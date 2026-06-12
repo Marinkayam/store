@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AcroShop ✨ | כל הציוד לעונה הבאה של האקרובטיקה</title>
+  <meta name="description" content="כל מה שצריך לעונה הבאה של האקרובטיקה והתעמלות קרקע - רשתות שיער, סיכות, גומיות, משקולות, בגדי גוף ועוד. הזמנה נוחה דרך אלי אקספרס.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤸</text></svg>">
+</head>
+<body>
+
+  <!-- ===== Hero ===== -->
+  <header class="hero">
+    <div class="hero-blob blob-1"></div>
+    <div class="hero-blob blob-2"></div>
+    <div class="hero-blob blob-3"></div>
+    <nav class="topbar">
+      <div class="logo">🤸‍♀️ <span>AcroShop</span></div>
+      <a class="topbar-cta" href="#products">לכל המוצרים ⬇</a>
+    </nav>
+    <div class="hero-content">
+      <span class="hero-badge">✨ מתאבזרים לעונה החדשה ✨</span>
+      <h1>כל מה שצריך<br><span class="gradient-text">לעונה הבאה של האקרובטיקה</span></h1>
+      <p class="hero-sub">
+        אספנו בשבילכם במקום אחד את כל הציוד שהמתעמלות באמת צריכות —
+        מרשתות שיער וסיכות ועד משקולות ובגדי גוף.
+        לוחצים על מוצר, מוסיפים לסל באלי אקספרס, וזהו! 🛒
+      </p>
+      <div class="hero-actions">
+        <a href="#products" class="btn btn-primary">🛍️ בואו נתחיל לקנות</a>
+        <a href="#how" class="btn btn-ghost">איך זה עובד?</a>
+      </div>
+      <div class="hero-emojis" aria-hidden="true">
+        <span class="float-emoji e1">🤸</span>
+        <span class="float-emoji e2">⭐</span>
+        <span class="float-emoji e3">🎀</span>
+        <span class="float-emoji e4">💪</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== How it works ===== -->
+  <section class="how" id="how">
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-icon">👀</div>
+        <h3>בוחרים מוצר</h3>
+        <p>מנווטים לפי קטגוריות ומוצאים בדיוק מה שצריך</p>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">🔗</div>
+        <h3>לוחצים על הקישור</h3>
+        <p>כל מוצר מוביל ישירות לעמוד שלו באלי אקספרס</p>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">🛒</div>
+        <h3>מוסיפים לסל</h3>
+        <p>מזמינים הכל בהזמנה אחת נוחה באלי אקספרס</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Products ===== -->
+  <main class="products-section" id="products">
+    <h2 class="section-title">המוצרים שלנו 💜</h2>
+    <p class="section-sub">לחצו על קטגוריה כדי לסנן, או גללו וראו הכל</p>
+
+    <div class="filters" id="filters" role="tablist" aria-label="סינון לפי קטגוריה"></div>
+
+    <div class="search-wrap">
+      <input type="search" id="search" placeholder="🔍 חיפוש מוצר... (למשל: גומיות)" aria-label="חיפוש מוצר">
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <p class="empty-msg" id="emptyMsg" hidden>לא נמצאו מוצרים 🙈 נסו חיפוש אחר</p>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <p class="disclosure">
+      💡 שקיפות מלאה: הדף הזה מכיל קישורי שותפים (affiliate) של AliExpress.
+      רכישה דרך הקישורים לא עולה לכם שקל נוסף, אבל עוזרת לנו להמשיך לעדכן את הדף 💜
+    </p>
+    <p class="footer-note">AcroShop · מתאבזרים לעונה הבאה של האקרובטיקה 🤸‍♀️</p>
+  </footer>
+
+  <button class="to-top" id="toTop" aria-label="חזרה למעלה">⬆</button>
+
+  <script src="js/products.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
