@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>התאמת לינקים 🔗 | AcroShop</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Rubik',sans-serif; background:#faf7ff; color:#2b2140; padding:24px 16px 60px; max-width:680px; margin:0 auto; line-height:1.6; }
+  h1 { font-size:1.6rem; font-weight:800; margin-bottom:6px; }
+  .sub { color:#6b6280; font-size:0.95rem; margin-bottom:22px; }
+  .row { background:#fff; border-radius:16px; box-shadow:0 4px 16px rgba(124,58,237,0.10); padding:16px; margin-bottom:14px; }
+  .row.done { border:2px solid #34d399; }
+  .row-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .num { background:linear-gradient(135deg,#7c3aed,#ec4899); color:#fff; font-weight:800; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .open-link { background:#ede9fe; color:#7c3aed; font-weight:600; padding:8px 16px; border-radius:999px; text-decoration:none; font-size:0.9rem; }
+  .open-link:active { background:#ddd1fa; }
+  select, input[type=url] { width:100%; font-family:inherit; font-size:1rem; padding:11px 14px; border:2px solid #e6dcf7; border-radius:12px; background:#fff; margin-top:8px; }
+  select:focus, input:focus { outline:none; border-color:#7c3aed; }
+  .new-name { display:none; }
+  .actions { position:sticky; bottom:12px; margin-top:24px; }
+  button.gen { width:100%; font-family:inherit; font-size:1.1rem; font-weight:800; color:#fff; background:linear-gradient(90deg,#7c3aed,#ec4899); border:none; border-radius:999px; padding:16px; cursor:pointer; box-shadow:0 10px 28px rgba(124,58,237,0.35); }
+  textarea { width:100%; height:220px; margin-top:16px; font-family:monospace; font-size:0.85rem; padding:12px; border:2px solid #e6dcf7; border-radius:12px; direction:rtl; }
+  .copy-note { text-align:center; color:#6b6280; font-size:0.9rem; margin-top:8px; }
+  .hint { background:#fef3c7; border-radius:12px; padding:12px 16px; font-size:0.9rem; margin-bottom:20px; }
+</style>
+</head>
+<body>
+
+<h1>🔗 התאמת לינקים למוצרים</h1>
+<p class="sub">לכל לינק: לוחצים על "פתיחה", רואים איזה מוצר זה באלי אקספרס, חוזרים לכאן ובוחרים אותו מהרשימה. בסוף לוחצים על הכפתור הסגול ושולחים לי את התוצאה 💜</p>
+<div class="hint">💡 לא חובה למלא הכל בבת אחת — אפשר למלא רק חלק, ללחוץ על הכפתור ולשלוח. אפשר גם להדביק כתובת תמונה של המוצר (אופציונלי).</div>
+
+<div id="rows"></div>
+
+<div class="actions"><button class="gen" onclick="generate()">✨ צרי לי את ההודעה לשליחה</button></div>
+<textarea id="out" placeholder="ההודעה המוכנה תופיע כאן — מעתיקים ושולחים בצ'אט" readonly onclick="this.select()"></textarea>
+<p class="copy-note">לחיצה על התיבה מסמנת הכל — ואז העתקה ושליחה בצ'אט 📋</p>
+
+<script>
+const LINKS = [
+  "https://s.click.aliexpress.com/e/_c4KvS24z",
+  "https://s.click.aliexpress.com/e/_c4dIjTAd",
+  "https://s.click.aliexpress.com/e/_c3ckWI6D",
+  "https://s.click.aliexpress.com/e/_c4MtYuVJ",
+  "https://s.click.aliexpress.com/e/_c3eZaaAh",
+  "https://s.click.aliexpress.com/e/_c3LiUSbx",
+  "https://s.click.aliexpress.com/e/_c2vLQEVP",
+  "https://s.click.aliexpress.com/e/_c3vYEL1T",
+  "https://s.click.aliexpress.com/e/_c3I7TuO1",
+  "https://s.click.aliexpress.com/e/_c3gibHZ3",
+  "https://s.click.aliexpress.com/e/_c3ZSl93J",
+  "https://s.click.aliexpress.com/e/_c2JTwkfF",
+  "https://s.click.aliexpress.com/e/_c3yb4kWZ",
+];
+
+const PRODUCT_NAMES = [
+  "רשתות שיער בלתי נראות","גומיות שחורות חזקות","סיכות שיער (בובי פינס)","סיכות U רחבות לבייגלה",
+  "מסרק זנב + מברשת החלקה","עושה בייגלה (דונאט לשיער)","סיכות מנצנצות לתחרויות",
+  "בגד גוף שקוף (בצבע גוף)","תחתונים שקופים בצבע גוף","בגד גוף לאימונים","מכנסונים קצרים לאימון","גוזיית ספורט בצבע גוף",
+  "משקולות ידיים","משקולות רגליים","גומיות התנגדות","רצועת מתיחות","מגיני שורש כף יד","מגיני ברכיים","מתקן למתיחת כף רגל",
+  "מזרן אוויר (אייר טראק)","תיק ספורט למתעמלת","בקבוק מים מוטיבציוני","גליל עיסוי (פואם רולר)","טייפ ספורט (קינזיו)",
+];
+
+const rows = document.getElementById("rows");
+LINKS.forEach((link, i) => {
+  const div = document.createElement("div");
+  div.className = "row";
+  div.innerHTML = `
+    <div class="row-top">
+      <span class="num">${i + 1}</span>
+      <a class="open-link" href="${link}" target="_blank" rel="noopener">🔍 פתיחה באלי אקספרס</a>
+    </div>
+    <select onchange="onPick(this)">
+      <option value="">— איזה מוצר זה? —</option>
+      ${PRODUCT_NAMES.map(n => `<option>${n}</option>`).join("")}
+      <option value="__new__">➕ מוצר חדש שאין בדף</option>
+    </select>
+    <input type="url" class="new-name" placeholder="שם המוצר החדש + קטגוריה (שיער/ביגוד/אימון/ציוד)">
+    <input type="url" class="img" placeholder="כתובת תמונת המוצר (אופציונלי)">
+  `;
+  rows.appendChild(div);
+});
+
+function onPick(sel) {
+  const row = sel.closest(".row");
+  row.querySelector(".new-name").style.display = sel.value === "__new__" ? "block" : "none";
+  row.classList.toggle("done", sel.value !== "");
+}
+
+function generate() {
+  const lines = [];
+  document.querySelectorAll(".row").forEach((row, i) => {
+    const sel = row.querySelector("select").value;
+    if (!sel) return;
+    const name = sel === "__new__" ? "מוצר חדש: " + row.querySelector(".new-name").value : sel;
+    const img = row.querySelector(".img").value;
+    lines.push(`${name} — ${LINKS[i]}` + (img ? ` — תמונה: ${img}` : ""));
+  });
+  const out = document.getElementById("out");
+  out.value = lines.length ? lines.join("\n") : "עוד לא נבחר אף מוצר 🙈";
+  out.focus(); out.select();
+  try { navigator.clipboard.writeText(out.value); } catch (e) {}
+}
+</script>
+</body>
+</html>
