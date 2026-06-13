@@ -37,19 +37,21 @@ function readJson(p) {
 }
 
 const configPath = path.join(__dirname, "config.json");
-if (!fs.existsSync(configPath)) {
-  console.error("❌ חסר הקובץ tools/config.json");
-  console.error("   העתיקי את tools/config.example.json ל-tools/config.json ומלאי את הפרטים שלך.");
-  process.exit(1);
-}
-const config = readJson(configPath);
 const input = readJson(path.join(__dirname, "products.input.json"));
 
-for (const key of ["appKey", "appSecret", "trackingId"]) {
-  if (!config[key] || String(config[key]).includes("PUT-YOUR")) {
-    console.error(`❌ חסר ערך בקונפיג: ${key}. מלאי אותו ב-tools/config.json`);
-    process.exit(1);
-  }
+// שני מצבי הרצה:
+//   API MODE   – יש tools/config.json עם מפתחות אמיתיים. מושך שם/תמונה/מחיר/עמלה
+//                + לינק אפיליאציה מה-API הרשמי. הכי עשיר.
+//   SCRAPE MODE – אין config.json (או חסרים מפתחות). פותח כל לינק, קורא את
+//                שם המוצר והתמונה מהדף עצמו, ומשתמש בלינק שסיפקת (שכבר מכיל
+//                את האפיליאציה שלך). לא דורש מפתחות בכלל — רק גישת רשת.
+let config = {};
+let API_MODE = false;
+if (fs.existsSync(configPath)) {
+  config = readJson(configPath);
+  API_MODE = ["appKey", "appSecret", "trackingId"].every(
+    (k) => config[k] && !String(config[k]).includes("PUT-YOUR")
+  );
 }
 
 const CURRENCY = config.targetCurrency || "ILS";
@@ -101,23 +103,49 @@ function extractProductId(url) {
   return m ? m[1] : null;
 }
 
-async function resolveToProductId(rawInput) {
+// מחזיר { productId, finalUrl, html } — html מוחזר רק אם כבר משכנו אותו
+async function resolveLink(rawInput) {
   const trimmed = String(rawInput).trim();
-  if (/^\d{6,}$/.test(trimmed)) return trimmed;          // כבר מספר מוצר
+  if (/^\d{6,}$/.test(trimmed)) {
+    return { productId: trimmed, finalUrl: `https://www.aliexpress.com/item/${trimmed}.html`, html: null };
+  }
   let direct = extractProductId(trimmed);
-  if (direct) return direct;
-  // לינק קצר — עוקבים אחרי ההפניה
+  if (direct) return { productId: direct, finalUrl: trimmed, html: null };
   try {
     const res = await fetch(trimmed, { redirect: "follow" });
-    direct = extractProductId(res.url);
-    if (direct) return direct;
+    const finalUrl = res.url;
+    direct = extractProductId(finalUrl);
     const html = await res.text();
-    const m = html.match(/productId["':=\s]+(\d{6,})/i) || html.match(/(\d{9,})\.html/);
-    if (m) return m[1];
+    if (!direct) {
+      const m = html.match(/productId["':=\s]+(\d{6,})/i) || html.match(/(\d{9,})\.html/);
+      if (m) direct = m[1];
+    }
+    return { productId: direct, finalUrl, html };
   } catch (e) {
     console.warn(`   ⚠️ לא הצלחתי לפתוח את הלינק: ${trimmed} (${e.message})`);
+    return { productId: null, finalUrl: null, html: null };
   }
-  return null;
+}
+
+// SCRAPE MODE: שולף שם + תמונה + מחיר מתוך ה-HTML של דף המוצר
+function scrapeFromHtml(html) {
+  if (!html) return {};
+  const meta = (prop) => {
+    const re = new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`, "i");
+    const m = html.match(re);
+    return m ? m[1] : "";
+  };
+  const decode = (s) =>
+    String(s || "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  let title = decode(meta("og:title")) || decode((html.match(/<title>([^<]+)<\/title>/i) || [])[1] || "");
+  title = title.replace(/\s*[-|]\s*AliExpress.*$/i, "").trim();
+  let image = meta("og:image");
+  if (image && image.startsWith("//")) image = "https:" + image;
+  const priceMatch =
+    html.match(/"formatedActivityPrice"\s*:\s*"([^"]+)"/) ||
+    html.match(/"formatedPrice"\s*:\s*"([^"]+)"/) ||
+    html.match(/"minActivityAmount"[^}]*"formatedAmount"\s*:\s*"([^"]+)"/);
+  return { title, image, price: priceMatch ? decode(priceMatch[1]) : "" };
 }
 
 /* ---------- ניחוש קטגוריה לפי שם המוצר ---------- */
@@ -184,18 +212,21 @@ const PRODUCTS = [
 /* ---------- ראשי ---------- */
 
 async function main() {
-  console.log(`\n🔄 מסנכרן ${input.items.length} מוצרים מאלי אקספרס...\n`);
+  console.log(`\n🔄 מסנכרן ${input.items.length} מוצרים מאלי אקספרס...`);
+  console.log(API_MODE
+    ? "   מצב: API מלא (שם, תמונה, מחיר, עמלה, לינק אפיליאציה)\n"
+    : "   מצב: ללא מפתחות (שם + תמונה מהדף; הלינקים שלך משמשים כמו שהם)\n");
 
-  // 1) פותרים לינקים -> מספרי מוצר
+  // 1) פותרים לינקים
   const resolved = [];
   for (const item of input.items) {
-    const id = await resolveToProductId(item.input);
-    if (!id) {
-      console.warn(`   ⚠️ דילגתי על: ${item.input} (לא נמצא מספר מוצר)`);
+    const r = await resolveLink(item.input);
+    if (!r.productId && !r.finalUrl) {
+      console.warn(`   ⚠️ דילגתי על: ${item.input}`);
       continue;
     }
-    resolved.push({ ...item, productId: id });
-    console.log(`   ✓ ${item.input}  →  מוצר ${id}`);
+    resolved.push({ ...item, ...r });
+    console.log(`   ✓ ${item.input}  →  ${r.productId || r.finalUrl}`);
   }
 
   if (resolved.length === 0) {
@@ -203,8 +234,30 @@ async function main() {
     process.exit(1);
   }
 
-  // 2) שולפים פרטי מוצר ב-API (עד 50 בכל קריאה)
-  console.log(`\n📡 שולף פרטים מה-API עבור ${resolved.length} מוצרים...`);
+  const products = API_MODE
+    ? await buildViaApi(resolved)
+    : await buildViaScrape(resolved);
+
+  // כותבים את הקובץ
+  const out = path.join(ROOT, "js", "products.js");
+  fs.writeFileSync(out, buildProductsFile(products), "utf8");
+  console.log(`\n✅ נכתבו ${products.length} מוצרים אל js/products.js`);
+  console.log("   פתחי את index.html בדפדפן כדי לראות את התוצאה 🎉\n");
+
+  // טיפ על עמלות נמוכות (רק במצב API)
+  const low = products.filter((p) => {
+    const n = parseFloat(String(p.commission).replace("%", ""));
+    return !isNaN(n) && n < 3;
+  });
+  if (low.length) {
+    console.log(`💡 שימי לב: ל-${low.length} מוצרים יש עמלה נמוכה מ-3%. שווה לשקול חלופות עם עמלה גבוהה יותר:`);
+    low.forEach((p) => console.log(`   · ${p.name} (${p.commission})`));
+  }
+}
+
+async function buildViaApi(resolved) {
+  const withId = resolved.filter((r) => r.productId);
+  console.log(`\n📡 שולף פרטים מה-API עבור ${withId.length} מוצרים...`);
   const fields = [
     "product_id", "product_title", "product_main_image_url",
     "target_sale_price", "target_sale_price_currency",
@@ -213,8 +266,8 @@ async function main() {
   ].join(",");
 
   const detailsById = {};
-  for (let i = 0; i < resolved.length; i += 50) {
-    const batch = resolved.slice(i, i + 50);
+  for (let i = 0; i < withId.length; i += 50) {
+    const batch = withId.slice(i, i + 50);
     const json = await callApi("aliexpress.affiliate.productdetail.get", {
       product_ids: batch.map((b) => b.productId).join(","),
       tracking_id: config.trackingId,
@@ -223,14 +276,11 @@ async function main() {
       ship_to_country: SHIP_TO,
       fields,
     });
-    for (const prod of extractProducts(json)) {
-      detailsById[String(prod.product_id)] = prod;
-    }
+    for (const prod of extractProducts(json)) detailsById[String(prod.product_id)] = prod;
   }
 
-  // 3) בונים את רשימת המוצרים הסופית
   const products = [];
-  for (const item of resolved) {
+  for (const item of withId) {
     const d = detailsById[item.productId];
     if (!d) {
       console.warn(`   ⚠️ ה-API לא החזיר פרטים למוצר ${item.productId}`);
@@ -240,35 +290,42 @@ async function main() {
     const category = item.category || guessCategory(d.product_title);
     const commission = d.hot_product_commission_rate || d.commission_rate || "";
     products.push({
-      name: title,
-      desc: title,
-      category,
+      name: title, desc: title, category,
       emoji: CATEGORY_EMOJI[category] || "🛍️",
       image: d.product_main_image_url || "",
-      link: d.promotion_link || item.input,         // לינק אפיליאציה תקין מה-API
+      link: d.promotion_link || item.input,
       price: d.target_sale_price || "",
       currency: d.target_sale_price_currency || CURRENCY,
       commission,
     });
-    const c = commission ? ` | עמלה ${commission}` : "";
-    console.log(`   ✓ ${title}  [${category}]${c}`);
+    console.log(`   ✓ ${title}  [${category}]${commission ? ` | עמלה ${commission}` : ""}`);
   }
+  return products;
+}
 
-  // 4) כותבים את הקובץ
-  const out = path.join(ROOT, "js", "products.js");
-  fs.writeFileSync(out, buildProductsFile(products), "utf8");
-  console.log(`\n✅ נכתבו ${products.length} מוצרים אל js/products.js`);
-  console.log("   פתחי את index.html בדפדפן כדי לראות את התוצאה 🎉\n");
-
-  // טיפ על עמלות נמוכות
-  const low = products.filter((p) => {
-    const n = parseFloat(String(p.commission).replace("%", ""));
-    return !isNaN(n) && n < 3;
-  });
-  if (low.length) {
-    console.log(`💡 שימי לב: ל-${low.length} מוצרים יש עמלה נמוכה מ-3%. שווה לשקול חלופות עם עמלה גבוהה יותר:`);
-    low.forEach((p) => console.log(`   · ${p.name} (${p.commission})`));
+async function buildViaScrape(resolved) {
+  console.log(`\n🌐 קורא פרטי מוצר מהדפים...`);
+  const products = [];
+  for (const item of resolved) {
+    let html = item.html;
+    if (!html && item.finalUrl) {
+      try { html = await (await fetch(item.finalUrl)).text(); } catch {}
+    }
+    const s = scrapeFromHtml(html);
+    const title = item.name || s.title || (item.productId ? `מוצר ${item.productId}` : "מוצר");
+    const category = item.category || guessCategory(s.title);
+    products.push({
+      name: title, desc: title, category,
+      emoji: CATEGORY_EMOJI[category] || "🛍️",
+      image: s.image || "",
+      link: item.input,            // הלינק שסיפקת — כבר מכיל את האפיליאציה שלך
+      price: s.price || "",
+      currency: "",
+      commission: "",
+    });
+    console.log(`   ✓ ${title}  [${category}]`);
   }
+  return products;
 }
 
 function extractProducts(json) {
