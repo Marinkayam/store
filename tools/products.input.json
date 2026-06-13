@@ -1,0 +1,18 @@
+{
+  "_comment": "רשימת המוצרים לייבוא. כל פריט: input = לינק קצר / לינק מוצר / מספר מוצר. category (אופציונלי) = hair/clothing/training/gear; אם משאירים ריק, הסקריפט מנחש לפי שם המוצר. name (אופציונלי) = שם להצגה; אם ריק, נלקח השם האמיתי מאלי אקספרס.",
+  "items": [
+    { "input": "https://s.click.aliexpress.com/e/_c4KvS24z", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c4dIjTAd", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3ckWI6D", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c4MtYuVJ", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3eZaaAh", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3LiUSbx", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c2vLQEVP", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3vYEL1T", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3I7TuO1", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3gibHZ3", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3ZSl93J", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c2JTwkfF", "category": "", "name": "" },
+    { "input": "https://s.click.aliexpress.com/e/_c3yb4kWZ", "category": "", "name": "" }
+  ]
+}

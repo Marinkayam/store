@@ -55,6 +55,10 @@ function renderProducts() {
       ? `<img src="${p.image}" alt="${p.name}" loading="lazy">`
       : `<span aria-hidden="true">${p.emoji}</span>`;
 
+    const priceTag = (p.price && p.price.trim() && !p.price.trim().startsWith("undefined"))
+      ? `<span class="card-price">${p.price}</span>`
+      : "";
+
     card.innerHTML = `
       <div class="card-media" style="background:${mediaGradients[p.category] || "#ede9fe"}">
         ${media}
@@ -63,6 +67,7 @@ function renderProducts() {
       <div class="card-body">
         <h3>${p.name}</h3>
         <p>${p.desc}</p>
+        ${priceTag}
         <a class="card-link" href="${p.link}" target="_blank" rel="noopener sponsored">
           🛒 לצפייה והזמנה באלי אקספרס
         </a>

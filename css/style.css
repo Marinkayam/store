@@ -316,6 +316,18 @@ a { text-decoration: none; color: inherit; }
 .card-body h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
 .card-body p { font-size: 0.88rem; color: var(--ink-soft); flex: 1; margin-bottom: 14px; }
 
+.card-price {
+  display: inline-block;
+  align-self: flex-start;
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
 .card-link {
   display: flex;
   align-items: center;

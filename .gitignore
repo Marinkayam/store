@@ -1,0 +1,9 @@
+# סודות אפיליאציה – לעולם לא לעלות לגיט!
+tools/config.json
+
+# Node
+node_modules/
+npm-debug.log*
+
+# מערכת
+.DS_Store

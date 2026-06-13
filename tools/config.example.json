@@ -1,0 +1,9 @@
+{
+  "_comment": "העתיקי קובץ זה ל-config.json ומלאי את הפרטים שלך מפורטל השותפים של אלי אקספרס (portals.aliexpress.com -> Open Platform / App Management). אל תעלי את config.json לגיט! הוא כבר ב-.gitignore.",
+  "appKey": "PUT-YOUR-APP-KEY-HERE",
+  "appSecret": "PUT-YOUR-APP-SECRET-HERE",
+  "trackingId": "PUT-YOUR-TRACKING-ID-HERE",
+  "targetCurrency": "ILS",
+  "targetLanguage": "HE",
+  "shipToCountry": "IL"
+}
