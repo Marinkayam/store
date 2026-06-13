@@ -1,18 +1,18 @@
 {
-  "_comment": "רשימת המוצרים לייבוא. כל פריט: input = לינק קצר / לינק מוצר / מספר מוצר. category (אופציונלי) = hair/clothing/training/gear; אם משאירים ריק, הסקריפט מנחש לפי שם המוצר. name (אופציונלי) = שם להצגה; אם ריק, נלקח השם האמיתי מאלי אקספרס.",
+  "_comment": "רשימת המוצרים לייבוא. name + category כבר מלאים בעברית נקייה, כך שהרצת הסקריפט שומרת עליהם ורק מוסיפה את תמונת המוצר האמיתית מאלי אקספרס. category: hair/clothing/training/gear.",
   "items": [
-    { "input": "https://s.click.aliexpress.com/e/_c4KvS24z", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c4dIjTAd", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3ckWI6D", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c4MtYuVJ", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3eZaaAh", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3LiUSbx", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c2vLQEVP", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3vYEL1T", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3I7TuO1", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3gibHZ3", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3ZSl93J", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c2JTwkfF", "category": "", "name": "" },
-    { "input": "https://s.click.aliexpress.com/e/_c3yb4kWZ", "category": "", "name": "" }
+    { "input": "https://s.click.aliexpress.com/e/_c4KvS24z", "category": "hair",     "name": "מסרק אנטי־סטטי לאיסוף שיער" },
+    { "input": "https://s.click.aliexpress.com/e/_c4dIjTAd", "category": "hair",     "name": "סט סיכות U ובובי פינס (45 יח')" },
+    { "input": "https://s.click.aliexpress.com/e/_c3ckWI6D", "category": "hair",     "name": "רשתות שיער לבייגלה (שחור / בז')" },
+    { "input": "https://s.click.aliexpress.com/e/_c4MtYuVJ", "category": "hair",     "name": "בובי פינס – סיכות שיער (50 יח')" },
+    { "input": "https://s.click.aliexpress.com/e/_c3eZaaAh", "category": "hair",     "name": "מברשת לקצוות ולהחלקת שיער" },
+    { "input": "https://s.click.aliexpress.com/e/_c3LiUSbx", "category": "clothing", "name": "גרביים דקות ונושמות (10 זוגות)" },
+    { "input": "https://s.click.aliexpress.com/e/_c2vLQEVP", "category": "training", "name": "טייפ קינזיו לתמיכה בברך" },
+    { "input": "https://s.click.aliexpress.com/e/_c3vYEL1T", "category": "hair",     "name": "מברשת להחלקת קוקו ושערות סוררות" },
+    { "input": "https://s.click.aliexpress.com/e/_c3I7TuO1", "category": "clothing", "name": "גרבי ספורט נמוכות ונושמות" },
+    { "input": "https://s.click.aliexpress.com/e/_c3gibHZ3", "category": "hair",     "name": "גומיות שיער שחורות חזקות (50/100 יח')" },
+    { "input": "https://s.click.aliexpress.com/e/_c3ZSl93J", "category": "training", "name": "גליל טייפ קינזיולוגי (5 ס\"מ × 5 מ')" },
+    { "input": "https://s.click.aliexpress.com/e/_c2JTwkfF", "category": "hair",     "name": "מסרק לעיסוי וסידור שיער" },
+    { "input": "https://s.click.aliexpress.com/e/_c3yb4kWZ", "category": "hair",     "name": "מלחציים / קליפסים לשיער (גדלים 5/6/7 ס\"מ)" }
   ]
 }

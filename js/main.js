@@ -22,6 +22,8 @@ const mediaGradients = {
 function renderFilters() {
   filtersEl.innerHTML = "";
   CATEGORIES.forEach((cat) => {
+    // מציגים רק קטגוריות שיש בהן מוצרים (ו"הכל" תמיד)
+    if (cat.id !== "all" && !PRODUCTS.some((p) => p.category === cat.id)) return;
     const btn = document.createElement("button");
     btn.className = "filter-btn" + (cat.id === activeCategory ? " active" : "");
     btn.textContent = cat.label;
