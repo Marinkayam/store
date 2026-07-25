@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
-import { randomSlug, randomToken } from "@/lib/slug";
+import { randomSlug } from "@/lib/slug";
 import { QUOTAS } from "@/lib/quotas";
 import { THEMES } from "@/lib/themes";
-import { sendParentSms, parentOpeningMessage } from "@/lib/sms";
 
 // POST /api/stores — נקרא בסוף האונבורדינג, אחרי supabase.auth.signUp.
 // מאמת טלפונים (נרמול בשמירה!), אוכף 3 חנויות לאימייל הורה, ומגריל slug אקראי.
@@ -71,7 +70,6 @@ export async function POST(req: NextRequest) {
   }
 
   // slug אקראי — מנסים שוב במקרה הנדיר של התנגשות
-  const parentToken = randomToken(16);
   let store: { id: string; slug: string } | null = null;
   for (let attempt = 0; attempt < 5 && !store; attempt++) {
     const { data, error } = await db
@@ -79,7 +77,6 @@ export async function POST(req: NextRequest) {
       .insert({
         owner_id: user.id,
         slug: randomSlug(),
-        parent_token: parentToken,
         display_name: displayName,
         emoji: (body.emoji ?? "🦄").slice(0, 8),
         tagline: body.tagline?.trim().slice(0, 60) || null,
@@ -115,14 +112,6 @@ export async function POST(req: NextRequest) {
       .single();
     firstProductId = prod?.id ?? null;
   }
-
-  // SMS יידוע להורה — ההורה בלופ גם אם האימייל שהוזן הוא של הילדה.
-  // נשלח ברקע; כישלון שליחה לא חוסם את פתיחת החנות.
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin;
-  sendParentSms(
-    parentPhone,
-    parentOpeningMessage(displayName, `${origin}/s/${store.slug}`, `${origin}/p/${parentToken}`)
-  ).catch(() => {});
 
   return NextResponse.json({ slug: store.slug, storeId: store.id, firstProductId });
 }
