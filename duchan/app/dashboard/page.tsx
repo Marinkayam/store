@@ -1,0 +1,204 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { supabaseBrowser } from "@/lib/supabase/client";
+import { useStore, confettiBurst } from "./use-store";
+import type { Order } from "@/lib/types";
+
+// מסך ההזמנות — מסך הבית של הדשבורד.
+// "שולם" מנכה מלאי (בפונקציית DB אטומית). "נמסר" מקבל קונפטי — המיקרו-אינטראקציה היחידה.
+
+const PILL: Record<string, { label: string; cls: string }> = {
+  sent: { label: "חדש", cls: "bg-[#FFF3E0] text-[#A85B00]" },
+  paid: { label: "שולם", cls: "bg-[#E4F3E9] text-[#1F7A42]" },
+  delivered: { label: "נמסר", cls: "bg-[#EDEEF1] text-[#6B6E7A]" },
+  cancelled: { label: "בוטל", cls: "bg-[#FBE9EA] text-[#D2373B]" },
+};
+
+export default function OrdersPage() {
+  const { store, loading } = useStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [toast, setToast] = useState("");
+
+  const refresh = useCallback(async () => {
+    if (!store) return;
+    const supa = supabaseBrowser();
+    const { data } = await supa
+      .from("orders")
+      .select("*")
+      .eq("store_id", store.id)
+      .order("created_at", { ascending: false });
+    setOrders((data as Order[]) ?? []);
+  }, [store]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const showToast = (m: string) => {
+    setToast(m);
+    setTimeout(() => setToast(""), 2400);
+  };
+
+  async function markPaid(o: Order) {
+    const supa = supabaseBrowser();
+    const { error } = await supa.rpc("mark_order_paid", { p_order: o.id });
+    if (error) {
+      showToast("משהו השתבש, נסי שוב");
+      return;
+    }
+    showToast("המלאי עודכן");
+    refresh();
+  }
+
+  async function setStatus(o: Order, status: "delivered" | "cancelled", e?: React.MouseEvent) {
+    const supa = supabaseBrowser();
+    await supa.from("orders").update({ status }).eq("id", o.id);
+    if (status === "delivered" && e) confettiBurst(e.clientX, e.clientY);
+    refresh();
+  }
+
+  const newCount = orders.filter((o) => o.status === "sent").length;
+
+  const checklist = store
+    ? [
+        { done: true, label: "שם" },
+        { done: true, label: "ערכת נושא" },
+        { done: !!store.cover_key, label: "תמונת קאבר" },
+        { done: !!store.tagline, label: "משפט עלייך" },
+      ]
+    : [];
+  const doneCount = checklist.filter((c) => c.done).length;
+
+  if (loading) return <div className="p-6 text-sm text-[#7A7D8A]">רגע…</div>;
+  if (!store)
+    return (
+      <div className="p-8 text-center text-sm text-[#7A7D8A] leading-relaxed">
+        עוד אין לך חנות.
+        <br />
+        <a href="/onboarding" className="underline text-[#15161B]">בואי נפתח אחת ←</a>
+      </div>
+    );
+
+  const firstName = store.display_name.replace(/^החנות של\s*/, "");
+
+  return (
+    <div>
+      <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC]">
+        <h1 className="text-lg font-bold">היי {firstName} 👋</h1>
+        <p className="text-xs text-[#7A7D8A] font-light">
+          {newCount ? `${newCount} הזמנות חדשות` : "הכל מטופל ✨"}
+        </p>
+      </header>
+
+      {/* רשימת השלמה — נעלמת לגמרי כשמסיימים */}
+      {doneCount < checklist.length && (
+        <div className="mx-3 mt-3 bg-white border border-[#E6E7EC] rounded-xl p-3 text-xs">
+          <div className="flex justify-between font-medium mb-1.5">
+            <span>החנות שלך {doneCount} מתוך {checklist.length}</span>
+            <span>{"▓".repeat(doneCount)}{"░".repeat(checklist.length - doneCount)}</span>
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[#7A7D8A]">
+            {checklist.map((c) => (
+              <span key={c.label}>{c.done ? "✓" : "○"} {c.label}</span>
+            ))}
+            <a href="/dashboard/settings" className="underline">←</a>
+          </div>
+        </div>
+      )}
+
+      <div className="p-3 flex flex-col gap-2">
+        {orders.length === 0 && (
+          <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
+            עוד לא הגיעו הזמנות.
+            <br />
+            שלחי את הלינק לחברות שלך 👇
+            <br />
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/s/${store.slug}`);
+                showToast("הלינק הועתק");
+              }}
+              className="mt-2 bg-[#15161B] text-white rounded-lg px-4 py-2 text-xs"
+            >
+              העתקת לינק
+            </button>
+          </div>
+        )}
+
+        {orders.map((o) => (
+          <div
+            key={o.id}
+            className={`bg-white border rounded-xl p-3 ${
+              o.status === "paid"
+                ? "bg-[#F6FBF7] border-[#CBE8D4]"
+                : o.status === "delivered" || o.status === "cancelled"
+                  ? "opacity-45 border-[#E6E7EC]"
+                  : "border-[#E6E7EC]"
+            }`}
+          >
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[11px] text-[#7A7D8A]">
+                #{o.order_number} · {new Date(o.created_at).toLocaleDateString("he-IL")}
+              </span>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${PILL[o.status].cls}`}>
+                {PILL[o.status].label}
+              </span>
+            </div>
+            {o.items.map((it, i) => (
+              <div key={i} className="text-[13px] py-px">
+                • {it.name} × {it.qty} — ₪{it.qty * it.price}
+              </div>
+            ))}
+            {o.buyer_note && (
+              <div className="text-[11px] text-[#7A7D8A] italic mt-1">"{o.buyer_note}"</div>
+            )}
+            <div className="flex justify-between text-xs font-medium border-t border-[#E6E7EC] mt-2 pt-2">
+              <span>סה"כ</span>
+              <span>₪{o.total}</span>
+            </div>
+            {o.status === "sent" && (
+              <div className="flex gap-1.5 mt-2">
+                <button
+                  onClick={() => markPaid(o)}
+                  className="flex-1 bg-[#15161B] text-white rounded-lg py-2 text-xs font-medium"
+                >
+                  שולם
+                </button>
+                {/* מספר הקונה לא נאסף אף פעם — השיחה כבר קיימת אצלה בוואטסאפ */}
+                <a
+                  href="https://wa.me/"
+                  className="flex-1 bg-white border border-[#E6E7EC] rounded-lg py-2 text-xs font-medium text-center"
+                >
+                  פתחי וואטסאפ
+                </a>
+                <button
+                  onClick={() => setStatus(o, "cancelled")}
+                  className="bg-white border border-[#F0CFD0] text-[#D2373B] rounded-lg py-2 px-3 text-xs"
+                >
+                  ביטול
+                </button>
+              </div>
+            )}
+            {o.status === "paid" && (
+              <div className="flex gap-1.5 mt-2">
+                <button
+                  onClick={(e) => setStatus(o, "delivered", e)}
+                  className="flex-1 bg-[#15161B] text-white rounded-lg py-2 text-xs font-medium"
+                >
+                  נמסר
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {toast && (
+        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[#1B1C22] text-white px-4 py-2.5 rounded-3xl text-[13px] z-[90]">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}

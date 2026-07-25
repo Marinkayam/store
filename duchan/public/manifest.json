@@ -1,0 +1,14 @@
+{
+  "name": "דוכן",
+  "short_name": "דוכן",
+  "description": "חנות קטנה שאת מקימה בעצמך",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F5F6F9",
+  "theme_color": "#15161B",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

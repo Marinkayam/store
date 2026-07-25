@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --canvas: #f5f6f9;
+  --ink: #15161b;
+  --muted: #7a7d8a;
+  --line: #e6e7ec;
+  --sub: #f5f6f9;
+  --danger: #d2373b;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-family: "Heebo", system-ui, sans-serif;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* אנימציית סקוויש לאימוג'י בחנות */
+@keyframes squish {
+  0%, 72%, 100% { transform: scale(1, 1); }
+  78% { transform: scale(1.16, 0.8); }
+  86% { transform: scale(0.95, 1.07); }
+  93% { transform: scale(1.02, 0.98); }
+}
+.squish {
+  display: block;
+  animation: squish 2.8s ease-in-out infinite;
+}
+
+/* קונפטי — המיקרו-אינטראקציה היחידה */
+@keyframes fly {
+  to { transform: translateY(-130px) rotate(380deg); opacity: 0; }
+}
+.confetti {
+  position: fixed;
+  width: 6px;
+  height: 10px;
+  z-index: 95;
+  pointer-events: none;
+  animation: fly 0.9s ease-out forwards;
+}
