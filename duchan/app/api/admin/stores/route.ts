@@ -19,7 +19,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "אין גישה" }, { status: 403 });
 
-  let body: { displayName?: string; parentName?: string; parentPhone?: string; parentEmail?: string; contactPhone?: string };
+  let body: { displayName?: string; contactPhone?: string };
   try {
     body = await req.json();
   } catch {
@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
   if (!displayName) return NextResponse.json({ error: "לחנות צריך שם" }, { status: 400 });
 
   const contactPhone = normalizePhone(body.contactPhone ?? "") ?? "972500000000";
-  const parentPhone = normalizePhone(body.parentPhone ?? "") ?? contactPhone;
 
   const db = supabaseAdmin();
   const claimToken = randomToken();
@@ -41,9 +40,6 @@ export async function POST(req: NextRequest) {
       slug: randomSlug(),
       display_name: displayName,
       contact_phone: contactPhone,
-      parent_name: body.parentName?.trim().slice(0, 60) || "—",
-      parent_phone: parentPhone,
-      parent_email: body.parentEmail?.trim().toLowerCase() || "",
       claim_token: claimToken,
       status: "paused", // עד שהחנות נתבעת היא לא פומבית
     })

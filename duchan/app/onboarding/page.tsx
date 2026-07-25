@@ -43,11 +43,8 @@ export default function Onboarding() {
 
   // שדות מסך השמירה — לא נשמרים ב-sessionStorage (סיסמה!)
   const [contactPhone, setContactPhone] = useState("");
-  const [parentName, setParentName] = useState("");
-  const [parentPhone, setParentPhone] = useState("");
-  const [parentEmail, setParentEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [parentKnows, setParentKnows] = useState(false);
 
   useEffect(() => {
     setDraft(loadDraft());
@@ -72,10 +69,6 @@ export default function Onboarding() {
 
   async function save() {
     setErr("");
-    if (!parentKnows) {
-      setErr("סמני שההורה שלך יודע — זה חשוב לנו");
-      return;
-    }
     if (password.length < 6) {
       setErr("סיסמה של 6 תווים לפחות");
       return;
@@ -84,13 +77,13 @@ export default function Onboarding() {
     try {
       const supa = supabaseBrowser();
       const { error: signErr } = await supa.auth.signUp({
-        email: parentEmail.trim(),
+        email: email.trim(),
         password,
       });
       if (signErr) {
-        // אולי כבר רשומה (אחות?) — מנסים להתחבר
+        // אולי כבר רשומה — מנסים להתחבר
         const { error: inErr } = await supa.auth.signInWithPassword({
-          email: parentEmail.trim(),
+          email: email.trim(),
           password,
         });
         if (inErr) {
@@ -107,8 +100,6 @@ export default function Onboarding() {
           emoji: draft!.emoji,
           theme: draft!.theme,
           contactPhone,
-          parentName,
-          parentPhone,
           firstProduct: draft!.product.name
             ? {
                 name: draft!.product.name,
@@ -357,23 +348,9 @@ export default function Onboarding() {
             className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
           />
           <input
-            value={parentName}
-            onChange={(e) => setParentName(e.target.value)}
-            placeholder="השם של אמא / אבא"
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm"
-          />
-          <input
-            value={parentPhone}
-            onChange={(e) => setParentPhone(e.target.value)}
-            placeholder="הטלפון של אמא / אבא"
-            inputMode="tel"
-            dir="ltr"
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
-          />
-          <input
-            value={parentEmail}
-            onChange={(e) => setParentEmail(e.target.value)}
-            placeholder="האימייל של ההורה"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="אימייל (איתו נכנסים לניהול)"
             type="email"
             dir="ltr"
             className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
@@ -386,18 +363,9 @@ export default function Onboarding() {
             dir="ltr"
             className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
           />
-          <label className="flex items-center gap-2 text-sm py-1">
-            <input
-              type="checkbox"
-              checked={parentKnows}
-              onChange={(e) => setParentKnows(e.target.checked)}
-              className="w-4 h-4"
-            />
-            ההורה שלי יודע שאני פותחת חנות
-          </label>
           {err && <p className="text-xs text-[#D2373B]">{err}</p>}
           <button
-            disabled={busy || !contactPhone || !parentName || !parentPhone || !parentEmail || !password}
+            disabled={busy || !contactPhone || !email || !password}
             onClick={save}
             className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-medium disabled:opacity-30"
           >

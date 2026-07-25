@@ -13,9 +13,9 @@ export interface Store {
   theme: ThemeKey;
   cover_key: string | null;
   contact_phone: string;
-  parent_name: string;
-  parent_phone: string;
-  parent_email: string;
+  parent_name: string | null;
+  parent_phone: string | null;
+  parent_email: string | null; // האימייל של החשבון (משמש למכסת 3 חנויות לאימייל)
   status: StoreStatus;
   claim_token: string | null;
   media_bytes: number;

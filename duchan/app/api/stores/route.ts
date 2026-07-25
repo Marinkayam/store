@@ -7,7 +7,7 @@ import { QUOTAS } from "@/lib/quotas";
 import { THEMES } from "@/lib/themes";
 
 // POST /api/stores — נקרא בסוף האונבורדינג, אחרי supabase.auth.signUp.
-// מאמת טלפונים (נרמול בשמירה!), אוכף 3 חנויות לאימייל הורה, ומגריל slug אקראי.
+// מאמת טלפון (נרמול בשמירה!), אוכף 3 חנויות לאימייל, ומגריל slug אקראי.
 
 interface Body {
   displayName?: string;
@@ -15,8 +15,6 @@ interface Body {
   tagline?: string;
   theme?: string;
   contactPhone?: string;
-  parentName?: string;
-  parentPhone?: string;
   firstProduct?: {
     name: string;
     description?: string;
@@ -48,16 +46,10 @@ export async function POST(req: NextRequest) {
   if (!contactPhone) {
     return NextResponse.json({ error: "מספר הוואטסאפ לא נראה תקין — בדקי אותו שוב" }, { status: 400 });
   }
-  const parentPhone = normalizePhone(body.parentPhone ?? "");
-  if (!parentPhone) {
-    return NextResponse.json({ error: "הטלפון של ההורה לא נראה תקין" }, { status: 400 });
-  }
-  const parentName = body.parentName?.trim().slice(0, 60);
-  if (!parentName) return NextResponse.json({ error: "חסר שם של אמא או אבא" }, { status: 400 });
 
   const db = supabaseAdmin();
 
-  // 3 חנויות לאימייל הורה
+  // 3 חנויות לאימייל
   const { count } = await db
     .from("stores")
     .select("id", { count: "exact", head: true })
@@ -82,9 +74,7 @@ export async function POST(req: NextRequest) {
         tagline: body.tagline?.trim().slice(0, 60) || null,
         theme,
         contact_phone: contactPhone,
-        parent_name: parentName,
-        parent_phone: parentPhone,
-        parent_email: user.email.toLowerCase(),
+        parent_email: user.email.toLowerCase(), // האימייל של החשבון — משמש למכסה
       })
       .select("id, slug")
       .single();

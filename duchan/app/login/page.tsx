@@ -28,18 +28,18 @@ function LoginForm() {
 
   async function resetPassword() {
     if (!email) {
-      setErr("כתבי קודם את האימייל של ההורה");
+      setErr("כתבי קודם את האימייל");
       return;
     }
     const supa = supabaseBrowser();
     await supa.auth.resetPasswordForEmail(email);
-    setErr("שלחנו לינק לאיפוס סיסמה לאימייל של ההורה");
+    setErr("שלחנו לינק לאיפוס סיסמה לאימייל");
   }
 
   return (
     <form onSubmit={submit} className="w-full max-w-sm flex flex-col gap-3">
       <label className="text-xs text-[#7A7D8A]">
-        האימייל של ההורה
+        אימייל
         <input
           type="email"
           dir="ltr"
