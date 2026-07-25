@@ -18,6 +18,7 @@ export interface Store {
   parent_email: string;
   status: StoreStatus;
   claim_token: string | null;
+  parent_token: string | null;
   media_bytes: number;
   created_at: string;
 }
