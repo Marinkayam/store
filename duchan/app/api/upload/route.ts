@@ -10,9 +10,12 @@ import { QUOTAS } from "@/lib/quotas";
 
 const EXT: Record<string, string> = {
   "image/webp": "webp",
+  "image/jpeg": "jpg", // ספארי ישן לא מקודד webp — הקנבס נופל ל-JPEG
   "video/mp4": "mp4",
   "video/webm": "webm",
 };
+
+const IMAGE_TYPES = ["image/webp", "image/jpeg"];
 
 export async function POST(req: NextRequest) {
   const supa = await supabaseServer();
@@ -34,7 +37,7 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json({ error: "קובץ לא נתמך" }, { status: 400 });
   }
-  if ((kind === "image" || kind === "poster" || kind === "cover") && contentType !== "image/webp") {
+  if ((kind === "image" || kind === "poster" || kind === "cover") && !IMAGE_TYPES.includes(contentType)) {
     return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });
   }
 
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
 
   const key =
     kind === "cover"
-      ? `${store.id}/cover.webp`
+      ? `${store.id}/cover.${EXT[contentType]}`
       : `${store.id}/products/${randomUUID()}.${EXT[contentType]}`;
 
   const url = await presignedUpload(key, contentType, bytes);

@@ -5,15 +5,39 @@ export const MAX_VIDEO_SECONDS = 10; // גלריה: דחייה מפורשת מע
 export const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
 export const RECORD_SECONDS = 5; // הקלטה: עצירה קשיחה ב-5 שניות
 
+/**
+ * המרת קנבס ל-Blob עם נפילה ל-JPEG: ספארי ישן לא מקודד WebP ומחזיר PNG
+ * בשקט — והשרת דוחה PNG. JPEG נתמך בכל דפדפן.
+ */
+async function canvasToImageBlob(c: OffscreenCanvas | HTMLCanvasElement): Promise<Blob> {
+  const toBlob = (type: string, quality: number) =>
+    "convertToBlob" in c
+      ? c.convertToBlob({ type, quality })
+      : new Promise<Blob>((res, rej) =>
+          (c as HTMLCanvasElement).toBlob((b) => (b ? res(b) : rej(new Error("toBlob failed"))), type, quality)
+        );
+  const webp = await toBlob("image/webp", 0.82);
+  if (webp.type === "image/webp") return webp;
+  return toBlob("image/jpeg", 0.85);
+}
+
+function makeCanvas(size: number): OffscreenCanvas | HTMLCanvasElement {
+  if (typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(size, size);
+  // iOS ישן — אין OffscreenCanvas
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  return c;
+}
+
 /** חיתוך לריבוע + דחיסה + מחיקת EXIF. אל תדלג על השלב הזה. */
 export async function squareImage(file: File | Blob, size = 900): Promise<Blob> {
   const bmp = await createImageBitmap(file);
   const side = Math.min(bmp.width, bmp.height);
-  const c = new OffscreenCanvas(size, size);
-  c.getContext("2d")!.drawImage(
+  const c = makeCanvas(size);
+  (c.getContext("2d") as CanvasRenderingContext2D).drawImage(
     bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size
   );
-  return c.convertToBlob({ type: "image/webp", quality: 0.82 });
+  return canvasToImageBlob(c);
 }
 
 /** פוסטר מפריים 0.1 שניות. בלעדיו הרשת מציגה ריבועים שחורים עד שהווידאו נטען. */
@@ -28,12 +52,12 @@ export function posterFrom(videoUrl: string): Promise<Blob | null> {
     v.onseeked = () => {
       clearTimeout(timeout);
       const side = Math.min(v.videoWidth, v.videoHeight) || 300;
-      const c = new OffscreenCanvas(600, 600);
+      const c = makeCanvas(600);
       try {
-        c.getContext("2d")!.drawImage(
+        (c.getContext("2d") as CanvasRenderingContext2D).drawImage(
           v, (v.videoWidth - side) / 2, (v.videoHeight - side) / 2, side, side, 0, 0, 600, 600
         );
-        c.convertToBlob({ type: "image/webp", quality: 0.8 }).then(resolve, () => resolve(null));
+        canvasToImageBlob(c).then(resolve, () => resolve(null));
       } catch {
         resolve(null);
       }
