@@ -14,5 +14,7 @@ export default async function AdminPage() {
       </div>
     );
   }
-  return <AdminView />;
+  // האם לשרת יש מפתח Anthropic. בלעדיו אפשר להדליק "כתיבה אוטומטית" לחנות,
+  // והילדה תלחץ ותקבל שגיאה — אז החמ"ל צריך לדעת את זה ולומר אותו.
+  return <AdminView aiConfigured={!!process.env.ANTHROPIC_API_KEY} />;
 }

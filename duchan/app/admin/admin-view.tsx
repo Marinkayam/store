@@ -134,7 +134,7 @@ const METHOD_LABEL: Record<string, string> = {
   gift: "מתנה",
 };
 
-export default function AdminView() {
+export default function AdminView({ aiConfigured = false }: { aiConfigured?: boolean }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [totals, setTotals] = useState<Totals | null>(null);
   const [stores, setStores] = useState<AdminStore[]>([]);
@@ -641,12 +641,21 @@ export default function AdminView() {
                       className="border border-[#E6E7EC] bg-white rounded-lg px-2.5 py-1.5 text-[11px]">כיבוי</button>
                   </>
                 ) : (
-                  <button onClick={() => setAi(detail.store.id, true, 50)}
-                    className="bg-[#15161B] text-white rounded-lg px-3 py-1.5 text-[11px] font-medium">
+                  <button
+                    onClick={() => setAi(detail.store.id, true, 50)}
+                    disabled={!aiConfigured}
+                    className="bg-[#15161B] text-white rounded-lg px-3 py-1.5 text-[11px] font-medium disabled:opacity-30"
+                  >
                     הפעלה · 50 תיאורים
                   </button>
                 )}
               </div>
+              {!aiConfigured && (
+                <div className="text-[11px] text-[#A85B00] mt-2">
+                  אין מפתח Anthropic בשרת. הדלקה כאן תיתן לילדה שגיאה בלחיצה —
+                  צריך להגדיר <code>ANTHROPIC_API_KEY</code> ולפרוס מחדש.
+                </div>
+              )}
             </div>
 
             {/* כניסות 14 יום */}
