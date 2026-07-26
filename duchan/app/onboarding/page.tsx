@@ -2,30 +2,32 @@
 
 import { useEffect, useRef, useState } from "react";
 import { THEMES, themeCssVars, themeOrDefault, type ThemeKey } from "@/lib/themes";
+import { COVERS, DEFAULT_COVER, coverCss } from "@/lib/covers";
 import { squareImage, MediaError } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "../phone-verify";
 
 // אונבורדינג: בונים לפני שנרשמים. מצב הביניים חי ב-sessionStorage.
 //
-// ארבעה מסכים: שם → מוצר → "מוכנה" → שמירה.
-// בחירת הסגנון והאמוג'י יושבת על מסך "מוכנה" ולא כשלב נפרד לפניו — לבחור
-// עיצוב לחנות ריקה זו החלטה מופשטת, ולבחור אותו כשרואים את המוצר בפנים
-// זה מיידי. זה גם חוסך מסך שלם.
+// ארבעה מסכים: שם → זהות → "מוכנה" → שמירה.
 //
-// מסך "החנות שלך מוכנה" הוא הציר — עד אליו לא ביקשנו כלום.
+// האונבורדינג לא מבקש מוצר. הוא בונה *דוכן*, לא מלאי. ילדה שנוחתת כאן עוד
+// לא צילמה כלום, ולבקש ממנה מוצר ראשון לפני שיש לה חנות זה לבקש עבודה לפני
+// שנתנו לה משהו. מה שהיא בונה כאן זה הזהות — שם, פרצוף, קאבר, סגנון — וזה
+// מה שהיא רוצה להראות לחברה. מוצרים נכנסים אחר כך מהדשבורד, שם יש מסך
+// שנבנה בשבילם, עם מצלמה, מלאי, אפשרויות ותגיות.
 
 interface Draft {
   step: number;
   displayName: string;
   theme: ThemeKey;
   emoji: string;
-  ref: string | null; // הסלאג של החנות שממנה הגיעה (?ref= בדף הנחיתה)
-  product: { name: string; price: string; description: string; imageData: string | null };
+  avatarData: string | null; // תמונת פרופיל שנבחרה, כ-dataURL עד שיש חנות
+  cover: string;             // מפתח קאבר מוכן
+  coverData: string | null;  // קאבר שהועלה — גובר על המוכן
+  ref: string | null;        // הסלאג של החנות שממנה הגיעה (?ref= בדף הנחיתה)
 }
 
-// האמוג'י של החנות — מופיע בראש דף החנות כשאין תמונת פרופיל.
-// שייך למסך העיצוב, לא למסך המוצר: שם הוא נראה כאילו הוא של המוצר.
 const EMOJIS = [
   "🦄", "🍩", "🐼", "🍦", "🌈", "🍓", "🐻", "⭐", "🧁", "🐸",
   "🌸", "🍭", "🦋", "🐰", "🍉", "💎", "🌻", "🐣", "🍀", "🎀",
@@ -36,8 +38,10 @@ const EMPTY: Draft = {
   displayName: "",
   theme: "cloud",
   emoji: "🦄",
+  avatarData: null,
+  cover: DEFAULT_COVER.key,
+  coverData: null,
   ref: null,
-  product: { name: "", price: "", description: "", imageData: null },
 };
 
 function loadDraft(): Draft {
@@ -54,10 +58,8 @@ export default function Onboarding() {
   const [photoErr, setPhotoErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ slug: string } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  // שדות מסך השמירה — לא נשמרים ב-sessionStorage (סיסמה!)
-  const [showDesc, setShowDesc] = useState(false);
+  const avatarRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDraft(loadDraft());
@@ -72,20 +74,38 @@ export default function Onboarding() {
   const theme = themeOrDefault(draft.theme);
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d!, ...patch }));
 
-  async function onImagePicked(file: File) {
+  /** קורא תמונה, חותך לריבוע ומוחק EXIF — ואז שומר כ-dataURL בטיוטה. */
+  async function pickImage(file: File, kind: "avatar" | "cover") {
     setPhotoErr("");
     let blob: Blob;
     try {
-      blob = await squareImage(file);
+      blob = await squareImage(file, kind === "cover" ? 1200 : 400);
     } catch (e) {
-      // מסך 2 הוא הרושם הראשון. תמונה שנכשלת בשקט כאן = נטישה.
       setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
       return;
     }
     const reader = new FileReader();
     reader.onload = () =>
-      set({ product: { ...draft!.product, imageData: reader.result as string } });
+      set(kind === "avatar" ? { avatarData: reader.result as string } : { coverData: reader.result as string });
     reader.readAsDataURL(blob);
+  }
+
+  /** מעלה dataURL ל-R2 ומחזיר את המפתח. נכשל בשקט — התמונה ניתנת להעלאה שוב. */
+  async function uploadData(dataUrl: string, kind: "avatar" | "cover", storeId: string) {
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const up = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, contentType: blob.type, bytes: blob.size, storeId }),
+      });
+      if (!up.ok) return null;
+      const { url, key } = await up.json();
+      const put = await fetch(url, { method: "PUT", headers: { "Content-Type": blob.type }, body: blob });
+      return put.ok ? (key as string) : null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -96,7 +116,6 @@ export default function Onboarding() {
     setErr("");
     setBusy(true);
     try {
-      const supa = supabaseBrowser();
       const res = await fetch("/api/stores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,15 +123,8 @@ export default function Onboarding() {
           displayName: draft!.displayName,
           emoji: draft!.emoji,
           theme: draft!.theme,
+          coverPreset: draft!.cover,
           ref: draft!.ref,
-          firstProduct: draft!.product.name
-            ? {
-                name: draft!.product.name,
-                description: draft!.product.description.trim() || undefined,
-                price: Number(draft!.product.price) || 0,
-                stock: 1,
-              }
-            : undefined,
         }),
       });
       const data = await res.json();
@@ -121,29 +133,19 @@ export default function Onboarding() {
         return;
       }
 
-      // העלאת תמונת המוצר הראשון (אם צולמה) — אחרי שיש חנות
-      if (draft!.product.imageData && data.firstProductId) {
-        try {
-          const blob = await (await fetch(draft!.product.imageData)).blob();
-          const up = await fetch("/api/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ kind: "image", contentType: blob.type, bytes: blob.size, storeId: data.storeId }),
-          });
-          if (up.ok) {
-            const { url, key } = await up.json();
-            const put = await fetch(url, {
-              method: "PUT",
-              headers: { "Content-Type": blob.type },
-              body: blob,
-            });
-            if (put.ok) {
-              await supa.from("products").update({ image_key: key }).eq("id", data.firstProductId);
-            }
-          }
-        } catch {
-          // התמונה תעלה שוב מהדשבורד — לא חוסמים את הלינק בגללה
-        }
+      // התמונות עולות אחרי שיש חנות. כישלון כאן לא חוסם — הלינק כבר קיים,
+      // והיא תוכל להעלות שוב מההגדרות.
+      const patch: Record<string, string> = {};
+      if (draft!.avatarData) {
+        const k = await uploadData(draft!.avatarData, "avatar", data.storeId);
+        if (k) patch.avatar_key = k;
+      }
+      if (draft!.coverData) {
+        const k = await uploadData(draft!.coverData, "cover", data.storeId);
+        if (k) patch.cover_key = k;
+      }
+      if (Object.keys(patch).length) {
+        await supabaseBrowser().from("stores").update(patch).eq("id", data.storeId);
       }
 
       sessionStorage.removeItem("duchan-draft");
@@ -154,11 +156,14 @@ export default function Onboarding() {
   }
 
   const storeUrl = result ? `${window.location.origin}/s/${result.slug}` : "";
+  const coverStyle = draft.coverData
+    ? { backgroundImage: `url(${draft.coverData})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: coverCss(draft.cover) };
 
-  /* ---------- תצוגת חנות (מסך 3) ---------- */
-  const preview = (full: boolean) => (
+  /* ---------- תצוגת החנות ---------- */
+  const preview = (tall: boolean) => (
     <div
-      className={`w-full overflow-hidden ${full ? "rounded-none min-h-[60vh]" : "rounded-2xl border border-[#E6E7EC]"}`}
+      className="w-full overflow-hidden card"
       style={{
         ...(themeCssVars(theme) as React.CSSProperties),
         background: theme.bg,
@@ -166,15 +171,19 @@ export default function Onboarding() {
         fontFamily: theme.font,
       }}
     >
-      <div className="h-16" style={{ background: "linear-gradient(135deg,#C9D6FF,#E2C6F7)" }} />
-      <div className="text-center -mt-6">
+      <div className={tall ? "h-24" : "h-16"} style={coverStyle} />
+      <div className="text-center -mt-7">
         <span
-          className="inline-flex w-12 h-12 rounded-full items-center justify-center text-2xl shadow"
-          style={{ background: theme.surface }}
+          className="inline-flex w-14 h-14 items-center justify-center text-2xl overflow-hidden"
+          style={{ background: theme.surface, borderRadius: theme.radius, border: theme.border, boxShadow: theme.shadow }}
         >
-          {draft.emoji}
+          {draft.avatarData ? (
+            <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />
+          ) : (
+            draft.emoji
+          )}
         </span>
-        <h3 className="font-bold mt-1.5">{draft.displayName || "החנות שלך"}</h3>
+        <h3 className="font-bold mt-2 text-[17px]">{draft.displayName || "הדוכן שלך"}</h3>
       </div>
       <div className="grid grid-cols-2 gap-2 p-3">
         {[0, 1].map((i) => (
@@ -183,18 +192,14 @@ export default function Onboarding() {
             className="overflow-hidden"
             style={{ background: theme.surface, borderRadius: theme.radius, border: theme.border }}
           >
-            <div className="aspect-square flex items-center justify-center text-3xl overflow-hidden" style={{ background: theme.thumb }}>
-              {i === 0 && draft.product.imageData ? (
-                <img src={draft.product.imageData} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className={i === 0 ? "squish" : ""}>{i === 0 ? draft.emoji : "✨"}</span>
-              )}
+            <div
+              className="aspect-square flex items-center justify-center text-2xl opacity-45"
+              style={{ background: theme.thumb }}
+            >
+              ✦
             </div>
-            <div className="text-center py-1.5 text-[11px] font-medium">
-              {i === 0 ? draft.product.name || "המוצר הראשון" : "עוד יבוא…"}
-              <div className="font-bold" style={{ color: theme.primary }}>
-                {i === 0 && draft.product.price ? `₪${draft.product.price}` : ""}
-              </div>
+            <div className="text-center py-1.5 text-[11px] opacity-50">
+              {i === 0 ? "המוצר הראשון שלך" : "ועוד אחד"}
             </div>
           </div>
         ))}
@@ -204,13 +209,17 @@ export default function Onboarding() {
 
   return (
     <main className="min-h-screen flex flex-col items-center px-5 py-8 gap-5 max-w-md mx-auto">
-      {/* progress */}
       {!result && (
         <div className="flex gap-1.5">
           {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
-              className={`h-1.5 rounded-full transition-all ${s <= draft.step ? "w-6 bg-[#15161B]" : "w-3 bg-[#DCDCE4]"}`}
+              className="h-1.5 transition-all"
+              style={{
+                width: s <= draft.step ? 24 : 12,
+                borderRadius: 99,
+                background: s <= draft.step ? "var(--olive)" : "var(--stone)",
+              }}
             />
           ))}
         </div>
@@ -219,133 +228,146 @@ export default function Onboarding() {
       {/* 1 — שם */}
       {draft.step === 1 && (
         <div className="w-full flex flex-col gap-4 pt-10">
-          <h1 className="text-xl font-bold text-center">מה שם החנות שלך?</h1>
+          <h1 className="text-xl font-bold text-center">איך קוראים לדוכן שלך?</h1>
           <input
             value={draft.displayName}
             onChange={(e) => set({ displayName: e.target.value })}
-            placeholder="החנות של…"
+            placeholder="הדוכן של…"
             maxLength={40}
             autoFocus
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-center"
+            className="field w-full px-4 py-3.5 text-center text-base"
           />
           <button
             disabled={!draft.displayName.trim()}
             onClick={() => set({ step: 2 })}
-            className="bg-[#15161B] text-white rounded-xl py-3 text-sm font-medium disabled:opacity-30"
+            className="btn btn-primary py-3.5 text-[15px]"
           >
             הלאה ←
           </button>
         </div>
       )}
 
-      {/* 2 — המוצר הראשון. המצלמה היא הדבר הראשון שרואים. */}
+      {/* 2 — הזהות: פרצוף וקאבר. לא מוצרים. */}
       {draft.step === 2 && (
-        <div className="w-full flex flex-col gap-3">
-          <h1 className="text-lg font-bold text-center">מה את מוכרת?</h1>
-          <p className="text-[12.5px] text-[#7A7D8A] text-center -mt-2">
-            דבר אחד מספיק. אפשר להוסיף עוד אחר כך.
-          </p>
+        <div className="w-full flex flex-col gap-5">
+          <div className="text-center">
+            <h1 className="text-xl font-bold">איך הדוכן שלך נראה?</h1>
+            <p className="text-[13px] text-[var(--muted)] mt-1">אפשר לשנות הכל אחר כך.</p>
+          </div>
 
-          {/* בלי capture: עם התכונה הזו הטלפון קופץ ישר למצלמה ואין בכלל דרך
-              לבחור תמונה קיימת. ילדה שכבר צילמה את הסקווישים אתמול נתקעת.
-              בלעדיה נפתח תפריט עם "צילום" ו"ספריית תמונות" — המצלמה עדיין
-              במרחק הקשה אחת, והגלריה קיימת. */}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => e.target.files?.[0] && onImagePicked(e.target.files[0])}
-          />
-          {/* ריבוע, כי זה מה שהתמונה תהיה בפועל — הקנבס חותך ל-900×900 */}
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="aspect-square w-full rounded-2xl border-[1.5px] border-dashed border-[#D3D5DC] bg-[#F5F6F9] flex flex-col items-center justify-center gap-1.5 overflow-hidden"
-          >
-            {draft.product.imageData ? (
-              <img src={draft.product.imageData} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <>
-                <span className="text-4xl">📷</span>
-                <span className="text-sm text-[#7A7D8A]">צלמי את המוצר</span>
-                <span className="text-[11px] text-[#A2A5B0]">או בחרי תמונה מהטלפון</span>
-              </>
+          <input ref={avatarRef} type="file" accept="image/*" hidden
+            onChange={(e) => e.target.files?.[0] && pickImage(e.target.files[0], "avatar")} />
+          <input ref={coverRef} type="file" accept="image/*" hidden
+            onChange={(e) => e.target.files?.[0] && pickImage(e.target.files[0], "cover")} />
+
+          {/* פרופיל */}
+          <div>
+            <div className="text-[13px] font-semibold mb-2">התמונה שלך</div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => avatarRef.current?.click()}
+                className="w-16 h-16 shrink-0 flex items-center justify-center text-2xl overflow-hidden card"
+              >
+                {draft.avatarData ? (
+                  <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  draft.emoji
+                )}
+              </button>
+              <div className="flex-1 flex flex-col gap-1.5">
+                <button onClick={() => avatarRef.current?.click()} className="btn btn-secondary py-2 text-[13px]">
+                  📷 תמונה מהטלפון
+                </button>
+                {draft.avatarData && (
+                  <button onClick={() => set({ avatarData: null })} className="btn btn-tertiary py-1 text-[12px]">
+                    להשתמש באמוג'י במקום
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {!draft.avatarData && (
+              <div className="flex gap-1.5 overflow-x-auto pb-1 mt-2.5 -mx-1 px-1">
+                {EMOJIS.map((e) => (
+                  <button
+                    key={e}
+                    onClick={() => set({ emoji: e })}
+                    className="w-10 h-10 shrink-0 bg-white text-lg transition"
+                    style={{
+                      borderRadius: "var(--r)",
+                      border: `1px solid ${draft.emoji === e ? "var(--olive)" : "var(--line)"}`,
+                      boxShadow: draft.emoji === e ? "0 0 0 3px rgba(168,164,109,.16)" : "none",
+                    }}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
             )}
-          </button>
-          {photoErr && <p className="text-xs text-[#D2373B] text-center">{photoErr}</p>}
+          </div>
 
-          <input
-            value={draft.product.name}
-            onChange={(e) => set({ product: { ...draft.product, name: e.target.value } })}
-            placeholder="שם המוצר"
-            maxLength={40}
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm"
-          />
-          <input
-            value={draft.product.price}
-            onChange={(e) => set({ product: { ...draft.product, price: e.target.value } })}
-            placeholder="מחיר (₪)"
-            type="number"
-            inputMode="numeric"
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm"
-          />
-
-          {/* תיאור — מקופל, כדי שהמסך יישאר קצר למי שלא צריכה אותו */}
-          {showDesc ? (
-            <textarea
-              value={draft.product.description}
-              onChange={(e) => set({ product: { ...draft.product, description: e.target.value } })}
-              placeholder="כמה מילים על המוצר (לא חובה)"
-              maxLength={120}
-              rows={2}
-              autoFocus
-              className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm"
-            />
-          ) : (
-            <button
-              onClick={() => setShowDesc(true)}
-              className="text-[12.5px] text-[#7A7D8A] underline self-center"
-            >
-              + להוסיף תיאור
+          {/* קאבר */}
+          <div>
+            <div className="text-[13px] font-semibold mb-2">הרקע של הדוכן</div>
+            <div className="grid grid-cols-4 gap-2">
+              {COVERS.map((c) => (
+                <button
+                  key={c.key}
+                  onClick={() => set({ cover: c.key, coverData: null })}
+                  className="h-12 transition"
+                  style={{
+                    background: c.css,
+                    borderRadius: "var(--r)",
+                    border: `1px solid ${!draft.coverData && draft.cover === c.key ? "var(--olive)" : "var(--line)"}`,
+                    boxShadow: !draft.coverData && draft.cover === c.key ? "0 0 0 3px rgba(168,164,109,.16)" : "none",
+                  }}
+                  aria-label={c.label}
+                />
+              ))}
+            </div>
+            <button onClick={() => coverRef.current?.click()} className="btn btn-secondary w-full py-2 text-[13px] mt-2">
+              🖼️ או תמונה משלך
             </button>
-          )}
+            {draft.coverData && (
+              <button onClick={() => set({ coverData: null })} className="btn btn-tertiary w-full py-1 text-[12px] mt-1">
+                לחזור לרקעים המוכנים
+              </button>
+            )}
+          </div>
 
-          <button
-            disabled={!draft.product.name.trim() || !draft.product.price}
-            onClick={() => set({ step: 3 })}
-            className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-medium disabled:opacity-30"
-          >
+          {photoErr && <p className="text-xs text-[var(--danger)] text-center">{photoErr}</p>}
+
+          <button onClick={() => set({ step: 3 })} className="btn btn-primary py-3.5 text-[15px]">
             הלאה ←
-          </button>
-          <button
-            onClick={() => set({ step: 3, product: { ...EMPTY.product } })}
-            className="text-[12.5px] text-[#7A7D8A] underline"
-          >
-            עוד אין לי מה למכור — נמשיך
           </button>
         </div>
       )}
 
-      {/* 3 — החנות מוכנה, ובוחרים לה סגנון תוך כדי שרואים אותה */}
+      {/* 3 — מוכנה: סגנון על תצוגה חיה */}
       {draft.step === 3 && (
         <div className="w-full flex flex-col gap-4">
-          <h1 className="text-xl font-bold text-center">החנות שלך מוכנה 🎉</h1>
+          <h1 className="text-xl font-bold text-center">הדוכן שלך מוכן 🎉</h1>
           {preview(true)}
 
           <div>
-            <div className="text-[11px] text-[#7A7D8A] mb-1.5">סגנון</div>
+            <div className="text-[13px] font-semibold mb-2">סגנון</div>
             <div className="grid grid-cols-3 gap-2">
               {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, t]) => (
                 <button
                   key={k}
                   onClick={() => set({ theme: k })}
-                  className={`rounded-xl border-[1.5px] bg-white p-2 ${draft.theme === k ? "border-[#15161B]" : "border-[#E6E7EC]"}`}
+                  className="bg-white p-2 transition"
+                  style={{
+                    borderRadius: "var(--r)",
+                    border: `1px solid ${draft.theme === k ? "var(--olive)" : "var(--line)"}`,
+                    boxShadow: draft.theme === k ? "0 0 0 3px rgba(168,164,109,.16)" : "none",
+                  }}
                 >
                   <div
-                    className="h-6 rounded-md mb-1 flex items-center justify-center"
-                    style={{ background: t.bg, border: "1px solid rgba(0,0,0,.07)" }}
+                    className="h-6 mb-1 flex items-center justify-center"
+                    style={{ background: t.bg, borderRadius: 8, border: "1px solid rgba(0,0,0,.06)" }}
                   >
-                    <i className="w-3 h-3 rounded-full block" style={{ background: t.primary }} />
+                    <i className="w-3 h-3 block" style={{ background: t.primary, borderRadius: 99 }} />
                   </div>
                   <span className="text-[11px] font-medium">{t.label}</span>
                 </button>
@@ -353,45 +375,27 @@ export default function Onboarding() {
             </div>
           </div>
 
-          <div>
-            <div className="text-[11px] text-[#7A7D8A] mb-1.5">אמוג'י</div>
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-              {EMOJIS.map((e) => (
-                <button
-                  key={e}
-                  onClick={() => set({ emoji: e })}
-                  className={`w-9 h-9 shrink-0 rounded-lg border-[1.5px] bg-white text-lg ${draft.emoji === e ? "border-[#15161B]" : "border-[#E6E7EC]"}`}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => set({ step: 4 })}
-            className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-medium"
-          >
+          <button onClick={() => set({ step: 4 })} className="btn btn-primary py-3.5 text-[15px]">
             שמירת החנות ←
           </button>
         </div>
       )}
 
-      {/* 4 — שמירה. שדה אחד: המספר. אין מייל, אין סיסמה להמציא ולזכור. */}
+      {/* 4 — שמירה. שדה אחד: המספר. */}
       {draft.step === 4 && !result && (
         <div className="w-full flex flex-col gap-3">
           {busy ? (
-            <p className="text-sm text-center py-10">שומרים את החנות…</p>
+            <p className="text-sm text-center py-10">שומרים את הדוכן…</p>
           ) : (
             <PhoneVerify
-              title="עוד רגע והיא באוויר"
+              title="עוד רגע והוא באוויר"
               subtitle="המספר שלך — לכאן יגיעו ההזמנות. אם הורה ממלא, זה המספר של הילדה."
               cta="שלחו לי קוד"
               onVerified={save}
             />
           )}
-          {err && <p className="text-xs text-[#D2373B] text-center">{err}</p>}
-          <p className="text-[11px] text-[#7A7D8A] text-center leading-relaxed">
+          {err && <p className="text-xs text-[var(--danger)] text-center">{err}</p>}
+          <p className="text-[11px] text-[var(--muted)] text-center leading-relaxed">
             בהמשך את מאשרת את{" "}
             <a href="/terms" target="_blank" className="underline">תנאי השימוש</a>
             {" "}ואת{" "}
@@ -400,30 +404,30 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* 6 — החנות נשמרה. הלינק נפתח לשיתוף רק בפרסום. */}
+      {/* נשמר — עכשיו מוצרים */}
       {result && (
-        <div className="w-full flex flex-col gap-4 pt-10 text-center">
+        <div className="w-full flex flex-col gap-4 pt-8 text-center">
           <div className="text-5xl">🎊</div>
-          <h1 className="text-xl font-bold">החנות שלך נשמרה</h1>
-          <p className="text-[13px] text-[#7A7D8A] leading-relaxed">
-            היא כולה שלך — אפשר להוסיף מוצרים, לשנות עיצוב ולראות איך היא נראית.
+          <h1 className="text-xl font-bold">הדוכן שלך נשמר</h1>
+          <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
+            עכשיו החלק הכיפי — להוסיף מה שאת מוכרת.
             <br />
-            הלינק לשיתוף נפתח כשמפרסמים אותה.
+            הלינק לשיתוף נפתח כשמפרסמים.
           </p>
-          <div className="bg-white border border-[#E6E7EC] rounded-xl px-4 py-3 text-[13px] font-mono text-[#A2A5B0]" dir="ltr">
+          <div className="card px-4 py-3 text-[13px] font-mono text-[var(--muted)]" dir="ltr">
             {storeUrl}
           </div>
-          <a href="/activate" className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-bold">
-            פרסום החנות ושחרור הלינק 🚀
+          <a href="/dashboard/products" className="btn btn-primary py-3.5 text-[15px]">
+            להוסיף את המוצר הראשון ←
           </a>
-          <a href="/dashboard/products" className="bg-white border border-[#E6E7EC] rounded-xl py-3 text-sm font-medium">
-            קודם להוסיף עוד מוצרים
+          <a href="/activate" className="btn btn-secondary py-3 text-[14px]">
+            לפרסם ולשחרר את הלינק 🚀
           </a>
-          <a href="/dashboard" className="text-sm text-[#7A7D8A] underline">
-            לניהול החנות ←
+          <a href="/dashboard" className="text-[13px] text-[var(--olive)] font-semibold">
+            לניהול הדוכן
           </a>
-          <p className="text-xs text-[#7A7D8A] leading-relaxed">
-            טיפ: הוסיפי את הדף למסך הבית כדי לחזור לחנות בקליק.
+          <p className="text-xs text-[var(--muted)] leading-relaxed">
+            טיפ: הוסיפי את הדף למסך הבית כדי לחזור בקליק.
           </p>
         </div>
       )}

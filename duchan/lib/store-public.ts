@@ -20,7 +20,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
   const { data: store } = await db
     .from("stores")
     .select(
-      "id, slug, display_name, emoji, tagline, theme, cover_key, avatar_key, status, activated_at, payout_bit, payout_paybox, payout_cash, payout_note"
+      "id, slug, display_name, emoji, tagline, theme, cover_key, cover_preset, avatar_key, status, activated_at, payout_bit, payout_paybox, payout_cash, payout_note"
     )
     .eq("slug", slug)
     .maybeSingle();

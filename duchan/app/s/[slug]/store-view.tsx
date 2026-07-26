@@ -5,6 +5,7 @@ import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { payoutOrderLine, payoutSummary } from "@/lib/payouts";
 import { BADGES, badgeFor } from "@/lib/badges";
+import { coverCss } from "@/lib/covers";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 
 interface CartLine {
@@ -243,7 +244,7 @@ export default function StoreView({
       <div className="relative">
         <div
           className="h-36 overflow-hidden"
-          style={{ background: cover ? undefined : "linear-gradient(135deg,#F6F0E8,#E6DCEB)" }}
+          style={{ background: cover ? undefined : coverCss(store.cover_preset) }}
         >
           {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
         </div>

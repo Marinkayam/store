@@ -12,6 +12,7 @@ export interface Store {
   tagline: string | null;
   theme: ThemeKey;
   cover_key: string | null;
+  cover_preset: string | null; // קאבר מוכן. cover_key גובר עליו.
   avatar_key: string | null;
   contact_phone: string;
   parent_name: string | null;
@@ -87,6 +88,7 @@ export interface PublicStore {
   tagline: string | null;
   theme: ThemeKey;
   cover_key: string | null;
+  cover_preset: string | null;
   avatar_key: string | null;
   // שמות אמצעי תשלום בלבד — אין כאן מספר טלפון ואין פרטי חשבון
   payout_bit: boolean;

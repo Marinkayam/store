@@ -5,6 +5,7 @@ import { normalizePhone } from "@/lib/phone";
 import { randomSlug } from "@/lib/slug";
 import { QUOTAS } from "@/lib/quotas";
 import { THEMES } from "@/lib/themes";
+import { COVERS, DEFAULT_COVER } from "@/lib/covers";
 
 // POST /api/stores — נקרא בסוף האונבורדינג, אחרי supabase.auth.signUp.
 // מאמת טלפון (נרמול בשמירה!), אוכף 3 חנויות לאימייל, ומגריל slug אקראי.
@@ -12,6 +13,7 @@ import { THEMES } from "@/lib/themes";
 interface Body {
   displayName?: string;
   emoji?: string;
+  coverPreset?: string;
   tagline?: string;
   theme?: string;
   contactPhone?: string;
@@ -42,6 +44,10 @@ export async function POST(req: NextRequest) {
   if (!displayName) return NextResponse.json({ error: "לחנות צריך שם" }, { status: 400 });
 
   const theme = body.theme && body.theme in THEMES ? body.theme : "cloud";
+  // רשימה סגורה — מפתח קאבר שלא קיים היה מוגש כרקע ריק
+  const coverPreset = COVERS.some((c) => c.key === body.coverPreset)
+    ? body.coverPreset!
+    : DEFAULT_COVER.key;
 
   const db = supabaseAdmin();
 
@@ -90,6 +96,7 @@ export async function POST(req: NextRequest) {
         emoji: (body.emoji ?? "🦄").slice(0, 8),
         tagline: body.tagline?.trim().slice(0, 60) || null,
         theme,
+        cover_preset: coverPreset,
         contact_phone: contactPhone,
         // נשמר רק אם יש כתובת אמיתית. בכניסה בסמס אין כזו, והכתובת הפנימית
         // @phone.duchan.app היא לא מייל שמישהי קוראת — אין טעם לשמור אותה.
