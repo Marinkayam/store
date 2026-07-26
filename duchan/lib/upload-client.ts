@@ -4,13 +4,14 @@
 
 export async function uploadBlob(
   kind: "image" | "video" | "poster" | "cover" | "avatar",
-  blob: Blob
+  blob: Blob,
+  storeId?: string
 ): Promise<{ key: string } | { error: string }> {
   const contentType = blob.type || "application/octet-stream";
   const res = await fetch("/api/upload", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind, contentType, bytes: blob.size }),
+    body: JSON.stringify({ kind, contentType, bytes: blob.size, storeId }),
   });
   const data = await res.json();
   if (!res.ok) return { error: data.error ?? "ההעלאה נכשלה" };

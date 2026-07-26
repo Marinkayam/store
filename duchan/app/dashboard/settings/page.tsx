@@ -42,6 +42,14 @@ export default function SettingsPage() {
     setTimeout(() => setToast(""), 2600);
   };
 
+  /** מרעננת את דף החנות מיד — אחרת השינוי מופיע לקונות רק אחרי דקה */
+  const refreshStorePage = (slug: string) =>
+    fetch("/api/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+    }).catch(() => {});
+
   const t = themeOrDefault(theme);
 
   async function save() {
@@ -65,6 +73,7 @@ export default function SettingsPage() {
       return;
     }
     setStore({ ...store, ...patch });
+    refreshStorePage(store.slug);
     setDirty(false);
     showToast("נשמר ✨");
   }
@@ -72,7 +81,7 @@ export default function SettingsPage() {
   async function onCover(file: File) {
     if (!store) return;
     const blob = await squareImage(file, 1200);
-    const r = await uploadBlob("cover", blob);
+    const r = await uploadBlob("cover", blob, store.id);
     if ("error" in r) {
       showToast(r.error);
       return;
@@ -81,13 +90,14 @@ export default function SettingsPage() {
     await supa.from("stores").update({ cover_key: r.key }).eq("id", store.id);
     setCoverPreview(URL.createObjectURL(blob));
     setStore({ ...store, cover_key: r.key });
+    refreshStorePage(store.slug);
     showToast("תמונת הקאבר עודכנה");
   }
 
   async function onAvatar(file: File) {
     if (!store) return;
     const blob = await squareImage(file, 400);
-    const r = await uploadBlob("avatar", blob);
+    const r = await uploadBlob("avatar", blob, store.id);
     if ("error" in r) {
       showToast(r.error);
       return;
@@ -96,6 +106,7 @@ export default function SettingsPage() {
     await supa.from("stores").update({ avatar_key: r.key }).eq("id", store.id);
     setAvatarPreview(URL.createObjectURL(blob));
     setStore({ ...store, avatar_key: r.key });
+    refreshStorePage(store.slug);
     showToast("תמונת הפרופיל עודכנה");
   }
 
@@ -105,6 +116,7 @@ export default function SettingsPage() {
     await supa.from("stores").update({ avatar_key: null }).eq("id", store.id);
     setAvatarPreview(null);
     setStore({ ...store, avatar_key: null });
+    refreshStorePage(store.slug);
     showToast("חזרנו לאמוג'י");
   }
 
@@ -125,6 +137,7 @@ export default function SettingsPage() {
       return;
     }
     setStore({ ...store, status: next });
+    await refreshStorePage(store.slug);
     showToast(next === "paused" ? "החנות בהפסקה — הלינק מציג 'החנות סגורה'" : "החנות פתוחה שוב 🎉");
   }
 

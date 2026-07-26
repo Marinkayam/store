@@ -29,6 +29,26 @@ export default function StoreView({
   const [isOwner, setIsOwner] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
+  // ספירת כניסה — פעם אחת לביקור (sessionStorage מונע ספירה כפולה בניווט פנימי)
+  useEffect(() => {
+    const key = `duchan-visited-${store.slug}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    // sendBeacon שורד סגירת טאב — קונה שנוחתת ויוצאת מיד עדיין נספרת
+    const payload = JSON.stringify({ slug: store.slug });
+    const sent =
+      typeof navigator.sendBeacon === "function" &&
+      navigator.sendBeacon("/api/track", new Blob([payload], { type: "application/json" }));
+    if (!sent) {
+      fetch("/api/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  }, [store.slug]);
+
   // כפתור עריכה צף — רק אם המחוברת היא בעלת החנות (RLS מחזיר את השורה רק לבעלים)
   useEffect(() => {
     const supa = supabaseBrowser();

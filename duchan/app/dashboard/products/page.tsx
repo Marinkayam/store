@@ -80,6 +80,16 @@ export default function ProductsPage() {
     setTimeout(() => setToast(""), 2600);
   };
 
+  /** דף החנות מוגש מקאש של 60 שניות — מרעננים אותו מיד אחרי שינוי מוצרים */
+  const refreshStorePage = () => {
+    if (!store) return;
+    fetch("/api/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: store.slug }),
+    }).catch(() => {});
+  };
+
   const refresh = useCallback(async () => {
     if (!store) return;
     const supa = supabaseBrowser();
@@ -261,7 +271,7 @@ export default function ProductsPage() {
       // מעלים מדיה קודם — אם נכשל, הטופס נשאר מלא
       let { imageKey, videoKey, posterKey } = edit;
       if (edit.pendingImage) {
-        const r = await uploadBlob("image", edit.pendingImage);
+        const r = await uploadBlob("image", edit.pendingImage, store.id);
         if ("error" in r) {
           showToast(r.error);
           return;
@@ -271,7 +281,7 @@ export default function ProductsPage() {
         posterKey = null;
       }
       if (edit.pendingVideo) {
-        const r = await uploadBlob("video", edit.pendingVideo);
+        const r = await uploadBlob("video", edit.pendingVideo, store.id);
         if ("error" in r) {
           showToast(r.error);
           return;
@@ -279,7 +289,7 @@ export default function ProductsPage() {
         videoKey = r.key;
         imageKey = null;
         if (edit.pendingPoster) {
-          const pr = await uploadBlob("poster", edit.pendingPoster);
+          const pr = await uploadBlob("poster", edit.pendingPoster, store.id);
           if (!("error" in pr)) posterKey = pr.key;
         }
       }
@@ -311,6 +321,7 @@ export default function ProductsPage() {
       showToast(edit.trackStock && edit.stock === 0 ? "המוצר סומן כאזל" : edit.id ? "המוצר עודכן" : "המוצר נוסף לחנות");
       setEdit(null);
       refresh();
+      refreshStorePage();
     } finally {
       setBusy(false);
     }
@@ -324,6 +335,7 @@ export default function ProductsPage() {
     setEdit(null);
     showToast("המוצר נמחק — אפשר לשחזר תוך 30 יום");
     refresh();
+    refreshStorePage();
     loadDeleted();
   }
 
@@ -358,6 +370,7 @@ export default function ProductsPage() {
     setEdit(null);
     showToast("המוצר שוכפל ✨");
     refresh();
+    refreshStorePage();
   }
 
   /* ---------- סידור ---------- */
@@ -377,6 +390,7 @@ export default function ProductsPage() {
       )
     );
     refresh();
+    refreshStorePage();
   }
 
   /* ---------- מלאי מהיר ---------- */
@@ -386,6 +400,7 @@ export default function ProductsPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.from("products").update({ stock }).eq("id", p.id);
     if (error) refresh();
+    else refreshStorePage();
   }
 
   /* ---------- שחזור ---------- */
@@ -419,6 +434,7 @@ export default function ProductsPage() {
     await supa.from("products").update({ deleted_at: null }).eq("id", p.id);
     showToast("המוצר חזר לחנות 🎉");
     refresh();
+    refreshStorePage();
     loadDeleted();
   }
 

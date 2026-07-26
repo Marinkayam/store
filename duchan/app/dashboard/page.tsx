@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore, confettiBurst } from "./use-store";
+import WhatsNew from "./whats-new";
 import type { Order } from "@/lib/types";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
@@ -134,11 +135,14 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC]">
-        <h1 className="text-lg font-bold">היי {firstName} 👋</h1>
-        <p className="text-xs text-[#7A7D8A] font-light">
-          {newCount ? `${newCount} הזמנות חדשות` : "הכל מטופל ✨"}
-        </p>
+      <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC] flex items-start justify-between">
+        <div>
+          <h1 className="text-lg font-bold">היי {firstName} 👋</h1>
+          <p className="text-xs text-[#7A7D8A] font-light">
+            {newCount ? `${newCount} הזמנות חדשות` : "הכל מטופל ✨"}
+          </p>
+        </div>
+        <WhatsNew />
       </header>
 
       {/* רשימת השלמה — נעלמת לגמרי כשמסיימים */}

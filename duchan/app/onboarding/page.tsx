@@ -122,7 +122,7 @@ export default function Onboarding() {
           const up = await fetch("/api/upload", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ kind: "image", contentType: blob.type, bytes: blob.size }),
+            body: JSON.stringify({ kind: "image", contentType: blob.type, bytes: blob.size, storeId: data.storeId }),
           });
           if (up.ok) {
             const { url, key } = await up.json();

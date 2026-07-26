@@ -22,14 +22,14 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supa.auth.getUser();
   if (!user) return NextResponse.json({ error: "לא מחוברת" }, { status: 401 });
 
-  let body: { kind?: string; contentType?: string; bytes?: number };
+  let body: { kind?: string; contentType?: string; bytes?: number; storeId?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { kind, contentType, bytes } = body;
+  const { kind, contentType, bytes, storeId } = body;
   if (
     !kind || !["image", "video", "poster", "cover", "avatar"].includes(kind) ||
     !contentType || !(contentType in EXT) ||
@@ -41,13 +41,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });
   }
 
+  // storeId מפורש כשיש יותר מחנות אחת לחשבון — אחרת ההעלאה נוחתת בחנות הלא נכונה.
+  // הבעלות נאכפת כאן בכל מקרה.
   const db = supabaseAdmin();
-  const { data: stores } = await db
-    .from("stores")
-    .select("id, media_bytes")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1);
+  let query = db.from("stores").select("id, media_bytes").eq("owner_id", user.id);
+  query = storeId ? query.eq("id", storeId) : query.order("created_at", { ascending: true });
+  const { data: stores } = await query.limit(1);
   const store = stores?.[0];
   if (!store) return NextResponse.json({ error: "אין לך חנות עדיין" }, { status: 404 });
 
