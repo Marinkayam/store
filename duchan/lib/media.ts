@@ -29,15 +29,56 @@ function makeCanvas(size: number): OffscreenCanvas | HTMLCanvasElement {
   return c;
 }
 
+/** שגיאה שאפשר להראות לילדה כמו שהיא, בלי לתרגם קודי דפדפן. */
+export class MediaError extends Error {}
+
+/**
+ * פענוח התמונה, עם נפילה מ-createImageBitmap ל-<img>.
+ *
+ * זו לא הגנה תיאורטית: אייפון מצלם ב-HEIC כברירת מחדל, ו-createImageBitmap
+ * לא מפענח HEIC ברוב הדפדפנים — הוא פשוט זורק. <img> כן מצליח, כי הוא עובר
+ * דרך מפענח התמונות של מערכת ההפעלה. בלי הנפילה הזו, ילדה עם אייפון בוחרת
+ * תמונה מהגלריה ולא קורה כלום.
+ */
+async function decodeImage(file: File | Blob) {
+  try {
+    const bmp = await createImageBitmap(file);
+    return { src: bmp as CanvasImageSource, w: bmp.width, h: bmp.height, done: () => bmp.close() };
+  } catch {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.decoding = "async";
+      await new Promise<void>((res, rej) => {
+        img.onload = () => res();
+        img.onerror = () => rej(new MediaError("לא הצלחנו לקרוא את התמונה. נסי לצלם מחדש."));
+        img.src = url;
+      });
+      if (!img.naturalWidth) {
+        throw new MediaError("לא הצלחנו לקרוא את התמונה. נסי לצלם מחדש.");
+      }
+      // ה-URL משוחרר רק אחרי הציור — שחרור מוקדם עלול לרוקן את התמונה
+      return { src: img as CanvasImageSource, w: img.naturalWidth, h: img.naturalHeight, done: () => URL.revokeObjectURL(url) };
+    } catch (e) {
+      URL.revokeObjectURL(url);
+      throw e instanceof MediaError ? e : new MediaError("לא הצלחנו לקרוא את התמונה. נסי לצלם מחדש.");
+    }
+  }
+}
+
 /** חיתוך לריבוע + דחיסה + מחיקת EXIF. אל תדלג על השלב הזה. */
 export async function squareImage(file: File | Blob, size = 900): Promise<Blob> {
-  const bmp = await createImageBitmap(file);
-  const side = Math.min(bmp.width, bmp.height);
-  const c = makeCanvas(size);
-  (c.getContext("2d") as CanvasRenderingContext2D).drawImage(
-    bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size
-  );
-  return canvasToImageBlob(c);
+  const { src, w, h, done } = await decodeImage(file);
+  try {
+    const side = Math.min(w, h);
+    const c = makeCanvas(size);
+    const ctx = c.getContext("2d") as CanvasRenderingContext2D | null;
+    if (!ctx) throw new MediaError("הדפדפן לא הצליח לעבד את התמונה. נסי לרענן את הדף.");
+    ctx.drawImage(src, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
+    return await canvasToImageBlob(c);
+  } finally {
+    done();
+  }
 }
 
 /** פוסטר מפריים 0.1 שניות. בלעדיו הרשת מציגה ריבועים שחורים עד שהווידאו נטען. */
@@ -130,10 +171,27 @@ export async function startRecording(stream: MediaStream): Promise<RecorderHandl
 }
 
 export async function openCamera(): Promise<MediaStream> {
-  return navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment", width: 720, height: 720 },
-    audio: false, // מכוון. פרטיות, לא אופטימיזציה.
-  });
+  // בדפדפן שבתוך וואטסאפ או אינסטגרם mediaDevices פשוט לא קיים, וזה בדיוק
+  // המסלול שבו ילדה מגיעה — היא לוחצת על לינק בשיחה. בלי הבדיקה הזו נזרקת
+  // שגיאת TypeError סתמית במקום הסבר מה לעשות.
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new MediaError("הדפדפן הזה לא נותן גישה למצלמה. פתחי את הלינק ב-Safari או ב-Chrome.");
+  }
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment", width: 720, height: 720 },
+      audio: false, // מכוון. פרטיות, לא אופטימיזציה.
+    });
+  } catch (e) {
+    const name = (e as DOMException)?.name;
+    throw new MediaError(
+      name === "NotAllowedError"
+        ? "המצלמה חסומה. באייפון: הגדרות → Safari → מצלמה → אפשר."
+        : name === "NotFoundError"
+          ? "לא מצאנו מצלמה במכשיר הזה."
+          : "לא הצלחנו לפתוח את המצלמה. נסי שוב."
+    );
+  }
 }
 
 export function mediaUrl(key: string | null | undefined): string | null {

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../use-store";
 import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
-import { squareImage, mediaUrl } from "@/lib/media";
+import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 
@@ -97,7 +97,13 @@ export default function SettingsPage() {
 
   async function onCover(file: File) {
     if (!store) return;
-    const blob = await squareImage(file, 1200);
+    let blob: Blob;
+    try {
+      blob = await squareImage(file, 1200);
+    } catch (e) {
+      showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      return;
+    }
     const r = await uploadBlob("cover", blob, store.id);
     if ("error" in r) {
       showToast(r.error);
@@ -113,7 +119,13 @@ export default function SettingsPage() {
 
   async function onAvatar(file: File) {
     if (!store) return;
-    const blob = await squareImage(file, 400);
+    let blob: Blob;
+    try {
+      blob = await squareImage(file, 400);
+    } catch (e) {
+      showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      return;
+    }
     const r = await uploadBlob("avatar", blob, store.id);
     if ("error" in r) {
       showToast(r.error);

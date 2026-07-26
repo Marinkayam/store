@@ -10,6 +10,7 @@ import {
   startRecording,
   openCamera,
   mediaUrl,
+  MediaError,
   RECORD_SECONDS,
   type RecorderHandle,
 } from "@/lib/media";
@@ -228,7 +229,15 @@ export default function ProductsPage() {
 
   /* ---------- מדיה ---------- */
   async function onPhoto(file: File) {
-    const blob = await squareImage(file);
+    // בלי ה-try הזה, תמונה שהדפדפן לא מפענח (HEIC מאייפון) מפילה את הפונקציה
+    // בשקט: הילדה בוחרת תמונה, לא קורה כלום, ואין מה להגיד לה.
+    let blob: Blob;
+    try {
+      blob = await squareImage(file);
+    } catch (e) {
+      showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      return;
+    }
     setEdit((e) =>
       e && {
         ...e,
@@ -273,8 +282,8 @@ export default function ProductsPage() {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-    } catch {
-      showToast("אין גישה למצלמה — נסי 'מהגלריה'");
+    } catch (e) {
+      showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה — נסי 'מהגלריה'");
       setRecOpen(false);
     }
   }
@@ -670,7 +679,9 @@ export default function ProductsPage() {
               )}
             </div>
 
-            <input ref={photoRef} type="file" accept="image/*" capture="environment" hidden
+            {/* בלי capture — אחרת הטלפון פותח מצלמה ישירות ואי אפשר לבחור
+                תמונה שכבר צולמה. ראה ההערה הזהה במסך האונבורדינג. */}
+            <input ref={photoRef} type="file" accept="image/*" hidden
               onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
             <input ref={galleryRef} type="file" accept="video/*" hidden
               onChange={(e) => e.target.files?.[0] && onGalleryVideo(e.target.files[0])} />

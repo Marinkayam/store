@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { THEMES, themeCssVars, themeOrDefault, type ThemeKey } from "@/lib/themes";
-import { squareImage } from "@/lib/media";
+import { squareImage, MediaError } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 // אונבורדינג: בונים לפני שנרשמים. מצב הביניים חי ב-sessionStorage.
@@ -50,6 +50,7 @@ function loadDraft(): Draft {
 export default function Onboarding() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState("");
+  const [photoErr, setPhotoErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ slug: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -74,7 +75,15 @@ export default function Onboarding() {
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d!, ...patch }));
 
   async function onImagePicked(file: File) {
-    const blob = await squareImage(file);
+    setPhotoErr("");
+    let blob: Blob;
+    try {
+      blob = await squareImage(file);
+    } catch (e) {
+      // מסך 2 הוא הרושם הראשון. תמונה שנכשלת בשקט כאן = נטישה.
+      setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () =>
       set({ product: { ...draft!.product, imageData: reader.result as string } });
@@ -256,11 +265,14 @@ export default function Onboarding() {
             דבר אחד מספיק. אפשר להוסיף עוד אחר כך.
           </p>
 
+          {/* בלי capture: עם התכונה הזו הטלפון קופץ ישר למצלמה ואין בכלל דרך
+              לבחור תמונה קיימת. ילדה שכבר צילמה את הסקווישים אתמול נתקעת.
+              בלעדיה נפתח תפריט עם "צילום" ו"ספריית תמונות" — המצלמה עדיין
+              במרחק הקשה אחת, והגלריה קיימת. */}
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
-            capture="environment"
             hidden
             onChange={(e) => e.target.files?.[0] && onImagePicked(e.target.files[0])}
           />
@@ -275,9 +287,11 @@ export default function Onboarding() {
               <>
                 <span className="text-4xl">📷</span>
                 <span className="text-sm text-[#7A7D8A]">צלמי את המוצר</span>
+                <span className="text-[11px] text-[#A2A5B0]">או בחרי תמונה מהטלפון</span>
               </>
             )}
           </button>
+          {photoErr && <p className="text-xs text-[#D2373B] text-center">{photoErr}</p>}
 
           <input
             value={draft.product.name}
