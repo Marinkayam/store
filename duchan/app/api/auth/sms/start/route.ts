@@ -95,7 +95,19 @@ export async function POST(req: NextRequest) {
     expires_at: new Date(now + OTP_TTL_MINUTES * 60 * 1000).toISOString(),
     ip_hash: ipHash,
   });
-  if (insErr) return NextResponse.json({ error: "משהו השתבש, נסי שוב" }, { status: 500 });
+  if (insErr) {
+    // עד עכשיו השגיאה הזו נבלעה בלי לוג ובלי פירוט, וכל תקלה בכתיבה — טבלה
+    // חסרה, מפתח service role שגוי, הרשאה — נראתה בדיוק אותו דבר.
+    console.error("[sms] otp insert failed:", insErr.message, insErr.code ?? "");
+    return NextResponse.json(
+      {
+        error: isOwner(phone)
+          ? `כתיבה ל-DB נכשלה: ${insErr.message}`
+          : "משהו השתבש, נסי שוב",
+      },
+      { status: 500 }
+    );
+  }
 
   const sent = await sendSms(phone, `${code} — קוד הכניסה שלך לדוכן. תקף ל-${OTP_TTL_MINUTES} דקות.`);
   if (!sent.ok) {
