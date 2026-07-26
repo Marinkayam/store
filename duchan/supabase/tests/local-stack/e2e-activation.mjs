@@ -189,6 +189,15 @@ await buyer.screenshot({ path: `${shots}/49-checkout-payment.png` });
 const storeHtml = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
 check("her whatsapp number still never appears in the HTML", !storeHtml.includes("972501234567"));
 
+/* ── 5ג: תצוגה מקדימה בוואטסאפ ── */
+const og = (prop) => storeHtml.match(new RegExp(`<meta property="${prop}" content="([^"]*)"`))?.[1];
+check("og:title is the store name", og("og:title") === seed.display_name, og("og:title"));
+check("og:url is absolute on the real domain", og("og:url")?.startsWith("https://duchan.co.il/s/"), og("og:url"));
+check("og:image points at a real uploaded image", !!og("og:image")?.includes("/duchan-media/"), og("og:image"));
+check("preview image is actually fetchable", (await fetch(og("og:image"))).ok);
+// noindex ו-OpenGraph חיים יחד בכוונה: לא נמצא בגוגל, אבל נראה טוב בשיתוף
+check("still noindex despite having a preview card", storeHtml.includes("noindex"));
+
 /* ── 6: מסך "להפיץ" — ההודעות המוכנות ── */
 await girl.goto(`${BASE}/dashboard/share`);
 // מחכים לתוכן שנטען אחרי useStore, לא לכותרת שקיימת גם בניווט התחתון

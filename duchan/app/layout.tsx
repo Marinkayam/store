@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  // בלי metadataBase, Next בונה תגיות OpenGraph עם נתיבים יחסיים
+  // וואטסאפ לא יודע לפתור אותם — התצוגה המקדימה יוצאת בלי תמונה.
+  metadataBase: new URL(SITE_URL),
   title: "דוכן",
   description: "חנות קטנה שאת מקימה בעצמך",
 };

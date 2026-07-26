@@ -15,10 +15,50 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPublicStore(slug);
+
+  if (data.state !== "live") {
+    return {
+      title: data.state === "pending" ? "החנות בהכנה" : "החנות סגורה",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = data.store.display_name;
+  const description = data.store.tagline || "חנות קטנה שנבנתה בדוכן";
+
+  // התמונה של הכרטיס בוואטסאפ: הקאבר, ואם אין — תמונת המוצר הראשון.
+  // בלי תמונה הלינק נראה כמו טקסט, ואף אחת לא לוחצת עליו.
+  const previewKey =
+    data.store.cover_key ??
+    data.products.find((p) => p.image_key || p.poster_key)?.image_key ??
+    data.products.find((p) => p.poster_key)?.poster_key ??
+    null;
+  const base = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+  const image = previewKey && base ? `${base}/${previewKey}` : undefined;
+
   return {
-    title: data.state === "live" ? data.store.display_name : "החנות סגורה",
-    description: (data.state === "live" && data.store.tagline) || "חנות קטנה שנבנתה בדוכן",
+    title,
+    description,
+    // noindex מונע אינדוקס בגוגל; תגיות OpenGraph עדיין עובדות בוואטסאפ.
+    // זה בדיוק מה שרוצים — לינק שנראה טוב כששולחים אותו, ולא נמצא בחיפוש.
     robots: { index: false, follow: false },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      siteName: "דוכן",
+      locale: "he_IL",
+      url: `/s/${slug}`,
+      // בלי width/height: הקאבר הוא 1200 והמוצר 900, והכרזה על מידות שגויות
+      // גורמת לחלק מהצרכנים לחתוך את התמונה. שיימדדו בעצמם.
+      ...(image ? { images: [{ url: image, alt: title }] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
   };
 }
 

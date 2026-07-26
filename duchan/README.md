@@ -4,7 +4,7 @@
 
 **ארכיטקטורה: דיפלוי אחד, multi-tenant.** כל חנות היא שורה בטבלה `stores`. אין דיפלוי per store.
 
-מסמכים: [`CLAUDE.md`](./CLAUDE.md) (הוראות הבנייה) · [`docs/duchan-spec.md`](./docs/duchan-spec.md) · [`docs/duchan-plan.md`](./docs/duchan-plan.md) · [`docs/duchan-mockup.html`](./docs/duchan-mockup.html)
+מסמכים: [`docs/deploy.md`](./docs/deploy.md) (**עלייה לאוויר**) · [`CLAUDE.md`](./CLAUDE.md) (הוראות הבנייה) · [`docs/duchan-spec.md`](./docs/duchan-spec.md) · [`docs/duchan-plan.md`](./docs/duchan-plan.md) · [`docs/duchan-mockup.html`](./docs/duchan-mockup.html)
 
 ## סטאק
 
@@ -14,6 +14,9 @@
 - **Cloudflare Pages** — אירוח
 
 ## הקמה
+
+לעלייה לפרודקשן על דומיין אמיתי — [`docs/deploy.md`](./docs/deploy.md), כולל רשומות
+ה-DNS, הקרון היומי, ומה לבדוק אחרי. מה שלמטה הוא הגרסה המקוצרת לפיתוח מקומי.
 
 ### 1. Supabase
 
@@ -132,12 +135,16 @@ node  supabase/tests/concurrency.mjs                     # 15 הזמנות בו-
 
 הרצה: Postgres מקומי עם המיגרציות + `postgrest-setup.sql`, PostgREST על 3001, שני השימים, `next dev`, ואז `node e2e.mjs`.
 
-`e2e-activation.mjs` — **37 בדיקות** של מסלול התשלום, אמצעי התשלום של הילדה, והרשת: הלינק נעול בטיוטה · ההזמנות
+`e2e-activation.mjs` — **42 בדיקות** של מסלול התשלום, אמצעי התשלום של הילדה, והרשת: הלינק נעול בטיוטה · ההזמנות
 מוחזרות ב-404 · מסך ההפעלה מציג מחיר, מה כלול, ההחזר, וההסבר להורה · הצהרת תשלום
 לא מפעילה כלום · **הבעלות מנסה לעדכן `activated_at` עם הטוקן האמיתי שלה ונכשלת** (וגם
 `payment_amount` ו-`ref_clicks`), אבל כן עורכת את השדות שלה · המנהלת מאשרת מהחמ"ל
 והלינק נפתח מיד · הילדה מגדירה איך משלמים לה וזה מגיע לגיליון ההזמנה · מסך "להפיץ" ·
 חברה מגיעה מהחנות, פותחת חנות, והשיוך מופיע באשכול.
+
+גם התצוגה המקדימה של וואטסאפ מכוסה שם: `og:title`, `og:url` מוחלט על הדומיין
+האמיתי, ו-`og:image` שנבדק שהוא באמת ניתן להורדה — יחד עם `noindex`. השילוב הזה
+מכוון: לא נמצא בגוגל, אבל נראה טוב כששולחים אותו.
 
 `e2e-admin.mjs` (12) ו-`e2e-journey.mjs` (14) מכסים את החמ"ל ואת המסע/פרימיום.
 
