@@ -38,11 +38,14 @@ const REQUIRED = [
   "NEXT_PUBLIC_R2_PUBLIC_URL",
   "ADMIN_EMAILS",
   "CRON_SECRET",
+  // כתיבה אוטומטית דלוקה לכל החנויות (מיגרציה 0011), ולכן המפתח כבר לא אופציונלי:
+  // בלעדיו כל ילדה שתלחץ "כתבי לי תיאור" תקבל שגיאה.
+  "ANTHROPIC_API_KEY",
 ];
 const OPTIONAL = [
   "NEXT_PUBLIC_ACTIVATION_PRICE",
   "NEXT_PUBLIC_OWNER_WHATSAPP",
-  "ANTHROPIC_API_KEY",
+  "AI_MODEL",
 ];
 
 for (const key of REQUIRED) {
@@ -89,7 +92,7 @@ if (SUPA && SERVICE) {
   try {
     const r = await rest(`stores?select=${COLUMNS}&limit=1`);
     r.ok
-      ? ok("כל עמודות stores קיימות (מיגרציות 0001–0010)")
+      ? ok("כל עמודות stores קיימות (כל המיגרציות)")
       : bad("עמודות חסרות ב-stores", `${(await r.text()).slice(0, 200)} → הריצי scripts/migrate.mjs`);
   } catch (e) {
     bad("בדיקת עמודות נכשלה", e.message);

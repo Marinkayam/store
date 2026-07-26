@@ -43,7 +43,7 @@ await girl.goto(`${BASE}/dashboard/products`);
 await girl.waitForSelector("text=המוצרים שלי");
 await girl.click("button[aria-label='מוצר חדש']");
 await girl.waitForSelector("text=מוצר חדש");
-check("no AI button when premium is off", !(await girl.textContent("body")).includes("כתבי לי תיאור"));
+check("no AI button when AI is off for the store", !(await girl.textContent("body")).includes("כתבי לי תיאור"));
 
 /* ── 3. אדמין מפעיל פרימיום ── */
 const admin = await (await browser.newContext({ viewport: { width: 720, height: 900 } })).newPage();
@@ -67,11 +67,11 @@ await admin.waitForSelector("text=המסע שלה");
 check("admin store file shows her journey", true);
 await admin.screenshot({ path: `${shots}/32-admin-journey.png` });
 
-await admin.click("button:has-text('הפעלה · 50 תיאורים')");
+await admin.click("button:has-text('הדלקה מחדש')");
 await admin.waitForSelector("text=הופעלה");
 await admin.waitForTimeout(800);
 const { rows: [ai] } = await db.query("select ai_enabled, ai_credits from stores where id=$1", [store.id]);
-check("admin enables premium with 50 credits", ai.ai_enabled === true && ai.ai_credits === 50, `credits=${ai.ai_credits}`);
+check("admin re-enables AI with 50 credits", ai.ai_enabled === true && ai.ai_credits === 50, `credits=${ai.ai_credits}`);
 
 /* ── 4. הילדה רואה עכשיו את הכפתור ── */
 await girl.reload();
@@ -83,7 +83,7 @@ const png = `${shots}/prod.png`;
 await girl.screenshot({ path: png });
 await girl.setInputFiles("input[type=file][accept='image/*']", png);
 await girl.waitForTimeout(1500);
-check("AI button appears once premium + photo", (await girl.textContent("body")).includes("כתבי לי תיאור"));
+check("AI button appears once AI on + photo", (await girl.textContent("body")).includes("כתבי לי תיאור"));
 await girl.screenshot({ path: `${shots}/33-ai-button.png` });
 
 /* ── 5. קרדיטים: ניכוי אטומי ובדיקת בעלות ── */
@@ -97,7 +97,7 @@ check("use_ai_credit refuses at zero", r0.ok === false);
 
 await db.query("update stores set ai_enabled = false, ai_credits = 10 where id=$1", [store.id]);
 const { rows: [rOff] } = await db.query("select use_ai_credit($1) as ok", [store.id]);
-check("use_ai_credit refuses when premium off", rOff.ok === false);
+check("use_ai_credit refuses when AI off", rOff.ok === false);
 
 // ה-API דוחה כשאין פרימיום, גם עם בעלות תקינה
 await db.query("update stores set ai_enabled = false where id=$1", [store.id]);
@@ -108,7 +108,7 @@ const apiOff = await girl.evaluate(async (sid) => {
   });
   return r.status;
 }, store.id);
-check("AI API returns 402 when premium off", apiOff === 402, `status=${apiOff}`);
+check("AI API returns 402 when AI off", apiOff === 402, `status=${apiOff}`);
 
 // לא-בעלים נחסם
 await db.query("update stores set ai_enabled = true, ai_credits = 10 where id=$1", [store.id]);

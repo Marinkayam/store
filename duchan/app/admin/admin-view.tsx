@@ -626,11 +626,13 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               </div>
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#E6E7EC]">
                 <span className="text-[12px] flex-1">
-                  ✨ כתיבה אוטומטית (פרימיום)
-                  {detail.store.ai_enabled && (
+                  ✨ כתיבה אוטומטית
+                  {detail.store.ai_enabled ? (
                     <span className="text-[#7A7D8A]">
                       {" · "}{detail.store.ai_credits === null ? "ללא הגבלה" : `${detail.store.ai_credits} נשארו`}
                     </span>
+                  ) : (
+                    <span className="text-[#A85B00]">{" · כבוי לחנות הזו"}</span>
                   )}
                 </span>
                 {detail.store.ai_enabled ? (
@@ -646,14 +648,15 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     disabled={!aiConfigured}
                     className="bg-[#15161B] text-white rounded-lg px-3 py-1.5 text-[11px] font-medium disabled:opacity-30"
                   >
-                    הפעלה · 50 תיאורים
+                    הדלקה מחדש · 50
                   </button>
                 )}
               </div>
               {!aiConfigured && (
                 <div className="text-[11px] text-[#A85B00] mt-2">
-                  אין מפתח Anthropic בשרת. הדלקה כאן תיתן לילדה שגיאה בלחיצה —
-                  צריך להגדיר <code>ANTHROPIC_API_KEY</code> ולפרוס מחדש.
+                  <b>אין מפתח Anthropic בשרת.</b> כתיבה אוטומטית דלוקה לכל החנויות,
+                  אז כל ילדה שתלחץ "כתבי לי תיאור" תקבל שגיאה. צריך להגדיר{" "}
+                  <code>ANTHROPIC_API_KEY</code> ולפרוס מחדש.
                 </div>
               )}
             </div>

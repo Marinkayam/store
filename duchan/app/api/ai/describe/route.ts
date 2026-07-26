@@ -59,8 +59,21 @@ export async function POST(req: NextRequest) {
   const { data: allowed, error: creditErr } = await db.rpc("use_ai_credit", { p_store: storeId });
   if (creditErr) return NextResponse.json({ error: "משהו השתבש" }, { status: 500 });
   if (!allowed) {
+    // מבררים למה נדחה רק בנתיב הכישלון — "נגמרו" ו"כבוי" הן שתי בעיות שונות,
+    // ולילדה שנגמרו לה הקרדיטים "לא פעיל בחנות שלך" זו הודעה מבלבלת.
+    const { data: why } = await db
+      .from("stores")
+      .select("ai_enabled, ai_credits")
+      .eq("id", storeId)
+      .maybeSingle();
+    const exhausted = why?.ai_enabled && (why?.ai_credits ?? 0) <= 0;
     return NextResponse.json(
-      { error: "כתיבה אוטומטית לא פעילה בחנות שלך", upgrade: true },
+      {
+        error: exhausted
+          ? "נגמרו התיאורים האוטומטיים בחנות שלך"
+          : "כתיבה אוטומטית כבויה בחנות שלך",
+        exhausted: !!exhausted,
+      },
       { status: 402 }
     );
   }
