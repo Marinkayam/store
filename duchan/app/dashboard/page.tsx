@@ -146,6 +146,28 @@ export default function OrdersPage() {
         <WhatsNew />
       </header>
 
+      {/* החנות עוד לא פורסמה — זה הדבר הראשון שהיא רואה, ולא נעלם עד שמפעילים */}
+      {!store.activated_at && (
+        <a
+          href="/activate"
+          className="block mx-3 mt-3 bg-[#15161B] text-white rounded-xl p-3.5"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{store.payment_claimed_at ? "⏳" : "🚀"}</span>
+            <div className="flex-1">
+              <div className="text-[13.5px] font-bold">
+                {store.payment_claimed_at ? "מחכות לאישור התשלום" : "החנות שלך עוד לא פורסמה"}
+              </div>
+              <div className="text-[11.5px] opacity-70 leading-relaxed">
+                {store.payment_claimed_at
+                  ? "קיבלנו את ההודעה. ברגע שנאשר, הלינק נפתח."
+                  : "הכל שמור. כדי לשתף את הלינק צריך לפרסם אותה →"}
+              </div>
+            </div>
+          </div>
+        </a>
+      )}
+
       {/* רשימת השלמה — נעלמת לגמרי כשמסיימים */}
       {doneCount < checklist.length && (
         <div className="mx-3 mt-3 bg-white border border-[#E6E7EC] rounded-xl p-3 text-xs">
@@ -202,23 +224,30 @@ export default function OrdersPage() {
       )}
 
       <div className="p-3 flex flex-col gap-2">
-        {orders.length === 0 && (
-          <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
-            עוד לא הגיעו הזמנות.
-            <br />
-            שלחי את הלינק לחברות שלך 👇
-            <br />
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/s/${store.slug}`);
-                showToast("הלינק הועתק");
-              }}
-              className="mt-2 bg-[#15161B] text-white rounded-lg px-4 py-2 text-xs"
-            >
-              העתקת לינק
-            </button>
-          </div>
-        )}
+        {orders.length === 0 &&
+          (store.activated_at ? (
+            <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
+              עוד לא הגיעו הזמנות.
+              <br />
+              שלחי את הלינק לחברות שלך 👇
+              <br />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/s/${store.slug}`);
+                  showToast("הלינק הועתק");
+                }}
+                className="mt-2 bg-[#15161B] text-white rounded-lg px-4 py-2 text-xs"
+              >
+                העתקת לינק
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
+              הזמנות יגיעו אחרי שהחנות תפורסם.
+              <br />
+              בינתיים שווה להוסיף עוד מוצרים ✨
+            </div>
+          ))}
 
         {filtered.length === 0 && orders.length > 0 && (
           <p className="text-center py-8 text-sm text-[#7A7D8A]">אין הזמנות בסינון הזה.</p>

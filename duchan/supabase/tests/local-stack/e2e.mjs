@@ -41,12 +41,25 @@ await page.fill("input[placeholder='הטלפון שלך (וואטסאפ)']", "05
 await page.fill("input[placeholder='אימייל (איתו נכנסים לניהול)']", "tamar-e2e@test.com");
 await page.fill("input[placeholder='סיסמה (6 תווים לפחות)']", "sqsq123!");
 await page.click("button:has-text('שמירה ופתיחת החנות')");
-await page.waitForSelector("text=הלינק שלך מוכן", { timeout: 20000 });
-await page.screenshot({ path: `${shots}/10-link-ready.png` });
+await page.waitForSelector("text=החנות שלך נשמרה", { timeout: 20000 });
+await page.screenshot({ path: `${shots}/10-saved-not-published.png` });
 
 const urlText = await page.textContent("div[dir=ltr]");
 const slug = urlText.trim().split("/s/")[1];
-check("onboarding completes to link screen", !!slug, `slug=${slug}`);
+check("onboarding completes to saved screen", !!slug, `slug=${slug}`);
+
+/* ── שלב 1ב: חנות חדשה היא טיוטה — הלינק עוד לא פומבי ── */
+const draftHtml = await (await fetch(`${BASE}/s/${slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
+check("unpublished store shows 'in preparation', not the products", draftHtml.includes("בהכנה") && !draftHtml.includes("סקוויש חד-קרן"));
+const draftOrder = await fetch(`${BASE}/api/orders`, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ slug, items: [{ productId: "00000000-0000-0000-0000-000000000000", qty: 1 }] }),
+});
+check("orders API rejects an unpublished store", draftOrder.status === 404, `status=${draftOrder.status}`);
+
+// מפעילים כמו שהמנהלת עושה (service role). המסלול המלא נבדק ב-e2e-activation.mjs
+await db.query("update stores set activated_at = now(), payment_amount = 200 where slug = $1", [slug]);
+await fetch(`${BASE}/api/revalidate`, { method: "POST" }).catch(() => {});
 
 /* ── שלב 2: אימות DB — נרמול טלפון, מוצר, תמונה ── */
 const storeRow = (await db.query("select * from stores where slug=$1", [slug])).rows[0];

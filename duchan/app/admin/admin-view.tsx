@@ -18,6 +18,12 @@ interface Totals {
   revenue: number;
   viewsTotal: number;
   views7d: number;
+  live: number;
+  drafts: number;
+  pendingActivation: number;
+  paidTotal: number;
+  referred: number;
+  refClicks: number;
 }
 
 interface AdminStore {
@@ -35,6 +41,15 @@ interface AdminStore {
   ai_enabled: boolean | null;
   ai_credits: number | null;
   created_at: string;
+  activated_at: string | null;
+  payment_claimed_at: string | null;
+  payment_method: string | null;
+  payment_ref: string | null;
+  payment_amount: number | null;
+  referred_by: string | null;
+  referral_source: string | null;
+  ref_clicks: number;
+  brought: number;
   products: number;
   deletedProducts: number;
   ordersNew: number;
@@ -105,7 +120,14 @@ const STATUS_LABEL: Record<string, string> = { active: "פעילה", paused: "מ
 
 /* ---------- component ---------- */
 
-type Tab = "overview" | "stores" | "explore" | "news";
+type Tab = "overview" | "stores" | "network" | "explore" | "news";
+
+const METHOD_LABEL: Record<string, string> = {
+  bit: "ביט",
+  paybox: "פייבוקס",
+  other: "אחר",
+  gift: "מתנה",
+};
 
 export default function AdminView() {
   const [tab, setTab] = useState<Tab>("overview");
@@ -160,6 +182,18 @@ export default function AdminView() {
     showToast(status === "active" ? "החנות הופעלה" : status === "paused" ? "החנות הושהתה" : "החנות נחסמה");
   }
 
+  // הפעלת חנות = פתיחת הלינק לשיתוף. הפעולה היחידה שגובה כסף בפועל.
+  async function setActivation(storeId: string, activate: boolean, paymentAmount?: number) {
+    await fetch("/api/admin/stores", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storeId, activate, paymentAmount }),
+    });
+    refresh();
+    if (detail?.store.id === storeId) openDetail(storeId);
+    showToast(activate ? "החנות הופעלה — הלינק פתוח 🎉" : "ההפעלה בוטלה");
+  }
+
   async function setAi(storeId: string, aiEnabled: boolean, aiCredits?: number | null) {
     await fetch("/api/admin/stores", {
       method: "PATCH",
@@ -210,6 +244,7 @@ export default function AdminView() {
           {([
             ["overview", "סקירה"],
             ["stores", "חנויות"],
+            ["network", "רשת"],
             ["explore", "מה מוכרות"],
             ["news", "עדכונים"],
           ] as [Tab, string][]).map(([k, label]) => (
@@ -226,7 +261,57 @@ export default function AdminView() {
         {/* ── סקירה ── */}
         {tab === "overview" && totals && (
           <>
+            {/* ממתינות להפעלה — הדבר היחיד שחוסם כסף וילדה מרוצה. תמיד ראשון. */}
+            {totals.pendingActivation > 0 && (
+              <section className="bg-[#FFF9EE] border border-[#F5E3C2] rounded-xl p-3">
+                <h2 className="text-sm font-bold mb-2 text-[#A85B00]">
+                  ⏳ ממתינות לאישור תשלום · {totals.pendingActivation}
+                </h2>
+                <div className="flex flex-col gap-2">
+                  {stores
+                    .filter((s) => !s.activated_at && s.payment_claimed_at)
+                    .map((s) => (
+                      <div key={s.id} className="bg-white border border-[#F5E3C2] rounded-lg p-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar s={s} size={9} />
+                          <div className="flex-1 min-w-0">
+                            <button
+                              onClick={() => { setTab("stores"); openDetail(s.id); }}
+                              className="text-[13px] font-bold truncate block text-right"
+                            >
+                              {s.display_name}
+                            </button>
+                            <div className="text-[11px] text-[#7A7D8A]">
+                              הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
+                              {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
+                              {s.payment_ref && ` · ${s.payment_ref}`}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 mt-2">
+                          <button
+                            onClick={() => setActivation(s.id, true, 200)}
+                            className="flex-1 bg-[#15161B] text-white rounded-lg py-2 text-[11.5px] font-bold"
+                          >
+                            אישור והפעלה
+                          </button>
+                          <a
+                            href={waLink(s)}
+                            target="_blank"
+                            className="flex-1 border border-[#E6E7EC] rounded-lg py-2 text-[11.5px] font-medium text-center"
+                          >
+                            וואטסאפ
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
+
             <div className="grid grid-cols-2 gap-2">
+              <Stat label="חנויות באוויר" value={totals.live} sub={`${totals.drafts} טיוטות`} icon="🚀" />
+              <Stat label="הכנסה מהפעלות" value={`₪${totals.paidTotal}`} sub={`${totals.live} חנויות ששולמו`} icon="🏦" />
               <Stat label="כניסות · 7 ימים" value={totals.views7d} sub={`${totals.viewsTotal} סה"כ`} icon="👀" />
               <Stat label="הזמנות חדשות" value={totals.newOrders} sub={`${totals.orders} סה"כ`} icon="🧾" />
               <Stat label='מכירות ששולמו' value={`₪${totals.revenue}`} sub="בכל החנויות" icon="💰" />
@@ -292,6 +377,11 @@ export default function AdminView() {
                         {s.claim_token && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EDEEF1] text-[#6B6E7A]">לא נתבעה</span>
                         )}
+                        {!s.activated_at && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${s.payment_claimed_at ? "bg-[#FFF3E0] text-[#A85B00]" : "bg-[#EDEEF1] text-[#6B6E7A]"}`}>
+                            {s.payment_claimed_at ? "ממתינה לאישור" : "טיוטה"}
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-[#7A7D8A] mt-0.5">
                         {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{s.revenue}
@@ -314,6 +404,15 @@ export default function AdminView() {
               )}
             </div>
           </>
+        )}
+
+        {/* ── רשת ── */}
+        {tab === "network" && totals && (
+          <NetworkTab
+            stores={stores}
+            totals={totals}
+            onOpen={(id) => { setTab("stores"); openDetail(id); }}
+          />
         )}
 
         {/* ── מה מוכרות ── */}
@@ -427,6 +526,69 @@ export default function AdminView() {
                 🔗 החנות עוד לא נתבעה — לחיצה מעתיקה את לינק התביעה
               </button>
             )}
+
+            {/* הפעלה ותשלום */}
+            <div
+              className={`rounded-xl p-3 mb-3 border ${
+                detail.store.activated_at
+                  ? "bg-[#F6FBF7] border-[#CBE8D4]"
+                  : detail.store.payment_claimed_at
+                    ? "bg-[#FFF9EE] border-[#F5E3C2]"
+                    : "bg-[#F5F6F9] border-[#E6E7EC]"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[12.5px] font-bold flex-1">
+                  {detail.store.activated_at
+                    ? `🚀 באוויר מאז ${new Date(detail.store.activated_at).toLocaleDateString("he-IL")}`
+                    : detail.store.payment_claimed_at
+                      ? "⏳ הצהירה ששילמה — ממתינה לאישור"
+                      : "📝 טיוטה — הלינק סגור"}
+                </span>
+                {detail.store.activated_at ? (
+                  <button
+                    onClick={() => setActivation(detail.store.id, false)}
+                    className="border border-[#E6E7EC] bg-white rounded-lg px-2.5 py-1.5 text-[11px]"
+                  >
+                    ביטול הפעלה
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setActivation(detail.store.id, true, 200)}
+                    className="bg-[#15161B] text-white rounded-lg px-3 py-1.5 text-[11px] font-medium"
+                  >
+                    אישור והפעלה
+                  </button>
+                )}
+              </div>
+              <div className="text-[11px] text-[#7A7D8A] mt-1.5">
+                {detail.store.payment_claimed_at && (
+                  <>
+                    הצהרה: {new Date(detail.store.payment_claimed_at).toLocaleDateString("he-IL")}
+                    {detail.store.payment_method &&
+                      ` · ${METHOD_LABEL[detail.store.payment_method] ?? detail.store.payment_method}`}
+                    {detail.store.payment_ref && ` · ${detail.store.payment_ref}`}
+                    {detail.store.payment_amount ? ` · ₪${detail.store.payment_amount}` : ""}
+                    <br />
+                  </>
+                )}
+                {detail.store.referred_by ? (
+                  <>
+                    הגיעה מ
+                    <button
+                      onClick={() => openDetail(detail.store.referred_by!)}
+                      className="underline"
+                    >
+                      {stores.find((x) => x.id === detail.store.referred_by)?.display_name ?? "חנות שנמחקה"}
+                    </button>
+                  </>
+                ) : (
+                  "הגיעה ישירות"
+                )}
+                {" · "}
+                הביאה {stores.find((x) => x.id === detail.store.id)?.brought ?? 0} · {detail.store.ref_clicks ?? 0} לחיצות על "פתחי חנות"
+              </div>
+            </div>
 
             {/* מסע + פרימיום */}
             <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">
@@ -574,6 +736,104 @@ function Avatar({ s, size }: { s: { avatar_key?: string | null; emoji: string };
       style={{ width: px, height: px, fontSize: px * 0.5 }}>
       {url ? <img src={url} alt="" className="w-full h-full object-cover" /> : s.emoji}
     </div>
+  );
+}
+
+/**
+ * "רשת" — מאיפה הגיעה כל חנות ומי הביאה את מי.
+ * זה מה שמראה אשכולות: כיתה שלמה שנפתחה מחנות אחת, שכונה, תנועת נוער.
+ * מי שהביאה חנויות היא נקודת המפתח של האשכול — שווה לדבר איתה.
+ */
+function NetworkTab({
+  stores,
+  totals,
+  onOpen,
+}: {
+  stores: AdminStore[];
+  totals: Totals;
+  onOpen: (id: string) => void;
+}) {
+  const byId = new Map(stores.map((s) => [s.id, s]));
+  const children = new Map<string, AdminStore[]>();
+  stores.forEach((s) => {
+    // אב שכבר לא קיים (נמחק) — מתייחסים אליה כשורש
+    const parent = s.referred_by && byId.has(s.referred_by) ? s.referred_by : null;
+    if (parent) children.set(parent, [...(children.get(parent) ?? []), s]);
+  });
+
+  const roots = stores.filter((s) => !s.referred_by || !byId.has(s.referred_by));
+  const clusterSize = (s: AdminStore): number =>
+    1 + (children.get(s.id) ?? []).reduce((sum, c) => sum + clusterSize(c), 0);
+
+  const clusters = roots
+    .map((r) => ({ root: r, size: clusterSize(r) }))
+    .sort((a, b) => b.size - a.size);
+
+  const withCluster = clusters.filter((c) => c.size > 1);
+  const alone = clusters.filter((c) => c.size === 1);
+
+  // כמה מהלחיצות על "פתחי חנות משלך" הפכו לחנות בפועל
+  const conversion = totals.refClicks ? Math.round((totals.referred / totals.refClicks) * 100) : 0;
+
+  const row = (s: AdminStore, depth: number) => (
+    <div key={s.id}>
+      <button
+        onClick={() => onOpen(s.id)}
+        className="w-full flex items-center gap-2 py-1.5 text-right"
+        style={{ paddingRight: depth * 18 }}
+      >
+        {depth > 0 && <span className="text-[#C9CBD3] text-[11px]">└</span>}
+        <Avatar s={s} size={depth ? 7 : 9} />
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium truncate">
+            {s.display_name}
+            {!s.activated_at && (
+              <span className="text-[10px] text-[#A85B00] font-normal"> · טיוטה</span>
+            )}
+          </div>
+          <div className="text-[10.5px] text-[#7A7D8A]">
+            {s.brought > 0 ? `הביאה ${s.brought} · ` : ""}
+            {s.ref_clicks === 1 ? "לחיצה אחת" : `${s.ref_clicks} לחיצות`} ·{" "}
+            {s.products === 1 ? "מוצר אחד" : `${s.products} מוצרים`}
+          </div>
+        </div>
+      </button>
+      {(children.get(s.id) ?? []).map((c) => row(c, depth + 1))}
+    </div>
+  );
+
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-2">
+        <Stat label="הגיעו מחנות" value={totals.referred} sub={`מתוך ${totals.stores}`} icon="🔗" />
+        <Stat label="לחיצות על 'פתחי חנות'" value={totals.refClicks} sub={`${conversion}% נפתחו`} icon="👆" />
+      </div>
+
+      <section className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+        <h2 className="text-sm font-bold">אשכולות</h2>
+        <p className="text-[11px] text-[#7A7D8A] mb-2">
+          חנות שהביאה חנויות אחרות. כאן נמצאות הכיתות והשכונות.
+        </p>
+        {withCluster.length === 0 && (
+          <p className="text-xs text-[#7A7D8A] py-3">עוד אף חנות לא הביאה חנות אחרת.</p>
+        )}
+        {withCluster.map(({ root, size }) => (
+          <div key={root.id} className="border-t border-[#F0F1F4] pt-2 mt-2 first:border-0 first:mt-0 first:pt-0">
+            <div className="text-[11px] font-bold text-[#1F7A42] mb-1">אשכול של {size} חנויות</div>
+            {row(root, 0)}
+          </div>
+        ))}
+      </section>
+
+      <section className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+        <h2 className="text-sm font-bold mb-2">הגיעו לבד · {alone.length}</h2>
+        {alone.slice(0, 20).map(({ root }) => row(root, 0))}
+        {alone.length > 20 && (
+          <p className="text-[11px] text-[#7A7D8A] pt-2">ועוד {alone.length - 20}…</p>
+        )}
+        {alone.length === 0 && <p className="text-xs text-[#7A7D8A] py-2">אין.</p>}
+      </section>
+    </>
   );
 }
 

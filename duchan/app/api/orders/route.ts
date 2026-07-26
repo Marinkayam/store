@@ -31,11 +31,12 @@ export async function POST(req: NextRequest) {
 
   const { data: store } = await db
     .from("stores")
-    .select("id, display_name, contact_phone, status")
+    .select("id, display_name, contact_phone, status, activated_at")
     .eq("slug", slug)
     .maybeSingle();
 
-  if (!store || store.status !== "active") {
+  // חנות שלא הופעלה לא מקבלת הזמנות, גם אם מישהו הגיע ללינק
+  if (!store || !store.activated_at || store.status !== "active") {
     return NextResponse.json({ error: "החנות סגורה כרגע" }, { status: 404 });
   }
 

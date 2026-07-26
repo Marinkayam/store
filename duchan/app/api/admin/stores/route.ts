@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { randomSlug, randomToken } from "@/lib/slug";
@@ -53,7 +54,14 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "אין גישה" }, { status: 403 });
 
-  let body: { storeId?: string; status?: string; aiEnabled?: boolean; aiCredits?: number | null };
+  let body: {
+    storeId?: string;
+    status?: string;
+    aiEnabled?: boolean;
+    aiCredits?: number | null;
+    activate?: boolean;
+    paymentAmount?: number;
+  };
   try {
     body = await req.json();
   } catch {
@@ -62,6 +70,21 @@ export async function PATCH(req: NextRequest) {
   if (!body.storeId) return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
 
   const patch: Record<string, unknown> = {};
+
+  // הפעלה/ביטול הפעלה. זו הפעולה היחידה שפותחת את הלינק לשיתוף,
+  // והיא נעשית כאן בלבד — לבעלות אין דרך לכתוב activated_at (טריגר במיגרציה 0008).
+  if (body.activate !== undefined) {
+    if (body.activate) {
+      patch.activated_at = new Date().toISOString();
+      patch.status = "active";
+      if (Number.isFinite(body.paymentAmount)) {
+        patch.payment_amount = Math.max(0, Math.floor(body.paymentAmount as number));
+      }
+    } else {
+      patch.activated_at = null;
+      patch.payment_claimed_at = null;
+    }
+  }
   if (body.status !== undefined) {
     if (!["active", "paused", "blocked"].includes(body.status)) {
       return NextResponse.json({ error: "סטטוס לא תקין" }, { status: 400 });
@@ -77,6 +100,16 @@ export async function PATCH(req: NextRequest) {
   }
 
   const db = supabaseAdmin();
-  await db.from("stores").update(patch).eq("id", body.storeId);
+  const { data: updated } = await db
+    .from("stores")
+    .update(patch)
+    .eq("id", body.storeId)
+    .select("slug")
+    .maybeSingle();
+
+  // הלינק חייב להיפתח מיד, לא אחרי 60 שניות של ISR
+  if (updated?.slug && (patch.activated_at !== undefined || patch.status !== undefined)) {
+    revalidatePath(`/s/${updated.slug}`);
+  }
   return NextResponse.json({ ok: true });
 }

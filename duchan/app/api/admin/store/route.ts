@@ -22,10 +22,27 @@ export async function GET(req: NextRequest) {
   ]);
 
   if (!store.data) return NextResponse.json({ error: "לא נמצא" }, { status: 404 });
+
+  // הסיכומים שהחמ"ל מציג (מסע, הכנסות) מחושבים כאן ולא בלקוח —
+  // בלעדיהם המסע בתיק החנות נראה נעול גם כשהיא כבר מכרה.
+  const prods = products.data ?? [];
+  const ords = orders.data ?? [];
+  const sold = ords.filter((o) => o.status === "paid" || o.status === "delivered");
+  const viewsTotal = (views.data ?? []).reduce((sum, v) => sum + v.views, 0);
+
   return NextResponse.json({
-    store: store.data,
-    products: products.data ?? [],
-    orders: orders.data ?? [],
+    store: {
+      ...store.data,
+      products: prods.filter((p) => !p.deleted_at).length,
+      deletedProducts: prods.filter((p) => p.deleted_at).length,
+      ordersTotal: ords.length,
+      ordersNew: ords.filter((o) => o.status === "sent").length,
+      ordersPaid: sold.length,
+      revenue: sold.reduce((sum, o) => sum + o.total, 0),
+      viewsTotal,
+    },
+    products: prods,
+    orders: ords,
     views: views.data ?? [],
   });
 }

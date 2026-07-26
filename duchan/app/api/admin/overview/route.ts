@@ -12,7 +12,7 @@ export async function GET() {
 
   const [storesQ, productsQ, ordersQ, viewsQ] = await Promise.all([
     db.from("stores")
-      .select("id, slug, display_name, emoji, tagline, avatar_key, status, contact_phone, parent_email, claim_token, media_bytes, ai_enabled, ai_credits, created_at")
+      .select("id, slug, display_name, emoji, tagline, avatar_key, status, contact_phone, parent_email, claim_token, media_bytes, ai_enabled, ai_credits, created_at, activated_at, payment_claimed_at, payment_method, payment_ref, payment_amount, referred_by, referral_source, ref_clicks")
       .order("created_at", { ascending: false }),
     db.from("products").select("store_id, deleted_at"),
     db.from("orders").select("store_id, status, total, created_at"),
@@ -51,12 +51,24 @@ export async function GET() {
     if (v.day >= weekAgo) s.views7d += v.views;
   });
 
-  const enriched = stores.map((s) => ({ ...s, ...a(s.id) }));
+  // כמה חנויות הביאה כל חנות — כדי לראות את האשכולות (כיתה, שכבה, שכונה)
+  const brought = new Map<string, number>();
+  stores.forEach((s) => {
+    if (s.referred_by) brought.set(s.referred_by, (brought.get(s.referred_by) ?? 0) + 1);
+  });
+
+  const enriched = stores.map((s) => ({ ...s, ...a(s.id), brought: brought.get(s.id) ?? 0 }));
 
   return NextResponse.json({
     totals: {
       stores: stores.length,
       activeStores: stores.filter((s) => s.status === "active").length,
+      live: stores.filter((s) => s.activated_at).length,
+      drafts: stores.filter((s) => !s.activated_at && !s.payment_claimed_at).length,
+      pendingActivation: stores.filter((s) => !s.activated_at && s.payment_claimed_at).length,
+      paidTotal: stores.reduce((sum, s) => sum + (s.payment_amount ?? 0), 0),
+      referred: stores.filter((s) => s.referred_by).length,
+      refClicks: stores.reduce((sum, s) => sum + (s.ref_clicks ?? 0), 0),
       products: products.filter((p) => !p.deleted_at).length,
       orders: orders.length,
       newOrders: orders.filter((o) => o.status === "sent").length,

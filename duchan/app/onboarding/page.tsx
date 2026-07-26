@@ -13,6 +13,7 @@ interface Draft {
   displayName: string;
   theme: ThemeKey;
   emoji: string;
+  ref: string | null; // הסלאג של החנות שממנה הגיעה (?ref= בדף הנחיתה)
   product: { name: string; price: string; imageData: string | null };
 }
 
@@ -23,6 +24,7 @@ const EMPTY: Draft = {
   displayName: "",
   theme: "cloud",
   emoji: "🦄",
+  ref: null,
   product: { name: "", price: "", imageData: null },
 };
 
@@ -100,6 +102,7 @@ export default function Onboarding() {
           emoji: draft!.emoji,
           theme: draft!.theme,
           contactPhone,
+          ref: draft!.ref,
           firstProduct: draft!.product.name
             ? {
                 name: draft!.product.name,
@@ -347,6 +350,11 @@ export default function Onboarding() {
             dir="ltr"
             className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
           />
+          {/* לפעמים הורה ממלא את הטופס. ההזמנות מגיעות למספר הזה — חייב להיות ברור. */}
+          <p className="text-[11px] text-[#7A7D8A] -mt-1.5 leading-relaxed">
+            לכאן יגיעו ההזמנות בוואטסאפ. אם הורה ממלא — זה המספר של הילדה, לא שלכם.
+            המספר לא מופיע בחנות ולא בקוד המקור.
+          </p>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -380,27 +388,24 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* 6 — הלינק שלך */}
+      {/* 6 — החנות נשמרה. הלינק נפתח לשיתוף רק בפרסום. */}
       {result && (
         <div className="w-full flex flex-col gap-4 pt-10 text-center">
           <div className="text-5xl">🎊</div>
-          <h1 className="text-xl font-bold">הלינק שלך מוכן</h1>
-          <div className="bg-white border border-[#E6E7EC] rounded-xl px-4 py-3 text-sm font-mono" dir="ltr">
+          <h1 className="text-xl font-bold">החנות שלך נשמרה</h1>
+          <p className="text-[13px] text-[#7A7D8A] leading-relaxed">
+            היא כולה שלך — אפשר להוסיף מוצרים, לשנות עיצוב ולראות איך היא נראית.
+            <br />
+            הלינק לשיתוף נפתח כשמפרסמים אותה.
+          </p>
+          <div className="bg-white border border-[#E6E7EC] rounded-xl px-4 py-3 text-[13px] font-mono text-[#A2A5B0]" dir="ltr">
             {storeUrl}
           </div>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(storeUrl);
-            }}
-            className="bg-[#15161B] text-white rounded-xl py-3 text-sm font-medium"
-          >
-            העתקה
-          </button>
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(`בואי לראות את החנות שלי! ${storeUrl}`)}`}
-            className="bg-[#25D366] text-white rounded-xl py-3 text-sm font-medium"
-          >
-            שיתוף בוואטסאפ
+          <a href="/activate" className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-bold">
+            פרסום החנות ושחרור הלינק 🚀
+          </a>
+          <a href="/dashboard/products" className="bg-white border border-[#E6E7EC] rounded-xl py-3 text-sm font-medium">
+            קודם להוסיף עוד מוצרים
           </a>
           <a href="/dashboard" className="text-sm text-[#7A7D8A] underline">
             לניהול החנות ←

@@ -15,6 +15,7 @@ interface Body {
   tagline?: string;
   theme?: string;
   contactPhone?: string;
+  ref?: string | null; // הסלאג של החנות שממנה הגיעה
   firstProduct?: {
     name: string;
     description?: string;
@@ -61,6 +62,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // מאיפה הגיעה. מאמתים את הסלאג מול ה-DB — הלקוח יכול לשלוח כל דבר,
+  // וחנות שמפנה לעצמה או לסלאג שלא קיים לא נספרת.
+  let referredBy: string | null = null;
+  if (body.ref && /^[a-z0-9]{3,12}$/i.test(body.ref)) {
+    const { data: src } = await db.from("stores").select("id").eq("slug", body.ref).maybeSingle();
+    referredBy = src?.id ?? null;
+  }
+
   // slug אקראי — מנסים שוב במקרה הנדיר של התנגשות
   let store: { id: string; slug: string } | null = null;
   for (let attempt = 0; attempt < 5 && !store; attempt++) {
@@ -75,6 +84,8 @@ export async function POST(req: NextRequest) {
         theme,
         contact_phone: contactPhone,
         parent_email: user.email.toLowerCase(), // האימייל של החשבון — משמש למכסה
+        referred_by: referredBy,
+        referral_source: referredBy ? "store" : "direct",
       })
       .select("id, slug")
       .single();

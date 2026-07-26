@@ -303,25 +303,40 @@ export default function SettingsPage() {
           </button>
         )}
 
-        {/* לינק */}
-        <div className="bg-white border border-[#E6E7EC] rounded-xl p-3 mt-1">
-          <div className="text-[11px] text-[#7A7D8A] font-mono mb-2" dir="ltr">{storeUrl}</div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => { navigator.clipboard.writeText(storeUrl); showToast("הלינק הועתק"); }}
-              className="flex-1 border border-[#E6E7EC] rounded-lg py-2.5 text-xs font-medium">
-              העתקה
-            </button>
-            <a href={`https://wa.me/?text=${encodeURIComponent(`בואי לראות את החנות שלי! ${storeUrl}`)}`}
-              className="flex-1 bg-[#15161B] text-white rounded-lg py-2.5 text-xs font-medium text-center">
-              שיתוף בוואטסאפ
-            </a>
+        {/* לינק — נפתח לשיתוף רק אחרי פרסום */}
+        {store.activated_at ? (
+          <div className="bg-white border border-[#E6E7EC] rounded-xl p-3 mt-1">
+            <div className="text-[11px] text-[#7A7D8A] font-mono mb-2" dir="ltr">{storeUrl}</div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { navigator.clipboard.writeText(storeUrl); showToast("הלינק הועתק"); }}
+                className="flex-1 border border-[#E6E7EC] rounded-lg py-2.5 text-xs font-medium">
+                העתקה
+              </button>
+              <a href={`https://wa.me/?text=${encodeURIComponent(`בואי לראות את החנות שלי! ${storeUrl}`)}`}
+                className="flex-1 bg-[#15161B] text-white rounded-lg py-2.5 text-xs font-medium text-center">
+                שיתוף בוואטסאפ
+              </a>
+            </div>
           </div>
-        </div>
+        ) : (
+          <a href="/activate" className="bg-[#15161B] text-white rounded-xl p-3.5 mt-1 block">
+            <div className="text-[13px] font-bold">
+              {store.payment_claimed_at ? "⏳ מחכות לאישור התשלום" : "🔒 הלינק עוד נעול"}
+            </div>
+            <div className="text-[11px] opacity-70 leading-relaxed mt-0.5">
+              {store.payment_claimed_at
+                ? "ברגע שנאשר, הלינק נפתח לשיתוף."
+                : "הכל בנוי ושמור. פרסום החנות פותח את הלינק →"}
+            </div>
+          </a>
+        )}
 
-        <a href={storeUrl} className="text-center text-xs text-[#7A7D8A] underline py-1">
-          צפייה בחנות כמו שקונות רואות אותה ←
-        </a>
+        {store.activated_at && (
+          <a href={storeUrl} className="text-center text-xs text-[#7A7D8A] underline py-1">
+            צפייה בחנות כמו שקונות רואות אותה ←
+          </a>
+        )}
 
         <button onClick={logout} className="text-center text-xs text-[#7A7D8A] py-2">
           יציאה מהחשבון
