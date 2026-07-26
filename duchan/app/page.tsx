@@ -38,49 +38,53 @@ export default function Landing() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 gap-8">
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-8 bg-[var(--canvas)]">
       {from && (
-        <div className="bg-[#FFF9EE] border border-[#F5E3C2] rounded-xl px-4 py-2.5 text-[12.5px] text-[#A85B00] text-center">
+        <div className="card px-4 py-3 text-[13px] text-center max-w-sm">
           {from.emoji} הגעת מ<span className="font-bold">{from.name}</span> — עכשיו תורך
         </div>
       )}
 
+      {/* שם המותג בפונט התצוגה, בלי בלוק צבע ובלי אמוג'י ענק —
+          האופי מגיע מהטיפוגרפיה ומהצבע, לא מקישוט. */}
       <div className="text-center">
-        <div className="text-5xl mb-3">🛍️</div>
-        <h1 className="text-2xl font-bold">דוכן</h1>
-        <p className="text-sm text-[#7A7D8A] mt-2 leading-relaxed">
-          חנות קטנה שאת מקימה בעצמך.
+        <h1 className="text-[40px] leading-none font-bold">דוכן</h1>
+        <p className="text-[15px] mt-4 leading-relaxed text-[var(--muted)]">
+          החנות שלך. הקהל שלך.
           <br />
-          מוצרים מהטלפון, לינק לשיתוף — וזהו.
+          מוכרים, משתפים, נהנים.
         </p>
+        <div className="mt-4 text-[var(--lavender)] text-lg">❦</div>
       </div>
+
       <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-3">
-        <label className="text-sm font-medium text-center">מה שם החנות שלך?</label>
+        <label className="text-[14px] font-semibold">איך קוראים לדוכן שלך?</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="החנות של…"
+          placeholder="הדוכן של…"
           maxLength={40}
           autoFocus
-          className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-center text-base"
+          className="field w-full px-4 py-3.5 text-base"
         />
         <button
           disabled={!name.trim()}
-          className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-medium disabled:opacity-30"
+          className="btn btn-primary py-4 text-[15px]"
         >
-          בואי נבנה אותה ←
+          יאללה, בונים ←
         </button>
-        <p className="text-[11.5px] text-[#A2A5B0] text-center leading-relaxed">
-          הבנייה חינם. משלמים רק כשרוצים לפרסם —{" "}
-          <a href="/price" className="underline">
-            כמה, וכולל מה
+        <p className="text-[12px] text-center leading-relaxed text-[var(--muted)]">
+          לבנות זה חינם. משלמים רק כשרוצים לפרסם —{" "}
+          <a href="/price" className="underline font-semibold text-[var(--olive)]">
+            כמה וכולל מה
           </a>
         </p>
       </form>
-      <a href="/login" className="text-xs text-[#7A7D8A] underline">
-        כבר יש לי חנות
+
+      <a href="/login" className="text-[14px] font-semibold text-[var(--olive)]">
+        כבר יש לי דוכן
       </a>
-      <p className="text-[11px] text-[#A2A5B0]">
+      <p className="text-[11px] text-[var(--muted)]">
         <a href="/terms" className="underline">תנאי שימוש</a>
         {" · "}
         <a href="/privacy" className="underline">מדיניות פרטיות</a>

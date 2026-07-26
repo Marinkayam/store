@@ -212,7 +212,7 @@ export default function StoreView({
       {/* רצועת הבעלים — נצמדת למעלה, אפור-שחור ולא בערכה של החנות, כדי שיהיה
           ברור שזו המערכת ולא הדף שהקונות רואות. קונה לא מקבלת אותה בכלל. */}
       {owner && (
-        <div className="sticky top-0 z-40 bg-[#15161B] text-white" dir="rtl">
+        <div className="sticky top-0 z-40 bg-[#262626] text-white" dir="rtl">
           <div className="flex items-center justify-between gap-2 px-3 py-2">
             <span className="text-[11px] opacity-80 leading-tight">
               זו החנות שלך
@@ -243,13 +243,19 @@ export default function StoreView({
       <div className="relative">
         <div
           className="h-36 overflow-hidden"
-          style={{ background: cover ? undefined : "linear-gradient(135deg,#C9D6FF,#E2C6F7)" }}
+          style={{ background: cover ? undefined : "linear-gradient(135deg,#F6F0E8,#E6DCEB)" }}
         >
           {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
         </div>
         <div
-          className="absolute -bottom-7 right-1/2 translate-x-1/2 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg overflow-hidden"
-          style={{ background: "var(--s-surface)" }}
+          className="absolute -bottom-8 right-1/2 translate-x-1/2 w-18 h-18 flex items-center justify-center text-3xl overflow-hidden"
+          style={{
+            background: "var(--s-surface)",
+            border: "var(--s-border)" as string,
+            boxShadow: "var(--s-shadow)" as string,
+            width: 72,
+            height: 72,
+          }}
         >
           {mediaUrl(store.avatar_key) ? (
             <img src={mediaUrl(store.avatar_key)!} alt="" className="w-full h-full object-cover" />
@@ -259,8 +265,8 @@ export default function StoreView({
         </div>
       </div>
 
-      <div className="text-center pt-10 px-5 pb-3">
-        <h1 className="text-xl font-bold">{store.display_name}</h1>
+      <div className="text-center pt-10 px-5 pb-4">
+        <h1 className="text-2xl font-bold">{store.display_name}</h1>
         {store.tagline && <p className="text-xs opacity-70 mt-1">{store.tagline}</p>}
       </div>
 
@@ -279,16 +285,16 @@ export default function StoreView({
                 <button
                   key={p.id}
                   onClick={() => !out && openProduct(p)}
-                  className={`text-right overflow-hidden relative active:scale-[.97] transition ${out ? "opacity-50 pointer-events-none" : ""}`}
+                  className={`text-right overflow-hidden relative transition active:translate-y-[1px] ${out ? "opacity-45 pointer-events-none" : ""}`}
                   style={{
                     background: "var(--s-surface)",
-                    borderRadius: "var(--s-radius)",
                     border: "var(--s-border)" as string,
+                    boxShadow: out ? "none" : ("var(--s-shadow)" as string),
                   }}
                 >
                   {out ? (
                     // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
-                    <span className="absolute inset-x-0 top-1/4 z-10 bg-[#15161B]/80 text-white text-[13px] font-bold text-center py-1.5 tracking-wide">
+                    <span className="absolute inset-x-0 top-1/4 z-10 bg-[#262626]/78 text-white text-[13px] font-semibold text-center py-1.5 tracking-wide">
                       אזל
                     </span>
                   ) : (
@@ -300,9 +306,11 @@ export default function StoreView({
                       const key = badgeFor(p, bestSellerId);
                       if (!key) return null;
                       const b = BADGES[key];
+                      // רצועה על כל רוחב הכרטיס ולא שבב בפינה: "אחרון במלאי"
+                      // ארוך מהכרטיס בטלפון וגלש החוצה. רצועה לא יכולה לגלוש.
                       return (
                         <span
-                          className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
+                          className="absolute inset-x-0 top-0 z-10 text-[10.5px] font-semibold text-center py-1"
                           style={{ background: b.bg, color: b.fg }}
                         >
                           {b.emoji} {b.label}
@@ -322,12 +330,12 @@ export default function StoreView({
                       <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
                     )}
                   </div>
-                  <div className="px-2 py-2 text-center">
-                    <div className="text-[13px] font-medium">{p.name}</div>
+                  <div className="px-2.5 py-2.5 text-right">
+                    <div className="text-[13.5px] font-semibold leading-tight">{p.name}</div>
                     {p.description && (
                       <div className="text-[11px] opacity-60 truncate">{p.description}</div>
                     )}
-                    <div className="text-sm font-bold mt-0.5" style={{ color: "var(--s-primary)" }}>
+                    <div className="text-[17px] font-bold mt-1" style={{ color: "var(--s-primary)" }}>
                       ₪{p.price}
                     </div>
                   </div>
@@ -348,8 +356,8 @@ export default function StoreView({
 
       {/* cart bar */}
       <div
-        className={`fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-3.5 pb-5 cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
-        style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+        className={`fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-4 pb-5 cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
+        style={{ background: "var(--s-primary)", color: "var(--s-onprimary)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)" }}
         onClick={() => cartCount && setOrderOpen(true)}
       >
         <span className="text-sm">{cartCount} פריטים · ₪{cartTotal}</span>

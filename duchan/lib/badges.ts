@@ -12,12 +12,13 @@ import type { PublicProduct } from "./types";
  */
 export type BadgeKey = "last" | "best" | "sale" | "rare" | "new";
 
+// הצבעים מהדיזיין סיסטם: נמכר=אפרסק, חדש=לבנדר, נדיר=זית, מומלץ=שמנת.
 export const BADGES: Record<BadgeKey, { emoji: string; label: string; bg: string; fg: string }> = {
-  last: { emoji: "⌛", label: "אחרון במלאי", bg: "#3B1E33", fg: "#FFFFFF" },
-  best: { emoji: "⭐", label: "הכי נמכר", bg: "#FFC53D", fg: "#3B1E33" },
-  sale: { emoji: "🎁", label: "מבצע", bg: "#E4405F", fg: "#FFFFFF" },
-  rare: { emoji: "💎", label: "נדיר", bg: "#5B4BE0", fg: "#FFFFFF" },
-  new:  { emoji: "🔥", label: "חדש",  bg: "#FF7A45", fg: "#FFFFFF" },
+  last: { emoji: "⌛", label: "אחרון במלאי", bg: "#E3C26F", fg: "#3A2E12" },
+  best: { emoji: "⭐", label: "הכי נמכר", bg: "#D9967A", fg: "#FFFFFF" },
+  sale: { emoji: "🎁", label: "מבצע", bg: "#B9824A", fg: "#FFFFFF" },
+  rare: { emoji: "💎", label: "נדיר", bg: "#A8A46D", fg: "#FFFFFF" },
+  new:  { emoji: "🌿", label: "חדש",  bg: "#B89AC8", fg: "#FFFFFF" },
 };
 
 /** מוצר נחשב חדש בשבוע הראשון שלו. */

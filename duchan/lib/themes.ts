@@ -1,5 +1,12 @@
-// 6 ערכות. מקור אמת יחיד — הערכים הועתקו מ-duchan-mockup.html.
+// 6 ערכות. מקור אמת יחיד.
 // אסור למחוק מפתח ערכה לעולם. רק להוציא משימוש ולמפות לחדשה.
+//
+// ── שפת העיצוב ──
+//
+// הערכות יושבות על אותה משפחה חמה של הדיזיין סיסטם: שמנת, זית, לבנדר ועץ.
+// פינות רכות של 12px, קו דק, וצל עדין — האופי מגיע מהצבע ומהטיפוגרפיה ולא
+// מקישוט. כל ערכה היא גוון של אותה שפה, כדי ששתי חנויות זו לצד זו ייראו
+// כמו שתי חנויות באותה עיר ולא כמו שתי אפליקציות שונות.
 
 export type ThemeKey = "cloud" | "berry" | "night" | "pastel" | "candy" | "minimal";
 
@@ -14,15 +21,20 @@ export interface Theme {
   font: string;
   thumb: string;
   border: string;
+  /** צל עדין. אין צללים קשיחים — הרכות היא חלק מהשפה. */
+  shadow: string;
 }
 
+const R = "12px";
+const SOFT = "0 2px 12px rgba(0,0,0,0.05)";
+
 export const THEMES: Record<ThemeKey, Theme> = {
-  cloud:   { label: "ענן",    bg: "#EFF6FF", surface: "#FFFFFF", ink: "#123252", primary: "#3B82C4", onPrimary: "#FFFFFF", radius: "20px", font: "'Varela Round',sans-serif", thumb: "#F4F9FF", border: "none" },
-  berry:   { label: "תות",    bg: "#FFF0F3", surface: "#FFFFFF", ink: "#4A1220", primary: "#E23E5C", onPrimary: "#FFFFFF", radius: "18px", font: "'Varela Round',sans-serif", thumb: "#FFF6F8", border: "none" },
-  night:   { label: "לילה",   bg: "#131120", surface: "#1F1C30", ink: "#EFEDF8", primary: "#6FF0BC", onPrimary: "#0E1A15", radius: "13px", font: "'Rubik',sans-serif",        thumb: "#282440", border: "none" },
-  pastel:  { label: "פסטל",   bg: "#FAF6EC", surface: "#FFFFFF", ink: "#2C3F37", primary: "#4FAE8E", onPrimary: "#FFFFFF", radius: "18px", font: "'Assistant',sans-serif",    thumb: "#F3F9F6", border: "none" },
-  candy:   { label: "ממתק",   bg: "#FFF4D9", surface: "#FFFFFF", ink: "#4B2A3A", primary: "#FF6FA5", onPrimary: "#FFFFFF", radius: "24px", font: "'Secular One',sans-serif",  thumb: "#FFF0F6", border: "none" },
-  minimal: { label: "מינימל", bg: "#FFFFFF", surface: "#FFFFFF", ink: "#111111", primary: "#111111", onPrimary: "#FFFFFF", radius: "2px",  font: "'Heebo',sans-serif",        thumb: "#F7F7F7", border: "1px solid #EAEAEA" },
+  cloud:   { label: "שמנת",   bg: "#FBF8F3", surface: "#FFFFFF", ink: "#262626", primary: "#A8A46D", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#F6F0E8", border: "1px solid #D6CFC4", shadow: SOFT },
+  berry:   { label: "לבנדר",  bg: "#F7F3F9", surface: "#FFFFFF", ink: "#31243A", primary: "#B89AC8", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#F3EDF7", border: "1px solid #DCD0E4", shadow: SOFT },
+  night:   { label: "לילה",   bg: "#232028", surface: "#2E2A35", ink: "#F4F1EC", primary: "#C9B7DA", onPrimary: "#232028", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#38333F", border: "1px solid #443E4D", shadow: "0 2px 12px rgba(0,0,0,0.25)" },
+  pastel:  { label: "זית",    bg: "#F4F5EC", surface: "#FFFFFF", ink: "#2C3020", primary: "#8CA78C", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#EEF1E4", border: "1px solid #D3D6C2", shadow: SOFT },
+  candy:   { label: "אפרסק",  bg: "#FDF2EC", surface: "#FFFFFF", ink: "#3A241A", primary: "#D9967A", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#FBEBE1", border: "1px solid #E8D3C6", shadow: SOFT },
+  minimal: { label: "עץ",     bg: "#FAF6F1", surface: "#FFFFFF", ink: "#2B2118", primary: "#B9824A", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#F5EDE3", border: "1px solid #E0D3C4", shadow: SOFT },
 };
 
 export function themeOrDefault(key: string | null | undefined): Theme {
@@ -41,5 +53,6 @@ export function themeCssVars(t: Theme): Record<string, string> {
     "--s-font": t.font,
     "--s-thumb": t.thumb,
     "--s-border": t.border,
+    "--s-shadow": t.shadow,
   };
 }

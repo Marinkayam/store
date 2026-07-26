@@ -1,12 +1,48 @@
 @import "tailwindcss";
 
+/*
+ * ── הדיזיין סיסטם של דוכן ──
+ *
+ * הערכים כאן הם המקור היחיד. כל מסך מושך מהם, ולכן שינוי גוון אחד כאן
+ * משנה את כל האפליקציה במקום לרדוף אחרי צבעים מודבקים בעשרים קבצים.
+ *
+ * הכיוון: חם ורגוע — שמנת, זית, לבנדר ועץ. לא פסטל תינוקי ולא ניאון.
+ * הפינות רכות (12px), הצל עדין, והקו דק. האופי מגיע מהצבע ומהטיפוגרפיה,
+ * לא מקישוט.
+ */
 :root {
-  --canvas: #f5f6f9;
-  --ink: #15161b;
-  --muted: #7a7d8a;
-  --line: #e6e7ec;
-  --sub: #f5f6f9;
-  --danger: #d2373b;
+  /* מותג */
+  --olive: #a8a46d;
+  --lavender: #b89ac8;
+  --cream: #f6f0e8;
+  --wood: #b9824a;
+  --ink: #262626;
+
+  /* ניטרליים */
+  --canvas: #fbf8f3;
+  --sand: #ece6de;
+  --stone: #d6cfc4;
+  --white: #ffffff;
+
+  /* מצב */
+  --success: #8ca78c;
+  --warning: #e3c26f;
+  --sold: #d9967a;
+  --new: #b89ac8;
+  --danger: #c0574a;
+
+  /* טקסט */
+  --muted: #857e73;
+  --line: var(--stone);
+  --sub: var(--sand);
+
+  /* טוקנים עיצוביים */
+  --r: 12px;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lift: 0 6px 20px rgba(0, 0, 0, 0.08);
+
+  --font-display: "Fraunces", "Heebo", Georgia, serif;
+  --font-body: "Inter", "Heebo", system-ui, sans-serif;
 }
 
 * {
@@ -14,12 +50,64 @@
 }
 
 html {
-  font-family: "Heebo", system-ui, sans-serif;
+  font-family: var(--font-body);
 }
 
 body {
   background: var(--canvas);
   color: var(--ink);
+}
+
+/* כותרות בפונט התצוגה. Heebo מטפלת בעברית בפועל דרך ה-fallback. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* ── רכיבי יסוד ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+}
+
+.btn {
+  border-radius: var(--r);
+  font-weight: 600;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn-primary {
+  background: var(--wood);
+  color: var(--white);
+}
+.btn-secondary {
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.btn-tertiary {
+  background: transparent;
+  color: var(--olive);
+}
+.btn:disabled {
+  opacity: 0.4;
+}
+
+.field {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  outline: none;
+}
+.field:focus {
+  border-color: var(--olive);
+  box-shadow: 0 0 0 3px rgba(168, 164, 109, 0.16);
 }
 
 /* אנימציית סקוויש לאימוג'י בחנות */
