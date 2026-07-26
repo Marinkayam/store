@@ -49,9 +49,13 @@ for (const host of [domain, `www.${domain}`, `media.${domain}`]) {
     const a = await dns.resolve4(host).catch(() => dns.resolve6(host));
     ok(`${host} נפתר`, a.slice(0, 2).join(", "));
   } catch {
+    // האירוח הוא Vercel. הרשומות נכתבות ב-Cloudflare DNS, בענן אפור (DNS only):
+    // שורש = A ל-76.76.21.21, www = CNAME ל-cname.vercel-dns.com.
     const label = host.startsWith("media.")
       ? "ממתין ל-R2 → Settings → Public access → Connect a domain"
-      : "ממתין ל-Cloudflare Pages → Custom domains";
+      : host.startsWith("www.")
+        ? "חסרה רשומת CNAME ל-cname.vercel-dns.com (ענן אפור)"
+        : "חסרה רשומת A ל-76.76.21.21 (ענן אפור)";
     pending(`${host} לא נפתר`, label);
   }
 }
@@ -67,9 +71,11 @@ try {
   const hsts = res.headers.get("strict-transport-security");
   hsts ? ok("כותרת HSTS", hsts) : warn("אין כותרת HSTS", "לא קריטי — .app אכוף בדפדפן ממילא");
 } catch (e) {
+  // ל-.app אין נפילה ל-HTTP, ולכן תעודה לא תקינה היא חסימה מלאה. הענן הכתום
+  // של Cloudflare מול Vercel הוא הסיבה הנפוצה: הוא שובר את הנפקת התעודה.
   const hint = /certificate|SSL|TLS/i.test(e.message)
-    ? "תעודה לא תקינה. ב-Cloudflare: SSL/TLS → Full (strict). Flexible יוצר לולאת הפניות."
-    : "ממתין לדיפלוי";
+    ? "תעודה לא תקינה — הרשומה צריכה להיות בענן אפור (DNS only), לא כתום."
+    : "ממתין לרשומות ה-DNS ולאימות הדומיין ב-Vercel → Settings → Domains";
   pending(`https://${domain} לא עונה`, hint);
 }
 
