@@ -12,7 +12,7 @@ export async function GET() {
 
   const [storesQ, productsQ, ordersQ, viewsQ] = await Promise.all([
     db.from("stores")
-      .select("id, slug, display_name, emoji, tagline, avatar_key, status, contact_phone, parent_email, claim_token, media_bytes, ai_enabled, ai_credits, created_at, activated_at, payment_claimed_at, payment_method, payment_ref, payment_amount, referred_by, referral_source, ref_clicks")
+      .select("id, slug, display_name, emoji, tagline, avatar_key, status, contact_phone, parent_email, claim_token, media_bytes, ai_enabled, ai_credits, created_at, activated_at, payment_claimed_at, payment_method, payment_ref, payment_amount, payout_bit, payout_paybox, payout_cash, payout_note, referred_by, referral_source, ref_clicks")
       .order("created_at", { ascending: false }),
     db.from("products").select("store_id, deleted_at"),
     db.from("orders").select("store_id, status, total, created_at"),

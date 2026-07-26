@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { displayPhone } from "@/lib/phone";
 import { milestones, reachedCount } from "@/lib/milestones";
+import { payoutSummary } from "@/lib/payouts";
 
 /* ---------- types ---------- */
 
@@ -46,6 +47,10 @@ interface AdminStore {
   payment_method: string | null;
   payment_ref: string | null;
   payment_amount: number | null;
+  payout_bit: boolean;
+  payout_paybox: boolean;
+  payout_cash: boolean;
+  payout_note: string | null;
   referred_by: string | null;
   referral_source: string | null;
   ref_clicks: number;
@@ -537,6 +542,9 @@ export default function AdminView() {
                     : "bg-[#F5F6F9] border-[#E6E7EC]"
               }`}
             >
+              <div className="text-[10.5px] text-[#7A7D8A] mb-1.5">
+                תשלום הקמה לדוכן — לא קשור לאיך שהיא גובה מקונות
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-[12.5px] font-bold flex-1">
                   {detail.store.activated_at
@@ -587,6 +595,17 @@ export default function AdminView() {
                 )}
                 {" · "}
                 הביאה {stores.find((x) => x.id === detail.store.id)?.brought ?? 0} · {detail.store.ref_clicks ?? 0} לחיצות על "פתחי חנות"
+              </div>
+            </div>
+
+            {/* איך היא גובה מקונות — לידיעה בלבד. הכסף הזה לא עובר דרכנו. */}
+            <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">
+              <div className="text-[11px] text-[#7A7D8A] mb-1">איך היא גובה מקונות</div>
+              <div className="text-[12.5px]">
+                {payoutSummary(detail.store) || "לא הגדירה עדיין"}
+                {detail.store.payout_note && (
+                  <span className="text-[#7A7D8A]"> · {detail.store.payout_note}</span>
+                )}
               </div>
             </div>
 

@@ -21,6 +21,13 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [toast, setToast] = useState("");
   const [dirty, setDirty] = useState(false);
+  // איך הקונה משלמת לילדה. נפרד לגמרי מתשלום ההקמה לדוכן (activated_at / payment_*).
+  const [payout, setPayout] = useState({
+    payout_bit: true,
+    payout_paybox: false,
+    payout_cash: true,
+    payout_note: "" as string | null,
+  });
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -35,6 +42,12 @@ export default function SettingsPage() {
     setPhone(displayPhone(store.contact_phone));
     setCoverPreview(mediaUrl(store.cover_key));
     setAvatarPreview(mediaUrl(store.avatar_key));
+    setPayout({
+      payout_bit: store.payout_bit ?? true,
+      payout_paybox: store.payout_paybox ?? false,
+      payout_cash: store.payout_cash ?? true,
+      payout_note: store.payout_note ?? "",
+    });
   }, [store]);
 
   const showToast = (m: string) => {
@@ -66,6 +79,10 @@ export default function SettingsPage() {
       emoji,
       theme,
       contact_phone: normalized,
+      payout_bit: payout.payout_bit,
+      payout_paybox: payout.payout_paybox,
+      payout_cash: payout.payout_cash,
+      payout_note: payout.payout_note?.trim() || null,
     };
     const { error } = await supa.from("stores").update(patch).eq("id", store.id);
     if (error) {
@@ -296,6 +313,50 @@ export default function SettingsPage() {
             בדיקה: פתיחת וואטסאפ למספר {displayPhone(normalizePhone(phone)!)}
           </a>
         )}
+
+        {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
+        <div className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+          <div className="text-[13px] font-bold">איך משלמים לי</div>
+          <p className="text-[11px] text-[#7A7D8A] leading-relaxed mt-0.5">
+            מה שתסמני יופיע לקונה לפני שהיא שולחת את ההזמנה, וגם בהודעת הוואטסאפ.
+            הכסף עובר ישירות אלייך — דוכן לא נוגע בו ולא לוקח עמלה.
+          </p>
+          <div className="flex flex-col gap-1.5 mt-2.5">
+            {([
+              ["payout_bit", "ביט", "למספר הוואטסאפ שלך"],
+              ["payout_paybox", "פייבוקס", "אם יש לך"],
+              ["payout_cash", "מזומן", "במסירה, פנים אל פנים"],
+            ] as const).map(([key, label, hint]) => (
+              <button
+                key={key}
+                onClick={() => { setPayout({ ...payout, [key]: !payout[key] }); setDirty(true); }}
+                className={`flex items-center gap-2.5 rounded-xl border-[1.5px] px-3 py-2.5 text-right ${
+                  payout[key] ? "border-[#15161B] bg-[#F5F6F9]" : "border-[#E6E7EC]"
+                }`}
+              >
+                <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] ${
+                  payout[key] ? "bg-[#15161B] text-white" : "border border-[#D3D5DC]"
+                }`}>
+                  {payout[key] ? "✓" : ""}
+                </span>
+                <span className="text-[13px] font-medium flex-1">{label}</span>
+                <span className="text-[11px] text-[#7A7D8A]">{hint}</span>
+              </button>
+            ))}
+          </div>
+          <input
+            value={payout.payout_note ?? ""}
+            onChange={(e) => { setPayout({ ...payout, payout_note: e.target.value }); setDirty(true); }}
+            placeholder='הערה לקונה — "ביט לאמא: 052-1234567"'
+            maxLength={80}
+            className="mt-2 w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-[13px]"
+          />
+          {!payout.payout_bit && !payout.payout_paybox && !payout.payout_cash && (
+            <p className="text-[11px] text-[#A85B00] mt-1.5">
+              לא סימנת כלום — הקונה תצטרך לשאול אותך בוואטסאפ איך לשלם.
+            </p>
+          )}
+        </div>
 
         {dirty && (
           <button onClick={save} className="bg-[#15161B] text-white rounded-xl py-3 text-sm font-bold">

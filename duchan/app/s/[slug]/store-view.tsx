@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { payoutOrderLine, payoutSummary } from "@/lib/payouts";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 
 interface CartLine {
@@ -28,6 +29,10 @@ export default function StoreView({
   const [toast, setToast] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // אמצעי התשלום שהחנות מקבלת — שמות בלבד, בלי מספרים ובלי פרטי חשבון
+  const paySummary = payoutSummary(store);
+  const payLine = payoutOrderLine(store);
 
   // ספירת כניסה — פעם אחת לביקור (sessionStorage מונע ספירה כפולה בניווט פנימי)
   useEffect(() => {
@@ -142,6 +147,7 @@ export default function StoreView({
         `ראיתי את החנות ואני רוצה להזמין:\n\n${lines}\n\n` +
         `סה"כ: ₪${data.total}` +
         (note.trim() ? `\nהערה: ${note.trim()}` : "") +
+        (payLine ? `\n\n${payLine}` : "") +
         `\n\nהזמנה #${data.orderNumber}`;
 
       setCart([]);
@@ -384,6 +390,14 @@ export default function StoreView({
             maxLength={200}
             className="w-full border-[1.5px] border-black/20 bg-transparent rounded-xl px-3 py-2.5 text-[13px] my-3"
           />
+          {paySummary && (
+            <div className="rounded-xl border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
+              <span className="font-bold">אפשר לשלם ב:</span> {paySummary}
+              {store.payout_note && (
+                <div className="opacity-70 mt-0.5">{store.payout_note}</div>
+              )}
+            </div>
+          )}
           <p className="text-[11px] opacity-60 text-center mb-3 leading-relaxed">
             ההזמנה תיפתח בוואטסאפ.
             <br />

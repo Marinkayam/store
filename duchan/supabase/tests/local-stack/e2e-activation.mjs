@@ -150,6 +150,45 @@ await girl.waitForSelector("text=החנות שלך באוויר");
 check("girl now sees her live link and share buttons", (await girl.textContent("body")).includes(`/s/${seed.slug}`));
 await girl.screenshot({ path: `${shots}/45-live.png` });
 
+/* ── 5ב: הכסף של הילדה נפרד מהתשלום לדוכן ── */
+// מתחילים מברירת המחדל כדי שהריצה תהיה חוזרת על עצמה
+await db.query(
+  "update stores set payout_bit=true, payout_paybox=false, payout_cash=true, payout_note=null where id=$1",
+  [seed.id]
+);
+await girl.goto(`${BASE}/dashboard/settings`);
+await girl.waitForSelector("text=איך משלמים לי");
+const payUi = await girl.textContent("body");
+check("settings separates her money from the platform fee",
+  payUi.includes("הכסף עובר ישירות אלייך") && payUi.includes("לא לוקח עמלה"));
+
+// ברירת מחדל: ביט + מזומן. מכבים מזומן ומוסיפים הערה.
+await girl.click("button:has-text('מזומן')");
+await girl.fill("input[placeholder='הערה לקונה — \"ביט לאמא: 052-1234567\"']", "ביט לאמא: 052-1234567");
+await girl.click("button:has-text('שמירת שינויים')");
+await girl.waitForSelector("text=נשמר");
+await girl.waitForTimeout(600);
+const { rows: [payRow] } = await db.query("select payout_bit, payout_cash, payout_note from stores where id=$1", [seed.id]);
+check("payout prefs saved", payRow.payout_bit === true && payRow.payout_cash === false && payRow.payout_note === "ביט לאמא: 052-1234567");
+
+// אמצעי התשלום מוצגים בגיליון ההזמנה, ולכן בודקים בדפדפן ולא ב-HTML הגולמי
+const buyer = await phone();
+await buyer.goto(`${BASE}/s/${seed.slug}`);
+await buyer.waitForSelector(".grid img", { timeout: 10000 });
+await buyer.click("text=סקוויש חד-קרן");
+await buyer.click("button:has-text('הוספה לסל')");
+await buyer.click("text=פריט"); // הכפתור הצף של הסל
+await buyer.waitForSelector("text=ההזמנה שלך", { timeout: 10000 });
+const sheet = await buyer.textContent("body");
+check("checkout shows how to pay her", sheet.includes("אפשר לשלם ב") && sheet.includes("ביט"));
+check("her note to the buyer is shown", sheet.includes("ביט לאמא: 052-1234567"));
+check("cash is gone once she turned it off", !sheet.includes("מזומן"));
+await buyer.screenshot({ path: `${shots}/49-checkout-payment.png` });
+
+// contact_phone עדיין לא ב-HTML — ההערה שלה היא בחירה שלה, לא דליפה שלנו
+const storeHtml = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
+check("her whatsapp number still never appears in the HTML", !storeHtml.includes("972501234567"));
+
 /* ── 6: מסך "להפיץ" — ההודעות המוכנות ── */
 await girl.goto(`${BASE}/dashboard/share`);
 // מחכים לתוכן שנטען אחרי useStore, לא לכותרת שקיימת גם בניווט התחתון

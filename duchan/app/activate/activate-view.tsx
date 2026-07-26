@@ -130,7 +130,7 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
               <br />
               • לכתוב תיאור קצר לכל אחד
               <br />
-              • לבחור תמונת קאבר
+              • להגדיר <a href="/dashboard/settings" className="underline">איך משלמים לך</a> — ביט, מזומן או שניהם
             </div>
           </div>
           <a
@@ -216,11 +216,20 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
       </div>
 
       {/* תשלום */}
-      <h2 className="text-base font-bold mt-9 mb-1">איך משלמים</h2>
+      <h2 className="text-base font-bold mt-9 mb-1">איך משלמים לדוכן</h2>
       <p className="text-[12.5px] text-[#7A7D8A] mb-3 leading-relaxed">
         אנחנו לא סולקות כרטיסי אשראי ולא שומרות פרטי תשלום. משלמים בביט או בפייבוקס,
         ואני מאשרת את החנות ידנית.
       </p>
+      {/* הבלבול הכי סביר כאן הוא בין שני סוגי הכסף. אומרים את זה במפורש. */}
+      <div className="bg-[#F6FBF7] border border-[#CBE8D4] rounded-xl p-3 mb-3 text-[12.5px] leading-relaxed">
+        <span className="font-bold">שני דברים נפרדים לגמרי:</span>
+        <br />
+        התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת החנות.
+        <br />
+        הכסף שקונות משלמות לך על מוצרים עובר <b>ישירות אלייך</b> — בביט או במזומן, איך
+        שתבחרי בהגדרות. אנחנו לא רואות אותו ולא לוקחות ממנו אגורה.
+      </div>
       <div className="flex flex-col gap-2">
         {bitUrl && (
           <a href={bitUrl} target="_blank" rel="noreferrer" className={payBtn}>

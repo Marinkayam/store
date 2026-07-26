@@ -24,6 +24,12 @@ export interface Store {
   payment_method: string | null;
   payment_ref: string | null;
   payment_amount: number | null;
+  // payout_* = איך הקונה משלמת לילדה. אין לזה קשר ל-payment_* שלמעלה,
+  // שהן התשלום החד-פעמי לדוכן על הקמת החנות.
+  payout_bit: boolean;
+  payout_paybox: boolean;
+  payout_cash: boolean;
+  payout_note: string | null;
   referred_by: string | null;
   referral_source: string | null;
   ref_clicks: number;
@@ -77,6 +83,11 @@ export interface PublicStore {
   theme: ThemeKey;
   cover_key: string | null;
   avatar_key: string | null;
+  // שמות אמצעי תשלום בלבד — אין כאן מספר טלפון ואין פרטי חשבון
+  payout_bit: boolean;
+  payout_paybox: boolean;
+  payout_cash: boolean;
+  payout_note: string | null;
 }
 
 export interface PublicProduct {

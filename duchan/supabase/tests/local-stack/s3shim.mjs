@@ -1,6 +1,6 @@
 // שים S3 מינימלי במקום R2 לבדיקות: PUT שומר, GET מגיש. חתימות לא נבדקות.
 import http from "http";
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, statSync } from "fs";
 import { dirname, join, normalize } from "path";
 
 const ROOT = process.env.S3_ROOT ?? "/var/lib/pgtest/s3data";
@@ -37,7 +37,8 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === "GET") {
-    if (!existsSync(file)) { res.writeHead(404, cors); return res.end(); }
+    // GET על תיקייה (למשל "/" בבדיקת בריאות) — 404, לא קריסה של השים
+    if (!existsSync(file) || statSync(file).isDirectory()) { res.writeHead(404, cors); return res.end(); }
     const ct = existsSync(file + ".ct") ? readFileSync(file + ".ct", "utf8") : "application/octet-stream";
     const data = readFileSync(file);
     res.writeHead(200, { ...cors, "Content-Type": ct, "Content-Length": data.length });
