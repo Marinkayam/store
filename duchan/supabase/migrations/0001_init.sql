@@ -56,13 +56,16 @@ create index on products (store_id) where deleted_at is null;
 create index on orders   (store_id, created_at desc);
 create index on orders   (store_id, ip_hash, created_at);
 
--- מספור הזמנות — atomic, לא count()+1
+-- מספור הזמנות — atomic, לא count()+1.
+-- advisory lock פר חנות: PostgreSQL אוסר FOR UPDATE על אגרגט (max),
+-- והנעילה מסדרת שתי הזמנות בו-זמניות באותה חנות.
 create or replace function next_order_number(p_store uuid)
 returns int language plpgsql as $$
 declare n int;
 begin
+  perform pg_advisory_xact_lock(hashtextextended(p_store::text, 0));
   select coalesce(max(order_number),0)+1 into n
-    from orders where store_id = p_store for update;
+    from orders where store_id = p_store;
   return n;
 end $$;
 

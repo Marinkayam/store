@@ -83,23 +83,15 @@ export async function POST(req: NextRequest) {
     total += p.price * qty;
   }
 
-  const { data: orderNumber, error: numErr } = await db.rpc("next_order_number", {
+  // מספור + כתיבה בטרנזקציה אחת — שתי קונות בו-זמניות מקבלות מספרים שונים
+  const { data: orderNumber, error: orderErr } = await db.rpc("place_order", {
     p_store: store.id,
+    p_items: snapshot,
+    p_total: total,
+    p_note: note?.slice(0, 200) || null,
+    p_ip_hash: ipHash,
   });
-  if (numErr || typeof orderNumber !== "number") {
-    return NextResponse.json({ error: "משהו השתבש, נסי שוב" }, { status: 500 });
-  }
-
-  const { error: insErr } = await db.from("orders").insert({
-    store_id: store.id,
-    order_number: orderNumber,
-    items: snapshot,
-    total,
-    buyer_note: note?.slice(0, 200) || null,
-    status: "sent",
-    ip_hash: ipHash,
-  });
-  if (insErr) {
+  if (orderErr || typeof orderNumber !== "number") {
     return NextResponse.json({ error: "משהו השתבש, נסי שוב" }, { status: 500 });
   }
 

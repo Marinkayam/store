@@ -84,6 +84,19 @@ lib/
 supabase/migrations/         # מיגרציות רק מוסיפות
 ```
 
+## בדיקות DB (רצות על Postgres מקומי, בלי Supabase)
+
+`supabase/tests/` מכיל חבילת בדיקות שאומתה על PostgreSQL 16:
+
+```bash
+psql -d duchan -f supabase/tests/00-auth-stub.sql        # סימולציית סכמת auth
+psql -d duchan -f supabase/migrations/0001_init.sql      # ... וכל המיגרציות בסדר
+psql -d duchan -f supabase/tests/db-tests.sql            # 11 קבוצות בדיקה
+node  supabase/tests/concurrency.mjs                     # 15 הזמנות בו-זמניות
+```
+
+מכוסה: מספור אטומי פר חנות · ניכוי מלאי ב"שולם" (פעם אחת בלבד) · החזרת מלאי בביטול · בדיקות בעלות ב-security definer · מלאי לא יורד מתחת לאפס · בידוד RLS בין חנויות · אנונימי לא רואה כלום · `place_order` תחת עומס מקבילי.
+
 ## פיצ'רי ניהול (מעבר לבסיס)
 
 - **מצב חופשה** — השהיה/פתיחה של החנות מההגדרות (blocked שמור לאדמין)
