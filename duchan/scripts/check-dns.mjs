@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+/**
+ * בודק שהדומיין באמת מוגדר נכון. להריץ מהמחשב שלך, לא מהשרת.
+ *
+ *   npm run check:dns duchan.app
+ *
+ * DNS נכשל בשקט: הכל "נראה" תקין, ואז התצוגה המקדימה בוואטסאפ יוצאת ריקה
+ * או שהדפדפן נכנס ללולאת הפניות. הסקריפט הזה אומר איפה בדיוק זה נתקע.
+ */
+import { promises as dns } from "node:dns";
+
+const domain = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || "")
+  .replace(/^https?:\/\//, "")
+  .replace(/\/.*$/, "");
+
+if (!domain) {
+  console.error("שימוש:  npm run check:dns duchan.app");
+  process.exit(1);
+}
+
+const results = [];
+const ok = (n, d = "") => results.push({ ok: true, n, d });
+const bad = (n, d = "") => results.push({ ok: false, n, d });
+const warn = (n, d = "") => results.push({ warn: true, n, d });
+
+/* ── 1. Nameservers ── */
+try {
+  const ns = await dns.resolveNs(domain);
+  const cf = ns.some((h) => h.endsWith("ns.cloudflare.com"));
+  cf
+    ? ok("nameservers מצביעים ל-Cloudflare", ns.join(", "))
+    : bad(
+        "nameservers עדיין לא ב-Cloudflare",
+        `${ns.join(", ")} → ב-GoDaddy: My Products → ${domain} → DNS → Nameservers → Change → I'll use my own`
+      );
+} catch (e) {
+  bad("אין רשומות NS", `${e.code} — אולי ההפצה עוד לא הסתיימה (עד 24 שעות)`);
+}
+
+/* ── 2. הדומיין נפתר ── */
+for (const host of [domain, `www.${domain}`, `media.${domain}`]) {
+  try {
+    const a = await dns.resolve4(host).catch(() => dns.resolve6(host));
+    ok(`${host} נפתר`, a.slice(0, 2).join(", "));
+  } catch {
+    const label = host.startsWith("media.")
+      ? "R2 → Settings → Public access → Connect a domain"
+      : "Cloudflare Pages → Custom domains";
+    bad(`${host} לא נפתר`, label);
+  }
+}
+
+/* ── 3. HTTPS ── */
+// ל-.app אין HTTP בכלל (HSTS preload), אז כישלון כאן הוא חסימה מלאה ולא אזהרה.
+try {
+  const res = await fetch(`https://${domain}`, { redirect: "follow" });
+  res.ok
+    ? ok(`https://${domain} עונה`, `HTTP ${res.status}`)
+    : warn(`https://${domain} החזיר ${res.status}`, "האתר עוד לא פרוס?");
+
+  const hsts = res.headers.get("strict-transport-security");
+  hsts ? ok("כותרת HSTS", hsts) : warn("אין כותרת HSTS", "לא קריטי — .app אכוף בדפדפן ממילא");
+} catch (e) {
+  const hint = /certificate|SSL|TLS/i.test(e.message)
+    ? "תעודה לא תקינה. ב-Cloudflare: SSL/TLS → Full (strict). Flexible יוצר לולאת הפניות."
+    : e.message;
+  bad(`https://${domain} נכשל`, hint);
+}
+
+/* ── 4. הסביבה מסכימה עם המציאות ── */
+const siteEnv = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+if (siteEnv && siteEnv !== `https://${domain}`) {
+  bad(
+    "NEXT_PUBLIC_SITE_URL לא תואם",
+    `${siteEnv} ≠ https://${domain} — הכרטיס בוואטסאפ יצביע לדומיין הלא נכון`
+  );
+} else if (siteEnv) {
+  ok("NEXT_PUBLIC_SITE_URL תואם");
+}
+
+/* ── 5. סיכום ── */
+console.log("");
+for (const r of results) {
+  console.log(`${r.ok ? "✓" : r.warn ? "!" : "✗"}  ${r.n}${r.d ? " — " + r.d : ""}`);
+}
+const failed = results.filter((r) => !r.ok && !r.warn);
+console.log(
+  failed.length
+    ? `\n${failed.length} בעיות. תקני והריצי שוב.`
+    : "\nהדומיין מוגדר נכון ✓  אפשר להמשיך ל-npm run check"
+);
+process.exit(failed.length ? 1 : 0);

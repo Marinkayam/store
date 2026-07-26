@@ -153,6 +153,19 @@ npm run check
 
 Cloudflare מנפיק תעודת TLS לבד. הפצת DNS לוקחת דקות עד שעה.
 
+**ב-SSL/TLS חייב להיות `Full (strict)`.** `Flexible` יוצר לולאת הפניות אינסופית
+מול Pages, וב-`.app` אין fallback ל-HTTP שיסתיר את זה.
+
+### בדיקה שההגדרה תפסה
+
+```bash
+npm run check:dns duchan.app
+```
+
+בודק ש-nameservers מצביעים ל-Cloudflare, שהדומיין ו-`www` ו-`media` נפתרים,
+שה-HTTPS עונה עם תעודה תקינה, ושה-`NEXT_PUBLIC_SITE_URL` תואם למציאות.
+כל כשל מודפס עם המסך המדויק שבו מתקנים אותו.
+
 ---
 
 ## 7. קרון יומי — חובה בתוכנית החינמית
