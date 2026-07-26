@@ -2,10 +2,11 @@ import "server-only";
 import { cache } from "react";
 import { supabaseAdmin } from "./supabase/admin";
 import type { PublicStore, PublicProduct } from "./types";
+import { bestSellerOf } from "./badges";
 
 /** לחנות שלא הופעלה יש מסך משלה — היא בהכנה, לא סגורה. */
 export type PublicStoreResult =
-  | { state: "live"; store: PublicStore; products: PublicProduct[] }
+  | { state: "live"; store: PublicStore; products: PublicProduct[]; bestSellerId: string | null }
   | { state: "pending"; name: string; emoji: string }
   | { state: "closed" };
 
@@ -34,13 +35,23 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
 
   const { data: products } = await db
     .from("products")
-    .select("id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, option_label, options")
+    .select("id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, option_label, options, badge, created_at")
     .eq("store_id", store.id)
     .is("deleted_at", null)
     .or("is_visible.is.null,is_visible.eq.true") // null = מוצג (שורות ותיקות)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
+  // "הכי נמכר" נגזר מהזמנות ששולמו בלבד — ראה ההסבר ב-lib/badges.ts
+  const { data: sold } = await db
+    .from("orders")
+    .select("items")
+    .eq("store_id", store.id)
+    .in("status", ["paid", "delivered"]);
+
+  const list = (products ?? []) as PublicProduct[];
+  const bestSellerId = bestSellerOf(sold ?? [], list);
+
   const { id: _id, status: _status, activated_at: _act, ...pub } = store;
-  return { state: "live", store: pub as PublicStore, products: (products ?? []) as PublicProduct[] };
+  return { state: "live", store: pub as PublicStore, products: list, bestSellerId };
 });

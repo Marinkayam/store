@@ -17,6 +17,7 @@ import {
 import { uploadBlob } from "@/lib/upload-client";
 import { QUOTAS } from "@/lib/quotas";
 import type { Product } from "@/lib/types";
+import { PICKABLE } from "@/lib/badges";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -31,6 +32,7 @@ interface EditState {
   isVisible: boolean;
   optionLabel: string;   // "צבע" · "מידה" — ריק = אין אפשרויות
   optionsText: string;   // "ורוד, כחול, צהוב" — נשמר כמערך
+  badge: "rare" | "sale" | null;
   imageKey: string | null;
   videoKey: string | null;
   posterKey: string | null;
@@ -51,6 +53,7 @@ const EMPTY_EDIT: EditState = {
   isVisible: true,
   optionLabel: "",
   optionsText: "",
+  badge: null,
   imageKey: null,
   videoKey: null,
   posterKey: null,
@@ -180,6 +183,7 @@ export default function ProductsPage() {
         trackStock: p.track_stock,
         optionLabel: p.option_label ?? "",
         optionsText: (p.options ?? []).join(", "),
+        badge: p.badge ?? null,
         stock: p.stock,
         isVisible: p.is_visible !== false,
         imageKey: p.image_key,
@@ -382,6 +386,7 @@ export default function ProductsPage() {
         track_stock: edit.trackStock,
         option_label: optionValues.length ? edit.optionLabel.trim() || "בחרי" : null,
         options: optionValues.length ? optionValues : null,
+        badge: edit.badge,
         stock: Math.max(0, edit.stock),
         is_visible: edit.isVisible,
         image_key: imageKey,
@@ -441,6 +446,7 @@ export default function ProductsPage() {
       track_stock: src.track_stock,
       option_label: src.option_label,
       options: src.options,
+      badge: src.badge,
       stock: src.stock,
       is_visible: src.is_visible,
       image_key: src.image_key,
@@ -756,6 +762,28 @@ export default function ProductsPage() {
                 מפרידים בפסיק. הקונה תבחר אחת לפני שהיא מוסיפה לסל.
               </p>
             )}
+
+            {/* תגיות. רק שתיים לבחירה — השאר מחושבות מהמכירות ומהמלאי, וזה
+                בכוונה: "הכי נמכר" שאפשר להדביק הוא מדבקה, לא הישג. */}
+            <label className="block text-[11px] text-[#7A7D8A] mb-1">תגית (לא חובה)</label>
+            <div className="flex gap-2 mb-1">
+              {PICKABLE.map((b) => (
+                <button
+                  key={b.key}
+                  onClick={() => setEdit((s) => s && { ...s, badge: s.badge === b.key ? null : b.key })}
+                  className={`flex-1 rounded-lg border py-2 text-[12.5px] transition ${
+                    edit.badge === b.key
+                      ? "border-[#15161B] bg-[#15161B] text-white font-bold"
+                      : "border-[#E6E7EC] bg-white"
+                  }`}
+                >
+                  {b.emoji} {b.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#A2A5B0] mb-3 leading-relaxed">
+              ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי מופיעות לבד, לפי מה שבאמת קורה בחנות.
+            </p>
 
             <div className="flex justify-between items-center border border-[#E6E7EC] rounded-lg px-3 py-2.5 mb-3">
               <span className="text-[13px]">מוצג בחנות</span>

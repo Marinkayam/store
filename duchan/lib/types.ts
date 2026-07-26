@@ -53,12 +53,14 @@ export interface Product {
   sort_order: number;
   option_label: string | null; // "צבע" · "מידה" · null = אין אפשרויות
   options: string[] | null;
+  badge: "rare" | "sale" | null; // תגית שהילדה בחרה. המחושבות נגזרות בקריאה.
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
   created_at: string;
 }
 
 export interface OrderItem {
+  id?: string; // מזהה המוצר. נוסף ב-0014 לחישוב "הכי נמכר"; חסר בהזמנות ותיקות.
   name: string;
   qty: number;
   price: number;
@@ -106,4 +108,6 @@ export interface PublicProduct {
   sort_order: number;
   option_label: string | null;
   options: string[] | null;
+  badge: "rare" | "sale" | null;
+  created_at: string; // דרוש לתגית "חדש"
 }

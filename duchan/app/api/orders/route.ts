@@ -95,7 +95,9 @@ export async function POST(req: NextRequest) {
       option = item.option;
     }
 
-    snapshot.push({ name: p.name, qty, price: p.price, ...(option ? { option } : {}) });
+    // המזהה נשמר כדי שתגית "הכי נמכר" תוכל להיגזר מהזמנות אמיתיות.
+    // השם לבדו נשבר ברגע שילדה משנה שם מוצר.
+    snapshot.push({ id: p.id, name: p.name, qty, price: p.price, ...(option ? { option } : {}) });
     total += p.price * qty;
   }
 

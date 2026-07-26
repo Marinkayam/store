@@ -95,7 +95,7 @@ export default async function StorePage({ params }: Props) {
 
   return (
     <div style={themeCssVars(theme) as React.CSSProperties}>
-      <StoreView store={data.store} products={data.products} />
+      <StoreView store={data.store} products={data.products} bestSellerId={data.bestSellerId} />
       {/* הלולאה: מי שראתה חנות של חברה יכולה לפתוח אחת משלה, והשיוך נשמר */}
       <OpenYourOwn slug={data.store.slug} />
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { payoutOrderLine, payoutSummary } from "@/lib/payouts";
+import { BADGES, badgeFor } from "@/lib/badges";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 
 interface CartLine {
@@ -20,9 +21,11 @@ const lineKey = (id: string, option?: string) => `${id}\u0000${option ?? ""}`;
 export default function StoreView({
   store,
   products,
+  bestSellerId,
 }: {
   store: PublicStore;
   products: PublicProduct[];
+  bestSellerId: string | null;
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [current, setCurrent] = useState<PublicProduct | null>(null);
@@ -288,14 +291,25 @@ export default function StoreView({
                     <span className="absolute inset-x-0 top-1/4 z-10 bg-[#15161B]/80 text-white text-[13px] font-bold text-center py-1.5 tracking-wide">
                       אזל
                     </span>
-                  ) : p.track_stock && p.stock <= 3 ? (
-                    <span
-                      className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
-                    >
-                      נשארו {p.stock}
-                    </span>
-                  ) : null}
+                  ) : (
+                    (() => {
+                      // תגית אחת לכרטיס, לפי סדר עדיפות. שלוש תגיות ברשת של
+                      // שתי עמודות הופכות את כולן לרעש. הצבע קבוע לכל תגית
+                      // ולא נגזר מהערכה — "מבצע" חייב להיראות אותו דבר בכל
+                      // חנות, אחרת הוא מפסיק להיות שפה משותפת בין החנויות.
+                      const key = badgeFor(p, bestSellerId);
+                      if (!key) return null;
+                      const b = BADGES[key];
+                      return (
+                        <span
+                          className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
+                          style={{ background: b.bg, color: b.fg }}
+                        >
+                          {b.emoji} {b.label}
+                        </span>
+                      );
+                    })()
+                  )}
                   <div
                     className="h-32 flex items-center justify-center text-5xl overflow-hidden"
                     style={{ background: "var(--s-thumb)" }}
