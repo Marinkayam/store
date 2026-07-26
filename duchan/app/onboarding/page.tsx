@@ -371,6 +371,12 @@ export default function Onboarding() {
           >
             {busy ? "שומרים…" : "שמירה ופתיחת החנות 🎉"}
           </button>
+          <p className="text-[11px] text-[#7A7D8A] text-center leading-relaxed">
+            בלחיצה על שמירה את מאשרת את{" "}
+            <a href="/terms" target="_blank" className="underline">תנאי השימוש</a>
+            {" "}ואת{" "}
+            <a href="/privacy" target="_blank" className="underline">מדיניות הפרטיות</a>
+          </p>
         </div>
       )}
 

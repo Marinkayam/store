@@ -236,6 +236,8 @@ export default function StoreView({
           <a href="/" className="underline">
             נבנתה בדוכן
           </a>
+          {" · "}
+          <a href="/terms" className="underline">תנאים</a>
         </p>
       </div>
 

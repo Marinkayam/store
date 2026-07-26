@@ -50,6 +50,11 @@ export default function Landing() {
       <a href="/login" className="text-xs text-[#7A7D8A] underline">
         כבר יש לי חנות
       </a>
+      <p className="text-[11px] text-[#A2A5B0]">
+        <a href="/terms" className="underline">תנאי שימוש</a>
+        {" · "}
+        <a href="/privacy" className="underline">מדיניות פרטיות</a>
+      </p>
     </main>
   );
 }
