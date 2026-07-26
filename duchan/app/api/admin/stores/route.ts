@@ -53,18 +53,30 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "אין גישה" }, { status: 403 });
 
-  let body: { storeId?: string; status?: string };
+  let body: { storeId?: string; status?: string; aiEnabled?: boolean; aiCredits?: number | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
+  if (!body.storeId) return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
 
-  if (!body.storeId || !["active", "paused", "blocked"].includes(body.status ?? "")) {
-    return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
+  const patch: Record<string, unknown> = {};
+  if (body.status !== undefined) {
+    if (!["active", "paused", "blocked"].includes(body.status)) {
+      return NextResponse.json({ error: "סטטוס לא תקין" }, { status: 400 });
+    }
+    patch.status = body.status;
+  }
+  if (body.aiEnabled !== undefined) patch.ai_enabled = body.aiEnabled;
+  if (body.aiCredits !== undefined) {
+    patch.ai_credits = body.aiCredits === null ? null : Math.max(0, Math.floor(body.aiCredits));
+  }
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: "אין מה לעדכן" }, { status: 400 });
   }
 
   const db = supabaseAdmin();
-  await db.from("stores").update({ status: body.status }).eq("id", body.storeId);
+  await db.from("stores").update(patch).eq("id", body.storeId);
   return NextResponse.json({ ok: true });
 }

@@ -19,6 +19,8 @@ export interface Store {
   parent_email: string | null; // האימייל של החשבון (משמש למכסת 3 חנויות לאימייל)
   status: StoreStatus;
   claim_token: string | null;
+  ai_enabled: boolean | null;
+  ai_credits: number | null;
   media_bytes: number;
   created_at: string;
 }

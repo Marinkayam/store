@@ -75,6 +75,9 @@ export default function ProductsPage() {
   const photoRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
+  // כתיבה אוטומטית (פרימיום)
+  const [aiBusy, setAiBusy] = useState(false);
+
   const showToast = (m: string) => {
     setToast(m);
     setTimeout(() => setToast(""), 2600);
@@ -89,6 +92,46 @@ export default function ProductsPage() {
       body: JSON.stringify({ slug: store.slug }),
     }).catch(() => {});
   };
+
+  /** מבקש מה-AI תיאור למוצר על סמך התמונה שבעורך */
+  async function writeDescription() {
+    if (!edit || !store || aiBusy) return;
+    const blob = edit.pendingImage;
+    if (!blob) {
+      showToast("קודם מוסיפים תמונה");
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const base64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res((r.result as string).split(",")[1] ?? "");
+        r.onerror = rej;
+        r.readAsDataURL(blob);
+      });
+      const resp = await fetch("/api/ai/describe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storeId: store.id,
+          imageBase64: base64,
+          mediaType: blob.type,
+          productName: edit.name,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        showToast(data.error ?? "לא הצלחנו לכתוב תיאור");
+        return;
+      }
+      setEdit((e) => e && { ...e, description: data.description });
+      showToast("כתבנו תיאור — אפשר לשנות אותו");
+    } catch {
+      showToast("אין חיבור — נסי שוב");
+    } finally {
+      setAiBusy(false);
+    }
+  }
 
   const refresh = useCallback(async () => {
     if (!store) return;
@@ -552,6 +595,7 @@ export default function ProductsPage() {
 
       <button
         onClick={() => openEditor(null)}
+        aria-label="מוצר חדש"
         className="fixed bottom-20 left-4 w-12 h-12 rounded-full bg-[#15161B] text-white text-2xl font-light shadow-lg z-30"
       >
         +
@@ -614,7 +658,15 @@ export default function ProductsPage() {
               onChange={(e) => setEdit((s) => s && { ...s, name: e.target.value })}
               className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3" />
 
-            <label className="block text-[11px] text-[#7A7D8A] mb-1">תיאור קצר</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] text-[#7A7D8A]">תיאור קצר</label>
+              {store.ai_enabled && edit.pendingImage && (
+                <button onClick={writeDescription} disabled={aiBusy}
+                  className="text-[11px] text-[#15161B] border border-[#E6E7EC] rounded-lg px-2 py-1 disabled:opacity-50">
+                  {aiBusy ? "כותבים…" : "✨ כתבי לי תיאור"}
+                </button>
+              )}
+            </div>
             <textarea value={edit.description} maxLength={120} rows={2} placeholder="רך במיוחד, חוזר לאט"
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
               className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3 resize-none" />

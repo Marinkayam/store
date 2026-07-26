@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { displayPhone } from "@/lib/phone";
+import { milestones, reachedCount } from "@/lib/milestones";
 
 /* ---------- types ---------- */
 
@@ -31,6 +32,8 @@ interface AdminStore {
   parent_email: string | null;
   claim_token: string | null;
   media_bytes: number;
+  ai_enabled: boolean | null;
+  ai_credits: number | null;
   created_at: string;
   products: number;
   deletedProducts: number;
@@ -155,6 +158,17 @@ export default function AdminView() {
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
     showToast(status === "active" ? "החנות הופעלה" : status === "paused" ? "החנות הושהתה" : "החנות נחסמה");
+  }
+
+  async function setAi(storeId: string, aiEnabled: boolean, aiCredits?: number | null) {
+    await fetch("/api/admin/stores", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storeId, aiEnabled, aiCredits }),
+    });
+    refresh();
+    if (detail?.store.id === storeId) openDetail(storeId);
+    showToast(aiEnabled ? "כתיבה אוטומטית הופעלה ✨" : "כתיבה אוטומטית כובתה");
   }
 
   async function restoreProduct(productId: string, storeId: string) {
@@ -283,6 +297,13 @@ export default function AdminView() {
                         {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{s.revenue}
                         {s.ordersNew > 0 && <b className="text-[#A85B00]"> · {s.ordersNew} חדשות</b>}
                       </div>
+                      <div className="text-[11px] text-[#7A7D8A] mt-0.5">
+                        🎯 מסע: {reachedCount(milestones({
+                          products: s.products, orders: s.ordersTotal, paidOrders: s.ordersPaid,
+                          revenue: s.revenue, views: s.viewsTotal,
+                        }))}/7
+                        {s.ai_enabled && <span className="text-[#1F7A42]"> · ✨ פרימיום</span>}
+                      </div>
                     </div>
                     <span className="text-[#7A7D8A]">‹</span>
                   </div>
@@ -406,6 +427,46 @@ export default function AdminView() {
                 🔗 החנות עוד לא נתבעה — לחיצה מעתיקה את לינק התביעה
               </button>
             )}
+
+            {/* מסע + פרימיום */}
+            <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">
+              <div className="text-[11px] text-[#7A7D8A] mb-2">המסע שלה</div>
+              <div className="flex flex-wrap gap-1.5">
+                {milestones({
+                  products: detail.store.products, orders: detail.store.ordersTotal,
+                  paidOrders: detail.store.ordersPaid, revenue: detail.store.revenue,
+                  views: detail.store.viewsTotal,
+                }).map((ms) => (
+                  <span key={ms.key} title={ms.title}
+                    className={`text-[11px] px-2 py-1 rounded-lg border ${ms.reached ? "bg-[#F6FBF7] border-[#CBE8D4]" : "bg-white border-[#E6E7EC] opacity-50"}`}>
+                    <span className={ms.reached ? "" : "grayscale"}>{ms.emoji}</span> {ms.title}
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#E6E7EC]">
+                <span className="text-[12px] flex-1">
+                  ✨ כתיבה אוטומטית (פרימיום)
+                  {detail.store.ai_enabled && (
+                    <span className="text-[#7A7D8A]">
+                      {" · "}{detail.store.ai_credits === null ? "ללא הגבלה" : `${detail.store.ai_credits} נשארו`}
+                    </span>
+                  )}
+                </span>
+                {detail.store.ai_enabled ? (
+                  <>
+                    <button onClick={() => setAi(detail.store.id, true, (detail.store.ai_credits ?? 0) + 50)}
+                      className="border border-[#E6E7EC] bg-white rounded-lg px-2.5 py-1.5 text-[11px]">+50</button>
+                    <button onClick={() => setAi(detail.store.id, false)}
+                      className="border border-[#E6E7EC] bg-white rounded-lg px-2.5 py-1.5 text-[11px]">כיבוי</button>
+                  </>
+                ) : (
+                  <button onClick={() => setAi(detail.store.id, true, 50)}
+                    className="bg-[#15161B] text-white rounded-lg px-3 py-1.5 text-[11px] font-medium">
+                    הפעלה · 50 תיאורים
+                  </button>
+                )}
+              </div>
+            </div>
 
             {/* כניסות 14 יום */}
             <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">

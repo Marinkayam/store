@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore, confettiBurst } from "./use-store";
 import WhatsNew from "./whats-new";
+import Journey from "./journey";
 import type { Order } from "@/lib/types";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
@@ -160,6 +161,8 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
+
+      <Journey store={store} />
 
       {/* הקופה שלי */}
       {revenue > 0 && (
