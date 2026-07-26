@@ -32,7 +32,9 @@ export default function Landing() {
     if (!name.trim()) return;
     sessionStorage.setItem(
       "duchan-draft",
-      JSON.stringify({ displayName: name.trim(), step: 2, ref })
+      // step 1 ולא 2: השם עובר מכאן, אבל התמונה והרקע עדיין לפניה.
+      // עם step 2 היא הייתה מדלגת על כל מסך הזהות בלי לדעת שהוא קיים.
+      JSON.stringify({ displayName: name.trim(), step: 1, ref })
     );
     router.push("/onboarding");
   }

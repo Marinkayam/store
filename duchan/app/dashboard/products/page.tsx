@@ -168,6 +168,19 @@ export default function ProductsPage() {
     refresh();
   }, [refresh]);
 
+  /**
+   * ?new=1 — הגעה ישירה מסוף פתיחת הדוכן. פותח את העורך מיד, כדי שהמשפט
+   * "בואי נוסיף את המוצר הראשון שלך" יימשך לפעולה ולא למסך רשימה ריק.
+   */
+  const [autoOpened, setAutoOpened] = useState(false);
+  useEffect(() => {
+    if (autoOpened || !store) return;
+    if (new URLSearchParams(window.location.search).get("new") !== "1") return;
+    setAutoOpened(true);
+    setEdit({ ...EMPTY_EDIT });
+    window.history.replaceState({}, "", "/dashboard/products");
+  }, [store, autoOpened]);
+
   /* ---------- טיוטות ---------- */
   const draftKey = (id: string | null) => `duchan-product-draft-${id ?? "new"}`;
 
