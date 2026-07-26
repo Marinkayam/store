@@ -3,7 +3,7 @@
 // העלאה ל-R2 דרך presigned URL מ-/api/upload. השרת מאמת בעלות ומכסה.
 
 export async function uploadBlob(
-  kind: "image" | "video" | "poster" | "cover",
+  kind: "image" | "video" | "poster" | "cover" | "avatar",
   blob: Blob
 ): Promise<{ key: string } | { error: string }> {
   const contentType = blob.type || "application/octet-stream";

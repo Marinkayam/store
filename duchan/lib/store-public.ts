@@ -13,7 +13,7 @@ export const getPublicStore = cache(
 
     const { data: store } = await db
       .from("stores")
-      .select("id, slug, display_name, emoji, tagline, theme, cover_key, status")
+      .select("id, slug, display_name, emoji, tagline, theme, cover_key, avatar_key, status")
       .eq("slug", slug)
       .maybeSingle();
 

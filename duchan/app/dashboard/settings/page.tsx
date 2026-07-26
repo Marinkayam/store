@@ -22,7 +22,9 @@ export default function SettingsPage() {
   const [toast, setToast] = useState("");
   const [dirty, setDirty] = useState(false);
   const coverRef = useRef<HTMLInputElement>(null);
+  const avatarRef = useRef<HTMLInputElement>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (!store) return;
@@ -32,6 +34,7 @@ export default function SettingsPage() {
     setTheme(store.theme);
     setPhone(displayPhone(store.contact_phone));
     setCoverPreview(mediaUrl(store.cover_key));
+    setAvatarPreview(mediaUrl(store.avatar_key));
   }, [store]);
 
   const showToast = (m: string) => {
@@ -79,6 +82,30 @@ export default function SettingsPage() {
     setCoverPreview(URL.createObjectURL(blob));
     setStore({ ...store, cover_key: r.key });
     showToast("תמונת הקאבר עודכנה");
+  }
+
+  async function onAvatar(file: File) {
+    if (!store) return;
+    const blob = await squareImage(file, 400);
+    const r = await uploadBlob("avatar", blob);
+    if ("error" in r) {
+      showToast(r.error);
+      return;
+    }
+    const supa = supabaseBrowser();
+    await supa.from("stores").update({ avatar_key: r.key }).eq("id", store.id);
+    setAvatarPreview(URL.createObjectURL(blob));
+    setStore({ ...store, avatar_key: r.key });
+    showToast("תמונת הפרופיל עודכנה");
+  }
+
+  async function removeAvatar() {
+    if (!store) return;
+    const supa = supabaseBrowser();
+    await supa.from("stores").update({ avatar_key: null }).eq("id", store.id);
+    setAvatarPreview(null);
+    setStore({ ...store, avatar_key: null });
+    showToast("חזרנו לאמוג'י");
   }
 
   async function logout() {
@@ -153,8 +180,8 @@ export default function SettingsPage() {
             {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
           </div>
           <div className="text-center -mt-5 pb-3">
-            <span className="inline-flex w-10 h-10 rounded-full items-center justify-center text-xl shadow" style={{ background: t.surface }}>
-              {emoji}
+            <span className="inline-flex w-10 h-10 rounded-full items-center justify-center text-xl shadow overflow-hidden" style={{ background: t.surface }}>
+              {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
             </span>
             <div className="font-bold text-sm mt-1">{name || "החנות שלך"}</div>
             {tagline && <div className="text-[11px] opacity-70">{tagline}</div>}
@@ -195,11 +222,31 @@ export default function SettingsPage() {
         </label>
 
         <div>
-          <span className="text-[11px] text-[#7A7D8A]">האמוג'י של החנות</span>
+          <span className="text-[11px] text-[#7A7D8A]">תמונת פרופיל</span>
+          <input ref={avatarRef} type="file" accept="image/*" hidden
+            onChange={(e) => e.target.files?.[0] && onAvatar(e.target.files[0])} />
+          <div className="flex items-center gap-3 mt-1 bg-white border border-[#E6E7EC] rounded-xl p-2.5">
+            <div className="w-12 h-12 rounded-full bg-[#F5F6F9] flex items-center justify-center text-2xl overflow-hidden">
+              {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
+            </div>
+            <button onClick={() => avatarRef.current?.click()}
+              className="border border-[#E6E7EC] rounded-lg px-3 py-2 text-xs font-medium">
+              📷 העלאת תמונה
+            </button>
+            {avatarPreview && (
+              <button onClick={removeAvatar} className="text-xs text-[#7A7D8A] underline">
+                חזרה לאמוג'י
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <span className="text-[11px] text-[#7A7D8A]">או אמוג'י</span>
           <div className="flex gap-1.5 flex-wrap mt-1">
             {EMOJIS.map((e) => (
               <button key={e} onClick={() => { setEmoji(e); setDirty(true); }}
-                className={`w-9 h-9 rounded-lg border-[1.5px] bg-white text-lg ${emoji === e ? "border-[#15161B]" : "border-[#E6E7EC]"}`}>
+                className={`w-9 h-9 rounded-lg border-[1.5px] bg-white text-lg ${emoji === e && !avatarPreview ? "border-[#15161B]" : "border-[#E6E7EC]"}`}>
                 {e}
               </button>
             ))}

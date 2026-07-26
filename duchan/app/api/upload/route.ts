@@ -31,13 +31,13 @@ export async function POST(req: NextRequest) {
 
   const { kind, contentType, bytes } = body;
   if (
-    !kind || !["image", "video", "poster", "cover"].includes(kind) ||
+    !kind || !["image", "video", "poster", "cover", "avatar"].includes(kind) ||
     !contentType || !(contentType in EXT) ||
     !bytes || bytes <= 0 || bytes > QUOTAS.maxUploadBytes
   ) {
     return NextResponse.json({ error: "קובץ לא נתמך" }, { status: 400 });
   }
-  if ((kind === "image" || kind === "poster" || kind === "cover") && !IMAGE_TYPES.includes(contentType)) {
+  if (kind !== "video" && !IMAGE_TYPES.includes(contentType)) {
     return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });
   }
 
@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
   const key =
     kind === "cover"
       ? `${store.id}/cover.${EXT[contentType]}`
-      : `${store.id}/products/${randomUUID()}.${EXT[contentType]}`;
+      : kind === "avatar"
+        ? `${store.id}/avatar.${EXT[contentType]}`
+        : `${store.id}/products/${randomUUID()}.${EXT[contentType]}`;
 
   const url = await presignedUpload(key, contentType, bytes);
 

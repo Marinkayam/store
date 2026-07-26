@@ -12,6 +12,7 @@ export interface Store {
   tagline: string | null;
   theme: ThemeKey;
   cover_key: string | null;
+  avatar_key: string | null;
   contact_phone: string;
   parent_name: string | null;
   parent_phone: string | null;
@@ -65,6 +66,7 @@ export interface PublicStore {
   tagline: string | null;
   theme: ThemeKey;
   cover_key: string | null;
+  avatar_key: string | null;
 }
 
 export interface PublicProduct {

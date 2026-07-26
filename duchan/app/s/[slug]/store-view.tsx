@@ -155,10 +155,14 @@ export default function StoreView({
           {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
         </div>
         <div
-          className="absolute -bottom-7 right-1/2 translate-x-1/2 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg"
+          className="absolute -bottom-7 right-1/2 translate-x-1/2 w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg overflow-hidden"
           style={{ background: "var(--s-surface)" }}
         >
-          {store.emoji}
+          {mediaUrl(store.avatar_key) ? (
+            <img src={mediaUrl(store.avatar_key)!} alt="" className="w-full h-full object-cover" />
+          ) : (
+            store.emoji
+          )}
         </div>
       </div>
 
