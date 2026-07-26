@@ -11,7 +11,7 @@
 - **Next.js 15** (App Router) + TypeScript + Tailwind 4
 - **Supabase** — Postgres + Auth + RLS
 - **Cloudflare R2** — כל המדיה (egress חינם — זה מה שמחזיק את מודל העלות)
-- **Cloudflare Pages** — אירוח
+- **Vercel** — אירוח (Node runtime; ראי [`docs/deploy.md`](./docs/deploy.md))
 
 ## הקמה
 

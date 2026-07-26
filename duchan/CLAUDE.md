@@ -23,7 +23,7 @@ Next.js 15 (App Router) + TypeScript
 Tailwind
 Supabase          — Postgres + Auth + RLS
 Cloudflare R2     — כל המדיה (S3 API)
-Cloudflare Pages  — אירוח
+Vercel            — אירוח (ראה docs/deploy.md)
 ```
 
 **R2 ולא Supabase Storage.** ל-Supabase יש 5GB egress חינם — כ-1,000 צפיות בעמוד לחודש לכל החנויות ביחד. ב-R2 ה-egress חינם לחלוטין. זו לא העדפה, זו הדרישה שמחזיקה את מודל העלות.

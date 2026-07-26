@@ -3,7 +3,9 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { r2Client } from "@/lib/r2";
 
-// קרון יומי (Cloudflare Cron → GET עם Authorization: Bearer CRON_SECRET):
+// קרון יומי — GET עם Authorization: Bearer CRON_SECRET.
+// ב-Vercel זה מוגדר ב-vercel.json; היא שולחת את הכותרת הזו לבד כשקיים
+// משתנה סביבה בשם CRON_SECRET. אפשר גם Cloudflare Worker עם Cron Trigger.
 // 1. פינג ל-Supabase — פרויקטים חינמיים מושהים אחרי שבוע ללא פעילות
 // 2. ייצוא 3 הטבלאות ל-JSON ב-R2 — בתוכנית החינמית אין גיבוי אוטומטי
 

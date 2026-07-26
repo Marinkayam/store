@@ -10,7 +10,8 @@
 |---|---|---|
 | הדומיין `duchan.app` | GoDaddy | בדקי את **עמודת החידוש**, לא רק שנה ראשונה |
 | Supabase | supabase.com | חינם מספיק להתחלה |
-| Cloudflare (R2 + Pages + DNS) | cloudflare.com | חינם עד ~10GB אחסון |
+| Cloudflare (R2 + DNS) | cloudflare.com | חינם עד ~10GB אחסון |
+| Vercel (אירוח) | vercel.com | Hobby חינם |
 
 ### `.app` — HTTPS הוא חובה, לא המלצה
 
@@ -20,8 +21,7 @@
 - אין גישה ב-HTTP. בכלל. הדפדפן לא ינסה ואז ייפול ל-HTTPS — הוא פשוט יסרב.
 - תעודה לא תקינה או חסרה = מסך חסימה אדום, לא אזהרה שאפשר לדלג עליה.
 - **זה בדיוק מה שרוצים** למוצר שילדות שולחות בוואטסאפ: אין מצב שהלינק ייפתח
-  לא מוצפן. Cloudflare מנפיק את התעודה אוטומטית, אז אין כאן עבודה — רק לוודא
-  ב-SSL/TLS שהמצב הוא **Full (strict)** ולא Flexible.
+  לא מוצפן. התעודה מונפקת אוטומטית — ראי את הערת ה-DNS בסעיף 6.
 
 ### בקנייה ב-GoDaddy
 
@@ -39,7 +39,7 @@
   ההחזר), ולכל הפחות לכבות Auto-renew כדי שלא תתחדש ב-₪49. במקומה להדליק 2FA
   בחשבון: Account Settings → Login & PIN → 2-Step Verification.
 - **Microsoft 365 Email** (₪29/חודש בחידוש) — לא צריך. ראי למטה.
-- Website Builder / אירוח — האתר יושב על Cloudflare Pages. GoDaddy הוא רק הרשם.
+- Website Builder / אירוח — האתר יושב על Vercel. GoDaddy הוא רק הרשם.
 - WHOIS privacy — ב-`.app` פרטי הרישום ממילא מוסתרים לפי GDPR.
 
 ### אימייל על הדומיין — חינם, דרך Cloudflare
@@ -135,26 +135,47 @@ npm run check
 
 ---
 
-## 6. Cloudflare Pages
+## 6. אירוח — Vercel
 
-1. Workers & Pages → Create → Pages → חיבור ל-GitHub.
-2. Build command `npm run build` · Output `.next` · Root directory `duchan`.
-3. Framework preset: **Next.js**.
-4. Settings → Environment variables: כל מה שבסעיף 3, ל-Production.
-5. Custom domains → `duchan.app` + `www.duchan.app`.
+### למה לא Cloudflare Pages
 
-### רשומות ה-DNS
+Pages מריצה Next.js ב-edge runtime, ושתי נקודות קצה כאן מייבאות את `crypto` של
+Node: `app/api/orders/route.ts` (hash של IP למגבלת ההזמנות) ו-`app/api/upload/route.ts`
+(שמות קבצים). גם `@aws-sdk/client-s3` מכוון ל-Node. כדי לרוץ שם צריך להמיר ל-Web
+Crypto ולעבור למתאם OpenNext עם binding ל-KV בשביל ה-ISR — עבודה אמיתית, בלי
+תמורה למוצר.
+
+ב-Vercel הקוד רץ כמו שהוא: Node runtime, ISR ו-`revalidatePath` מהקופסה.
+**R2 נשאר ב-Cloudflare** — ה-egress החינמי שם הוא מה שמחזיק את מודל העלות,
+וזה לא משתנה. Cloudflare ממשיך לנהל DNS ואת `media.duchan.app`.
+
+### ההגדרה
+
+1. `vercel.com` → Sign up with **GitHub**.
+2. `Add New` → `Project` → לייבא את הריפו.
+3. **`Root Directory` → `duchan`.** בשורש הריפו יושב פרויקט אחר ואין שם
+   `package.json` — בלי זה הבנייה נכשלת מיד.
+4. Framework Preset: **Next.js** (מזוהה לבד). Build/Output/Install — ברירת מחדל.
+5. `Environment Variables` — כל מה שבסעיף 3.
+6. `Deploy`.
+
+**ענף ברירת המחדל בריפו אינו `main`.** לוודא ב-`Settings` → `Git` →
+`Production Branch` שהוא מצביע לענף עם הקוד, אחרת Vercel בונה פרויקט אחר.
+
+### רשומות ה-DNS (ב-Cloudflare)
 
 | Type | Name | Value | Proxy |
 |---|---|---|---|
-| CNAME | `@` | `<project>.pages.dev` | 🟠 מופעל |
-| CNAME | `www` | `<project>.pages.dev` | 🟠 מופעל |
+| A | `@` | `76.76.21.21` | ⬜ **DNS only** |
+| CNAME | `www` | `cname.vercel-dns.com` | ⬜ **DNS only** |
 | CNAME | `media` | (נוצר לבד ע"י R2) | 🟠 מופעל |
 
-Cloudflare מנפיק תעודת TLS לבד. הפצת DNS לוקחת דקות עד שעה.
+**הענן חייב להיות אפור (DNS only) על השתיים הראשונות.** עם פרוקסי כתום, Vercel
+לא מצליחה להנפיק תעודה, וב-`.app` — שאין בו fallback ל-HTTP — התוצאה היא דף
+שלא נטען בלי שום רמז לסיבה. את הערכים המדויקים Vercel נותנת במסך הוספת הדומיין;
+אם הם שונים ממה שכאן, ללכת לפי מה שהיא אומרת.
 
-**ב-SSL/TLS חייב להיות `Full (strict)`.** `Flexible` יוצר לולאת הפניות אינסופית
-מול Pages, וב-`.app` אין fallback ל-HTTP שיסתיר את זה.
+`media` נשאר מפורקס — הוא מוגש מ-R2, לא מ-Vercel.
 
 ### בדיקה שההגדרה תפסה
 
@@ -168,9 +189,13 @@ npm run check:dns duchan.app
 
 ---
 
-## 7. קרון יומי — חובה בתוכנית החינמית
+## 7. קרון יומי — גיבוי
 
-Workers & Pages → Create → Worker, עם Cron Trigger `0 3 * * *`:
+`duchan/vercel.json` (בריפו) מגדיר Cron יומי ב-03:00 שקורא ל-`/api/cron`.
+**Vercel שולחת `Authorization: Bearer $CRON_SECRET` לבד** כשקיים משתנה סביבה בשם
+`CRON_SECRET` — בדיוק מה שנקודת הקצה מצפה לו. אין מה להגדיר מעבר לזה.
+
+לחלופין, Cloudflare Worker עם Cron Trigger `0 3 * * *`:
 
 ```js
 export default {
@@ -182,8 +207,10 @@ export default {
 };
 ```
 
-עושה שני דברים: מגבה את הטבלאות ל-JSON ב-R2 (**לתוכנית החינמית של Supabase אין
-גיבוי אוטומטי**), ומחזיק את הפרויקט ער — פרויקט חינמי מושהה אחרי שבוע בלי פעילות.
+מייצא את הטבלאות ל-JSON ב-R2 — עותק שלא תלוי ב-Supabase בכלל.
+
+**בתוכנית בתשלום של Supabase יש כבר גיבוי יומי אוטומטי, והפרויקט לא נרדם.**
+הקרון הזה הוא שכבה שנייה, לא הכרח. בתוכנית החינמית הוא חובה משתי הסיבות.
 
 ---
 
