@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { THEMES, themeCssVars, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, MediaError } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import PhoneVerify from "../phone-verify";
 
 // אונבורדינג: בונים לפני שנרשמים. מצב הביניים חי ב-sessionStorage.
 //
@@ -56,9 +57,6 @@ export default function Onboarding() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   // שדות מסך השמירה — לא נשמרים ב-sessionStorage (סיסמה!)
-  const [contactPhone, setContactPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showDesc, setShowDesc] = useState(false);
 
   useEffect(() => {
@@ -90,31 +88,15 @@ export default function Onboarding() {
     reader.readAsDataURL(blob);
   }
 
+  /**
+   * נקרא אחרי שהטלפון אומת בסמס — בשלב הזה כבר יש סשן פתוח, ולכן אין כאן
+   * הרשמה: רק יצירת החנות. הטלפון עצמו נלקח בשרת מהמספר שאומת, לא מהלקוח.
+   */
   async function save() {
     setErr("");
-    if (password.length < 6) {
-      setErr("סיסמה של 6 תווים לפחות");
-      return;
-    }
     setBusy(true);
     try {
       const supa = supabaseBrowser();
-      const { error: signErr } = await supa.auth.signUp({
-        email: email.trim(),
-        password,
-      });
-      if (signErr) {
-        // אולי כבר רשומה — מנסים להתחבר
-        const { error: inErr } = await supa.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-        if (inErr) {
-          setErr("לא הצלחנו להירשם — אולי האימייל כבר רשום עם סיסמה אחרת");
-          return;
-        }
-      }
-
       const res = await fetch("/api/stores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,7 +104,6 @@ export default function Onboarding() {
           displayName: draft!.displayName,
           emoji: draft!.emoji,
           theme: draft!.theme,
-          contactPhone,
           ref: draft!.ref,
           firstProduct: draft!.product.name
             ? {
@@ -396,49 +377,22 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* 4 — שמירה */}
+      {/* 4 — שמירה. שדה אחד: המספר. אין מייל, אין סיסמה להמציא ולזכור. */}
       {draft.step === 4 && !result && (
         <div className="w-full flex flex-col gap-3">
-          <h1 className="text-lg font-bold text-center">עוד רגע והיא באוויר</h1>
-          <input
-            value={contactPhone}
-            onChange={(e) => setContactPhone(e.target.value)}
-            placeholder="הטלפון שלך (וואטסאפ)"
-            inputMode="tel"
-            dir="ltr"
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
-          />
-          {/* לפעמים הורה ממלא את הטופס. ההזמנות מגיעות למספר הזה — חייב להיות ברור. */}
-          <p className="text-[11px] text-[#7A7D8A] -mt-1.5 leading-relaxed">
-            לכאן יגיעו ההזמנות בוואטסאפ. אם הורה ממלא — זה המספר של הילדה, לא שלכם.
-            המספר לא מופיע בחנות ולא בקוד המקור.
-          </p>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="אימייל (איתו נכנסים לניהול)"
-            type="email"
-            dir="ltr"
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
-          />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="סיסמה (6 תווים לפחות)"
-            type="password"
-            dir="ltr"
-            className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm text-left"
-          />
-          {err && <p className="text-xs text-[#D2373B]">{err}</p>}
-          <button
-            disabled={busy || !contactPhone || !email || !password}
-            onClick={save}
-            className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-medium disabled:opacity-30"
-          >
-            {busy ? "שומרים…" : "שמירה ופתיחת החנות 🎉"}
-          </button>
+          {busy ? (
+            <p className="text-sm text-center py-10">שומרים את החנות…</p>
+          ) : (
+            <PhoneVerify
+              title="עוד רגע והיא באוויר"
+              subtitle="המספר שלך — לכאן יגיעו ההזמנות. אם הורה ממלא, זה המספר של הילדה."
+              cta="שלחו לי קוד"
+              onVerified={save}
+            />
+          )}
+          {err && <p className="text-xs text-[#D2373B] text-center">{err}</p>}
           <p className="text-[11px] text-[#7A7D8A] text-center leading-relaxed">
-            בלחיצה על שמירה את מאשרת את{" "}
+            בהמשך את מאשרת את{" "}
             <a href="/terms" target="_blank" className="underline">תנאי השימוש</a>
             {" "}ואת{" "}
             <a href="/privacy" target="_blank" className="underline">מדיניות הפרטיות</a>

@@ -25,6 +25,7 @@ if (existsSync(envPath)) {
 const results = [];
 const ok = (name, detail = "") => results.push({ ok: true, name, detail });
 const bad = (name, detail = "") => results.push({ ok: false, name, detail });
+const warn = (name, detail = "") => results.push({ warn: true, name, detail });
 
 /* ── 1. משתני סביבה ── */
 const REQUIRED = [
@@ -36,20 +37,37 @@ const REQUIRED = [
   "R2_SECRET_ACCESS_KEY",
   "R2_BUCKET",
   "NEXT_PUBLIC_R2_PUBLIC_URL",
-  "ADMIN_EMAILS",
   "CRON_SECRET",
   // כתיבה אוטומטית דלוקה לכל החנויות (מיגרציה 0011), ולכן המפתח כבר לא אופציונלי:
   // בלעדיו כל ילדה שתלחץ "כתבי לי תיאור" תקבל שגיאה.
   "ANTHROPIC_API_KEY",
+  // הכניסה כולה עוברת בסמס (מיגרציה 0013). בלי אלה אי אפשר להירשם בכלל.
+  "SMS4FREE_KEY",
+  "SMS4FREE_USER",
+  "SMS4FREE_PASS",
 ];
 const OPTIONAL = [
   "NEXT_PUBLIC_ACTIVATION_PRICE",
   "NEXT_PUBLIC_OWNER_WHATSAPP",
   "AI_MODEL",
+  "SMS4FREE_SENDER",
 ];
 
 for (const key of REQUIRED) {
   process.env[key] ? ok(`env ${key}`) : bad(`env ${key}`, "חסר ב-.env.local");
+}
+
+// הכניסה בסמס נותנת למשתמשת כתובת פנימית, ולכן ADMIN_EMAILS לבדו כבר לא
+// מספיק: מי שנכנסת בטלפון לא תתאים לאף אימייל ותיחסם מהחמ"ל שלה עצמה.
+if (!process.env.ADMIN_PHONES && !process.env.ADMIN_EMAILS) {
+  bad("env ADMIN_PHONES", "אין אף מנהלת מוגדרת — החמ\"ל יהיה סגור לכולן");
+} else if (!process.env.ADMIN_PHONES) {
+  warn(
+    "ADMIN_PHONES לא מוגדר",
+    "הכניסה היא בסמס. בלי המספר שלך ברשימה לא תיכנסי לחמ\"ל אחרי שתתחברי בטלפון."
+  );
+} else {
+  ok("env ADMIN_PHONES");
 }
 for (const key of OPTIONAL) {
   if (!process.env[key]) console.log(`•  ${key} לא מוגדר (אופציונלי)`);
@@ -168,10 +186,12 @@ if (process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID) {
 /* ── סיכום ── */
 console.log("");
 for (const r of results) {
-  console.log(`${r.ok ? "✓" : "✗"}  ${r.name}${r.detail ? " — " + r.detail : ""}`);
+  console.log(`${r.warn ? "!" : r.ok ? "✓" : "✗"}  ${r.name}${r.detail ? " — " + r.detail : ""}`);
 }
-const failed = results.filter((r) => !r.ok);
-console.log(`\n${results.length - failed.length}/${results.length} בדיקות עברו.`);
+// אזהרה היא לא כישלון: היא לא מפילה את הבדיקה אבל גם לא נבלעת
+const failed = results.filter((r) => !r.ok && !r.warn);
+const checked = results.filter((r) => !r.warn);
+console.log(`\n${checked.length - failed.length}/${checked.length} בדיקות עברו.`);
 if (failed.length) {
   console.log("\nמה לתקן:");
   failed.forEach((f) => console.log(`  • ${f.name}: ${f.detail || "ראי למעלה"}`));

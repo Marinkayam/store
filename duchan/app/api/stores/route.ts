@@ -29,7 +29,7 @@ interface Body {
 export async function POST(req: NextRequest) {
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user?.email) return NextResponse.json({ error: "לא מחוברת" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברת" }, { status: 401 });
 
   let body: Body;
   try {
@@ -43,21 +43,29 @@ export async function POST(req: NextRequest) {
 
   const theme = body.theme && body.theme in THEMES ? body.theme : "cloud";
 
-  const contactPhone = normalizePhone(body.contactPhone ?? "");
-  if (!contactPhone) {
-    return NextResponse.json({ error: "מספר הוואטסאפ לא נראה תקין — בדקי אותו שוב" }, { status: 400 });
-  }
-
   const db = supabaseAdmin();
 
-  // 3 חנויות לאימייל
+  // הטלפון נלקח מהמספר שאומת בסמס, לא מהגוף של הבקשה. אחרת ילדה שאימתה מספר
+  // אחד יכולה לפתוח חנות שההזמנות שלה נשלחות למספר של מישהי אחרת.
+  const { data: verified } = await db
+    .from("phone_accounts")
+    .select("phone")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const contactPhone = verified?.phone ?? normalizePhone(body.contactPhone ?? "");
+  if (!contactPhone) {
+    return NextResponse.json({ error: "צריך לאמת מספר טלפון קודם" }, { status: 400 });
+  }
+
+  // המכסה עברה מאימייל לטלפון: אפשר להמציא כתובת מייל, קשה יותר להשיג מספר נוסף
   const { count } = await db
     .from("stores")
     .select("id", { count: "exact", head: true })
-    .eq("parent_email", user.email.toLowerCase());
+    .eq("contact_phone", contactPhone);
   if ((count ?? 0) >= QUOTAS.storesPerParentEmail) {
     return NextResponse.json(
-      { error: `אפשר לפתוח עד ${QUOTAS.storesPerParentEmail} חנויות לאימייל אחד` },
+      { error: `אפשר לפתוח עד ${QUOTAS.storesPerParentEmail} חנויות למספר אחד` },
       { status: 409 }
     );
   }
@@ -83,7 +91,9 @@ export async function POST(req: NextRequest) {
         tagline: body.tagline?.trim().slice(0, 60) || null,
         theme,
         contact_phone: contactPhone,
-        parent_email: user.email.toLowerCase(), // האימייל של החשבון — משמש למכסה
+        // נשמר רק אם יש כתובת אמיתית. בכניסה בסמס אין כזו, והכתובת הפנימית
+        // @phone.duchan.app היא לא מייל שמישהי קוראת — אין טעם לשמור אותה.
+        parent_email: user.email?.endsWith("@phone.duchan.app") ? null : user.email?.toLowerCase() ?? null,
         referred_by: referredBy,
         referral_source: referredBy ? "store" : "direct",
       })
