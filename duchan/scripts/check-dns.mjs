@@ -24,10 +24,13 @@ const bad = (n, d = "") => results.push({ ok: false, n, d });
 const warn = (n, d = "") => results.push({ warn: true, n, d });
 
 /* ── 1. Nameservers ── */
+// כשה-NS כבר ב-Cloudflare אבל כלום לא נפתר, זה לא תקלה — זה פשוט "עוד לא פרסנו".
+// בלי ההבחנה הזו הסקריפט מדווח על מצב תקין כארבע בעיות, ומי שקורא אותו מפסיק להאמין לו.
+let onCloudflare = false;
 try {
   const ns = await dns.resolveNs(domain);
-  const cf = ns.some((h) => h.endsWith("ns.cloudflare.com"));
-  cf
+  onCloudflare = ns.some((h) => h.endsWith("ns.cloudflare.com"));
+  onCloudflare
     ? ok("nameservers מצביעים ל-Cloudflare", ns.join(", "))
     : bad(
         "nameservers עדיין לא ב-Cloudflare",
@@ -37,6 +40,9 @@ try {
   bad("אין רשומות NS", `${e.code} — אולי ההפצה עוד לא הסתיימה (עד 24 שעות)`);
 }
 
+/** לפני שיש דיפלוי, "לא נפתר" הוא הצעד הבא ולא כשל */
+const pending = onCloudflare ? warn : bad;
+
 /* ── 2. הדומיין נפתר ── */
 for (const host of [domain, `www.${domain}`, `media.${domain}`]) {
   try {
@@ -44,9 +50,9 @@ for (const host of [domain, `www.${domain}`, `media.${domain}`]) {
     ok(`${host} נפתר`, a.slice(0, 2).join(", "));
   } catch {
     const label = host.startsWith("media.")
-      ? "R2 → Settings → Public access → Connect a domain"
-      : "Cloudflare Pages → Custom domains";
-    bad(`${host} לא נפתר`, label);
+      ? "ממתין ל-R2 → Settings → Public access → Connect a domain"
+      : "ממתין ל-Cloudflare Pages → Custom domains";
+    pending(`${host} לא נפתר`, label);
   }
 }
 
@@ -63,8 +69,8 @@ try {
 } catch (e) {
   const hint = /certificate|SSL|TLS/i.test(e.message)
     ? "תעודה לא תקינה. ב-Cloudflare: SSL/TLS → Full (strict). Flexible יוצר לולאת הפניות."
-    : e.message;
-  bad(`https://${domain} נכשל`, hint);
+    : "ממתין לדיפלוי";
+  pending(`https://${domain} לא עונה`, hint);
 }
 
 /* ── 4. הסביבה מסכימה עם המציאות ── */
@@ -84,9 +90,15 @@ for (const r of results) {
   console.log(`${r.ok ? "✓" : r.warn ? "!" : "✗"}  ${r.n}${r.d ? " — " + r.d : ""}`);
 }
 const failed = results.filter((r) => !r.ok && !r.warn);
-console.log(
-  failed.length
-    ? `\n${failed.length} בעיות. תקני והריצי שוב.`
-    : "\nהדומיין מוגדר נכון ✓  אפשר להמשיך ל-npm run check"
-);
+const waiting = results.filter((r) => r.warn);
+
+if (failed.length) {
+  console.log(`\n${failed.length} בעיות שצריך לתקן.`);
+} else if (waiting.length) {
+  console.log(
+    "\nהדומיין מוגדר נכון ✓  מה שמסומן ב-! עוד לא נפרס — זה הצעד הבא, לא תקלה."
+  );
+} else {
+  console.log("\nהכל חי ✓  אפשר להמשיך ל-npm run check");
+}
 process.exit(failed.length ? 1 : 0);
