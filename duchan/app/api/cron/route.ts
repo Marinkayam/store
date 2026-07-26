@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { r2Client } from "@/lib/r2";
 
 // קרון יומי (Cloudflare Cron → GET עם Authorization: Bearer CRON_SECRET):
 // 1. פינג ל-Supabase — פרויקטים חינמיים מושהים אחרי שבוע ללא פעילות
@@ -19,14 +20,7 @@ export async function GET(req: NextRequest) {
     db.from("orders").select("*"),
   ]);
 
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
+  const s3 = r2Client();
 
   const day = new Date().toISOString().slice(0, 10);
   await s3.send(
