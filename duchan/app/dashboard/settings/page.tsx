@@ -87,6 +87,20 @@ export default function SettingsPage() {
     window.location.href = "/";
   }
 
+  // מצב חופשה: השהיה עצמית. blocked שמור לאדמין — הבעלות לא יכולה לשנות אותו.
+  async function togglePause() {
+    if (!store || store.status === "blocked") return;
+    const next = store.status === "active" ? "paused" : "active";
+    const supa = supabaseBrowser();
+    const { error } = await supa.from("stores").update({ status: next }).eq("id", store.id);
+    if (error) {
+      showToast("משהו השתבש, נסי שוב");
+      return;
+    }
+    setStore({ ...store, status: next });
+    showToast(next === "paused" ? "החנות בהפסקה — הלינק מציג 'החנות סגורה'" : "החנות פתוחה שוב 🎉");
+  }
+
   if (loading) return <div className="p-6 text-sm text-[#7A7D8A]">רגע…</div>;
   if (!store) return null;
 
@@ -99,6 +113,37 @@ export default function SettingsPage() {
       </header>
 
       <div className="p-3 flex flex-col gap-3">
+        {/* מצב חופשה */}
+        {store.status === "blocked" ? (
+          <div className="bg-[#FBE9EA] border border-[#F0CFD0] rounded-xl p-3 text-[13px] text-[#D2373B]">
+            החנות הושבתה על ידי הנהלת דוכן.
+          </div>
+        ) : (
+          <div className="bg-white border border-[#E6E7EC] rounded-xl p-3 flex items-center justify-between">
+            <div>
+              <div className="text-[13px] font-medium">
+                {store.status === "active" ? "החנות פתוחה" : "החנות בהפסקה"}
+              </div>
+              <div className="text-[11px] text-[#7A7D8A]">
+                {store.status === "active"
+                  ? "כולן יכולות להיכנס ולהזמין"
+                  : "הלינק מציג 'החנות סגורה כרגע'. הכל נשמר."}
+              </div>
+            </div>
+            <button
+              onClick={togglePause}
+              className={`w-11 h-6.5 rounded-full relative transition ${store.status === "active" ? "bg-[#1F7A42]" : "bg-[#D6D8DE]"}`}
+              style={{ width: 44, height: 26 }}
+              aria-label="פתיחה או הפסקה של החנות"
+            >
+              <i
+                className="absolute top-[3px] w-[20px] h-[20px] rounded-full bg-white transition-all"
+                style={{ right: store.status === "active" ? 21 : 3 }}
+              />
+            </button>
+          </div>
+        )}
+
         {/* תצוגה מקדימה חיה — מתעדכנת תוך כדי */}
         <div
           className="rounded-2xl overflow-hidden border border-[#E6E7EC]"

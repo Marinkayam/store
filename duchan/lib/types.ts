@@ -34,6 +34,7 @@ export interface Product {
   track_stock: boolean;
   stock: number;
   sort_order: number;
+  is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
   created_at: string;
 }
@@ -51,6 +52,7 @@ export interface Order {
   items: OrderItem[];
   total: number;
   buyer_note: string | null;
+  owner_note: string | null;
   status: OrderStatus;
   created_at: string;
 }

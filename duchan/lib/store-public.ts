@@ -24,6 +24,7 @@ export const getPublicStore = cache(
       .select("id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order")
       .eq("store_id", store.id)
       .is("deleted_at", null)
+      .or("is_visible.is.null,is_visible.eq.true") // null = מוצג (שורות ותיקות)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
 

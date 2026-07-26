@@ -15,10 +15,23 @@ const PILL: Record<string, { label: string; cls: string }> = {
   cancelled: { label: "בוטל", cls: "bg-[#FBE9EA] text-[#D2373B]" },
 };
 
+type Filter = "all" | "sent" | "paid" | "delivered" | "cancelled";
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: "all", label: "הכל" },
+  { key: "sent", label: "חדשות" },
+  { key: "paid", label: "שולמו" },
+  { key: "delivered", label: "נמסרו" },
+  { key: "cancelled", label: "בוטלו" },
+];
+
 export default function OrdersPage() {
   const { store, loading } = useStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [toast, setToast] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [noteEditId, setNoteEditId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
 
   const refresh = useCallback(async () => {
     if (!store) return;
@@ -51,14 +64,51 @@ export default function OrdersPage() {
     refresh();
   }
 
-  async function setStatus(o: Order, status: "delivered" | "cancelled", e?: React.MouseEvent) {
+  async function markDelivered(o: Order, e: React.MouseEvent) {
     const supa = supabaseBrowser();
-    await supa.from("orders").update({ status }).eq("id", o.id);
-    if (status === "delivered" && e) confettiBurst(e.clientX, e.clientY);
+    await supa.from("orders").update({ status: "delivered" }).eq("id", o.id);
+    confettiBurst(e.clientX, e.clientY);
+    refresh();
+  }
+
+  // ביטול דרך פונקציית DB — אם המלאי כבר נוכה ("שולם"), הוא חוזר אטומית
+  async function cancelOrder(o: Order) {
+    const supa = supabaseBrowser();
+    const { error } = await supa.rpc("cancel_order", { p_order: o.id });
+    if (error) {
+      showToast("משהו השתבש, נסי שוב");
+      return;
+    }
+    showToast(o.status === "sent" ? "ההזמנה בוטלה" : "ההזמנה בוטלה והמלאי חזר");
+    refresh();
+  }
+
+  async function saveOwnerNote(o: Order) {
+    const supa = supabaseBrowser();
+    await supa.from("orders").update({ owner_note: noteText.trim() || null }).eq("id", o.id);
+    setNoteEditId(null);
     refresh();
   }
 
   const newCount = orders.filter((o) => o.status === "sent").length;
+  const filtered = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+
+  // "הקופה שלי" — בתוך גבולות האפיון: ספירת הזמנות וסכומים, לא אנליטיקס
+  const sold = orders.filter((o) => o.status === "paid" || o.status === "delivered");
+  const revenue = sold.reduce((s, o) => s + o.total, 0);
+  const topProduct = (() => {
+    const counts = new Map<string, number>();
+    sold.forEach((o) => o.items.forEach((it) => counts.set(it.name, (counts.get(it.name) ?? 0) + it.qty)));
+    let best: string | null = null;
+    let bestQty = 0;
+    counts.forEach((qty, name) => {
+      if (qty > bestQty) {
+        best = name;
+        bestQty = qty;
+      }
+    });
+    return best;
+  })();
 
   const checklist = store
     ? [
@@ -107,6 +157,43 @@ export default function OrdersPage() {
         </div>
       )}
 
+      {/* הקופה שלי */}
+      {revenue > 0 && (
+        <div className="mx-3 mt-3 bg-white border border-[#E6E7EC] rounded-xl p-3 flex items-center gap-3">
+          <span className="text-2xl">💰</span>
+          <div className="flex-1">
+            <div className="text-sm font-bold">₪{revenue} בקופה</div>
+            <div className="text-[11px] text-[#7A7D8A]">
+              {sold.length} הזמנות ששולמו{topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* סינון */}
+      {orders.length > 0 && (
+        <div className="flex gap-1.5 px-3 pt-3 overflow-x-auto">
+          {FILTERS.map((f) => {
+            const count =
+              f.key === "all" ? orders.length : orders.filter((o) => o.status === f.key).length;
+            if (f.key !== "all" && count === 0) return null;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border ${
+                  filter === f.key
+                    ? "bg-[#15161B] text-white border-[#15161B]"
+                    : "bg-white text-[#7A7D8A] border-[#E6E7EC]"
+                }`}
+              >
+                {f.label} · {count}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="p-3 flex flex-col gap-2">
         {orders.length === 0 && (
           <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
@@ -126,7 +213,11 @@ export default function OrdersPage() {
           </div>
         )}
 
-        {orders.map((o) => (
+        {filtered.length === 0 && orders.length > 0 && (
+          <p className="text-center py-8 text-sm text-[#7A7D8A]">אין הזמנות בסינון הזה.</p>
+        )}
+
+        {filtered.map((o) => (
           <div
             key={o.id}
             className={`bg-white border rounded-xl p-3 ${
@@ -153,6 +244,49 @@ export default function OrdersPage() {
             {o.buyer_note && (
               <div className="text-[11px] text-[#7A7D8A] italic mt-1">"{o.buyer_note}"</div>
             )}
+
+            {/* הערה אישית של בעלת החנות */}
+            {noteEditId === o.id ? (
+              <div className="flex gap-1.5 mt-1.5">
+                <input
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="לארוז בורוד, לתת ביום שלישי…"
+                  maxLength={120}
+                  autoFocus
+                  className="flex-1 border border-[#E6E7EC] rounded-lg px-2.5 py-1.5 text-[12px]"
+                />
+                <button
+                  onClick={() => saveOwnerNote(o)}
+                  className="bg-[#15161B] text-white rounded-lg px-3 text-[11px] font-medium"
+                >
+                  שמירה
+                </button>
+              </div>
+            ) : o.owner_note ? (
+              <button
+                onClick={() => {
+                  setNoteEditId(o.id);
+                  setNoteText(o.owner_note ?? "");
+                }}
+                className="block text-right text-[11px] text-[#A85B00] bg-[#FFF9EE] border border-[#F5E3C2] rounded-lg px-2.5 py-1.5 mt-1.5 w-full"
+              >
+                📝 {o.owner_note}
+              </button>
+            ) : (
+              o.status !== "cancelled" && (
+                <button
+                  onClick={() => {
+                    setNoteEditId(o.id);
+                    setNoteText("");
+                  }}
+                  className="text-[11px] text-[#7A7D8A] underline mt-1.5"
+                >
+                  📝 הוספת הערה לעצמי
+                </button>
+              )
+            )}
+
             <div className="flex justify-between text-xs font-medium border-t border-[#E6E7EC] mt-2 pt-2">
               <span>סה"כ</span>
               <span>₪{o.total}</span>
@@ -173,7 +307,7 @@ export default function OrdersPage() {
                   פתחי וואטסאפ
                 </a>
                 <button
-                  onClick={() => setStatus(o, "cancelled")}
+                  onClick={() => cancelOrder(o)}
                   className="bg-white border border-[#F0CFD0] text-[#D2373B] rounded-lg py-2 px-3 text-xs"
                 >
                   ביטול
@@ -183,10 +317,16 @@ export default function OrdersPage() {
             {o.status === "paid" && (
               <div className="flex gap-1.5 mt-2">
                 <button
-                  onClick={(e) => setStatus(o, "delivered", e)}
+                  onClick={(e) => markDelivered(o, e)}
                   className="flex-1 bg-[#15161B] text-white rounded-lg py-2 text-xs font-medium"
                 >
                   נמסר
+                </button>
+                <button
+                  onClick={() => cancelOrder(o)}
+                  className="bg-white border border-[#F0CFD0] text-[#D2373B] rounded-lg py-2 px-3 text-xs"
+                >
+                  ביטול והחזרת מלאי
                 </button>
               </div>
             )}
