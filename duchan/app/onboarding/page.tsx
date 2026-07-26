@@ -6,7 +6,13 @@ import { squareImage } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 // אונבורדינג: בונים לפני שנרשמים. מצב הביניים חי ב-sessionStorage.
-// מסך 4 ("החנות שלך מוכנה") הוא הציר — עד אליו לא ביקשנו כלום.
+//
+// ארבעה מסכים: שם → מוצר → "מוכנה" → שמירה.
+// בחירת הסגנון והאמוג'י יושבת על מסך "מוכנה" ולא כשלב נפרד לפניו — לבחור
+// עיצוב לחנות ריקה זו החלטה מופשטת, ולבחור אותו כשרואים את המוצר בפנים
+// זה מיידי. זה גם חוסך מסך שלם.
+//
+// מסך "החנות שלך מוכנה" הוא הציר — עד אליו לא ביקשנו כלום.
 
 interface Draft {
   step: number;
@@ -14,10 +20,15 @@ interface Draft {
   theme: ThemeKey;
   emoji: string;
   ref: string | null; // הסלאג של החנות שממנה הגיעה (?ref= בדף הנחיתה)
-  product: { name: string; price: string; imageData: string | null };
+  product: { name: string; price: string; description: string; imageData: string | null };
 }
 
-const EMOJIS = ["🦄", "🍩", "🐼", "🍦", "🌈", "🍓", "🐻", "⭐", "🧁", "🐸"];
+// האמוג'י של החנות — מופיע בראש דף החנות כשאין תמונת פרופיל.
+// שייך למסך העיצוב, לא למסך המוצר: שם הוא נראה כאילו הוא של המוצר.
+const EMOJIS = [
+  "🦄", "🍩", "🐼", "🍦", "🌈", "🍓", "🐻", "⭐", "🧁", "🐸",
+  "🌸", "🍭", "🦋", "🐰", "🍉", "💎", "🌻", "🐣", "🍀", "🎀",
+];
 
 const EMPTY: Draft = {
   step: 1,
@@ -25,7 +36,7 @@ const EMPTY: Draft = {
   theme: "cloud",
   emoji: "🦄",
   ref: null,
-  product: { name: "", price: "", imageData: null },
+  product: { name: "", price: "", description: "", imageData: null },
 };
 
 function loadDraft(): Draft {
@@ -47,6 +58,7 @@ export default function Onboarding() {
   const [contactPhone, setContactPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showDesc, setShowDesc] = useState(false);
 
   useEffect(() => {
     setDraft(loadDraft());
@@ -106,6 +118,7 @@ export default function Onboarding() {
           firstProduct: draft!.product.name
             ? {
                 name: draft!.product.name,
+                description: draft!.product.description.trim() || undefined,
                 price: Number(draft!.product.price) || 0,
                 stock: 1,
               }
@@ -152,7 +165,7 @@ export default function Onboarding() {
 
   const storeUrl = result ? `${window.location.origin}/s/${result.slug}` : "";
 
-  /* ---------- תצוגת חנות (למסכים 2 ו-4) ---------- */
+  /* ---------- תצוגת חנות (מסך 3) ---------- */
   const preview = (full: boolean) => (
     <div
       className={`w-full overflow-hidden ${full ? "rounded-none min-h-[60vh]" : "rounded-2xl border border-[#E6E7EC]"}`}
@@ -180,7 +193,7 @@ export default function Onboarding() {
             className="overflow-hidden"
             style={{ background: theme.surface, borderRadius: theme.radius, border: theme.border }}
           >
-            <div className="h-20 flex items-center justify-center text-3xl overflow-hidden" style={{ background: theme.thumb }}>
+            <div className="aspect-square flex items-center justify-center text-3xl overflow-hidden" style={{ background: theme.thumb }}>
               {i === 0 && draft.product.imageData ? (
                 <img src={draft.product.imageData} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -204,7 +217,7 @@ export default function Onboarding() {
       {/* progress */}
       {!result && (
         <div className="flex gap-1.5">
-          {[1, 2, 3, 4, 5].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
               className={`h-1.5 rounded-full transition-all ${s <= draft.step ? "w-6 bg-[#15161B]" : "w-3 bg-[#DCDCE4]"}`}
@@ -235,41 +248,14 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* 2 — ערכה */}
+      {/* 2 — המוצר הראשון. המצלמה היא הדבר הראשון שרואים. */}
       {draft.step === 2 && (
-        <div className="w-full flex flex-col gap-4">
-          <h1 className="text-lg font-bold text-center">איזה סגנון הכי את?</h1>
-          {preview(false)}
-          <div className="grid grid-cols-3 gap-2">
-            {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, t]) => (
-              <button
-                key={k}
-                onClick={() => set({ theme: k })}
-                className={`rounded-xl border-[1.5px] bg-white p-2 ${draft.theme === k ? "border-[#15161B]" : "border-[#E6E7EC]"}`}
-              >
-                <div
-                  className="h-6 rounded-md mb-1 flex items-center justify-center"
-                  style={{ background: t.bg, border: "1px solid rgba(0,0,0,.07)" }}
-                >
-                  <i className="w-3 h-3 rounded-full block" style={{ background: t.primary }} />
-                </div>
-                <span className="text-[11px] font-medium">{t.label}</span>
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => set({ step: 3 })}
-            className="bg-[#15161B] text-white rounded-xl py-3 text-sm font-medium"
-          >
-            הלאה ←
-          </button>
-        </div>
-      )}
-
-      {/* 3 — מוצר ראשון */}
-      {draft.step === 3 && (
         <div className="w-full flex flex-col gap-3">
-          <h1 className="text-lg font-bold text-center">המוצר הראשון שלך</h1>
+          <h1 className="text-lg font-bold text-center">מה את מוכרת?</h1>
+          <p className="text-[12.5px] text-[#7A7D8A] text-center -mt-2">
+            דבר אחד מספיק. אפשר להוסיף עוד אחר כך.
+          </p>
+
           <input
             ref={fileRef}
             type="file"
@@ -278,27 +264,21 @@ export default function Onboarding() {
             hidden
             onChange={(e) => e.target.files?.[0] && onImagePicked(e.target.files[0])}
           />
+          {/* ריבוע, כי זה מה שהתמונה תהיה בפועל — הקנבס חותך ל-900×900 */}
           <button
             onClick={() => fileRef.current?.click()}
-            className="h-40 rounded-2xl border-[1.5px] border-dashed border-[#D3D5DC] bg-[#F5F6F9] flex items-center justify-center overflow-hidden"
+            className="aspect-square w-full rounded-2xl border-[1.5px] border-dashed border-[#D3D5DC] bg-[#F5F6F9] flex flex-col items-center justify-center gap-1.5 overflow-hidden"
           >
             {draft.product.imageData ? (
               <img src={draft.product.imageData} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-sm text-[#7A7D8A]">📷 צלמי את המוצר</span>
+              <>
+                <span className="text-4xl">📷</span>
+                <span className="text-sm text-[#7A7D8A]">צלמי את המוצר</span>
+              </>
             )}
           </button>
-          <div className="flex gap-1.5 justify-center flex-wrap">
-            {EMOJIS.map((e) => (
-              <button
-                key={e}
-                onClick={() => set({ emoji: e })}
-                className={`w-9 h-9 rounded-lg border-[1.5px] bg-white text-lg ${draft.emoji === e ? "border-[#15161B]" : "border-[#E6E7EC]"}`}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
+
           <input
             value={draft.product.name}
             onChange={(e) => set({ product: { ...draft.product, name: e.target.value } })}
@@ -314,23 +294,87 @@ export default function Onboarding() {
             inputMode="numeric"
             className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm"
           />
+
+          {/* תיאור — מקופל, כדי שהמסך יישאר קצר למי שלא צריכה אותו */}
+          {showDesc ? (
+            <textarea
+              value={draft.product.description}
+              onChange={(e) => set({ product: { ...draft.product, description: e.target.value } })}
+              placeholder="כמה מילים על המוצר (לא חובה)"
+              maxLength={120}
+              rows={2}
+              autoFocus
+              className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-sm"
+            />
+          ) : (
+            <button
+              onClick={() => setShowDesc(true)}
+              className="text-[12.5px] text-[#7A7D8A] underline self-center"
+            >
+              + להוסיף תיאור
+            </button>
+          )}
+
           <button
             disabled={!draft.product.name.trim() || !draft.product.price}
-            onClick={() => set({ step: 4 })}
-            className="bg-[#15161B] text-white rounded-xl py-3 text-sm font-medium disabled:opacity-30"
+            onClick={() => set({ step: 3 })}
+            className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-medium disabled:opacity-30"
           >
             הלאה ←
+          </button>
+          <button
+            onClick={() => set({ step: 3, product: { ...EMPTY.product } })}
+            className="text-[12.5px] text-[#7A7D8A] underline"
+          >
+            עוד אין לי מה למכור — נמשיך
           </button>
         </div>
       )}
 
-      {/* 4 — החנות שלך מוכנה */}
-      {draft.step === 4 && (
+      {/* 3 — החנות מוכנה, ובוחרים לה סגנון תוך כדי שרואים אותה */}
+      {draft.step === 3 && (
         <div className="w-full flex flex-col gap-4">
           <h1 className="text-xl font-bold text-center">החנות שלך מוכנה 🎉</h1>
           {preview(true)}
+
+          <div>
+            <div className="text-[11px] text-[#7A7D8A] mb-1.5">סגנון</div>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, t]) => (
+                <button
+                  key={k}
+                  onClick={() => set({ theme: k })}
+                  className={`rounded-xl border-[1.5px] bg-white p-2 ${draft.theme === k ? "border-[#15161B]" : "border-[#E6E7EC]"}`}
+                >
+                  <div
+                    className="h-6 rounded-md mb-1 flex items-center justify-center"
+                    style={{ background: t.bg, border: "1px solid rgba(0,0,0,.07)" }}
+                  >
+                    <i className="w-3 h-3 rounded-full block" style={{ background: t.primary }} />
+                  </div>
+                  <span className="text-[11px] font-medium">{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[11px] text-[#7A7D8A] mb-1.5">אמוג'י</div>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+              {EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => set({ emoji: e })}
+                  className={`w-9 h-9 shrink-0 rounded-lg border-[1.5px] bg-white text-lg ${draft.emoji === e ? "border-[#15161B]" : "border-[#E6E7EC]"}`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
-            onClick={() => set({ step: 5 })}
+            onClick={() => set({ step: 4 })}
             className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-medium"
           >
             שמירת החנות ←
@@ -338,8 +382,8 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* 5 — שמירה */}
-      {draft.step === 5 && !result && (
+      {/* 4 — שמירה */}
+      {draft.step === 4 && !result && (
         <div className="w-full flex flex-col gap-3">
           <h1 className="text-lg font-bold text-center">עוד רגע והיא באוויר</h1>
           <input

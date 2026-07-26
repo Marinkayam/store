@@ -27,14 +27,18 @@ await page.screenshot({ path: imgPath }); // 390×780 — רחוק מריבוע
 await page.fill("input", "החנות של תמר");
 await page.click("button:has-text('בואי נבנה')");
 await page.waitForURL("**/onboarding");
-await page.click("button:has-text('ממתק')");
-await page.click("button:has-text('הלאה')");
-
+// מסך 2 — המוצר. המצלמה היא הדבר הראשון.
 await page.setInputFiles("input[type=file]", imgPath);
 await page.waitForTimeout(1200); // squareImage רץ בדפדפן
 await page.fill("input[placeholder='שם המוצר']", "סקוויש חד-קרן");
 await page.fill("input[placeholder='מחיר (₪)']", "15");
+await page.click("text=+ להוסיף תיאור");
+await page.fill("textarea", "רך, ורוד, ומתנפח לאט");
 await page.click("button:has-text('הלאה')");
+
+// מסך 3 — "מוכנה": בוחרים סגנון כשכבר רואים את המוצר בפנים
+await page.waitForSelector("text=החנות שלך מוכנה");
+await page.click("button:has-text('ממתק')");
 await page.click("button:has-text('שמירת החנות')");
 
 await page.fill("input[placeholder='הטלפון שלך (וואטסאפ)']", "050-123-4567"); // עם מקפים — בדיקת נרמול
@@ -69,6 +73,7 @@ check("theme saved", storeRow?.theme === "candy", storeRow?.theme);
 
 const prodRow = (await db.query("select * from products where store_id=$1", [storeRow.id])).rows[0];
 check("first product saved", prodRow?.name === "סקוויש חד-קרן" && prodRow?.price === 15);
+check("first product description saved", prodRow?.description === "רך, ורוד, ומתנפח לאט", prodRow?.description ?? "none");
 check("product image uploaded to storage", !!prodRow?.image_key, prodRow?.image_key ?? "none");
 
 if (prodRow?.image_key) {
