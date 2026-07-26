@@ -1,7 +1,10 @@
 import { ACTIVATION_PRICE, GETS, LEARNS, PAYBACK } from "@/lib/pricing";
 
-// חלקי התוכן של "מה מקבלים במחיר". משותפים לדף המחיר הפומבי (/price)
-// ולמסך ההפעלה בתוך האפליקציה (/activate) — כדי שהשניים לא יסתרו זה את זה.
+// חלקי התוכן של מסך ההפעלה (/activate). דף המחיר הפומבי (/price) בונה את
+// התצוגה שלו בעצמו, אבל שניהם שואבים מאותו `lib/pricing.ts`.
+//
+// גוף שני בכל מה שמופיע בזרימה הראשית — הילדה היא שקוראת את המסך הזה.
+// LearnsTable ו-AnchorTable יושבים בתוך הבלוק "להראות להורה" ולכן הם בגוף שלישי.
 
 export function GetsList({ compact = false }: { compact?: boolean }) {
   const rows = compact ? GETS.slice(0, 6) : GETS;
@@ -34,9 +37,9 @@ export function PaybackCard() {
   return (
     <div className="rounded-2xl bg-[#F6FBF7] border border-[#CBE8D4] p-5 text-center">
       <div className="text-3xl">📈</div>
-      <h2 className="text-lg font-bold mt-2">היא מחזירה את זה</h2>
+      <h2 className="text-lg font-bold mt-2">את מחזירה את זה</h2>
       <p className="text-[13.5px] text-[#3A3C46] mt-1.5 leading-relaxed">
-        זו לא הוצאה — זו השקעה שהיא מחזירה בעצמה.
+        כמה מכירות וזה כבר שילם על עצמו.
       </p>
       <div className="bg-white rounded-xl border border-[#CBE8D4] p-3.5 mt-3.5 text-[13px]">
         {PAYBACK.map((r, i) => (
@@ -52,7 +55,7 @@ export function PaybackCard() {
         ))}
       </div>
       <p className="text-[12px] text-[#5B5E6B] mt-3 leading-relaxed">
-        מכאן והלאה — הכל רווח. ואין לנו נגיעה בכסף שלה.
+        ומכאן — הכל שלך. אנחנו לא נוגעים בכסף ולא לוקחים עמלה.
       </p>
     </div>
   );
