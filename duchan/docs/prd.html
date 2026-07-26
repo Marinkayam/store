@@ -1,0 +1,517 @@
+<title>דוכן — PRD</title>
+
+<style>
+  :root {
+    --ground: #fbf8f3;
+    --surface: #ffffff;
+    --sand: #ece6de;
+    --stone: #d6cfc4;
+    --ink: #262626;
+    --muted: #7d7568;
+    --olive: #8a8654;
+    --lavender: #9b7bb0;
+    --wood: #a9702f;
+    --sold: #c47a5c;
+
+    --measure: 68ch;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #1c1a1f;
+      --surface: #24222a;
+      --sand: #2e2b34;
+      --stone: #423d4a;
+      --ink: #f1ece5;
+      --muted: #a49a8e;
+      --olive: #b6b174;
+      --lavender: #c3a6d6;
+      --wood: #d59a58;
+      --sold: #e0a184;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1c1a1f;
+    --surface: #24222a;
+    --sand: #2e2b34;
+    --stone: #423d4a;
+    --ink: #f1ece5;
+    --muted: #a49a8e;
+    --olive: #b6b174;
+    --lavender: #c3a6d6;
+    --wood: #d59a58;
+    --sold: #e0a184;
+  }
+  :root[data-theme="light"] {
+    --ground: #fbf8f3;
+    --surface: #ffffff;
+    --sand: #ece6de;
+    --stone: #d6cfc4;
+    --ink: #262626;
+    --muted: #7d7568;
+    --olive: #8a8654;
+    --lavender: #9b7bb0;
+    --wood: #a9702f;
+    --sold: #c47a5c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.75;
+    direction: rtl;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: clamp(2.5rem, 7vw, 5rem) clamp(1.15rem, 5vw, 2rem) 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* ── מסת הפתיחה ── */
+  .mast { display: flex; flex-direction: column; gap: 1.15rem; }
+  .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--olive);
+    font-weight: 700;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.3rem, 8vw, 3.4rem);
+    line-height: 1.08;
+    margin: 0;
+    font-weight: 600;
+    text-wrap: balance;
+    letter-spacing: -0.015em;
+  }
+  .thesis {
+    font-size: clamp(1.05rem, 3.4vw, 1.28rem);
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .thesis strong { color: var(--wood); font-weight: 700; }
+  .meta {
+    font-size: 0.82rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--stone);
+    font-variant-numeric: tabular-nums;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.4rem, 4.5vw, 1.75rem);
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.25;
+    text-wrap: balance;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid var(--olive);
+  }
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    margin: 1rem 0 -0.35rem;
+    line-height: 1.4;
+  }
+  p { margin: 0; }
+  a { color: var(--wood); }
+
+  ul, ol { margin: 0; padding-inline-start: 1.15rem; display: flex; flex-direction: column; gap: 0.45rem; }
+  li::marker { color: var(--olive); }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86em;
+    background: var(--sand);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    direction: ltr;
+    display: inline-block;
+  }
+
+  /* ── שבב מצב: הצורה מקודדת את המצב, לא רק המילה ── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.14rem 0.5rem;
+    border-radius: 3px;
+    white-space: nowrap;
+    vertical-align: 0.1em;
+  }
+  .chip::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .built   { color: var(--olive);    background: color-mix(in srgb, var(--olive) 14%, transparent); }
+  .partial { color: var(--wood);     background: color-mix(in srgb, var(--wood) 14%, transparent); }
+  .planned { color: var(--lavender); background: color-mix(in srgb, var(--lavender) 16%, transparent); }
+  .planned::before { border-radius: 1px; }
+  .partial::before { border-radius: 1px; transform: rotate(45deg); }
+
+  /* ── טבלאות ── */
+  .scroll { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    min-width: 30rem;
+  }
+  th, td {
+    text-align: right;
+    padding: 0.6rem 0.7rem;
+    border-bottom: 1px solid var(--stone);
+    vertical-align: top;
+  }
+  th {
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    border-bottom-width: 2px;
+  }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ── בלוק מודגש ── */
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--stone);
+    border-inline-start: 3px solid var(--wood);
+    border-radius: 4px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    font-size: 0.94rem;
+  }
+  .note .label {
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--wood);
+  }
+  .note.open { border-inline-start-color: var(--lavender); }
+  .note.open .label { color: var(--lavender); }
+
+  /* ── שלבי הלולאה ── */
+  .loop { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0; }
+  .loop li {
+    display: grid;
+    grid-template-columns: 2.1rem 1fr;
+    gap: 0.85rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px dashed var(--stone);
+    align-items: baseline;
+  }
+  .loop li:last-child { border-bottom: none; }
+  .loop .n {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    color: var(--olive);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .loop b { font-weight: 700; }
+  .loop span.sub { color: var(--muted); font-size: 0.9rem; display: block; }
+
+  footer {
+    border-top: 1px solid var(--stone);
+    padding-top: 1.25rem;
+    font-size: 0.83rem;
+    color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: color 0.15s ease; }
+  }
+  a:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--wood);
+    outline-offset: 2px;
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">מסמך מוצר</div>
+    <h1>דוכן</h1>
+    <p class="thesis">
+      דוכן היא לא אפליקציה למכירת צעצועים. היא <strong>משחק שבו ילדים לומדים להיות יזמים</strong> —
+      כל מכירה היא משימה, כל דוכן הוא זהות, וכל חבר הוא גם לקוח, גם עוקב וגם מתחרה.
+    </p>
+    <div class="meta">
+      <span>גרסה 1 · יולי 2026</span>
+      <span>duchan.app</span>
+      <span>קהל יעד: 9–14</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>הרעיון</h2>
+    <p>
+      ילדה פותחת דוכן משלה. היא לא רק מוכרת בו דברים — היא מעצבת אותו, מפרסמת אותו,
+      משדרגת אותו, צוברת לקוחות ומתחרה עם חברות. בדיוק כמו שיש בית משלך ב-Roblox,
+      כאן יש דוכן משלך.
+    </p>
+    <p>
+      המכירה האמיתית היא רק חלק קטן מהחוויה. מה שמחזיר ילדים כל יום הוא ההתקדמות,
+      היצירתיות והאינטראקציה החברתית סביב העסק שהם בנו בעצמם — מי פתחה דוכן חדש,
+      מי העלתה מוצרים, כמה עוקבים יש לה, אם קיבלה הזמנה, אם עלתה דרגה.
+    </p>
+
+    <div class="note">
+      <span class="label">הגבול</span>
+      <p>
+        <strong>המערכת לא נוגעת בכסף ולא במשלוח.</strong> קונה בוחרת מוצרים ולוחצת כפתור
+        שפותח וואטסאפ עם ההזמנה מנוסחת מראש. התשלום והמסירה מסוכמים שם, בין הילדה לקונה.
+        זו לא מגבלה טכנית — זו החלטה שמורידה מהמוצר אחריות רגולטורית, סיכון כספי,
+        וכתובות של ילדים.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>למי זה</h2>
+    <table>
+      <thead>
+        <tr><th>מי</th><th>מה היא רוצה</th><th>מה מחזיק אותה</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>הילדה</td>
+          <td>משהו משלה שנראה אמיתי ושאפשר להראות לחברות</td>
+          <td>התקדמות, עיצוב, תגובות של חברות</td>
+        </tr>
+        <tr>
+          <td>ההורה</td>
+          <td>שהילדה תעשה משהו בעל ערך ולא עוד מסך</td>
+          <td>שהיא לומדת תמחור, מלאי, אחריות</td>
+        </tr>
+        <tr>
+          <td>החברה</td>
+          <td>לקנות, אבל בעיקר להיות בפנים</td>
+          <td>הפיד, העוקבים, והדוכן שהיא תפתח בעצמה</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>ההורה הוא לא המשתמש — הוא מי שמאשר.</strong> המוצר צריך להיראות לילדה
+      כמו שלה לגמרי, ולהורה כמו משהו ששווה 200 שקל.
+    </p>
+  </section>
+
+  <section>
+    <h2>הלולאה</h2>
+    <p>זה הסדר שבו הכל קורה, וכל שלב קיים כדי לדחוף לשלב הבא.</p>
+    <ul class="loop">
+      <li><span class="n">1</span><span><b>בונים לפני שנרשמים.</b> <span class="sub">שם, פרצוף, רקע, סגנון. אף פרט אישי לא נדרש עד שהיא רואה דוכן גמור.</span></span></li>
+      <li><span class="n">2</span><span><b>מאמתים מספר.</b> <span class="sub">קוד בסמס. אותו מספר הוא גם הוואטסאפ שאליו יגיעו ההזמנות.</span></span></li>
+      <li><span class="n">3</span><span><b>מוסיפים מוצרים.</b> <span class="sub">תמונה או וידאו מהטלפון, מחיר, מלאי, צבעים, תגית.</span></span></li>
+      <li><span class="n">4</span><span><b>משלמים ומפרסמים.</b> <span class="sub">₪200 חד-פעמי. עד אז הלינק נעול.</span></span></li>
+      <li><span class="n">5</span><span><b>משתפים בוואטסאפ.</b> <span class="sub">טקסטים מוכנים. הלינק נראה טוב בתצוגה המקדימה.</span></span></li>
+      <li><span class="n">6</span><span><b>מקבלים הזמנה.</b> <span class="sub">הודעה מנוסחת מראש נפתחת אצל הקונה. הילדה מסמנת "שולם" והמלאי יורד.</span></span></li>
+      <li><span class="n">7</span><span><b>חברה פותחת דוכן.</b> <span class="sub">מכל דוכן חי אפשר לפתוח אחד משלך, והשיוך נשמר.</span></span></li>
+    </ul>
+    <p>
+      שלב 7 הוא המנוע. דוכן אחד שמצליח בכיתה מייצר עוד חמישה, וזו הסיבה שהמערכת
+      סופרת מי הביאה את מי.
+    </p>
+  </section>
+
+  <section>
+    <h2>מה קיים היום</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>יכולת</th><th>מצב</th><th>פירוט</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>בניית דוכן</td><td><span class="chip built">בנוי</span></td><td>שם, אמוג'י או תמונת פרופיל, 8 רקעים מוכנים או תמונה, 6 ערכות</td></tr>
+          <tr><td>כניסה בסמס</td><td><span class="chip built">בנוי</span></td><td>קוד בן 6 ספרות, 10 דקות, 5 ניסיונות, הגבלת קצב</td></tr>
+          <tr><td>מוצרים</td><td><span class="chip built">בנוי</span></td><td>תמונה, וידאו 5 שניות, מחיר, מלאי, תיאור, שכפול</td></tr>
+          <tr><td>אפשרויות מוצר</td><td><span class="chip built">בנוי</span></td><td>צבע · מידה · טעם. הקונה חייבת לבחור לפני הוספה לסל</td></tr>
+          <tr><td>תגיות</td><td><span class="chip built">בנוי</span></td><td>💎 נדיר · 🎁 מבצע נבחרות · ⭐ הכי נמכר · 🌿 חדש · ⌛ אחרון במלאי מחושבות</td></tr>
+          <tr><td>הזמנה בוואטסאפ</td><td><span class="chip built">בנוי</span></td><td>מחירים מאומתים בשרת, מספר הילדה לא ב-HTML</td></tr>
+          <tr><td>מלאי</td><td><span class="chip built">בנוי</span></td><td>יורד ב"שולם" ולא ביצירת ההזמנה</td></tr>
+          <tr><td>הפעלה בתשלום</td><td><span class="chip built">בנוי</span></td><td>₪200, הצהרה בביט/פייבוקס, אישור ידני בחמ"ל</td></tr>
+          <tr><td>לולאת הפניות</td><td><span class="chip built">בנוי</span></td><td>מי הביאה את מי, כמה קליקים, אשכולות בחמ"ל</td></tr>
+          <tr><td>כתיבת תיאור ב-AI</td><td><span class="chip built">בנוי</span></td><td>לפי תמונת המוצר, 50 קרדיטים לחנות</td></tr>
+          <tr><td>חמ"ל</td><td><span class="chip built">בנוי</span></td><td>סקירה, חנויות, תיק חנות, רשת, מה מוכרות, עדכונים</td></tr>
+          <tr><td>מסע ואבני דרך</td><td><span class="chip partial">חלקי</span></td><td>7 אבני דרך קיימות. אין דרגות, אין הישגים לפתיחה</td></tr>
+          <tr><td>עוקבים</td><td><span class="chip planned">מתוכנן</span></td><td>—</td></tr>
+          <tr><td>פיד</td><td><span class="chip planned">מתוכנן</span></td><td>—</td></tr>
+          <tr><td>שדרוגים לפתיחה</td><td><span class="chip planned">מתוכנן</span></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>השכבה החברתית</h2>
+    <p>
+      זה מה שהופך את דוכן ממערכת חנויות למשחק. שלושה חלקים, והם תלויים זה בזה.
+    </p>
+
+    <h3>עוקבים</h3>
+    <p>
+      ילדה אוהבת דוכן של חברה ולוחצת ⭐ עקוב. מעכשיו, כשהחברה מוסיפה מוצר, היא מקבלת
+      התראה. מספר העוקבים מוצג בדוכן והופך למדד שאפשר לגדול בו.
+    </p>
+
+    <h3>פיד</h3>
+    <p>
+      מוצרים חדשים של חברות, ושל חברות של חברות. זה מה שמייצר סיבה להיכנס כל יום
+      גם כשלא קונים כלום.
+    </p>
+
+    <h3>דרגות והישגים</h3>
+    <p>
+      המכירה הראשונה, המוצר החמישי, העוקב העשירי. כל אבן דרך פותחת משהו — ערכת עיצוב,
+      רקע, מסגרת לדוכן. ההתקדמות היא מה שמחליף את הכסף כתמריץ, כי רוב הבנות ימכרו מעט.
+    </p>
+
+    <div class="note open">
+      <span class="label">החלטה פתוחה · חוסמת בנייה</span>
+      <p>
+        <strong>פיד ועוקבים שוברים את מודל הבטיחות הקיים.</strong> היום הכתובת של כל דוכן
+        היא חמישה תווים אקראיים, יש <code>noindex</code> בכל דף, ואין מפת אתר — הכל כדי
+        שדוכן של ילדה בת עשר יהיה נגיש רק למי שהיא שלחה לו את הלינק.
+      </p>
+      <p>
+        פיד הופך דוכנים לניתנים לגילוי. השאלה שצריך לענות עליה לפני שורת קוד אחת:
+        <strong>הפיד סגור למעגל חברים, או פתוח לכולן?</strong> סגור שומר על הבטיחות ומאט
+        את הצמיחה; פתוח עושה את ההפך ומכניס את המוצר לקטגוריה רגולטורית אחרת לגמרי —
+        רשת חברתית לקטינים.
+      </p>
+      <p>ההמלצה: סגור למעגל חברים בגרסה הראשונה. אפשר לפתוח אחר כך; אי אפשר לסגור אחורה.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>הכסף</h2>
+    <table>
+      <thead>
+        <tr><th>מי משלם</th><th>למי</th><th>כמה</th><th>איך</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ההורה</td><td>דוכן</td><td class="num">₪200 חד-פעמי</td><td>ביט או פייבוקס, אישור ידני</td></tr>
+        <tr><td>הקונה</td><td>הילדה</td><td class="num">מחיר המוצר</td><td>ביט · פייבוקס · מזומן — ביניהן</td></tr>
+      </tbody>
+    </table>
+    <p>
+      שני סוגי הכסף מופרדים לחלוטין במוצר ובקוד. דוכן גובה פעם אחת על הקמת הדוכן,
+      ולא לוקחת אחוזים ממכירות. זה מה שמאפשר להגיד להורה "אין כאן שום דבר מתמשך".
+    </p>
+    <p>
+      <strong>העיגון:</strong> יותר משווה ממשחק קונסולה, פחות משיעור פרטי אחד.
+      מסך המחיר מראה כמה סקווישים צריך למכור כדי להחזיר את זה.
+    </p>
+  </section>
+
+  <section>
+    <h2>בטיחות</h2>
+    <p>אלה כללים, לא העדפות. כל אחד מהם נובע מזה שהמשתמשות הן קטינות.</p>
+    <ul>
+      <li>כתובת הדוכן היא 5 תווים אקראיים — לא שם ולא בית ספר</li>
+      <li><code>noindex, nofollow</code> בכל דף דוכן. אין מפת אתר</li>
+      <li><strong>אין שדה כתובת בשום מקום.</strong> מסירה מסוכמת בוואטסאפ</li>
+      <li>מספר הוואטסאפ לא מופיע ב-HTML — הוא מוחזר מהשרת רק אחרי שההזמנה נוצרה</li>
+      <li>כל תמונה עוברת ציור מחדש בקנבס — זה מוחק את קואורדינטות ה-GPS של הבית</li>
+      <li>הקלטת וידאו ללא אודיו. חמש שניות בחדר קולטות אחים והורים</li>
+      <li>הדוכן נעול עד שהמנהלת מאשרת — ילדה לא יכולה לפרסם את עצמה לאוויר</li>
+      <li>המנהלת יכולה להשבית כל דוכן מהחמ"ל</li>
+    </ul>
+    <div class="note">
+      <span class="label">פער ידוע</span>
+      <p>
+        אין היום ערוץ אוטומטי להורה. בגרסאות קודמות נשלח מייל להורה עם לינק לסגירת
+        הדוכן; ההרשמה בסמס ויתרה על זה לטובת פשטות. הבקרה היחידה שנשארה היא ידנית,
+        דרך החמ"ל. זו תהיה השאלה הראשונה של כל הורה.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>ארכיטקטורה</h2>
+    <table>
+      <thead><tr><th>שכבה</th><th>מה</th><th>למה</th></tr></thead>
+      <tbody>
+        <tr><td>אפליקציה</td><td>Next.js 15 · TypeScript · Vercel</td><td>דיפלוי אחד לכל הדוכנים</td></tr>
+        <tr><td>נתונים</td><td>Supabase — Postgres, Auth, RLS</td><td>הרשאות ברמת השורה, לא בקוד</td></tr>
+        <tr><td>מדיה</td><td>Cloudflare R2</td><td>תעבורה יוצאת חינם — זה מה שמחזיק את מודל העלות</td></tr>
+        <tr><td>סמס</td><td>sms4free</td><td>קודי כניסה</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>כל דוכן הוא שורה בטבלה, לא דיפלוי.</strong> זו ההחלטה שקובעת שאפשר להחזיק
+      אלף דוכנים באותה עלות כמו עשרה.
+    </p>
+    <p>
+      הקריאה הפומבית של דוכן נעשית בשרת בלבד ומחזירה שדות מפורשים — מספר טלפון
+      ופרטי הורה לא יוצאים משם לעולם. פעולות רגישות כמו הפעלה או ניכוי מלאי יושבות
+      בפונקציות מסד עם בדיקת בעלות, ולא בקוד הלקוח.
+    </p>
+  </section>
+
+  <section>
+    <h2>מה מודדים</h2>
+    <p>
+      <strong>המדד היחיד שקובע בשלב הזה: כמה בנות הוסיפו מוצר שני בלי שביקשו מהן.</strong>
+      הוא מודד את הדבר היחיד שאי אפשר לזייף — שהן חזרו.
+    </p>
+    <ul>
+      <li>זמן מנחיתה ועד העתקת הלינק</li>
+      <li>כמה סיימו אונבורדינג לבד</li>
+      <li>יחס הזמנה שנשלחה → הזמנה ששולמה</li>
+      <li>כמה דוכנים חדשים הגיעו מדוכן קיים</li>
+    </ul>
+    <p>יעד קרוב: שלושה דוכנים אמיתיים, שבוע.</p>
+  </section>
+
+  <section>
+    <h2>הסדר קדימה</h2>
+    <ol>
+      <li><strong>שלושה דוכנים אמיתיים.</strong> לראות איפה בנות נתקעות לפני שמוסיפים שכבה</li>
+      <li><strong>להחליט על הפיד</strong> — סגור או פתוח. זו החלטה שקובעת ארכיטקטורה ובטיחות</li>
+      <li><strong>עוקבים</strong> — הכי פשוט מהשלושה, ומייצר את המדד שאפשר לגדול בו</li>
+      <li><strong>דרגות והישגים</strong> על גבי המסע שכבר קיים</li>
+      <li><strong>פיד</strong> — אחרון, כי הוא הכי כבד והכי רגיש</li>
+      <li><strong>ערוץ להורה</strong> — לסגור את הפער לפני שמגיעים למאות דוכנים</li>
+    </ol>
+  </section>
+
+  <footer>
+    דוכן · העיר הקטנה של הילדים היזמים
+  </footer>
+
+</div>
