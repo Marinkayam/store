@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = { title: "תנאי שימוש · דוכן" };
 
 // עמוד סטטי. עדכון אחרון מופיע למטה — לעדכן בכל שינוי מהותי.
 
-const CONTACT_EMAIL = "hello@duchan.co"; // ← לעדכן לכתובת אמיתית
+
 
 export default function TermsPage() {
   return (

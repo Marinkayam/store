@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = { title: "מדיניות פרטיות · דוכן" };
 
-const CONTACT_EMAIL = "hello@duchan.co"; // ← לעדכן לכתובת אמיתית
+
 
 export default function PrivacyPage() {
   return (

@@ -192,7 +192,7 @@ check("her whatsapp number still never appears in the HTML", !storeHtml.includes
 /* ── 5ג: תצוגה מקדימה בוואטסאפ ── */
 const og = (prop) => storeHtml.match(new RegExp(`<meta property="${prop}" content="([^"]*)"`))?.[1];
 check("og:title is the store name", og("og:title") === seed.display_name, og("og:title"));
-check("og:url is absolute on the real domain", og("og:url")?.startsWith("https://duchan.co.il/s/"), og("og:url"));
+check("og:url is absolute on the real domain", og("og:url")?.startsWith("https://duchan.app/s/"), og("og:url"));
 check("og:image points at a real uploaded image", !!og("og:image")?.includes("/duchan-media/"), og("og:image"));
 check("preview image is actually fetchable", (await fetch(og("og:image"))).ok);
 // noindex ו-OpenGraph חיים יחד בכוונה: לא נמצא בגוגל, אבל נראה טוב בשיתוף

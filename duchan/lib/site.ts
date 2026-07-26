@@ -19,3 +19,9 @@ export const SITE_URL = (
 /** כתובת מוחלטת מנתיב יחסי. `absolute("/s/k3m9p")` */
 export const absolute = (path: string) =>
   `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
+/**
+ * הכתובת שמופיעה בתנאי השימוש ובמדיניות הפרטיות.
+ * חייבת להיות תיבה שבאמת נקראת — זו הכתובת שאליה הורה יפנה בבקשת מחיקת נתונים.
+ */
+export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@duchan.app";
