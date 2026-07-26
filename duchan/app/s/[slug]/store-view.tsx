@@ -11,7 +11,11 @@ interface CartLine {
   name: string;
   price: number;
   qty: number;
+  option?: string; // "ורוד" — אותו מוצר בשני צבעים הוא שתי שורות בסל
 }
+
+/** מזהה שורת סל: מוצר + בחירה. */
+const lineKey = (id: string, option?: string) => `${id}\u0000${option ?? ""}`;
 
 export default function StoreView({
   store,
@@ -23,11 +27,13 @@ export default function StoreView({
   const [cart, setCart] = useState<CartLine[]>([]);
   const [current, setCurrent] = useState<PublicProduct | null>(null);
   const [qty, setQty] = useState(1);
+  const [choice, setChoice] = useState<string | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState("");
-  const [isOwner, setIsOwner] = useState(false);
+  // null = לא בעלת החנות (או שעוד לא נבדק). קונה לא רואה מזה כלום.
+  const [owner, setOwner] = useState<{ newOrders: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   // אמצעי התשלום שהחנות מקבלת — שמות בלבד, בלי מספרים ובלי פרטי חשבון
@@ -54,15 +60,27 @@ export default function StoreView({
     }
   }, [store.slug]);
 
-  // כפתור עריכה צף — רק אם המחוברת היא בעלת החנות (RLS מחזיר את השורה רק לבעלים)
+  /**
+   * הילדה רואה את החנות *וגם* את הדרך לניהול; הקונות רואות חנות בלבד.
+   * הבדיקה נשענת על RLS — השורה חוזרת רק לבעלת החנות, ולכן אין כאן שום
+   * מידע שאפשר להוציא מהדף בתור מבקרת. גם מספר ההזמנות החדשות מגיע מ-RLS.
+   */
   useEffect(() => {
     const supa = supabaseBrowser();
-    supa
-      .from("stores")
-      .select("id")
-      .eq("slug", store.slug)
-      .maybeSingle()
-      .then(({ data }) => setIsOwner(!!data));
+    let alive = true;
+    (async () => {
+      const { data } = await supa.from("stores").select("id").eq("slug", store.slug).maybeSingle();
+      if (!alive || !data) return;
+      const { count } = await supa
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("store_id", data.id)
+        .eq("status", "sent");
+      if (alive) setOwner({ newOrders: count ?? 0 });
+    })();
+    return () => {
+      alive = false;
+    };
   }, [store.slug]);
 
   // מנגן רק את הסרטונים שנראים — שישה במקביל מקפיאים גלילה בטלפון ישן
@@ -99,22 +117,35 @@ export default function StoreView({
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
   const cartTotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
 
-  const inCart = (id: string) => cart.find((l) => l.id === id)?.qty ?? 0;
+  const inCart = (id: string) =>
+    cart.filter((l) => l.id === id).reduce((s, l) => s + l.qty, 0);
   const maxQty = (p: PublicProduct) => (p.track_stock ? Math.max(0, p.stock - inCart(p.id)) : 99);
 
   function openProduct(p: PublicProduct) {
     setCurrent(p);
     setQty(1);
+    // בחירה יחידה נבחרת מראש — אין מה להחליט
+    setChoice(p.options?.length === 1 ? p.options[0] : null);
   }
 
   function addToCart() {
     if (!current) return;
+    const opt = choice ?? undefined;
+    const key = lineKey(current.id, opt);
     setCart((c) => {
-      const ex = c.find((l) => l.id === current.id);
-      if (ex) return c.map((l) => (l.id === current.id ? { ...l, qty: l.qty + qty } : l));
-      return [...c, { id: current.id, name: current.name, price: current.price, qty }];
+      const ex = c.find((l) => lineKey(l.id, l.option) === key);
+      if (ex) {
+        return c.map((l) =>
+          lineKey(l.id, l.option) === key ? { ...l, qty: l.qty + qty } : l
+        );
+      }
+      return [
+        ...c,
+        { id: current.id, name: current.name, price: current.price, qty, ...(opt ? { option: opt } : {}) },
+      ];
     });
     setCurrent(null);
+    setChoice(null);
     showToast("נוסף לסל");
   }
 
@@ -127,7 +158,7 @@ export default function StoreView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: store.slug,
-          items: cart.map((l) => ({ productId: l.id, qty: l.qty })),
+          items: cart.map((l) => ({ productId: l.id, qty: l.qty, option: l.option })),
           note: note.trim() || undefined,
         }),
       });
@@ -139,8 +170,11 @@ export default function StoreView({
 
       // בונים את הלינק רק אחרי שהשרת ענה — המספר לא יושב ב-HTML
       const firstName = data.storeName.replace(/^החנות של\s*/, "");
-      const lines = (data.items as { name: string; qty: number; price: number }[])
-        .map((i) => `• ${i.name} × ${i.qty} — ₪${i.price * i.qty}`)
+      const lines = (data.items as { name: string; qty: number; price: number; option?: string }[])
+        .map(
+          (i) =>
+            `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} — ₪${i.price * i.qty}`
+        )
         .join("\n");
       const msg =
         `היי ${firstName}! 👋\n` +
@@ -172,6 +206,36 @@ export default function StoreView({
         fontFamily: "var(--s-font)",
       }}
     >
+      {/* רצועת הבעלים — נצמדת למעלה, אפור-שחור ולא בערכה של החנות, כדי שיהיה
+          ברור שזו המערכת ולא הדף שהקונות רואות. קונה לא מקבלת אותה בכלל. */}
+      {owner && (
+        <div className="sticky top-0 z-40 bg-[#15161B] text-white" dir="rtl">
+          <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <span className="text-[11px] opacity-80 leading-tight">
+              זו החנות שלך
+              <br />
+              <span className="opacity-70">ככה הקונות רואות אותה</span>
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <a href="/dashboard" className="relative bg-white text-[#15161B] rounded-lg px-2.5 py-1.5 text-[11.5px] font-bold">
+                הזמנות
+                {owner.newOrders > 0 && (
+                  <span className="absolute -top-1.5 -left-1.5 min-w-4 h-4 px-1 rounded-full bg-[#E4405F] text-white text-[9.5px] font-bold flex items-center justify-center">
+                    {owner.newOrders}
+                  </span>
+                )}
+              </a>
+              <a href="/dashboard/products" className="border border-white/30 rounded-lg px-2.5 py-1.5 text-[11.5px]">
+                מוצרים
+              </a>
+              <a href="/dashboard/settings" className="border border-white/30 rounded-lg px-2.5 py-1.5 text-[11.5px]">
+                עיצוב
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* hero */}
       <div className="relative">
         <div
@@ -220,7 +284,8 @@ export default function StoreView({
                   }}
                 >
                   {out ? (
-                    <span className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#6B6B72] text-white">
+                    // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
+                    <span className="absolute inset-x-0 top-1/4 z-10 bg-[#15161B]/80 text-white text-[13px] font-bold text-center py-1.5 tracking-wide">
                       אזל
                     </span>
                   ) : p.track_stock && p.stock <= 3 ? (
@@ -266,16 +331,6 @@ export default function StoreView({
           <a href="/terms" className="underline">תנאים</a>
         </p>
       </div>
-
-      {/* עריכה — לבעלת החנות בלבד */}
-      {isOwner && (
-        <a
-          href="/dashboard"
-          className="fixed bottom-24 left-4 z-30 px-4 py-2.5 rounded-full bg-[#15161B] text-white text-sm font-medium shadow-lg"
-        >
-          עריכה ✏️
-        </a>
-      )}
 
       {/* cart bar */}
       <div
@@ -337,6 +392,32 @@ export default function StoreView({
           {current.track_stock && current.stock <= 3 && (
             <p className="text-[11px] opacity-60 text-center mt-1">נשארו {current.stock} במלאי</p>
           )}
+
+          {/* בחירה — חייבים לבחור לפני הוספה לסל */}
+          {current.options && current.options.length > 0 && (
+            <div className="mt-4">
+              <div className="text-[12px] opacity-60 text-center mb-2">
+                {current.option_label || "בחרי"}
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                {current.options.map((o) => (
+                  <button
+                    key={o}
+                    onClick={() => setChoice(o)}
+                    className="text-[13px] font-medium rounded-full px-4 py-2 border-[1.5px] transition"
+                    style={
+                      choice === o
+                        ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
+                        : { borderColor: "currentColor", opacity: 0.55 }
+                    }
+                  >
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-center gap-5 my-4">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -356,11 +437,15 @@ export default function StoreView({
           </div>
           <button
             onClick={addToCart}
-            disabled={maxQty(current) === 0}
+            disabled={maxQty(current) === 0 || (!!current.options?.length && !choice)}
             className="w-full rounded-xl py-3.5 text-[15px] font-bold disabled:opacity-40"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
           >
-            {maxQty(current) === 0 ? "אין יותר במלאי" : "הוספה לסל"}
+            {maxQty(current) === 0
+              ? "אין יותר במלאי"
+              : current.options?.length && !choice
+                ? `קודם בוחרים ${current.option_label || "אפשרות"}`
+                : "הוספה לסל"}
           </button>
         </div>
       )}
@@ -374,8 +459,11 @@ export default function StoreView({
           <div className="w-9 h-1 rounded bg-current opacity-15 mx-auto mb-4" />
           <h2 className="text-base font-bold mb-2.5">ההזמנה שלך</h2>
           {cart.map((l) => (
-            <div key={l.id} className="flex justify-between text-[13px] py-1">
-              <span>{l.name} × {l.qty}</span>
+            <div key={lineKey(l.id, l.option)} className="flex justify-between text-[13px] py-1">
+              <span>
+                {l.name}
+                {l.option ? ` (${l.option})` : ""} × {l.qty}
+              </span>
               <span>₪{l.price * l.qty}</span>
             </div>
           ))}

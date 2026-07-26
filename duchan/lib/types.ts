@@ -51,6 +51,8 @@ export interface Product {
   track_stock: boolean;
   stock: number;
   sort_order: number;
+  option_label: string | null; // "צבע" · "מידה" · null = אין אפשרויות
+  options: string[] | null;
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
   created_at: string;
@@ -60,6 +62,7 @@ export interface OrderItem {
   name: string;
   qty: number;
   price: number;
+  option?: string; // הבחירה של הקונה: "ורוד". נשמר ב-snapshot ההזמנה.
 }
 
 export interface Order {
@@ -101,4 +104,6 @@ export interface PublicProduct {
   track_stock: boolean;
   stock: number;
   sort_order: number;
+  option_label: string | null;
+  options: string[] | null;
 }

@@ -10,7 +10,7 @@ import type { OrderItem } from "@/lib/types";
 
 interface Body {
   slug?: string;
-  items?: { productId: string; qty: number }[];
+  items?: { productId: string; qty: number; option?: string }[];
   note?: string;
 }
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   const ids = items.map((i) => i.productId);
   const { data: products } = await db
     .from("products")
-    .select("id, name, price, track_stock, stock")
+    .select("id, name, price, track_stock, stock, option_label, options")
     .eq("store_id", store.id)
     .in("id", ids)
     .is("deleted_at", null);
@@ -80,7 +80,22 @@ export async function POST(req: NextRequest) {
     if (p.track_stock && p.stock < qty) {
       return NextResponse.json({ error: `נשארו רק ${p.stock} מ"${p.name}"` }, { status: 409 });
     }
-    snapshot.push({ name: p.name, qty, price: p.price });
+
+    // הבחירה של הקונה מאומתת מול הרשימה ב-DB, כמו המחיר. אחרת אפשר לשלוח
+    // כל טקסט והוא ייכנס להזמנה ולהודעת הוואטסאפ של הילדה.
+    const choices = p.options ?? [];
+    let option: string | undefined;
+    if (choices.length > 0) {
+      if (!item.option || !choices.includes(item.option)) {
+        return NextResponse.json(
+          { error: `צריך לבחור ${p.option_label || "אפשרות"} ל"${p.name}"` },
+          { status: 400 }
+        );
+      }
+      option = item.option;
+    }
+
+    snapshot.push({ name: p.name, qty, price: p.price, ...(option ? { option } : {}) });
     total += p.price * qty;
   }
 

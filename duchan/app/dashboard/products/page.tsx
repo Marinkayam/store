@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../use-store";
 import {
@@ -28,6 +28,8 @@ interface EditState {
   trackStock: boolean;
   stock: number;
   isVisible: boolean;
+  optionLabel: string;   // "צבע" · "מידה" — ריק = אין אפשרויות
+  optionsText: string;   // "ורוד, כחול, צהוב" — נשמר כמערך
   imageKey: string | null;
   videoKey: string | null;
   posterKey: string | null;
@@ -46,6 +48,8 @@ const EMPTY_EDIT: EditState = {
   trackStock: true,
   stock: 1,
   isVisible: true,
+  optionLabel: "",
+  optionsText: "",
   imageKey: null,
   videoKey: null,
   posterKey: null,
@@ -82,6 +86,16 @@ export default function ProductsPage() {
     setToast(m);
     setTimeout(() => setToast(""), 2600);
   };
+
+  /**
+   * הבחירות כפי שיישמרו: "ורוד, כחול,, ורוד " → ["ורוד","כחול"].
+   * מקור אמת אחד גם לשבבים בעורך וגם לשמירה — אחרת היא רואה שלוש בחירות
+   * ובחנות מופיעות שתיים.
+   */
+  const optionValues = useMemo(
+    () => [...new Set((edit?.optionsText ?? "").split(",").map((o) => o.trim()).filter(Boolean))].slice(0, 12),
+    [edit?.optionsText]
+  );
 
   /** דף החנות מוגש מקאש של 60 שניות — מרעננים אותו מיד אחרי שינוי מוצרים */
   const refreshStorePage = () => {
@@ -163,6 +177,8 @@ export default function ProductsPage() {
         description: p.description ?? "",
         price: String(p.price),
         trackStock: p.track_stock,
+        optionLabel: p.option_label ?? "",
+        optionsText: (p.options ?? []).join(", "),
         stock: p.stock,
         isVisible: p.is_visible !== false,
         imageKey: p.image_key,
@@ -183,7 +199,14 @@ export default function ProductsPage() {
       const raw = localStorage.getItem(draftKey(p?.id ?? null));
       if (raw) {
         const d = JSON.parse(raw);
-        base = { ...base, name: d.name ?? base.name, description: d.description ?? base.description, price: d.price ?? base.price };
+        base = {
+          ...base,
+          name: d.name ?? base.name,
+          description: d.description ?? base.description,
+          price: d.price ?? base.price,
+          optionLabel: d.optionLabel ?? base.optionLabel,
+          optionsText: d.optionsText ?? base.optionsText,
+        };
       }
     } catch {}
     setEdit(base);
@@ -193,7 +216,13 @@ export default function ProductsPage() {
     if (!edit) return;
     localStorage.setItem(
       draftKey(edit.id),
-      JSON.stringify({ name: edit.name, description: edit.description, price: edit.price })
+      JSON.stringify({
+        name: edit.name,
+        description: edit.description,
+        price: edit.price,
+        optionLabel: edit.optionLabel,
+        optionsText: edit.optionsText,
+      })
     );
   }, [edit]);
 
@@ -342,6 +371,8 @@ export default function ProductsPage() {
         description: edit.description.trim() || null,
         price: Math.max(0, Math.floor(Number(edit.price) || 0)),
         track_stock: edit.trackStock,
+        option_label: optionValues.length ? edit.optionLabel.trim() || "בחרי" : null,
+        options: optionValues.length ? optionValues : null,
         stock: Math.max(0, edit.stock),
         is_visible: edit.isVisible,
         image_key: imageKey,
@@ -399,6 +430,8 @@ export default function ProductsPage() {
       description: src.description,
       price: src.price,
       track_stock: src.track_stock,
+      option_label: src.option_label,
+      options: src.options,
       stock: src.stock,
       is_visible: src.is_visible,
       image_key: src.image_key,
@@ -551,7 +584,7 @@ export default function ProductsPage() {
                   {!p.track_stock ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F5F6F9] text-[#7A7D8A]">בלי מעקב</span>
                   ) : out ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FBE9EA] text-[#D2373B]">אזל</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FBE9EA] text-[#D2373B] font-bold">אזל</span>
                   ) : p.stock <= 2 ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFF3E0] text-[#A85B00]">נשארו {p.stock}</span>
                   ) : (
@@ -593,12 +626,13 @@ export default function ProductsPage() {
         )}
       </div>
 
+      {/* היה עיגול "+" בלי מילה, וקל היה לפספס אותו לגמרי */}
       <button
         onClick={() => openEditor(null)}
         aria-label="מוצר חדש"
-        className="fixed bottom-20 left-4 w-12 h-12 rounded-full bg-[#15161B] text-white text-2xl font-light shadow-lg z-30"
+        className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] h-12 rounded-2xl bg-[#15161B] text-white text-[15px] font-bold shadow-lg z-30 flex items-center justify-center gap-2"
       >
-        +
+        <span className="text-xl font-light">+</span> מוצר חדש
       </button>
 
       {/* editor sheet */}
@@ -654,7 +688,7 @@ export default function ProductsPage() {
             </div>
 
             <label className="block text-[11px] text-[#7A7D8A] mb-1">שם המוצר</label>
-            <input value={edit.name} maxLength={40}
+            <input value={edit.name} maxLength={40} aria-label="שם המוצר"
               onChange={(e) => setEdit((s) => s && { ...s, name: e.target.value })}
               className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3" />
 
@@ -672,9 +706,45 @@ export default function ProductsPage() {
               className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3 resize-none" />
 
             <label className="block text-[11px] text-[#7A7D8A] mb-1">מחיר (₪)</label>
-            <input value={edit.price} type="number" inputMode="numeric"
+            <input value={edit.price} type="number" inputMode="numeric" aria-label="מחיר"
               onChange={(e) => setEdit((s) => s && { ...s, price: e.target.value })}
               className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3" />
+
+            {/* אפשרויות לבחירה — צבע, מידה, טעם. אחת פר מוצר, בלי מלאי נפרד. */}
+            <label className="block text-[11px] text-[#7A7D8A] mb-1">
+              אפשרויות לבחירה (לא חובה)
+            </label>
+            <div className="flex gap-2 mb-2">
+              <input
+                value={edit.optionLabel}
+                maxLength={12}
+                placeholder="צבע"
+                aria-label="שם האפשרות"
+                onChange={(e) => setEdit((s) => s && { ...s, optionLabel: e.target.value })}
+                className="w-24 border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm"
+              />
+              <input
+                value={edit.optionsText}
+                maxLength={120}
+                placeholder="ורוד, כחול, צהוב"
+                aria-label="הבחירות"
+                onChange={(e) => setEdit((s) => s && { ...s, optionsText: e.target.value })}
+                className="flex-1 border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm"
+              />
+            </div>
+            {optionValues.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {optionValues.map((o) => (
+                  <span key={o} className="text-[11px] bg-[#F5F6F9] rounded-full px-2.5 py-1">
+                    {o}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-[#A2A5B0] mb-3">
+                מפרידים בפסיק. הקונה תבחר אחת לפני שהיא מוסיפה לסל.
+              </p>
+            )}
 
             <div className="flex justify-between items-center border border-[#E6E7EC] rounded-lg px-3 py-2.5 mb-3">
               <span className="text-[13px]">מוצג בחנות</span>

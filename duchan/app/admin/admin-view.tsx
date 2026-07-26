@@ -140,6 +140,8 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
   const [stores, setStores] = useState<AdminStore[]>([]);
   const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<StoreDetail | null>(null);
+  // המוצר שפתוח לעריכה בתיק החנות. אחד בכל רגע.
+  const [editProduct, setEditProduct] = useState<{ id: string; name: string; price: string; stock: string } | null>(null);
   const [explore, setExplore] = useState<ExploreStore[]>([]);
   const [news, setNews] = useState<Announcement[]>([]);
   const [toast, setToast] = useState("");
@@ -210,14 +212,35 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     showToast(aiEnabled ? "כתיבה אוטומטית הופעלה ✨" : "כתיבה אוטומטית כובתה");
   }
 
-  async function restoreProduct(productId: string, storeId: string) {
-    await fetch("/api/admin/store", {
+  /**
+   * כל פעולה על מוצר מהחמ"ל. גם "מחיקה" היא רכה — deleted_at, עם שחזור.
+   * הודעת ה-toast מפורשת בכוונה: אחרת נראה כאילו מחקת לילדה מוצר לתמיד.
+   */
+  async function productAction(
+    productId: string,
+    storeId: string,
+    action: "restore" | "delete" | "hide" | "show" | "edit",
+    extra?: Record<string, unknown>
+  ) {
+    const r = await fetch("/api/admin/store", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId, action: "restore" }),
+      body: JSON.stringify({ productId, action, ...extra }),
     });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      showToast(d.error ?? "הפעולה נכשלה");
+      return;
+    }
+    setEditProduct(null);
     openDetail(storeId);
-    showToast("המוצר שוחזר לחנות");
+    showToast(
+      action === "restore" ? "המוצר חזר לחנות"
+      : action === "delete" ? "המוצר הוצא מהחנות — אפשר לשחזר"
+      : action === "hide" ? "המוצר מוסתר מהקונות"
+      : action === "show" ? "המוצר חזר להיות מוצג"
+      : "המוצר עודכן"
+    );
   }
 
   const filtered = useMemo(() => {
@@ -686,26 +709,85 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
             <div className="flex flex-col gap-1.5 mb-4">
               {detail.products.map((p) => {
                 const img = mediaUrl(p.poster_key) ?? mediaUrl(p.image_key);
+                const open = editProduct?.id === p.id;
                 return (
                   <div key={p.id}
-                    className={`flex items-center gap-2.5 border border-[#E6E7EC] rounded-lg p-2 ${p.deleted_at ? "bg-[#FAFAFB] opacity-70" : "bg-white"}`}>
-                    <div className="w-9 h-9 rounded-md bg-[#F5F6F9] flex items-center justify-center text-lg overflow-hidden">
-                      {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium truncate">{p.name}</div>
-                      <div className="text-[10px] text-[#7A7D8A]">
-                        ₪{p.price}
-                        {p.track_stock ? ` · מלאי ${p.stock}` : " · בלי מעקב"}
-                        {p.is_visible === false && " · מוסתר"}
-                        {p.deleted_at && ` · נמחק ${new Date(p.deleted_at).toLocaleDateString("he-IL")}`}
+                    className={`border border-[#E6E7EC] rounded-lg p-2 ${p.deleted_at ? "bg-[#FAFAFB] opacity-70" : "bg-white"}`}>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-md bg-[#F5F6F9] flex items-center justify-center text-lg overflow-hidden shrink-0">
+                        {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-medium truncate">{p.name}</div>
+                        <div className="text-[10px] text-[#7A7D8A]">
+                          ₪{p.price}
+                          {p.track_stock ? ` · מלאי ${p.stock}` : " · בלי מעקב"}
+                          {p.is_visible === false && " · מוסתר"}
+                          {p.deleted_at && ` · הוצא ${new Date(p.deleted_at).toLocaleDateString("he-IL")}`}
+                        </div>
+                      </div>
+                      {p.deleted_at ? (
+                        <button onClick={() => productAction(p.id, detail.store.id, "restore")}
+                          className="text-[11px] border border-[#E6E7EC] rounded-lg px-2.5 py-1.5 shrink-0">
+                          שחזור
+                        </button>
+                      ) : (
+                        <div className="flex gap-1 shrink-0">
+                          <button
+                            onClick={() =>
+                              setEditProduct(
+                                open
+                                  ? null
+                                  : { id: p.id, name: p.name, price: String(p.price), stock: String(p.stock) }
+                              )
+                            }
+                            aria-label="עריכה"
+                            className="text-[11px] border border-[#E6E7EC] rounded-lg px-2 py-1.5">
+                            {open ? "סגירה" : "✏️"}
+                          </button>
+                          <button
+                            onClick={() => productAction(p.id, detail.store.id, p.is_visible === false ? "show" : "hide")}
+                            aria-label={p.is_visible === false ? "הצגה" : "הסתרה"}
+                            className="text-[11px] border border-[#E6E7EC] rounded-lg px-2 py-1.5">
+                            {p.is_visible === false ? "👁️" : "🙈"}
+                          </button>
+                          <button onClick={() => productAction(p.id, detail.store.id, "delete")}
+                            aria-label="הוצאה מהחנות"
+                            className="text-[11px] border border-[#F2C9C9] text-[#B4232A] rounded-lg px-2 py-1.5">
+                            🗑️
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {p.deleted_at && (
-                      <button onClick={() => restoreProduct(p.id, detail.store.id)}
-                        className="text-[11px] border border-[#E6E7EC] rounded-lg px-2.5 py-1.5">
-                        שחזור
-                      </button>
+
+                    {open && editProduct && (
+                      <div className="mt-2 pt-2 border-t border-[#EEEFF3] flex flex-col gap-1.5">
+                        <input value={editProduct.name} maxLength={40} aria-label="שם המוצר"
+                          onChange={(e) => setEditProduct((s) => s && { ...s, name: e.target.value })}
+                          className="w-full border border-[#E6E7EC] rounded-lg px-2.5 py-2 text-[13px]" />
+                        <div className="flex gap-1.5">
+                          <input value={editProduct.price} type="number" inputMode="numeric" aria-label="מחיר"
+                            onChange={(e) => setEditProduct((s) => s && { ...s, price: e.target.value })}
+                            className="flex-1 border border-[#E6E7EC] rounded-lg px-2.5 py-2 text-[13px]" />
+                          <input value={editProduct.stock} type="number" inputMode="numeric" aria-label="מלאי"
+                            onChange={(e) => setEditProduct((s) => s && { ...s, stock: e.target.value })}
+                            className="flex-1 border border-[#E6E7EC] rounded-lg px-2.5 py-2 text-[13px]" />
+                        </div>
+                        <button
+                          onClick={() =>
+                            productAction(p.id, detail.store.id, "edit", {
+                              name: editProduct.name,
+                              price: Number(editProduct.price),
+                              stock: Number(editProduct.stock),
+                            })
+                          }
+                          className="bg-[#15161B] text-white rounded-lg py-2 text-[13px] font-bold">
+                          שמירה
+                        </button>
+                        <p className="text-[10px] text-[#A2A5B0]">
+                          שדות: שם · מחיר · מלאי. הילדה תראה את השינוי בחנות מיד.
+                        </p>
+                      </div>
                     )}
                   </div>
                 );
