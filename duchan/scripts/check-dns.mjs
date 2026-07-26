@@ -43,30 +43,64 @@ try {
 /** לפני שיש דיפלוי, "לא נפתר" הוא הצעד הבא ולא כשל */
 const pending = onCloudflare ? warn : bad;
 
+/**
+ * A, ואם אין — AAAA. שתי הטעויות שהיו כאן:
+ *
+ * 1. `resolve4(h).catch(() => resolve6(h))` — כשה-A נכשל רגעית, השגיאה שדווחה
+ *    הייתה של ה-AAAA ("queryAaaa ENODATA"), ולכן דומיין שעבד דווח כלא נפתר
+ *    מסיבה מוטעית לגמרי.
+ * 2. בלי ניסיון חוזר — ENODATA חולף אחד הפך הגדרה נכונה ל"תקלה", וזה בדיוק
+ *    סוג ההודעה שגורם למי שקורא להפסיק להאמין לסקריפט.
+ */
+async function resolveHost(host, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await dns.resolve4(host);
+    } catch (e4) {
+      try {
+        return await dns.resolve6(host);
+      } catch {
+        // ENOTFOUND = אין רשומה כזו בכלל, ואין טעם לנסות שוב.
+        if (e4.code === "ENOTFOUND" || i === tries - 1) return null;
+        await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+  }
+  return null;
+}
+
 /* ── 2. הדומיין נפתר ── */
 for (const host of [domain, `www.${domain}`, `media.${domain}`]) {
-  try {
-    const a = await dns.resolve4(host).catch(() => dns.resolve6(host));
+  const a = await resolveHost(host);
+  if (a) {
     ok(`${host} נפתר`, a.slice(0, 2).join(", "));
-  } catch {
-    // האירוח הוא Vercel. הרשומות נכתבות ב-Cloudflare DNS, בענן אפור (DNS only):
-    // שורש = A ל-76.76.21.21, www = CNAME ל-cname.vercel-dns.com.
-    const label = host.startsWith("media.")
-      ? "ממתין ל-R2 → Settings → Public access → Connect a domain"
-      : host.startsWith("www.")
-        ? "חסרה רשומת CNAME ל-cname.vercel-dns.com (ענן אפור)"
-        : "חסרה רשומת A ל-76.76.21.21 (ענן אפור)";
-    pending(`${host} לא נפתר`, label);
+    continue;
   }
+  // האירוח הוא Vercel, והרשומות נכתבות ב-Cloudflare DNS בענן אפור (DNS only).
+  // הערך המדויק לשורש הוא ייחודי לפרויקט ומופיע ב-Vercel → Settings → Domains.
+  const label = host.startsWith("media.")
+    ? "ממתין ל-R2 → Settings → Public access → Connect a domain"
+    : host.startsWith("www.")
+      ? "אין רשומת www — לא חובה. אם רוצים: CNAME בענן אפור, ואז להוסיף אותה גם ב-Vercel"
+      : "חסרה רשומת CNAME על @ לכתובת ש-Vercel נותן, בענן אפור (DNS only)";
+  pending(`${host} לא נפתר`, label);
 }
 
 /* ── 3. HTTPS ── */
 // ל-.app אין HTTP בכלל (HSTS preload), אז כישלון כאן הוא חסימה מלאה ולא אזהרה.
 try {
   const res = await fetch(`https://${domain}`, { redirect: "follow" });
+  // 401/403 מדומיין שכבר נפתר זה כמעט תמיד Vercel Deployment Protection ולא
+  // באג באפליקציה — כל דף מוחזר חסום, כולל דף חנות שילדה שיתפה.
+  const blocked = res.status === 401 || res.status === 403;
   res.ok
     ? ok(`https://${domain} עונה`, `HTTP ${res.status}`)
-    : warn(`https://${domain} החזיר ${res.status}`, "האתר עוד לא פרוס?");
+    : warn(
+        `https://${domain} החזיר ${res.status}`,
+        blocked
+          ? "כנראה Vercel → Settings → Deployment Protection. אם את מריצה מרשת עם proxy, ייתכן שהוא זה שחוסם."
+          : "האתר עוד לא פרוס?"
+      );
 
   const hsts = res.headers.get("strict-transport-security");
   hsts ? ok("כותרת HSTS", hsts) : warn("אין כותרת HSTS", "לא קריטי — .app אכוף בדפדפן ממילא");
