@@ -5,6 +5,22 @@ import { normalizePhone } from "@/lib/phone";
 import { sendSms, smsConfigured } from "@/lib/sms";
 import { generateCode, hashCode, OTP_TTL_MINUTES } from "@/lib/otp";
 
+/**
+ * האם המספר הזה הוא של המנהלת.
+ *
+ * כשהיא מנסה להיכנס, השגיאה מציגה את התשובה האמיתית של הספק במקום נוסח
+ * כללי. בלי זה הסיבה קבורה בלוגים של השרת, והדרך היחידה לדעת מה שבור היא
+ * לפתוח את וורסל ולחפש — וזה בדיוק מה שהופך תקלה של דקה לשעה.
+ * לילדה זה נשאר כללי תמיד; אין לה מה לעשות עם "sender לא מאושר".
+ */
+function isOwner(phone: string): boolean {
+  return (process.env.ADMIN_PHONES ?? "")
+    .split(",")
+    .map((p) => normalizePhone(p.trim()))
+    .filter(Boolean)
+    .includes(phone);
+}
+
 // POST /api/auth/sms/start { phone } — שולח קוד בסמס.
 //
 // כל הודעה כאן עולה כסף אמיתי, ולכן ההגבלות הן בקרת עלות בדיוק כמו שהן
@@ -15,10 +31,6 @@ const PER_PHONE_PER_DAY = 5;
 const PER_IP_PER_DAY = 15;
 
 export async function POST(req: NextRequest) {
-  if (!smsConfigured()) {
-    return NextResponse.json({ error: "שליחת הקודים לא מוגדרת עדיין" }, { status: 503 });
-  }
-
   let body: { phone?: string };
   try {
     body = await req.json();
@@ -27,6 +39,23 @@ export async function POST(req: NextRequest) {
   }
 
   const phone = normalizePhone(body.phone ?? "");
+
+  if (!smsConfigured()) {
+    // למנהלת מפרטים איזה משתנה בדיוק חסר, כדי שלא תצטרך לנחש בין ארבעה
+    const missing = (["SMS4FREE_KEY", "SMS4FREE_USER", "SMS4FREE_PASS"] as const).filter(
+      (k) => !process.env[k]
+    );
+    return NextResponse.json(
+      {
+        error:
+          phone && isOwner(phone)
+            ? `חסר בוורסל: ${missing.join(", ")} — לסמן Production ואז Redeploy`
+            : "שליחת הקודים לא מוגדרת עדיין",
+      },
+      { status: 503 }
+    );
+  }
+
   if (!phone) {
     return NextResponse.json({ error: "המספר לא נראה תקין — בדקי אותו שוב" }, { status: 400 });
   }
@@ -70,9 +99,15 @@ export async function POST(req: NextRequest) {
 
   const sent = await sendSms(phone, `${code} — קוד הכניסה שלך לדוכן. תקף ל-${OTP_TTL_MINUTES} דקות.`);
   if (!sent.ok) {
-    // הסיבה האמיתית נשארת בלוג של מרינה. לילדה אין מה לעשות עם "sender לא מאושר".
     console.error("[sms] send failed:", sent.reason, sent.code ?? "");
-    return NextResponse.json({ error: "לא הצלחנו לשלוח את הקוד. נסי שוב עוד רגע" }, { status: 502 });
+    return NextResponse.json(
+      {
+        error: isOwner(phone)
+          ? `הספק דחה: ${sent.reason}${sent.code ? ` (${sent.code})` : ""}`
+          : "לא הצלחנו לשלוח את הקוד. נסי שוב עוד רגע",
+      },
+      { status: 502 }
+    );
   }
 
   return NextResponse.json({ ok: true, ttlMinutes: OTP_TTL_MINUTES });
