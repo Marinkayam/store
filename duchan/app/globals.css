@@ -98,8 +98,11 @@ h3 {
 .btn:active:not(:disabled) {
   transform: translateY(1px);
 }
+/* שחור, לא צבע מהפלטה: הפעולה הראשית צריכה להיות הדבר הכי בולט במסך,
+   וגם זהה בכל מקום. קודם היה כאן --wood בזמן שכפתורים אחרים (אימות
+   טלפון, שמירת מוצר) כבר היו שחורים — שני "כפתורים ראשיים" שונים. */
 .btn-primary {
-  background: var(--wood);
+  background: var(--ink);
   color: var(--white);
 }
 .btn-secondary {
@@ -109,7 +112,7 @@ h3 {
 }
 .btn-tertiary {
   background: transparent;
-  color: var(--olive);
+  color: var(--ink);
 }
 .btn:disabled {
   opacity: 0.4;

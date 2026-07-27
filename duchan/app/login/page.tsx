@@ -56,8 +56,15 @@ export default function LoginPage() {
         </Suspense>
       </div>
       <a href="/" className="text-xs text-[var(--muted)]">
-        עוד אין לך חנות? <span className="underline">פותחים אחת בדקות</span>
+        עוד אין דוכן? <span className="underline">פותחים אחד בדקות</span>
       </a>
+      <p className="text-[11px] text-[var(--muted)]">
+        <a href="/terms" className="underline">תנאי שימוש</a>
+        {" · "}
+        <a href="/privacy" className="underline">פרטיות</a>
+        {" · "}
+        <a href="/accessibility" className="underline">נגישות</a>
+      </p>
     </main>
   );
 }

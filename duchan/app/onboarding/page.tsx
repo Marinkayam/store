@@ -43,23 +43,47 @@ function loadDraft(): Draft {
   return EMPTY;
 }
 
-/** מד ההתקדמות ושורת החזרה, משותפים לשלושת מסכי הבנייה (לא למסך הטלפון —
- * הוא לא נספר כ"עוד שלב", הוא השלב שבסוף כל השלושה). */
+/**
+ * מד ההתקדמות ושורת החזרה — נצמד לראש המסך, לא צף באמצע.
+ * משותף לשלושת מסכי הבנייה בלבד; מסך הטלפון לא נספר כ"עוד שלב",
+ * הוא מה שקורה אחרי שכל השלושה נגמרו.
+ */
 function StepHeader({ step, onBack }: { step: 1 | 2 | 3; onBack: () => void }) {
   return (
-    <div className="w-full flex items-center gap-3">
-      <button onClick={onBack} aria-label="חזרה" className="text-lg text-[var(--muted)]">→</button>
-      <div className="flex-1 flex gap-1.5">
-        {[1, 2, 3].map((n) => (
-          <div
-            key={n}
-            className="flex-1 h-1"
-            style={{ background: n <= step ? "var(--olive)" : "var(--sand)" }}
-          />
-        ))}
+    <header className="sticky top-0 z-20 bg-[var(--canvas)] border-b border-[var(--line)]">
+      <div className="max-w-md mx-auto px-6 py-3 flex items-center gap-3">
+        <button
+          onClick={onBack}
+          aria-label="חזרה"
+          className="w-8 h-8 -mr-2 flex items-center justify-center text-[17px] text-[var(--muted)]"
+        >
+          →
+        </button>
+        <span className="text-[11.5px] text-[var(--muted)] shrink-0">שלב {step} מתוך 3</span>
+        <div className="flex-1 flex gap-1" aria-hidden>
+          {[1, 2, 3].map((n) => (
+            <div
+              key={n}
+              className="flex-1 h-[3px]"
+              style={{ background: n <= step ? "var(--ink)" : "var(--sand)" }}
+            />
+          ))}
+        </div>
       </div>
-      <span className="text-[11px] text-[var(--muted)] shrink-0">{step} / 3</span>
-    </div>
+    </header>
+  );
+}
+
+/** קישורי החובה — מופיעים בתחתית כל מסך בפלואו, לא רק בדף הבית */
+function LegalFooter() {
+  return (
+    <p className="text-[11px] text-[var(--muted)] text-center pt-2">
+      <a href="/terms" className="underline">תנאי שימוש</a>
+      {" · "}
+      <a href="/privacy" className="underline">פרטיות</a>
+      {" · "}
+      <a href="/accessibility" className="underline">נגישות</a>
+    </p>
   );
 }
 
@@ -140,14 +164,20 @@ export default function Onboarding() {
     }
   }
 
-  return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-10 gap-5 max-w-md mx-auto">
-      <HelpButton context="פתיחת הדוכן" />
+  // מסך הטלפון ומסך הסיום אינם חלק ממד ההתקדמות — הבנייה כבר נגמרה בהם
+  const barStep = !result && draft.step <= 3 ? (draft.step as 1 | 2 | 3) : null;
+  const goBack = () =>
+    draft.step === 1 ? (window.location.href = "/") : set({ step: (draft.step - 1) as Step });
 
+  return (
+    <div className="min-h-screen flex flex-col bg-[var(--canvas)]">
+      <HelpButton context="פתיחת הדוכן" />
+      {barStep && <StepHeader step={barStep} onBack={goBack} />}
+
+      <main className="flex-1 w-full max-w-md mx-auto px-6 py-8 flex flex-col gap-5">
       {/* 1 — שם הדוכן */}
       {draft.step === 1 && !result && (
         <div className="w-full flex flex-col gap-5">
-          <StepHeader step={1} onBack={() => (window.location.href = "/")} />
           <div className="text-center">
             <h1 className="text-xl font-bold">איך יקראו לדוכן?</h1>
             <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
@@ -176,7 +206,6 @@ export default function Onboarding() {
       {/* 2 — רקע, עם תצוגה חיה שכוללת גם תמונה אישית אופציונלית */}
       {draft.step === 2 && !result && (
         <div className="w-full flex flex-col gap-5">
-          <StepHeader step={2} onBack={() => set({ step: 1 })} />
           <div className="text-center">
             <h1 className="text-xl font-bold">איזה רקע בא לך?</h1>
             <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
@@ -262,7 +291,6 @@ export default function Onboarding() {
       {/* 3 — גיל ועיר (לא חובה) + מודעות הורים */}
       {draft.step === 3 && !result && (
         <div className="w-full flex flex-col gap-5">
-          <StepHeader step={3} onBack={() => set({ step: 2 })} />
           <div className="text-center">
             <h1 className="text-xl font-bold">עוד שני פרטים</h1>
             <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
@@ -409,6 +437,11 @@ export default function Onboarding() {
           </a>
         </div>
       )}
-    </main>
+
+      <div className="mt-auto">
+        <LegalFooter />
+      </div>
+      </main>
+    </div>
   );
 }
