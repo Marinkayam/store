@@ -31,6 +31,7 @@ interface EditState {
   trackStock: boolean;
   stock: number;
   isVisible: boolean;
+  hasOptions: boolean;   // יש לזה כמה צבעים/מידות לבחור? שאלה קודם, שדות רק אחר כך
   optionLabel: string;   // "צבע" · "מידה" — ריק = אין אפשרויות
   optionsText: string;   // "ורוד, כחול, צהוב" — נשמר כמערך
   badge: "rare" | "sale" | null;
@@ -57,6 +58,7 @@ const EMPTY_EDIT: EditState = {
   trackStock: true,
   stock: 1,
   isVisible: true,
+  hasOptions: false,
   optionLabel: "",
   optionsText: "",
   badge: null,
@@ -216,6 +218,7 @@ export default function ProductsPage() {
         description: p.description ?? "",
         price: String(p.price),
         trackStock: p.track_stock,
+        hasOptions: (p.options?.length ?? 0) > 0,
         optionLabel: p.option_label ?? "",
         optionsText: (p.options ?? []).join(", "),
         badge: p.badge ?? null,
@@ -848,22 +851,48 @@ export default function ProductsPage() {
                 בשדה השם במקום ברשימת הבחירות, וקונה ראתה כותרת חסרת פשר.
                 עכשיו כל שדה בשורה נפרדת עם תווית ודוגמה מפורשת, וסדר הפוך —
                 קודם הבחירות עצמן, כי זה מה שחייבים למלא. */}
-            <label className="block text-[11px] text-[var(--muted)] mb-1">
-              אפשרויות לבחירה (לא חובה)
-            </label>
-            <label className="block text-[10.5px] text-[var(--faint)] mb-1">
-              הצבעים או המידות, מופרדים בפסיק
-            </label>
-            <input
-              value={edit.optionsText}
-              maxLength={120}
-              placeholder="לבן, ורוד, כחול"
-              aria-label="הבחירות"
-              onChange={(e) => setEdit((s) => s && { ...s, optionsText: e.target.value })}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-2"
-            />
-            {optionValues.length > 0 && (
+            <div className="border border-[var(--line)] px-3 py-2.5 mb-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[13px]">יש לזה כמה צבעים או מידות לבחור?</span>
+                <button
+                  onClick={() =>
+                    setEdit((s) => {
+                      if (!s) return s;
+                      const on = !s.hasOptions;
+                      // כיבוי מנקה גם את הטקסט — אחרת נשאר "צבע" שמור בלי
+                      // שהיא רואה אותו, וקונה תתבקש לבחור משהו שלא קיים
+                      return on
+                        ? { ...s, hasOptions: on }
+                        : { ...s, hasOptions: on, optionsText: "", optionLabel: "" };
+                    })
+                  }
+                  aria-label="יש לזה כמה צבעים או מידות לבחור"
+                  aria-pressed={edit.hasOptions}
+                  className={`w-10 h-6 relative transition ${edit.hasOptions ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
+                >
+                  <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.hasOptions ? "right-[19px]" : "right-[3px]"}`} />
+                </button>
+              </div>
+              {!edit.hasOptions && (
+                <p className="text-[11px] text-[var(--muted)] mt-1 leading-relaxed">
+                  לדוגמה: סקוויש שיש לו רק צבע אחד — לא, כמה צבעים לבחור ממנו — כן.
+                </p>
+              )}
+            </div>
+
+            {edit.hasOptions && (
               <>
+                <label className="block text-[10.5px] text-[var(--faint)] mb-1">
+                  הצבעים או המידות, מופרדים בפסיק
+                </label>
+                <input
+                  value={edit.optionsText}
+                  maxLength={120}
+                  placeholder="לבן, ורוד, כחול"
+                  aria-label="הבחירות"
+                  onChange={(e) => setEdit((s) => s && { ...s, optionsText: e.target.value })}
+                  className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-2"
+                />
                 <label className="block text-[10.5px] text-[var(--faint)] mb-1">
                   איך קוראים לזה? (למשל: צבע, מידה)
                 </label>
@@ -875,22 +904,22 @@ export default function ProductsPage() {
                   onChange={(e) => setEdit((s) => s && { ...s, optionLabel: e.target.value })}
                   className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-2"
                 />
+                {optionValues.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {optionValues.map((o) => (
+                      // data-chip ולא מחלקת עיצוב: בדיקה שנתלית על שם מחלקה נשברת
+                      // בכל שינוי עיצובי, ואז מחפשים באג שאין
+                      <span key={o} data-chip="option" className="text-[11px] bg-[var(--canvas)] border border-[var(--line)] px-2.5 py-1">
+                        {o}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[var(--faint)] mb-3">
+                    מפרידים בפסיק. הקונה תבחר אחת לפני שהיא מוסיפה לסל.
+                  </p>
+                )}
               </>
-            )}
-            {optionValues.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {optionValues.map((o) => (
-                  // data-chip ולא מחלקת עיצוב: בדיקה שנתלית על שם מחלקה נשברת
-                  // בכל שינוי עיצובי, ואז מחפשים באג שאין
-                  <span key={o} data-chip="option" className="text-[11px] bg-[var(--canvas)] border border-[var(--line)] px-2.5 py-1">
-                    {o}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[11px] text-[var(--faint)] mb-3">
-                מפרידים בפסיק. הקונה תבחר אחת לפני שהיא מוסיפה לסל.
-              </p>
             )}
 
             {/* תגיות. רק שתיים לבחירה — השאר מחושבות מהמכירות ומהמלאי, וזה
