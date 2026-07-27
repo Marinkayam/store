@@ -536,7 +536,7 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-5 max-h-[88%] overflow-y-auto overscroll-contain"
+          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-5 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
           style={{
             background: "var(--s-surface)",
             color: "var(--s-ink)",
@@ -547,45 +547,46 @@ export default function StoreView({
             touchAction: "pan-y",
           }}
         >
-          <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-3" />
-          <div
-            className="h-32 flex items-center justify-center text-6xl overflow-hidden"
-            style={{ background: "var(--s-thumb)" }}
-          >
-            {mediaUrl(current.video_key) ? (
-              <video
-                src={mediaUrl(current.video_key)!}
-                poster={mediaUrl(current.poster_key) ?? undefined}
-                muted loop playsInline autoPlay
-                className="w-full h-full object-cover"
-              />
-            ) : mediaUrl(current.image_key) ? (
-              <img src={mediaUrl(current.image_key)!} alt="" className="w-full h-full object-cover" />
-            ) : (
-              "🛍️"
+          <div className="w-9 h-1 bg-current opacity-15 mx-auto -mb-1" />
+          <div>
+            <div
+              className="h-32 flex items-center justify-center text-6xl overflow-hidden"
+              style={{ background: "var(--s-thumb)" }}
+            >
+              {mediaUrl(current.video_key) ? (
+                <video
+                  src={mediaUrl(current.video_key)!}
+                  poster={mediaUrl(current.poster_key) ?? undefined}
+                  muted loop playsInline autoPlay
+                  className="w-full h-full object-cover"
+                />
+              ) : mediaUrl(current.image_key) ? (
+                <img src={mediaUrl(current.image_key)!} alt="" className="w-full h-full object-cover" />
+              ) : (
+                "🛍️"
+              )}
+            </div>
+            <h2 className="text-lg font-bold text-center mt-3">{current.name}</h2>
+            {current.description && (
+              <p className="text-[13px] opacity-70 text-center mt-1 leading-relaxed">{current.description}</p>
+            )}
+            <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary)" }}>
+              ₪{current.price}
+            </p>
+            {current.track_stock && current.stock <= 3 && (
+              <p className="text-[11px] opacity-60 text-center mt-1">נשארו {current.stock} במלאי</p>
             )}
           </div>
-          <h2 className="text-lg font-bold text-center mt-3">{current.name}</h2>
-          {current.description && (
-            <p className="text-[13px] opacity-70 text-center mt-1 leading-relaxed">{current.description}</p>
-          )}
-          <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary)" }}>
-            ₪{current.price}
-          </p>
-          {current.track_stock && current.stock <= 3 && (
-            <p className="text-[11px] opacity-60 text-center mt-1">נשארו {current.stock} במלאי</p>
-          )}
 
-          {/* בחירה — חייבים לבחור לפני הוספה לסל */}
+          {/* בחירה — חייבים לבחור לפני הוספה לסל.
+              שורות מלאות-רוחב במקום שבבים צמודים: אצבע על מסך קטן לא יכולה
+              לפספס שורה שלמה כמו שהיא מפספסת שבב דחוס ליד שבבים אחרים. */}
           {current.options && current.options.length > 0 && (
-            <div className="mt-4">
-              <div className="text-[12px] opacity-60 text-center mb-2">
-                {current.option_label || "בחרי"}
+            <div className="border-t border-current/10 pt-3.5">
+              <div className="text-[14px] font-bold text-center mb-2.5">
+                {current.option_label ? `לבחור ${current.option_label}` : "לבחור אפשרות"}
               </div>
-              {/* יעד מגע של 44 פיקסלים ומצב נבחר מלא־צבע עם סימן.
-                  אצבע של ילדה על שבב קטן ושקוף למחצה מחטיאה, והמסך נראה
-                  כאילו הוא לא מגיב — וזה בדיוק מה שדווח מהשטח. */}
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-col gap-2">
                 {current.options.map((o) => {
                   const on = choice === o;
                   return (
@@ -594,7 +595,7 @@ export default function StoreView({
                       onClick={() => setChoice(o)}
                       aria-pressed={on}
                       aria-label={`${current.option_label || "בחירה"}: ${o}`}
-                      className="text-[14px] font-semibold px-4 min-h-11 border-[1.5px] transition flex items-center gap-1.5"
+                      className="w-full text-[15px] font-semibold px-4 py-3.5 border-2 transition flex items-center justify-between gap-2"
                       style={
                         on
                           ? {
@@ -602,46 +603,63 @@ export default function StoreView({
                               color: "var(--s-onprimary)",
                               borderColor: "var(--s-primary)",
                             }
-                          : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                          : { borderColor: "currentColor", opacity: 0.85, background: "var(--s-thumb)" }
                       }
                     >
-                      {on && <span aria-hidden>✓</span>}
                       {o}
+                      <span
+                        className="w-6 h-6 flex items-center justify-center shrink-0 text-[13px]"
+                        style={{
+                          borderRadius: "999px",
+                          border: `2px solid ${on ? "var(--s-onprimary)" : "currentColor"}`,
+                          background: on ? "var(--s-onprimary)" : "transparent",
+                          color: "var(--s-primary)",
+                        }}
+                        aria-hidden
+                      >
+                        {on ? "✓" : ""}
+                      </span>
                     </button>
                   );
                 })}
               </div>
               {!choice && (
-                <p className="text-[11.5px] text-center mt-2 opacity-60">
-                  צריך לבחור כדי להוסיף לסל
+                <p className="text-[12px] text-center mt-2.5 opacity-60">
+                  צריך לבחור {current.option_label || "אפשרות"} לפני שמוסיפים לסל
                 </p>
               )}
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-5 my-4">
-            <button
-              onClick={() => setQty((q) => Math.max(1, q - 1))}
-              disabled={qty <= 1}
-              className="w-8 h-8 border-[1.5px] border-current opacity-55 disabled:opacity-20 text-lg"
-            >
-              −
-            </button>
-            <span className="text-lg font-bold min-w-6 text-center">{qty}</span>
-            <button
-              onClick={() => setQty((q) => Math.min(maxQty(current), q + 1))}
-              disabled={qty >= maxQty(current)}
-              className="w-8 h-8 border-[1.5px] border-current opacity-55 disabled:opacity-20 text-lg"
-            >
-              +
-            </button>
+          <div className="border-t border-current/10 pt-3.5">
+            <div className="text-[12px] opacity-60 text-center mb-2">כמות</div>
+            <div className="flex items-center justify-center gap-6">
+              <button
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                disabled={qty <= 1}
+                aria-label="פחות"
+                className="w-11 h-11 border-2 border-current opacity-55 disabled:opacity-20 text-xl"
+              >
+                −
+              </button>
+              <span className="text-xl font-bold min-w-8 text-center">{qty}</span>
+              <button
+                onClick={() => setQty((q) => Math.min(maxQty(current), q + 1))}
+                disabled={qty >= maxQty(current)}
+                aria-label="עוד"
+                className="w-11 h-11 border-2 border-current opacity-55 disabled:opacity-20 text-xl"
+              >
+                +
+              </button>
+            </div>
           </div>
+
           <button
             onClick={addToCart}
             aria-label="הוספה לסל"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             disabled={preview || maxQty(current) === 0 || (!!current.options?.length && !choice)}
-            className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40 sticky bottom-0"
+            className="w-full py-4 text-[16px] font-bold disabled:opacity-40 sticky bottom-0"
           >
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
                 לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
