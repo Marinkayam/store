@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
         <a href="/" className="text-xs text-[var(--muted)] underline">← חזרה לדוכן</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">מדיניות פרטיות</h1>
-        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.0</p>
+        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.1</p>
 
         <Section title="העיקרון">
           דוכן נבנתה סביב איסוף מידע מינימלי. אנחנו אוספים רק את מה שנדרש כדי
@@ -19,9 +19,14 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="מה אנחנו אוספים — מבעלת החנות">
-          שם החנות ותכניה (תיאורים, תמונות, סרטונים) · מספר וואטסאפ ליצירת קשר
-          עם קונים · כתובת אימייל וסיסמה לכניסה לחשבון (הסיסמה נשמרת מוצפנת
-          ואיננו יכולים לקרוא אותה) · פרטי ההזמנות שהתקבלו בחנות.
+          שם החנות ותכניה (תיאורים, תמונות, סרטונים) · מספר טלפון, המשמש גם
+          לכניסה לחשבון באמצעות קוד חד-פעמי בסמס (אין סיסמה שצריך לזכור) וגם
+          ליצירת קשר עם קונים · גיל ועיר מגורים, שניהם לא חובה — נאספים רק כדי
+          לשייך בעתיד תוכן בפיד לפי קבוצת גיל ואזור, <b>לעולם אינם מוצגים
+          בחנות הפומבית ואינם מוטמעים בקוד</b> · פרטי ההזמנות שהתקבלו בחנות.
+          בחנויות שנפתחו על ידינו עבור בעלת חנות ונתבעו באמצעות לינק תביעה,
+          נאספים גם אימייל וסיסמה לכניסה (הסיסמה נשמרת מוצפנת ואיננו יכולים
+          לקרוא אותה).
         </Section>
 
         <Section title="מה אנחנו אוספים — מקונים">
@@ -81,6 +86,8 @@ export default function PrivacyPage() {
 
         <p className="text-xs text-[var(--muted)] mt-8">
           ראו גם: <a href="/terms" className="underline">תנאי השימוש</a>
+          {" · "}
+          <a href="/accessibility" className="underline">הצהרת נגישות</a>
         </p>
       </div>
     </main>

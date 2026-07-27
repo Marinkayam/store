@@ -378,6 +378,8 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
           <a href="/terms" className="underline">תנאי שימוש</a>
           {" · "}
           <a href="/privacy" className="underline">מדיניות פרטיות</a>
+          {" · "}
+          <a href="/accessibility" className="underline">נגישות</a>
         </p>
       </div>
     </Shell>

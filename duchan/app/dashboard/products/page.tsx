@@ -1061,7 +1061,7 @@ export default function ProductsPage() {
       {recOpen && (
         <div className="fixed inset-0 bg-[var(--ink)] z-[70] flex flex-col items-center justify-between py-8">
           <video ref={videoRef} muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-90" />
-          <button onClick={closeRecorder} className="absolute top-5 left-4 bg-black/45 text-white w-8 h-8 z-10">✕</button>
+          <button onClick={closeRecorder} aria-label="סגירת המצלמה" className="absolute top-5 left-4 bg-black/45 text-white w-8 h-8 z-10">✕</button>
           <div className="relative z-10 text-white text-xs bg-black/45 px-3.5 py-1.5 ">
             לחיצה ארוכה כדי להקליט · עד {RECORD_SECONDS} שניות · בלי קול
           </div>
