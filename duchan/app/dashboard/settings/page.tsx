@@ -8,6 +8,7 @@ import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { isPayoutLink } from "@/lib/payouts";
+import { COVERS, coverCss } from "@/lib/covers";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -20,6 +21,16 @@ export default function SettingsPage() {
   const [emoji, setEmoji] = useState("🦄");
   const [theme, setTheme] = useState<ThemeKey>("cloud");
   const [phone, setPhone] = useState("");
+  // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה
+  const [info, setInfo] = useState({
+    about: "",
+    city: "",
+    ships: false,
+    shipping_note: "",
+    shipping_price: "" as string,
+    order_intro: "",
+    order_outro: "",
+  });
   const [toast, setToast] = useState("");
   const [dirty, setDirty] = useState(false);
   // איך הקונה משלמת לילדה. נפרד לגמרי מתשלום ההקמה לדוכן (activated_at / payment_*).
@@ -33,6 +44,7 @@ export default function SettingsPage() {
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [preset, setPreset] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,6 +55,16 @@ export default function SettingsPage() {
     setTheme(store.theme);
     setPhone(displayPhone(store.contact_phone));
     setCoverPreview(mediaUrl(store.cover_key));
+    setPreset(store.cover_preset ?? null);
+    setInfo({
+      about: store.about ?? "",
+      city: store.city ?? "",
+      ships: store.ships ?? false,
+      shipping_note: store.shipping_note ?? "",
+      shipping_price: store.shipping_price == null ? "" : String(store.shipping_price),
+      order_intro: store.order_intro ?? "",
+      order_outro: store.order_outro ?? "",
+    });
     setAvatarPreview(mediaUrl(store.avatar_key));
     setPayout({
       payout_bit: store.payout_bit ?? true,
@@ -92,6 +114,13 @@ export default function SettingsPage() {
       payout_cash: payout.payout_cash,
       payout_note: payout.payout_note?.trim() || null,
       payout_link: payout.payout_link?.trim() || null,
+      about: info.about.trim() || null,
+      city: info.city.trim() || null,
+      ships: info.ships,
+      shipping_note: info.ships ? info.shipping_note.trim() || null : null,
+      shipping_price: info.ships && info.shipping_price !== "" ? Math.max(0, Math.min(200, Math.round(Number(info.shipping_price) || 0))) : null,
+      order_intro: info.order_intro.trim() || null,
+      order_outro: info.order_outro.trim() || null,
     };
     const { error } = await supa.from("stores").update(patch).eq("id", store.id);
     if (error) {
@@ -124,6 +153,28 @@ export default function SettingsPage() {
     setStore({ ...store, cover_key: r.key });
     refreshStorePage(store.slug);
     showToast("תמונת הקאבר עודכנה");
+  }
+
+  /** רקע מוכן. תמונה שהועלתה גוברת עליו, אז מסירים אותה. */
+  async function pickPreset(key: string) {
+    if (!store) return;
+    const supa = supabaseBrowser();
+    await supa.from("stores").update({ cover_preset: key, cover_key: null }).eq("id", store.id);
+    setPreset(key);
+    setCoverPreview(null);
+    setStore({ ...store, cover_preset: key, cover_key: null });
+    refreshStorePage(store.slug);
+    showToast("הרקע עודכן");
+  }
+
+  async function removeCover() {
+    if (!store) return;
+    const supa = supabaseBrowser();
+    await supa.from("stores").update({ cover_key: null }).eq("id", store.id);
+    setCoverPreview(null);
+    setStore({ ...store, cover_key: null });
+    refreshStorePage(store.slug);
+    showToast("התמונה הוסרה — חזרנו לרקע");
   }
 
   async function onAvatar(file: File) {
@@ -242,21 +293,45 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* קאבר */}
+        {/* קאבר: תמונה אמיתית או אחד מהמוכנים. תמונה תמיד גוברת. */}
         <input ref={coverRef} type="file" accept="image/*" hidden
           onChange={(e) => e.target.files?.[0] && onCover(e.target.files[0])} />
-        <button
-          onClick={() => coverRef.current?.click()}
-          className="h-24 border border-[var(--line)] overflow-hidden relative bg-white"
-        >
-          {coverPreview ? (
-            <img src={coverPreview} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-medium bg-[linear-gradient(135deg,var(--cream),var(--sand))]">
-              <span className="bg-white/90 px-3.5 py-1.5 ">+ תמונת קאבר</span>
-            </span>
-          )}
-        </button>
+        <div className="bg-white border border-[var(--line)] p-3">
+          <div className="text-[13px] font-bold">הקאבר של הדוכן</div>
+          <div
+            className="h-24 mt-2 overflow-hidden relative border border-[var(--line)]"
+            style={coverPreview ? undefined : { background: coverCss(preset) }}
+          >
+            {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
+          </div>
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => coverRef.current?.click()}
+              className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
+            >
+              העלאת תמונה
+            </button>
+            {coverPreview && (
+              <button onClick={removeCover} className="border border-[var(--line)] px-3 text-[12.5px]">
+                הסרה
+              </button>
+            )}
+          </div>
+          <div className="text-[11px] text-[var(--muted)] mt-2.5 mb-1">או רקע מוכן:</div>
+          <div className="flex gap-1.5 flex-wrap">
+            {COVERS.map((c) => (
+              <button
+                key={c.key}
+                onClick={() => pickPreset(c.key)}
+                aria-label={`רקע ${c.label}`}
+                className={`w-11 h-8 border-2 ${
+                  !coverPreview && preset === c.key ? "border-[var(--ink)]" : "border-[var(--line)]"
+                }`}
+                style={{ background: c.css }}
+              />
+            ))}
+          </div>
+        </div>
 
         <label className="text-[11px] text-[var(--muted)]">
           שם החנות
@@ -334,6 +409,125 @@ export default function SettingsPage() {
             בדיקה: פתיחת וואטסאפ למספר {displayPhone(normalizePhone(phone)!)}
           </a>
         )}
+
+        {/* על הדוכן: מה שקונה שואלת לפני שהיא קונה */}
+        <div className="bg-white border border-[var(--line)] p-3">
+          <div className="text-[13px] font-bold">על הדוכן</div>
+          <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
+            מוצג מתחת לשם, בדף שהקונות רואות.
+          </p>
+          <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">כמה מילים עלייך ועל הדוכן</label>
+          <textarea
+            value={info.about}
+            onChange={(e) => { setInfo({ ...info, about: e.target.value }); setDirty(true); }}
+            placeholder="אני נועה, בת 11, ואני מכינה צמידים מחוטים ומוכרת סקווישים שכבר לא בשימוש."
+            maxLength={300}
+            rows={3}
+            aria-label="על הדוכן"
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
+          />
+          <label className="block text-[11px] text-[var(--muted)] mt-2 mb-1">עיר</label>
+          <input
+            value={info.city}
+            onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
+            placeholder="למשל: רמת גן"
+            maxLength={30}
+            aria-label="עיר"
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+          />
+          <p className="text-[11px] text-[var(--muted)] mt-1">
+            עיר בלבד — לעולם לא כתובת. זה מספיק כדי שקונה תדע אם מסירה הגיונית.
+          </p>
+        </div>
+
+        {/* משלוחים */}
+        <div className="bg-white border border-[var(--line)] p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[13px] font-bold">משלוחים</div>
+              <div className="text-[11px] text-[var(--muted)]">
+                {info.ships ? "מוצג בדף החנות ובהודעת ההזמנה" : "כרגע: מסירה ביד בלבד"}
+              </div>
+            </div>
+            <button
+              onClick={() => { setInfo({ ...info, ships: !info.ships }); setDirty(true); }}
+              aria-label="יש משלוחים"
+              aria-pressed={info.ships}
+              className={`relative ${info.ships ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
+              style={{ width: 44, height: 26 }}
+            >
+              <i
+                className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all"
+                style={{ right: info.ships ? 21 : 3 }}
+              />
+            </button>
+          </div>
+          {info.ships && (
+            <>
+              <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">איך ולאן</label>
+              <textarea
+                value={info.shipping_note}
+                onChange={(e) => { setInfo({ ...info, shipping_note: e.target.value }); setDirty(true); }}
+                placeholder="שולחת בדואר לכל הארץ, מגיע תוך שבוע. באזור שלי אפשר גם למסור ביד."
+                maxLength={200}
+                rows={2}
+                aria-label="פרטי משלוח"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
+              />
+              <label className="block text-[11px] text-[var(--muted)] mt-2 mb-1">מחיר משלוח (₪)</label>
+              <input
+                value={info.shipping_price}
+                onChange={(e) => { setInfo({ ...info, shipping_price: e.target.value.replace(/\D/g, "") }); setDirty(true); }}
+                inputMode="numeric"
+                placeholder="למשל: 15"
+                maxLength={3}
+                aria-label="מחיר משלוח"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
+              <p className="text-[11px] text-[var(--muted)] mt-1">
+                אפשר להשאיר ריק — אז כתוב רק שיש משלוח, והמחיר נסגר בוואטסאפ.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* איך ההזמנה מגיעה אלייך */}
+        <div className="bg-white border border-[var(--line)] p-3">
+          <div className="text-[13px] font-bold">איך ההזמנה מגיעה אלייך</div>
+          <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
+            הרשימה והסכום נכתבים לבד. את קובעת איך ההודעה נפתחת ואיך היא נגמרת.
+          </p>
+          <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">שורת פתיחה</label>
+          <input
+            value={info.order_intro}
+            onChange={(e) => { setInfo({ ...info, order_intro: e.target.value }); setDirty(true); }}
+            placeholder={`היי ${store.display_name.split(" ").pop()}! 👋`}
+            maxLength={80}
+            aria-label="שורת פתיחה"
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+          />
+          <label className="block text-[11px] text-[var(--muted)] mt-2 mb-1">שורת סיום</label>
+          <input
+            value={info.order_outro}
+            onChange={(e) => { setInfo({ ...info, order_outro: e.target.value }); setDirty(true); }}
+            placeholder="תודה! אחזור אלייך היום 💛"
+            maxLength={80}
+            aria-label="שורת סיום"
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+          />
+          <div className="mt-2.5 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12px] leading-relaxed whitespace-pre-line">
+            {`${info.order_intro.trim() || `היי ${store.display_name.split(" ").pop()}! 👋`}
+ראיתי את הדוכן ואני רוצה להזמין:
+
+• סקוויש אבוקדו × 1 — ₪18
+
+סה"כ: ₪18${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}
+אשלם ב${payout.payout_bit ? "ביט" : payout.payout_paybox ? "פייבוקס" : "מזומן"}
+
+הזמנה #1${info.order_outro.trim() ? `\n${info.order_outro.trim()}` : ""}`}
+          </div>
+          <p className="text-[11px] text-[var(--muted)] mt-1.5">כך זה ייראה אצלך בוואטסאפ.</p>
+        </div>
 
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
         <div className="bg-white border border-[var(--line)] p-3">

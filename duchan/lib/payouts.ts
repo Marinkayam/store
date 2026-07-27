@@ -9,6 +9,8 @@
  * והסיכום בפועל נעשה בוואטסאפ בין הצדדים. אין עמלה ואין גישה לכסף.
  */
 
+export type PayMethod = "bit" | "paybox" | "cash";
+
 export interface PayoutPrefs {
   payout_bit: boolean;
   payout_paybox: boolean;
@@ -34,6 +36,36 @@ export function payoutLink(p: PayoutPrefs): { url: string; label: string } | nul
   const url = p.payout_link?.trim();
   if (!url || !isPayoutLink(url)) return null;
   return { url, label: /bitpay/i.test(url) ? "תשלום בביט" : "תשלום בפייבוקס" };
+}
+
+/** אמצעי התשלום שהחנות מקבלת, כרשימה שאפשר לבחור ממנה. */
+export function payMethods(p: PayoutPrefs): { key: PayMethod; label: string }[] {
+  const out: { key: PayMethod; label: string }[] = [];
+  if (p.payout_bit) out.push({ key: "bit", label: "ביט" });
+  if (p.payout_paybox) out.push({ key: "paybox", label: "פייבוקס" });
+  if (p.payout_cash) out.push({ key: "cash", label: "מזומן" });
+  return out;
+}
+
+/**
+ * ההוראות לאמצעי שהקונה בחרה, כפי שהן נכנסות להודעת הוואטסאפ.
+ *
+ * הפרטים נבנים רק אחרי שהשרת אישר את ההזמנה, ולכן אפשר לכלול כאן את המספר
+ * של הילדה: הוא לא יושב ב-HTML של הדף, והקונה ממילא כותבת אליו עכשיו.
+ */
+export function payInstructions(
+  p: PayoutPrefs,
+  method: PayMethod | null,
+  phone: string
+): string {
+  const local = phone.replace(/^972/, "0");
+  const link = payoutLink(p);
+  if (method === "bit") return `אשלם בביט למספר ${local}`;
+  if (method === "paybox") {
+    return link ? `אשלם בפייבוקס: ${link.url}` : "אשלם בפייבוקס";
+  }
+  if (method === "cash") return "אשלם במזומן במסירה";
+  return "";
 }
 
 /** שמות אמצעי התשלום שהחנות מקבלת. בטוח להצגה ב-HTML — אין כאן מספרים. */

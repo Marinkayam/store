@@ -1,4 +1,5 @@
 import type { PublicProduct } from "./types";
+import type { IconName } from "@/app/icons";
 
 /**
  * תגיות מוצר.
@@ -13,21 +14,24 @@ import type { PublicProduct } from "./types";
 export type BadgeKey = "last" | "best" | "sale" | "rare" | "new";
 
 // הצבעים מהדיזיין סיסטם: נמכר=אפרסק, חדש=לבנדר, נדיר=זית, מומלץ=שמנת.
-export const BADGES: Record<BadgeKey, { emoji: string; label: string; bg: string; fg: string }> = {
-  last: { emoji: "⌛", label: "אחרון במלאי", bg: "#E3C26F", fg: "#3A2E12" },
-  best: { emoji: "⭐", label: "הכי נמכר", bg: "#D9967A", fg: "#FFFFFF" },
-  sale: { emoji: "🎁", label: "מבצע", bg: "#B9824A", fg: "#FFFFFF" },
-  rare: { emoji: "💎", label: "נדיר", bg: "#A8A46D", fg: "#FFFFFF" },
-  new:  { emoji: "🌿", label: "חדש",  bg: "#B89AC8", fg: "#FFFFFF" },
+export const BADGES: Record<
+  BadgeKey,
+  { icon: IconName; label: string; bg: string; fg: string }
+> = {
+  last: { icon: "hourglass", label: "אחרון במלאי", bg: "#E3C26F", fg: "#3A2E12" },
+  best: { icon: "star", label: "הכי נמכר", bg: "#D9967A", fg: "#FFFFFF" },
+  sale: { icon: "gift", label: "מבצע", bg: "#B9824A", fg: "#FFFFFF" },
+  rare: { icon: "gem", label: "נדיר", bg: "#A8A46D", fg: "#FFFFFF" },
+  new:  { icon: "leaf", label: "חדש", bg: "#B89AC8", fg: "#FFFFFF" },
 };
 
 /** מוצר נחשב חדש בשבוע הראשון שלו. */
 const NEW_DAYS = 7;
 
 /** התגיות שהילדה בוחרת בעצמה — אלה היחידות שנשמרות ב-DB. */
-export const PICKABLE: { key: "rare" | "sale"; emoji: string; label: string }[] = [
-  { key: "rare", emoji: BADGES.rare.emoji, label: BADGES.rare.label },
-  { key: "sale", emoji: BADGES.sale.emoji, label: BADGES.sale.label },
+export const PICKABLE: { key: "rare" | "sale"; icon: IconName; label: string }[] = [
+  { key: "rare", icon: BADGES.rare.icon, label: BADGES.rare.label },
+  { key: "sale", icon: BADGES.sale.icon, label: BADGES.sale.label },
 ];
 
 /**

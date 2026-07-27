@@ -3,12 +3,15 @@
 // הדשבורד שקט בכוונה: אפור-לבן קבוע. כל הצבע שייך לחנויות.
 
 import { usePathname, useRouter } from "next/navigation";
+import Icon, { type IconName } from "../icons";
 
-const TABS = [
-  { href: "/dashboard", label: "הזמנות", icon: "🧾" },
-  { href: "/dashboard/products", label: "מוצרים", icon: "🛍️" },
-  { href: "/dashboard/share", label: "להפיץ", icon: "📣" },
-  { href: "/dashboard/settings", label: "החנות שלי", icon: "⭐" },
+// אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
+// הניווט — הדבר שהילדה רואה בכל מסך — לא בשליטתנו.
+const TABS: { href: string; label: string; icon: IconName }[] = [
+  { href: "/dashboard", label: "הזמנות", icon: "receipt" },
+  { href: "/dashboard/products", label: "מוצרים", icon: "bag" },
+  { href: "/dashboard/share", label: "להפיץ", icon: "megaphone" },
+  { href: "/dashboard/settings", label: "החנות שלי", icon: "shop" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -27,7 +30,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               onClick={() => router.push(t.href)}
               className={`flex-1 flex flex-col items-center gap-0.5 py-1 text-[10px] ${on ? "text-[var(--ink)] font-medium" : "text-[var(--muted)]"}`}
             >
-              <span className={`text-lg ${on ? "" : "grayscale opacity-60"}`}>{t.icon}</span>
+              <Icon
+                name={t.icon}
+                size={21}
+                tone={on ? "var(--lavender)" : "var(--sand)"}
+              />
               {t.label}
             </button>
           );

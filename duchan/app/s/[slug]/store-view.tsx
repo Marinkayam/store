@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { payoutLink, payoutOrderLine, payoutSummary } from "@/lib/payouts";
+import { payInstructions, payMethods, payoutLink, payoutSummary, type PayMethod } from "@/lib/payouts";
 import { BADGES, badgeFor } from "@/lib/badges";
+import Icon from "@/app/icons";
 import { coverCss } from "@/lib/covers";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 
@@ -48,8 +49,12 @@ export default function StoreView({
 
   // אמצעי התשלום שהחנות מקבלת — שמות בלבד, בלי מספרים ובלי פרטי חשבון
   const paySummary = payoutSummary(store);
-  const payLine = payoutOrderLine(store);
   const payLink = payoutLink(store);
+  const methods = payMethods(store);
+  // ברירת מחדל: האמצעי הראשון שהחנות מקבלת. קונה שלא נגעה בכלום עדיין
+  // שולחת הזמנה שאומרת איך היא משלמת, במקום "נסגור בוואטסאפ".
+  const [payWith, setPayWith] = useState<PayMethod | null>(null);
+  const chosenPay = payWith ?? methods[0]?.key ?? null;
 
   // ספירת כניסה — פעם אחת לביקור (sessionStorage מונע ספירה כפולה בניווט פנימי)
   useEffect(() => {
@@ -226,13 +231,20 @@ export default function StoreView({
             `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} — ₪${i.price * i.qty}`
         )
         .join("\n");
+      const pay = payInstructions(store, chosenPay, data.phone);
+      const shipLine = store.ships
+        ? `\nמשלוח: ${store.shipping_note || "בתיאום"}${store.shipping_price ? ` · ₪${store.shipping_price}` : ""}`
+        : "";
       const msg =
-        `היי ${firstName}! 👋\n` +
-        `ראיתי את החנות ואני רוצה להזמין:\n\n${lines}\n\n` +
+        `${store.order_intro?.trim() || `היי ${firstName}! 👋`}\n` +
+        `ראיתי את הדוכן ואני רוצה להזמין:\n\n${lines}\n\n` +
         `סה"כ: ₪${data.total}` +
         (note.trim() ? `\nהערה: ${note.trim()}` : "") +
-        (payLine ? `\n\n${payLine}` : "") +
-        `\n\nהזמנה #${data.orderNumber}`;
+        shipLine +
+        (pay ? `\n${pay}` : "") +
+        (store.payout_note?.trim() ? `\n${store.payout_note.trim()}` : "") +
+        `\n\nהזמנה #${data.orderNumber}` +
+        (store.order_outro?.trim() ? `\n${store.order_outro.trim()}` : "");
 
       setCart([]);
       setNote("");
@@ -342,6 +354,39 @@ export default function StoreView({
       <div className="text-center pt-10 px-5 pb-4">
         <h1 className="text-2xl font-bold">{store.display_name}</h1>
         {store.tagline && <p className="text-xs opacity-70 mt-1">{store.tagline}</p>}
+
+        {/* מה שקונה שואלת לפני שהיא קונה: מאיפה, כמה יש, ויש משלוח?
+            כל שאלה כזו שנשארת בלי תשובה בדף היא הודעה בוואטסאפ, ולעיתים
+            קרובות מכירה שלא נסגרה. */}
+        <div className="flex items-center justify-center gap-2 mt-2 text-[11.5px] opacity-70 flex-wrap">
+          {store.city && <span>📍 {store.city}</span>}
+          {store.city && <span aria-hidden>·</span>}
+          <span>{products.length} מוצרים</span>
+          {store.ships && (
+            <>
+              <span aria-hidden>·</span>
+              <span>
+                משלוח{typeof store.shipping_price === "number" ? ` ₪${store.shipping_price}` : ""}
+              </span>
+            </>
+          )}
+        </div>
+
+        {store.about && (
+          <p className="text-[12.5px] opacity-80 mt-3 leading-relaxed max-w-sm mx-auto whitespace-pre-line">
+            {store.about}
+          </p>
+        )}
+
+        {store.ships && store.shipping_note && (
+          <div
+            className="mt-3 mx-auto max-w-sm border-[1.5px] px-3 py-2 text-[12px] leading-relaxed text-start"
+            style={{ borderColor: "currentColor", opacity: 0.75 }}
+          >
+            <b>משלוחים:</b> {store.shipping_note}
+            {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
+          </div>
+        )}
       </div>
 
       {/* grid */}
@@ -396,7 +441,8 @@ export default function StoreView({
                           className="absolute top-0 right-0 z-10 bg-white text-[10px] font-semibold px-1.5 py-0.5 border-b border-r-0 border-t-0 border-l"
                           style={{ color: b.bg, borderColor: b.bg }}
                         >
-                          {b.emoji} {b.label}
+                          <Icon name={b.icon} size={12} tone="none" className="inline-block align-[-1px] ms-0.5" />{" "}
+                          {b.label}
                         </span>
                       );
                     })()
@@ -487,12 +533,20 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-7 max-h-[88%] overflow-y-auto"
-          style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
+          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-5 max-h-[88%] overflow-y-auto overscroll-contain"
+          style={{
+            background: "var(--s-surface)",
+            color: "var(--s-ink)",
+            fontFamily: "var(--s-font)",
+            // בלי זה, גרירה בתוך הגיליון באייפון מגלגלת את הדף שמאחור
+            // והבחירה שיושבת מתחת לקפל פשוט לא מגיעה למסך
+            WebkitOverflowScrolling: "touch",
+            touchAction: "pan-y",
+          }}
         >
-          <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-4" />
+          <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-3" />
           <div
-            className="h-40 flex items-center justify-center text-6xl overflow-hidden"
+            className="h-32 flex items-center justify-center text-6xl overflow-hidden"
             style={{ background: "var(--s-thumb)" }}
           >
             {mediaUrl(current.video_key) ? (
@@ -525,22 +579,40 @@ export default function StoreView({
               <div className="text-[12px] opacity-60 text-center mb-2">
                 {current.option_label || "בחרי"}
               </div>
+              {/* יעד מגע של 44 פיקסלים ומצב נבחר מלא־צבע עם סימן.
+                  אצבע של ילדה על שבב קטן ושקוף למחצה מחטיאה, והמסך נראה
+                  כאילו הוא לא מגיב — וזה בדיוק מה שדווח מהשטח. */}
               <div className="flex flex-wrap justify-center gap-2">
-                {current.options.map((o) => (
-                  <button
-                    key={o}
-                    onClick={() => setChoice(o)}
-                    className="text-[13px] font-medium px-4 py-2 border-[1.5px] transition"
-                    style={
-                      choice === o
-                        ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                        : { borderColor: "currentColor", opacity: 0.55 }
-                    }
-                  >
-                    {o}
-                  </button>
-                ))}
+                {current.options.map((o) => {
+                  const on = choice === o;
+                  return (
+                    <button
+                      key={o}
+                      onClick={() => setChoice(o)}
+                      aria-pressed={on}
+                      aria-label={`${current.option_label || "בחירה"}: ${o}`}
+                      className="text-[14px] font-semibold px-4 min-h-11 border-[1.5px] transition flex items-center gap-1.5"
+                      style={
+                        on
+                          ? {
+                              background: "var(--s-primary)",
+                              color: "var(--s-onprimary)",
+                              borderColor: "var(--s-primary)",
+                            }
+                          : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                      }
+                    >
+                      {on && <span aria-hidden>✓</span>}
+                      {o}
+                    </button>
+                  );
+                })}
               </div>
+              {!choice && (
+                <p className="text-[11.5px] text-center mt-2 opacity-60">
+                  צריך לבחור כדי להוסיף לסל
+                </p>
+              )}
             </div>
           )}
 
@@ -564,9 +636,9 @@ export default function StoreView({
           <button
             onClick={addToCart}
             aria-label="הוספה לסל"
-            disabled={preview || maxQty(current) === 0 || (!!current.options?.length && !choice)}
-            className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+            disabled={preview || maxQty(current) === 0 || (!!current.options?.length && !choice)}
+            className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40 sticky bottom-0"
           >
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
                 לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
@@ -659,7 +731,38 @@ export default function StoreView({
           />
           {(paySummary || payLink) && (
             <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
-              {paySummary && (
+              {/* הקונה בוחרת איך היא משלמת, וההודעה נושאת את ההוראות לאותו
+                  אמצעי. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?" בוואטסאפ. */}
+              {methods.length > 0 && (
+                <>
+                  <div className="font-bold mb-1.5">איך תשלמי?</div>
+                  <div className="flex gap-1.5 mb-1">
+                    {methods.map((m) => {
+                      const on = chosenPay === m.key;
+                      return (
+                        <button
+                          key={m.key}
+                          onClick={() => setPayWith(m.key)}
+                          aria-pressed={on}
+                          aria-label={`תשלום ב${m.label}`}
+                          className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                          style={
+                            on
+                              ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
+                              : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                          }
+                        >
+                          {m.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="opacity-60 text-[11.5px]">
+                    ההוראות ייכנסו להודעה שתישלח בוואטסאפ.
+                  </p>
+                </>
+              )}
+              {!methods.length && paySummary && (
                 <>
                   <span className="font-bold">אפשר לשלם ב:</span> {paySummary}
                 </>
@@ -667,7 +770,7 @@ export default function StoreView({
               {store.payout_note && <div className="opacity-70 mt-0.5">{store.payout_note}</div>}
               {/* לינק התשלום נפתח בלשונית חדשה: הסל והטופס נשארים כאן,
                   והקונה חוזרת לשלוח את ההזמנה אחרי ששילמה. */}
-              {payLink && (
+              {payLink && chosenPay === "paybox" && (
                 <a
                   href={payLink.url}
                   target="_blank"

@@ -18,6 +18,7 @@ import { uploadBlob } from "@/lib/upload-client";
 import { QUOTAS } from "@/lib/quotas";
 import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
+import Icon from "@/app/icons";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -577,7 +578,7 @@ export default function ProductsPage() {
             כי מסך ריק שמפנה ל-"+" קטן בפינה משאיר אותה לחפש. */}
         {products.length === 0 && (
           <div className="text-center py-12 flex flex-col items-center gap-3">
-            <div className="text-5xl">🛍️</div>
+            <Icon name="stall" size={64} tone="var(--cream)" className="text-[var(--wood)]" />
             <p className="text-sm text-[var(--muted)] leading-relaxed">
               הדוכן שלך ריק בינתיים.
               <br />
@@ -693,7 +694,7 @@ export default function ProductsPage() {
         aria-label="מוצר חדש"
         className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] h-12 bg-[var(--ink)] text-white text-[15px] font-bold  z-30 flex items-center justify-center gap-2"
       >
-        <span className="text-xl font-light">+</span> מוצר חדש
+        <Icon name="plus" size={18} /> מוצר חדש
       </button>
 
       {/* editor sheet */}
@@ -740,13 +741,13 @@ export default function ProductsPage() {
 
             <div className="flex gap-2 mb-3.5">
               <button onClick={openRecorder} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
-                <span className="text-base">🎬</span>הקלטת וידאו
+                <Icon name="video" size={19} tone="var(--cream)" />הקלטת וידאו
               </button>
               <button onClick={() => photoRef.current?.click()} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
-                <span className="text-base">📷</span>תמונה
+                <Icon name="camera" size={19} tone="var(--cream)" />תמונה
               </button>
               <button onClick={() => galleryRef.current?.click()} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
-                <span className="text-base">🖼️</span>מהגלריה
+                <Icon name="gallery" size={19} tone="var(--cream)" />מהגלריה
               </button>
             </div>
 
@@ -825,7 +826,8 @@ export default function ProductsPage() {
                       : "border-[var(--line)] bg-white"
                   }`}
                 >
-                  {b.emoji} {b.label}
+                  <Icon name={b.icon} size={14} tone="none" className="inline-block align-[-2px] ms-1" />
+                  {b.label}
                 </button>
               ))}
             </div>
@@ -953,7 +955,7 @@ export default function ProductsPage() {
           אבל הוא קטן ואפור, כי הצעד הבא האמיתי הוא לשלוח את הלינק. */}
       {celebrate && store && (
         <div className="fixed inset-0 z-[95] bg-white flex flex-col items-center justify-center text-center px-8 gap-4">
-          <div className="text-6xl">🎉</div>
+          <Icon name="party" size={68} tone="var(--lavender)" className="text-[var(--wood)]" />
           <h2 className="text-[22px] font-bold leading-tight">הדוכן שלך באוויר!</h2>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">
             יש בו מוצר, יש לו לינק, והוא נראה בדיוק כמו שבנית אותו.

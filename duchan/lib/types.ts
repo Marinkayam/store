@@ -34,6 +34,14 @@ export interface Store {
   payout_cash: boolean;
   payout_note: string | null;
   payout_link: string | null; // לינק ביט/פייבוקס. נאכף בטריגר (מיגרציה 0018).
+  // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה (מיגרציה 0019)
+  about: string | null;
+  city: string | null;
+  ships: boolean;
+  shipping_note: string | null;
+  shipping_price: number | null;
+  order_intro: string | null;
+  order_outro: string | null;
   referred_by: string | null;
   referral_source: string | null;
   ref_clicks: number;
@@ -99,6 +107,14 @@ export interface PublicStore {
   payout_cash: boolean;
   payout_note: string | null;
   payout_link: string | null;
+  about: string | null;
+  city: string | null;
+  ships: boolean;
+  shipping_note: string | null;
+  shipping_price: number | null;
+  // נוסחי הפתיחה והסיום של הודעת ההזמנה שמגיעה אליה בוואטסאפ
+  order_intro: string | null;
+  order_outro: string | null;
 }
 
 export interface PublicProduct {

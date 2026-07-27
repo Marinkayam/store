@@ -3,6 +3,7 @@ import { getPublicStore } from "@/lib/store-public";
 import { themeCssVars, themeOrDefault } from "@/lib/themes";
 import { ACTIVATION_PRICE, FULL_PRICE, IS_LAUNCH, LAUNCH_UNTIL_LABEL } from "@/lib/pricing";
 import StoreView from "./store-view";
+import Icon from "@/app/icons";
 
 // דף החנות הפומבי. SSR, נקרא עם service role, שדות מפורשים בלבד.
 // noindex בכל דף חנות — אין sitemap, אין אינדוקס.
@@ -67,7 +68,7 @@ export default async function StorePage({ params }: Props) {
   if (data.state === "closed") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--canvas)] text-center px-8">
-        <div className="text-5xl">🌙</div>
+        <Icon name="moon" size={58} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
         <h1 className="text-xl font-bold">החנות סגורה כרגע</h1>
         <p className="text-sm text-[var(--muted)]">אולי הלינק השתנה, ואולי היא פשוט נחה.</p>
       </div>
@@ -112,7 +113,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
 
   return (
     <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-9 text-center">
-      <div className="text-3xl">🛍️</div>
+      <Icon name="stall" size={54} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
       <h2 className="text-[15px] font-bold text-[var(--ink)] mt-2">רוצה גם דוכן מכירות כזה?</h2>
       <p className="text-[12.5px] text-[var(--muted)] mt-1.5 leading-relaxed max-w-xs mx-auto">
         סקווישים שכבר לא בשימוש, צמידים שהכנת, בגדים שקטנו.
