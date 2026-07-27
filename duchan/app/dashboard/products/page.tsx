@@ -851,33 +851,26 @@ export default function ProductsPage() {
                 בשדה השם במקום ברשימת הבחירות, וקונה ראתה כותרת חסרת פשר.
                 עכשיו כל שדה בשורה נפרדת עם תווית ודוגמה מפורשת, וסדר הפוך —
                 קודם הבחירות עצמן, כי זה מה שחייבים למלא. */}
-            <div className="border border-[var(--line)] px-3 py-2.5 mb-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[13px]">יש לזה כמה צבעים או מידות לבחור?</span>
-                <button
-                  onClick={() =>
-                    setEdit((s) => {
-                      if (!s) return s;
-                      const on = !s.hasOptions;
-                      // כיבוי מנקה גם את הטקסט — אחרת נשאר "צבע" שמור בלי
-                      // שהיא רואה אותו, וקונה תתבקש לבחור משהו שלא קיים
-                      return on
-                        ? { ...s, hasOptions: on }
-                        : { ...s, hasOptions: on, optionsText: "", optionLabel: "" };
-                    })
-                  }
-                  aria-label="יש לזה כמה צבעים או מידות לבחור"
-                  aria-pressed={edit.hasOptions}
-                  className={`w-10 h-6 relative transition ${edit.hasOptions ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-                >
-                  <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.hasOptions ? "right-[19px]" : "right-[3px]"}`} />
-                </button>
-              </div>
-              {!edit.hasOptions && (
-                <p className="text-[11px] text-[var(--muted)] mt-1 leading-relaxed">
-                  לדוגמה: סקוויש שיש לו רק צבע אחד — לא, כמה צבעים לבחור ממנו — כן.
-                </p>
-              )}
+            <div className="flex justify-between items-center border border-[var(--line)] px-3 py-2.5 mb-3">
+              <span className="text-[13px]">יש לזה עוד צבעים או מידות?</span>
+              <button
+                onClick={() =>
+                  setEdit((s) => {
+                    if (!s) return s;
+                    const on = !s.hasOptions;
+                    // כיבוי מנקה גם את הטקסט — אחרת נשאר "צבע" שמור בלי
+                    // שהיא רואה אותו, וקונה תתבקש לבחור משהו שלא קיים
+                    return on
+                      ? { ...s, hasOptions: on }
+                      : { ...s, hasOptions: on, optionsText: "", optionLabel: "" };
+                  })
+                }
+                aria-label="יש לזה כמה צבעים או מידות לבחור"
+                aria-pressed={edit.hasOptions}
+                className={`w-10 h-6 relative transition ${edit.hasOptions ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
+              >
+                <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.hasOptions ? "right-[19px]" : "right-[3px]"}`} />
+              </button>
             </div>
 
             {edit.hasOptions && (
