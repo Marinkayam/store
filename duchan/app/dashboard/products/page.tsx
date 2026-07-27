@@ -751,6 +751,17 @@ export default function ProductsPage() {
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
 
+            {/* מה מותר למכור — רק במוצר חדש, לפני שמעלים תמונה. בתקנון זה
+                קיים, אבל אף אחת לא קוראת תקנון; כאן זה נראה ברגע הנכון. */}
+            {!edit.id && (
+              <p className="text-[11px] text-[var(--muted)] bg-[var(--canvas)] px-3 py-2 mb-3 leading-relaxed">
+                דוכן מיועד למוצרים לא שימושיים ופריטי יד שנייה — צעצועים,
+                תכשיטים, פריטי תחביב. בלי אלכוהול, טבק, כלי נשק, תרופות,
+                בעלי חיים או מוצרים מזויפים.{" "}
+                <a href="/terms" target="_blank" className="underline">עוד בתקנון</a>
+              </p>
+            )}
+
             <label className="block text-[12px] font-semibold mb-1.5">1. תמונה או וידאו</label>
             <div
               className="bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex flex-col items-center justify-center text-5xl overflow-hidden relative mb-1 touch-none select-none"

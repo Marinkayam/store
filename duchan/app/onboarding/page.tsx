@@ -20,6 +20,7 @@ interface Draft {
   cover: string;
   age: string;
   city: string;
+  parentAware: boolean;
   ref: string | null;
 }
 
@@ -30,6 +31,7 @@ const EMPTY: Draft = {
   cover: DEFAULT_COVER.key,
   age: "",
   city: "",
+  parentAware: false,
   ref: null,
 };
 
@@ -82,6 +84,7 @@ export default function Onboarding() {
           coverPreset: draft!.cover,
           age: draft!.age ? Number(draft!.age) : undefined,
           city: draft!.city.trim() || undefined,
+          parentAware: draft!.parentAware,
           ref: draft!.ref,
         }),
       });
@@ -246,8 +249,26 @@ export default function Onboarding() {
             </div>
           </div>
 
+          {/* מודעות הורים — לפני שמוזן מספר טלפון או שנוצר חשבון, לא אחרי.
+              זו לא אותה הצהרה כמו זו שב-/activate: שם מאשרים לפרסם את
+              הדוכן לעולם, כאן רק שההורים יודעים שמזינים פרטים ופותחים
+              משהו. שתי נקודות עצירה שונות לשתי החלטות שונות. */}
+          <label className="flex items-start gap-2.5 -mt-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={draft.parentAware}
+              onChange={(e) => set({ parentAware: e.target.checked })}
+              aria-label="ההורים שלי יודעים"
+              className="mt-0.5 w-5 h-5 shrink-0 accent-[var(--olive)]"
+            />
+            <span className="text-[12.5px] text-[var(--muted)] leading-relaxed">
+              ההורים שלי יודעים שאני פותחת דוכן כאן, ושאני מזינה פרטים כמו
+              מספר טלפון.
+            </span>
+          </label>
+
           <button
-            disabled={!draft.displayName.trim()}
+            disabled={!draft.displayName.trim() || !draft.parentAware}
             onClick={() => set({ step: 2 })}
             className="btn btn-primary py-3.5 text-[15px]"
           >
@@ -286,7 +307,7 @@ export default function Onboarding() {
           <p className="text-[14px] leading-relaxed">
             עכשיו נכנסים פנימה וממלאים אותו במוצרים.
           </p>
-          <a href="/dashboard/products" className="btn btn-primary py-3.5 text-[15px]">
+          <a href="/dashboard/products?new=1" className="btn btn-primary py-3.5 text-[15px]">
             לדוכן שלי ←
           </a>
         </div>

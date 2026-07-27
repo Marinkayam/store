@@ -19,6 +19,7 @@ interface Body {
   contactPhone?: string;
   age?: number;
   city?: string;
+  parentAware?: boolean;
   ref?: string | null; // הסלאג של החנות שממנה הגיעה
   firstProduct?: {
     name: string;
@@ -91,32 +92,44 @@ export async function POST(req: NextRequest) {
     referredBy = src?.id ?? null;
   }
 
+  // מודעות ההורים מסומנת חובה במסך 1 של ההקמה, לפני שהטלפון אפילו נשלח —
+  // כאן רק נרשמת החותמת. parent_aware_at (מיגרציה 0023) עשוי עוד לא להיות
+  // בפרודקשן, ולכן includeParentAware יורד אוטומטית אם העמודה חסרה במקום
+  // להפיל את פתיחת החנות כולה.
+  const parentAwareAt = body.parentAware ? new Date().toISOString() : null;
+  let includeParentAware = true;
+
   // slug אקראי — מנסים שוב במקרה הנדיר של התנגשות
   let store: { id: string; slug: string } | null = null;
   for (let attempt = 0; attempt < 5 && !store; attempt++) {
-    const { data, error } = await db
-      .from("stores")
-      .insert({
-        owner_id: user.id,
-        slug: randomSlug(),
-        display_name: displayName,
-        emoji: (body.emoji ?? "🦄").slice(0, 8),
-        tagline: body.tagline?.trim().slice(0, 60) || null,
-        theme,
-        cover_preset: coverPreset,
-        contact_phone: contactPhone,
-        age,
-        city,
-        // נשמר רק אם יש כתובת אמיתית. בכניסה בסמס אין כזו, והכתובת הפנימית
-        // @phone.duchan.app היא לא מייל שמישהי קוראת — אין טעם לשמור אותה.
-        parent_email: user.email?.endsWith("@phone.duchan.app") ? null : user.email?.toLowerCase() ?? null,
-        referred_by: referredBy,
-        referral_source: referredBy ? "store" : "direct",
-      })
-      .select("id, slug")
-      .single();
-    if (!error) store = data;
-    else if (!error.message.includes("slug")) {
+    const payload: Record<string, unknown> = {
+      owner_id: user.id,
+      slug: randomSlug(),
+      display_name: displayName,
+      emoji: (body.emoji ?? "🦄").slice(0, 8),
+      tagline: body.tagline?.trim().slice(0, 60) || null,
+      theme,
+      cover_preset: coverPreset,
+      contact_phone: contactPhone,
+      age,
+      city,
+      // נשמר רק אם יש כתובת אמיתית. בכניסה בסמס אין כזו, והכתובת הפנימית
+      // @phone.duchan.app היא לא מייל שמישהי קוראת — אין טעם לשמור אותה.
+      parent_email: user.email?.endsWith("@phone.duchan.app") ? null : user.email?.toLowerCase() ?? null,
+      referred_by: referredBy,
+      referral_source: referredBy ? "store" : "direct",
+    };
+    if (includeParentAware) payload.parent_aware_at = parentAwareAt;
+
+    const { data, error } = await db.from("stores").insert(payload).select("id, slug").single();
+    if (!error) {
+      store = data;
+    } else if (error.message.includes("slug")) {
+      continue; // התנגשות אקראית בסלאג — מנסים שוב עם סלאג חדש
+    } else if (includeParentAware) {
+      console.error("[stores] insert with parent_aware_at failed, retrying without it:", error.message);
+      includeParentAware = false;
+    } else {
       return NextResponse.json({ error: "משהו השתבש, לנסות שוב" }, { status: 500 });
     }
   }

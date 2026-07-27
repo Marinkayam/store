@@ -550,6 +550,19 @@ alter table stores add column if not exists sms_unlimited boolean not null defau
 
 insert into schema_migrations (name) values ('0022_sms_unlimited.sql') on conflict do nothing;
 
+-- ───────────────────────────────────────────────────────────────
+-- 0023_parent_aware.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- חותמת של הרגע שבו הילדה סימנה "ההורים שלי יודעים", בתחילת ההקמה —
+-- לפני שמוזן טלפון או שנוצר חשבון. נפרדת מ-parent_consent_at (מיגרציה
+-- 0016), שנקבעת הרבה יותר מאוחר, ממש לפני פרסום החנות לעולם. שתי חותמות
+-- לשתי החלטות שונות: מודעות מוקדמת מול אישור לפרסם בפועל.
+
+alter table stores add column if not exists parent_aware_at timestamptz;
+
+insert into schema_migrations (name) values ('0023_parent_aware.sql') on conflict do nothing;
+
 commit;
 
 -- אחרי ההרצה: לרענן את הקאש של ה-API
