@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { r2Client } from "@/lib/r2";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
-// POST /api/ai/describe { storeId, imageBase64, mediaType, productName? }
+// POST /api/ai/describe { storeId, productName?, imageBase64+mediaType | imageKey }
+//
+// imageKey הוא המסלול לתמונה ששמורה כבר: היא עורכת מוצר ותיק ורוצה תיאור,
+// בלי לצלם אותו מחדש. השרת מושך את הקובץ מ-R2 — הדפדפן לא יכול, כי קריאה
+// חוצת-דומיין של בייטים דורשת CORS, ובכל מקרה אין סיבה להוריד תמונה למכשיר
+// רק כדי להעלות אותה בחזרה.
 // פיצ'ר פרימיום: כותב תיאור קצר למוצר מתוך התמונה. נדלק פר חנות ע"י המנהלת.
 // המפתח של Anthropic נשאר בשרת — הדפדפן שולח תמונה ומקבל טקסט.
 
@@ -29,20 +36,32 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supa.auth.getUser();
   if (!user) return NextResponse.json({ error: "לא מחוברת" }, { status: 401 });
 
-  let body: { storeId?: string; imageBase64?: string; mediaType?: string; productName?: string };
+  let body: {
+    storeId?: string;
+    imageBase64?: string;
+    mediaType?: string;
+    imageKey?: string;
+    productName?: string;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { storeId, imageBase64, mediaType, productName } = body;
-  if (!storeId || !imageBase64 || !mediaType || !ALLOWED_MEDIA.includes(mediaType)) {
+  const { storeId, imageKey, productName } = body;
+  let { imageBase64, mediaType } = body;
+  if (!storeId || (!imageKey && (!imageBase64 || !mediaType))) {
     return NextResponse.json({ error: "צריך תמונה" }, { status: 400 });
   }
-  // base64 ≈ 4/3 מהגודל האמיתי
-  if (imageBase64.length * 0.75 > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ error: "התמונה גדולה מדי" }, { status: 413 });
+  if (imageBase64) {
+    if (!mediaType || !ALLOWED_MEDIA.includes(mediaType)) {
+      return NextResponse.json({ error: "צריך תמונה" }, { status: 400 });
+    }
+    // base64 ≈ 4/3 מהגודל האמיתי
+    if (imageBase64.length * 0.75 > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: "התמונה גדולה מדי" }, { status: 413 });
+    }
   }
 
   // בעלות + פרימיום + קרדיט, בבדיקה אחת אטומית
@@ -54,6 +73,31 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (!store || store.owner_id !== user.id) {
     return NextResponse.json({ error: "אין גישה" }, { status: 403 });
+  }
+
+  // המפתח חייב להיות בתיקייה של החנות. בלי הבדיקה הזו אפשר לבקש תיאור
+  // לתמונה של חנות אחרת — הבעלות נבדקה על החנות, לא על הקובץ.
+  if (imageKey) {
+    if (!imageKey.startsWith(`${storeId}/`) || imageKey.includes("..")) {
+      return NextResponse.json({ error: "אין גישה" }, { status: 403 });
+    }
+    try {
+      const obj = await r2Client().send(
+        new GetObjectCommand({ Bucket: process.env.R2_BUCKET!, Key: imageKey })
+      );
+      const type = obj.ContentType ?? "image/webp";
+      if (!ALLOWED_MEDIA.includes(type)) {
+        return NextResponse.json({ error: "אפשר תיאור לתמונה בלבד" }, { status: 400 });
+      }
+      const bytes = Buffer.from(await obj.Body!.transformToByteArray());
+      if (bytes.byteLength > MAX_IMAGE_BYTES) {
+        return NextResponse.json({ error: "התמונה גדולה מדי" }, { status: 413 });
+      }
+      imageBase64 = bytes.toString("base64");
+      mediaType = type;
+    } catch {
+      return NextResponse.json({ error: "לא מצאנו את התמונה" }, { status: 404 });
+    }
   }
 
   const { data: allowed, error: creditErr } = await db.rpc("use_ai_credit", { p_store: storeId });
@@ -96,7 +140,7 @@ export async function POST(req: NextRequest) {
         {
           role: "user",
           content: [
-            { type: "image", source: { type: "base64", media_type: mediaType as "image/webp", data: imageBase64 } },
+            { type: "image", source: { type: "base64", media_type: mediaType as "image/webp", data: imageBase64! } },
             {
               type: "text",
               text: productName?.trim()

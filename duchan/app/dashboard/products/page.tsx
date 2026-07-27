@@ -125,25 +125,29 @@ export default function ProductsPage() {
   async function writeDescription() {
     if (!edit || !store || aiBusy) return;
     const blob = edit.pendingImage;
-    if (!blob) {
+    // תמונה חדשה נשלחת מהדפדפן; תמונה שכבר נשמרה נמשכת בשרת לפי המפתח,
+    // כדי שגם עריכה של מוצר ותיק תוכל לקבל תיאור בלי לצלם מחדש.
+    const savedKey = !blob ? edit.imageKey ?? edit.posterKey : null;
+    if (!blob && !savedKey) {
       showToast("קודם מוסיפים תמונה");
       return;
     }
     setAiBusy(true);
     try {
-      const base64 = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res((r.result as string).split(",")[1] ?? "");
-        r.onerror = rej;
-        r.readAsDataURL(blob);
-      });
+      const base64 = blob
+        ? await new Promise<string>((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res((r.result as string).split(",")[1] ?? "");
+            r.onerror = rej;
+            r.readAsDataURL(blob);
+          })
+        : null;
       const resp = await fetch("/api/ai/describe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storeId: store.id,
-          imageBase64: base64,
-          mediaType: blob.type,
+          ...(base64 ? { imageBase64: base64, mediaType: blob!.type } : { imageKey: savedKey }),
           productName: edit.name,
         }),
       });
@@ -625,7 +629,11 @@ export default function ProductsPage() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{p.name}</div>
+                {/* השורה כולה פותחת עריכה, אבל בלי סימן אי אפשר לדעת את זה */}
+                <div className="text-sm font-medium flex items-center gap-1.5">
+                  {p.name}
+                  <span className="text-[10px] text-[#A2A5B0] font-normal">✎ עריכה</span>
+                </div>
                 {p.description && (
                   <div className="text-[11px] text-[#7A7D8A] truncate">{p.description}</div>
                 )}
@@ -749,7 +757,7 @@ export default function ProductsPage() {
 
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[11px] text-[#7A7D8A]">תיאור קצר</label>
-              {store.ai_enabled && edit.pendingImage && (
+              {store.ai_enabled && (edit.pendingImage || edit.imageKey || edit.posterKey) && (
                 <button onClick={writeDescription} disabled={aiBusy}
                   className="text-[11px] text-[#15161B] border border-[#E6E7EC] rounded-lg px-2 py-1 disabled:opacity-50">
                   {aiBusy ? "כותבים…" : "✨ כתבי לי תיאור"}
