@@ -85,28 +85,57 @@ export default async function StorePage({ params }: Props) {
         preview={data.state === "preview"}
       />
       {/* הלולאה: מי שראתה חנות של חברה יכולה לפתוח אחת משלה, והשיוך נשמר */}
-      <OpenYourOwn slug={data.store.slug} />
+      <OpenYourOwn slug={data.store.slug} name={data.store.display_name} />
     </div>
   );
 }
 
-function OpenYourOwn({ slug }: { slug: string }) {
+function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
+  /**
+   * שתי דרכים להגיע לדוכן משלך, ובכוונה בסדר הזה:
+   *
+   * דיבור עם מרינה קודם — מי שמגיעה מדוכן של חברה כמעט תמיד ההורה, והוא
+   * רוצה לשאול לפני שהוא נותן לילדה להתחיל. ההודעה נושאת את שם הדוכן ואת
+   * הקוד שלו, כדי שאפשר יהיה לדעת מאיפה הפנייה הגיעה בלי לשאול.
+   *
+   * המספר מגיע ממשתנה סביבה עם ברירת מחדל, כדי שהחלפת מספר לא תדרוש
+   * שינוי קוד. זה מספר עסקי שנועד להיות גלוי — להבדיל ממספר הוואטסאפ של
+   * הילדה, שלעולם אינו יושב ב-HTML.
+   */
+  const sales = (process.env.NEXT_PUBLIC_SALES_WHATSAPP || "972545888471").replace(/\D/g, "");
+  const msg =
+    `היי מרינה! 👋\n` +
+    `הגעתי מהדוכן "${name}" (${slug}) באתר דוכן,\n` +
+    `ואני רוצה גם דוכן מכירות כזה.`;
+
   return (
     <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-9 text-center">
       <div className="text-3xl">🛍️</div>
-      <h2 className="text-[15px] font-bold text-[var(--ink)] mt-2">גם לך יש דברים למכור</h2>
+      <h2 className="text-[15px] font-bold text-[var(--ink)] mt-2">רוצה גם דוכן מכירות כזה?</h2>
       <p className="text-[12.5px] text-[var(--muted)] mt-1.5 leading-relaxed max-w-xs mx-auto">
         סקווישים שכבר לא בשימוש, צמידים שהכנת, בגדים שקטנו.
         <br />
-        חנות משלך נבנית בכמה דקות, מהטלפון.
+        דוכן משלך נבנה בכמה דקות, מהטלפון.
       </p>
+
+      <a
+        href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
+        className="inline-block mt-4 bg-[var(--whatsapp)] text-white px-6 py-3 text-[13.5px] font-bold"
+      >
+        דברי איתי בוואטסאפ
+      </a>
+      <p className="text-[11.5px] text-[var(--muted)] mt-2">
+        מרינה · <span dir="ltr">{sales.replace(/^972/, "0")}</span>
+      </p>
+
       <a
         href={`/?ref=${slug}`}
-        className="inline-block mt-4 bg-[var(--ink)] text-white px-6 py-3 text-[13.5px] font-bold"
+        className="inline-block mt-4 border border-[var(--line)] bg-white px-6 py-2.5 text-[13px] font-medium"
       >
         פתחי חנות משלך
       </a>
-      <p className="text-[11px] text-[var(--faint)] mt-3">
+
+      <p className="text-[11px] text-[var(--faint)] mt-4">
         נבנה ב<span className="font-bold">דוכן</span> · חינם לבנייה
       </p>
     </div>

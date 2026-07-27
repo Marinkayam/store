@@ -5,7 +5,7 @@
 // · רשת (מי הביאה את מי) · מה מוכרות (גלריה) · עדכונים (הודעות לבנות)
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { displayPhone } from "@/lib/phone";
+import { displayPhone, normalizePhone } from "@/lib/phone";
 import { milestones, reachedCount } from "@/lib/milestones";
 import { payoutSummary } from "@/lib/payouts";
 
@@ -257,8 +257,18 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
   const filtered = useMemo(() => {
     const q = search.trim();
     if (!q) return stores;
+    // חיפוש לפי טלפון הוא הדרך שבה אני באמת מחפשת: לקוחה כותבת לי מהמספר
+    // שלה, ואת שם החנות אני לא זוכרת. המספר מנורמל בשני הצדדים כדי
+    // ש-050-527-8685 ו-972505278685 יימצאו אותו דבר.
+    const digits = q.replace(/\D/g, "");
+    const asE164 = normalizePhone(q);
     return stores.filter(
-      (s) => s.display_name.includes(q) || s.slug.includes(q) || (s.parent_email ?? "").includes(q)
+      (s) =>
+        s.display_name.includes(q) ||
+        s.slug.includes(q) ||
+        (s.parent_email ?? "").includes(q) ||
+        (!!asE164 && s.contact_phone === asE164) ||
+        (digits.length >= 5 && (s.contact_phone ?? "").includes(digits))
     );
   }, [stores, search]);
 
@@ -519,7 +529,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="חיפוש לפי שם, לינק או אימייל…"
+              placeholder="חיפוש לפי שם, טלפון או לינק…"
               className="w-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm"
             />
             <div className="flex flex-col gap-2">
