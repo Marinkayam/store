@@ -104,10 +104,14 @@ export default function Landing() {
         </div>
         <h2 className="text-[19px] font-bold text-[var(--olive)] mt-3">הדוכן שלך מתחיל כאן</h2>
         <p className="text-[14px] mt-2.5 leading-relaxed text-[var(--muted)] max-w-xs">
-          אפשר למכור כאן <span className="font-bold text-[var(--ink)]">כל מה שרוצים</span> —
-          סקווישים שכבר לא בשימוש, צמידים שהכנת, בגדים שקטנו, ציורים, עוגיות.
+          יש צעצועים שכבר לא משחקים בהם?
           <br />
-          כל דבר שההורים שלך מסכימים לו.
+          בגדים חדשים עם התווית שעוד לא לבשו? אופניים שכבר לא מתחשק לרכב עליהם?
+          <br />
+          ספר שכבר קראו? סקוויש שכבר מעכו עד הסוף?
+          <br />
+          <span className="font-bold text-[var(--ink)]">אפשר לפתוח דוכן ולמכור את זה לחברים</span>{" "}
+          — ממש כמו חנות אמיתית. כל דבר שההורים מסכימים לו.
         </p>
       </div>
 
