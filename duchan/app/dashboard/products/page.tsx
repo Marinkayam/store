@@ -746,8 +746,9 @@ export default function ProductsPage() {
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
 
+            <label className="block text-[12px] font-semibold mb-1.5">1. תמונה או וידאו</label>
             <div
-              className="h-38 bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex items-center justify-center text-5xl overflow-hidden relative mb-1 touch-none select-none"
+              className="h-38 bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex flex-col items-center justify-center text-5xl overflow-hidden relative mb-1 touch-none select-none"
               style={{ height: "9.5rem" }}
               onPointerDown={onPosPointerDown}
               onPointerMove={onPosPointerMove}
@@ -782,7 +783,12 @@ export default function ProductsPage() {
                   )}
                 </>
               ) : (
-                "🛍️"
+                <>
+                  <span>🛍️</span>
+                  <span className="text-[11px] text-[var(--muted)] font-sans mt-1">
+                    עוד אין תמונה — לבחור אחת מהכפתורים למטה
+                  </span>
+                </>
               )}
             </div>
             {edit.previewUrl && !edit.previewIsVideo && edit.pendingImageRaw && (
@@ -798,7 +804,7 @@ export default function ProductsPage() {
             <input ref={galleryRef} type="file" accept="video/*" hidden
               onChange={(e) => e.target.files?.[0] && onGalleryVideo(e.target.files[0])} />
 
-            <div className="flex gap-2 mb-3.5">
+            <div className="flex gap-2 mt-2 mb-3.5">
               <button onClick={openRecorder} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
                 <Icon name="video" size={19} tone="var(--cream)" />הקלטת וידאו
               </button>
@@ -810,13 +816,22 @@ export default function ProductsPage() {
               </button>
             </div>
 
-            <label className="block text-[11px] text-[var(--muted)] mb-1">שם המוצר</label>
-            <input value={edit.name} maxLength={40} aria-label="שם המוצר"
+            <label className="block text-[12px] font-semibold mb-1.5">2. שם המוצר</label>
+            <input value={edit.name} maxLength={40} aria-label="שם המוצר" placeholder="למשל: סקוויש אבוקדו"
               onChange={(e) => setEdit((s) => s && { ...s, name: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3" />
 
+            <label className="block text-[12px] font-semibold mb-1.5">3. מחיר (₪)</label>
+            <input value={edit.price} type="number" inputMode="numeric" aria-label="מחיר" placeholder="למשל: 15"
+              onChange={(e) => setEdit((s) => s && { ...s, price: e.target.value })}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-4" />
+
+            <p className="text-[11px] text-[var(--faint)] mb-2.5">
+              מכאן והלאה הכל לא חובה — אפשר לשמור גם בלעדיו.
+            </p>
+
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[11px] text-[var(--muted)]">תיאור קצר</label>
+              <label className="block text-[11px] text-[var(--muted)]">תיאור קצר (לא חובה)</label>
               {store.ai_enabled && (edit.pendingImage || edit.imageKey || edit.posterKey) && (
                 <button onClick={writeDescription} disabled={aiBusy}
                   className="text-[11px] text-[var(--ink)] border border-[var(--line)] px-2 py-1 disabled:opacity-50">
@@ -827,11 +842,6 @@ export default function ProductsPage() {
             <textarea value={edit.description} maxLength={120} rows={2} placeholder="רך במיוחד, חוזר לאט"
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3 resize-none" />
-
-            <label className="block text-[11px] text-[var(--muted)] mb-1">מחיר (₪)</label>
-            <input value={edit.price} type="number" inputMode="numeric" aria-label="מחיר"
-              onChange={(e) => setEdit((s) => s && { ...s, price: e.target.value })}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3" />
 
             {/* אפשרויות לבחירה — צבע, מידה, טעם. אחת פר מוצר, בלי מלאי נפרד.
                 שני שדות זה ליד זה בעבר בילבלו: מוכרת מילאה צבע (למשל "לבן")
