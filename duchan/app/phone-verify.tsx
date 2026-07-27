@@ -94,8 +94,8 @@ export default function PhoneVerify({
     return (
       <>
       <div className="w-full flex flex-col gap-3">
-        <h1 className="text-lg font-bold text-center">{title}</h1>
-        <p className="text-[12.5px] text-[var(--muted)] text-center -mt-1 leading-relaxed">{subtitle}</p>
+        <h1 className="t-title text-center">{title}</h1>
+        <p className="t-sub text-center">{subtitle}</p>
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -104,14 +104,14 @@ export default function PhoneVerify({
           autoComplete="tel"
           placeholder="050-123-4567"
           aria-label="מספר טלפון"
-          className="w-full border border-[var(--line)] bg-white px-4 py-3 text-center text-base tracking-wide"
+          className="field w-full px-4 py-4 text-center t-body tracking-wide"
           onKeyDown={(e) => e.key === "Enter" && phone.trim() && sendCode()}
         />
-        {err && <p className="text-xs text-[var(--danger)] text-center">{err}</p>}
+        {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
         <button
           onClick={sendCode}
           disabled={busy || phone.replace(/\D/g, "").length < 9}
-          className="bg-[var(--ink)] text-white py-3.5 text-sm font-bold disabled:opacity-30"
+          className="btn btn-primary disabled:opacity-30"
         >
           {busy ? "שולחים…" : cta}
         </button>
@@ -119,8 +119,8 @@ export default function PhoneVerify({
         {/* לא כל ילד/ה יש לו/לה טלפון משלו/משלה — המספר יכול להיות של הורה,
             וזה בכוונה לא הערת שוליים אלא תיבה עצמאית */}
         <div className="bg-[var(--canvas)] border border-[var(--line)] px-3.5 py-3">
-          <div className="text-[12.5px] font-semibold">אפשר גם מספר של אמא או אבא</div>
-          <p className="text-[11.5px] text-[var(--muted)] leading-relaxed mt-1">
+          <div className="t-body font-medium">אפשר גם מספר של אמא או אבא</div>
+          <p className="t-small text-[var(--muted)] mt-1.5">
             הקוד צריך להגיע בהודעה שאפשר לראות. אם זה מספר של מבוגר,
             ההודעות על ההזמנות יגיעו אליו.
           </p>
@@ -129,7 +129,7 @@ export default function PhoneVerify({
         <button
           type="button"
           onClick={() => setShowFindHelp(true)}
-          className="text-[11.5px] text-[var(--muted)] underline"
+          className="t-small text-[var(--muted)] underline"
         >
           לא יודעים מה המספר?
         </button>
@@ -141,7 +141,7 @@ export default function PhoneVerify({
           <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-6 max-h-[85%] overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <div className="flex items-start justify-between mb-1">
-              <h2 className="text-base font-bold">איך מוצאים את המספר</h2>
+              <h2 className="t-heading">איך מוצאים את המספר</h2>
               <button
                 onClick={() => setShowFindHelp(false)}
                 aria-label="סגירה"
@@ -150,7 +150,7 @@ export default function PhoneVerify({
                 ✕
               </button>
             </div>
-            <p className="text-[12.5px] text-[var(--muted)] mb-4">שתי דרכים, לפי הטלפון:</p>
+            <p className="t-sub mb-5">שתי דרכים, לפי הטלפון:</p>
 
             <FindNumberSteps
               title="באייפון"
@@ -163,7 +163,7 @@ export default function PhoneVerify({
 
             <button
               onClick={() => setShowFindHelp(false)}
-              className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold mt-2"
+              className="btn btn-primary w-full mt-2"
             >
               מצאנו, אפשר להמשיך
             </button>
@@ -176,8 +176,8 @@ export default function PhoneVerify({
 
   return (
     <div className="w-full flex flex-col gap-3">
-      <h1 className="text-lg font-bold text-center">הקוד שקיבלת</h1>
-      <p className="text-[12.5px] text-[var(--muted)] text-center -mt-1">
+      <h1 className="t-title text-center">הקוד שקיבלת</h1>
+      <p className="t-sub text-center">
         שלחנו הודעה ל-{displayPhone(phone.replace(/\D/g, "").replace(/^0/, "972"))}
       </p>
       <input
@@ -195,20 +195,20 @@ export default function PhoneVerify({
         maxLength={6}
         placeholder="______"
         aria-label="קוד אימות"
-        className="w-full border border-[var(--line)] bg-white px-4 py-3.5 text-center text-2xl font-bold tracking-[0.5em]"
+        className="field w-full px-4 py-4 text-center text-[1.75rem] font-medium tracking-[0.4em]"
       />
-      {err && <p className="text-xs text-[var(--danger)] text-center">{err}</p>}
-      {busy && <p className="text-xs text-[var(--muted)] text-center">רגע…</p>}
+      {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
+      {busy && <p className="t-small text-[var(--muted)] text-center">רגע…</p>}
       <button
         onClick={() => setStep("phone")}
-        className="text-xs text-[var(--muted)] underline"
+        className="t-small text-[var(--muted)] underline"
       >
         המספר לא נכון? לשנות
       </button>
       <button
         onClick={sendCode}
         disabled={cooldown > 0 || busy}
-        className="text-xs text-[var(--muted)] underline disabled:opacity-40 disabled:no-underline"
+        className="t-small text-[var(--muted)] underline disabled:opacity-40 disabled:no-underline"
       >
         {cooldown > 0 ? `לא הגיעה הודעה? אפשר לשלוח שוב בעוד ${cooldown}` : "לא הגיעה הודעה? לשלוח שוב"}
       </button>
@@ -220,14 +220,14 @@ export default function PhoneVerify({
 function FindNumberSteps({ title, steps }: { title: string; steps: string[] }) {
   return (
     <div className="mb-4">
-      <div className="text-[13px] font-bold mb-1.5">{title}</div>
+      <div className="t-body font-medium mb-2">{title}</div>
       <ol className="flex flex-col">
         {steps.map((s, i) => (
           <li
             key={i}
-            className="flex gap-2.5 py-1.5 border-b border-[var(--line)] last:border-0 text-[13px]"
+            className="flex gap-3 py-2.5 border-b border-[var(--line)] last:border-0 t-small"
           >
-            <span className="text-[var(--faint)] text-[11px] pt-0.5 shrink-0">
+            <span className="t-label pt-0.5 shrink-0">
               {String(i + 1).padStart(2, "0")}
             </span>
             <span className="leading-relaxed">{s}</span>

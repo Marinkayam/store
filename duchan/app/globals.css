@@ -66,22 +66,42 @@
 
 html {
   font-family: var(--font-body);
+  /* 16px בסיס. הטקסטים היו קטנים מדי (11–12px) וילדה בת עשר פשוט לא
+     קוראת אותם בטלפון. */
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--canvas);
   color: var(--ink);
+  font-weight: 400;
+  line-height: 1.6;
 }
 
-/* כותרות: אותה משפחה כמו הגוף (Heebo), אבל משקל כבד יותר שנותן להן זהות
-   משלהן בלי לגרור פונט שני שלא תומך בעברית. */
+/* כותרות: אותה משפחה כמו הגוף (Heebo), במשקל בינוני ולא שחור.
+   800 היה כבד ודחוס; 500–600 עם ריווח אותיות פתוח קורא מודרני וקליל,
+   וגם קריא יותר בעברית, שאין בה אותיות גדולות שיישאו את המשקל. */
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
 }
+
+/* ── סולם טיפוגרפי ──
+   קנה מידה אחד לכל האתר, כדי שלא יהיו עשרים גדלים שרירותיים בסוגריים
+   מרובעים. כל גודל כאן נבדק שהוא קריא בטלפון. */
+.t-title    { font-size: 1.5rem;   font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; }
+.t-heading  { font-size: 1.1875rem; font-weight: 600; letter-spacing: -0.015em; line-height: 1.35; }
+.t-body     { font-size: 1rem;     font-weight: 400; line-height: 1.6; }
+.t-sub      { font-size: 0.9375rem; font-weight: 400; line-height: 1.65; color: var(--muted); }
+.t-small    { font-size: 0.875rem; font-weight: 400; line-height: 1.6; }
+/* תווית זעירה עם ריווח אותיות, כמו במוקאפים. הריווח הוא מה שהופך
+   טקסט קטן לכוונה עיצובית במקום לטקסט שנדחס. */
+.t-label    { font-size: 0.75rem;  font-weight: 500; letter-spacing: 0.08em; color: var(--muted); }
 
 /* ── רכיבי יסוד ── */
 .card {
@@ -90,9 +110,18 @@ h3 {
   border-radius: var(--r);
 }
 
+/* כפתור: תמיד ממורכז, תמיד באותו גובה מינימלי (44px — יעד המגע המומלץ),
+   ובמשקל בינוני ולא כבד. */
 .btn {
   border-radius: var(--r);
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 1rem;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
   transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
 }
 .btn:active:not(:disabled) {

@@ -59,7 +59,7 @@ function StepHeader({ step, onBack }: { step: 1 | 2 | 3; onBack: () => void }) {
         >
           →
         </button>
-        <span className="text-[11.5px] text-[var(--muted)] shrink-0">שלב {step} מתוך 3</span>
+        <span className="t-label shrink-0">שלב {step} מתוך 3</span>
         <div className="flex-1 flex gap-1" aria-hidden>
           {[1, 2, 3].map((n) => (
             <div
@@ -77,7 +77,7 @@ function StepHeader({ step, onBack }: { step: 1 | 2 | 3; onBack: () => void }) {
 /** קישורי החובה — מופיעים בתחתית כל מסך בפלואו, לא רק בדף הבית */
 function LegalFooter() {
   return (
-    <p className="text-[11px] text-[var(--muted)] text-center pt-2">
+    <p className="t-small text-[var(--muted)] text-center pt-2">
       <a href="/terms" className="underline">תנאי שימוש</a>
       {" · "}
       <a href="/privacy" className="underline">פרטיות</a>
@@ -179,8 +179,8 @@ export default function Onboarding() {
       {draft.step === 1 && !result && (
         <div className="w-full flex flex-col gap-5">
           <div className="text-center">
-            <h1 className="text-xl font-bold">איך יקראו לדוכן?</h1>
-            <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
+            <h1 className="t-title">איך יקראו לדוכן?</h1>
+            <p className="t-sub mt-2">
               זה השם שיופיע בדוכן. אפשר לשנות אותו מתי שרוצים.
             </p>
           </div>
@@ -191,12 +191,12 @@ export default function Onboarding() {
             aria-label="שם הדוכן"
             maxLength={40}
             autoFocus
-            className="field w-full px-4 py-3.5 text-center text-base"
+            className="field w-full px-4 py-4 text-center t-body"
           />
           <button
             disabled={!draft.displayName.trim()}
             onClick={() => set({ step: 2 })}
-            className="btn btn-primary py-3.5 text-[15px]"
+            className="btn btn-primary"
           >
             הלאה, לבחירת רקע ←
           </button>
@@ -207,8 +207,8 @@ export default function Onboarding() {
       {draft.step === 2 && !result && (
         <div className="w-full flex flex-col gap-5">
           <div className="text-center">
-            <h1 className="text-xl font-bold">איזה רקע בא לך?</h1>
-            <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
+            <h1 className="t-title">איזה רקע בא לך?</h1>
+            <p className="t-sub mt-2">
               זה הצבע של כל הדוכן. אפשר לראות למעלה איך זה נראה.
             </p>
           </div>
@@ -239,8 +239,8 @@ export default function Onboarding() {
                   {draft.avatarData ? "✎" : "+"}
                 </span>
               </button>
-              <div className="font-bold mt-2 text-[16px]">{draft.displayName || "הדוכן"}</div>
-              <div className="text-[11px] text-[var(--muted)] mt-0.5">
+              <div className="t-heading mt-3">{draft.displayName || "הדוכן"}</div>
+              <div className="t-small text-[var(--muted)] mt-1">
                 {draft.avatarData ? "לחיצה כדי להחליף" : "לחיצה כדי להוסיף תמונה (לא חובה)"}
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function Onboarding() {
             })}
           </div>
 
-          <button onClick={() => set({ step: 3 })} className="btn btn-primary py-3.5 text-[15px]">
+          <button onClick={() => set({ step: 3 })} className="btn btn-primary">
             הלאה — לפרטים אחרונים ←
           </button>
         </div>
@@ -292,15 +292,15 @@ export default function Onboarding() {
       {draft.step === 3 && !result && (
         <div className="w-full flex flex-col gap-5">
           <div className="text-center">
-            <h1 className="text-xl font-bold">עוד שני פרטים</h1>
-            <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
+            <h1 className="t-title">עוד שני פרטים</h1>
+            <p className="t-sub mt-2">
               שניהם לא חובה, הם רק עוזרים למצוא את הדוכן לפי גיל ואזור.
             </p>
           </div>
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <div className="text-[13px] font-semibold mb-1.5">גיל</div>
+              <div className="t-small font-medium mb-2">גיל</div>
               <input
                 value={draft.age}
                 onChange={(e) => set({ age: e.target.value.replace(/\D/g, "").slice(0, 2) })}
@@ -308,18 +308,18 @@ export default function Onboarding() {
                 aria-label="גיל"
                 inputMode="numeric"
                 maxLength={2}
-                className="field w-full px-4 py-3.5 text-center text-base"
+                className="field w-full px-4 py-4 text-center t-body"
               />
             </div>
             <div className="flex-[1.4]">
-              <div className="text-[13px] font-semibold mb-1.5">עיר</div>
+              <div className="t-small font-medium mb-2">עיר</div>
               <input
                 value={draft.city}
                 onChange={(e) => set({ city: e.target.value })}
                 placeholder="רמת גן"
                 aria-label="עיר"
                 maxLength={30}
-                className="field w-full px-4 py-3.5 text-center text-base"
+                className="field w-full px-4 py-4 text-center t-body"
               />
             </div>
           </div>
@@ -340,20 +340,20 @@ export default function Onboarding() {
                 aria-label="ההורים שלי יודעים"
                 className="mt-0.5 w-5 h-5 shrink-0 accent-[var(--olive)]"
               />
-              <span className="text-[13px] font-semibold leading-relaxed">
+              <span className="t-body font-medium">
                 ההורים יודעים על פתיחת הדוכן כאן
               </span>
             </label>
             {/* הסיבה האמיתית לבקש טלפון בשלב הבא: ההזמנות מגיעות ישירות
                 לוואטסאפ. לא סליקה, לא משיכת כסף, לא מסירות — דוכן לא נוגע
                 בכסף ובמשלוח בכלל. */}
-            <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
+            <p className="t-small text-[var(--muted)] mt-2">
               בשלב הבא נבקש מספר טלפון, כדי שההזמנות יגיעו ישירות בוואטסאפ.
               בלי זה אי אפשר לפרסם את הדוכן.
             </p>
           </div>
 
-          <div className="text-[12px] text-[var(--muted)] leading-relaxed">
+          <div className="t-small text-[var(--muted)]">
             <div className="font-semibold text-[var(--ink)] mb-1">מה יקרה עכשיו:</div>
             <ul className="flex flex-col gap-0.5 list-disc pr-4">
               <li>הדוכן נפתח, פרטי, רק מי שבונה אותו רואה אותו</li>
@@ -365,7 +365,7 @@ export default function Onboarding() {
           <button
             disabled={!draft.parentAware}
             onClick={() => set({ step: 4 })}
-            className="btn btn-primary py-3.5 text-[15px]"
+            className="btn btn-primary"
           >
             הלאה, למספר הטלפון ←
           </button>
@@ -387,7 +387,7 @@ export default function Onboarding() {
             />
           )}
           {err && <p className="text-xs text-[var(--danger)] text-center">{err}</p>}
-          <button onClick={() => set({ step: 3 })} className="btn btn-tertiary text-[12px] py-1">
+          <button onClick={() => set({ step: 3 })} className="btn btn-tertiary t-small">
             → חזרה
           </button>
         </div>
@@ -399,9 +399,9 @@ export default function Onboarding() {
       {result && draft && (
         <div className="w-full flex flex-col gap-4">
           <div className="text-center">
-            <p className="text-[11px] text-[var(--muted)] tracking-wide">נפתח דוכן</p>
+            <p className="t-label">נפתח דוכן</p>
             <h1 className="text-xl font-bold mt-0.5">{draft.displayName}</h1>
-            <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
+            <p className="t-sub mt-2">
               הוא עדיין פרטי. מעלים מוצר אחד, ואז אפשר לפרסם.
             </p>
           </div>
@@ -419,20 +419,20 @@ export default function Onboarding() {
                   "🛍️"
                 )}
               </div>
-              <div className="font-bold mt-2 text-[16px]">{draft.displayName}</div>
-              <div className="text-[11px] text-[var(--muted)] mt-0.5">
+              <div className="t-heading mt-3">{draft.displayName}</div>
+              <div className="t-small text-[var(--muted)] mt-1">
                 {[draft.city, "0 מוצרים"].filter(Boolean).join(" · ")}
               </div>
             </div>
-            <div className="mx-4 mb-4 border-[1.5px] border-dashed border-[#D3D5DC] py-6 text-center text-[12px] text-[var(--muted)]">
+            <div className="mx-4 mb-4 border-[1.5px] border-dashed border-[#D3D5DC] py-6 text-center t-small text-[var(--muted)]">
               כאן יופיע המוצר הראשון
             </div>
           </div>
 
-          <a href="/dashboard/products?new=1" className="btn btn-primary py-3.5 text-[15px]">
+          <a href="/dashboard/products?new=1" className="btn btn-primary">
             להעלות מוצר ראשון
           </a>
-          <a href="/dashboard/products" className="btn btn-tertiary text-[13px] py-2 text-center">
+          <a href="/dashboard/products" className="btn btn-tertiary t-small">
             אחר כך, לדוכן שלי
           </a>
         </div>

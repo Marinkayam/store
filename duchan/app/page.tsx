@@ -76,17 +76,17 @@ export default function Landing() {
           className="w-full max-w-sm border-[1.5px] border-[var(--olive)] bg-white px-4 py-3 flex items-center gap-3"
         >
           <span className="text-xl">{mine.emoji}</span>
-          <span className="flex-1 text-[13px] leading-tight">
+          <span className="flex-1 t-small leading-snug">
             <span className="text-[var(--muted)]">כבר יש לך דוכן</span>
             <br />
             <b>{mine.name}</b>
           </span>
-          <span className="text-[13px] font-bold text-[var(--olive)]">לניהול ←</span>
+          <span className="t-small font-medium text-[var(--ink)]">לניהול ←</span>
         </a>
       )}
 
       {from && (
-        <div className="card px-4 py-3 text-[13px] text-center max-w-sm">
+        <div className="card px-4 py-3 t-small text-center max-w-sm">
           {from.emoji} הגעת מ<span className="font-bold">{from.name}</span>, עכשיו תורך
         </div>
       )}
@@ -96,21 +96,21 @@ export default function Landing() {
           באותה נשימה בכוונה, כדי שאף אחד מהם לא יישמע כמו תוספת קטנה. */}
       <div className="text-center flex flex-col items-center">
         <StallArt className="w-56 h-auto" />
-        <h1 className="text-[44px] leading-none font-bold mt-1">דוכן</h1>
+        <h1 className="text-[2.75rem] leading-none font-semibold tracking-[-0.03em] mt-2">דוכן</h1>
         <div className="flex items-center gap-2 mt-3 text-[var(--lavender)]">
           <span className="text-[10px] tracking-[0.3em]">····</span>
           <span className="text-base">❦</span>
           <span className="text-[10px] tracking-[0.3em]">····</span>
         </div>
-        <h2 className="text-[19px] font-bold text-[var(--olive)] mt-3">הדוכן שלך מתחיל כאן</h2>
-        <p className="text-[14px] mt-2.5 leading-relaxed text-[var(--muted)] max-w-xs">
+        <h2 className="t-heading text-[var(--olive)] mt-4">הדוכן שלך מתחיל כאן</h2>
+        <p className="t-sub mt-3 max-w-[19rem]">
           יש צעצועים שכבר לא משחקים בהם? בגדים עם התווית שעוד לא לבשו? ספר
           שכבר קראו, או סקוויש שכבר מעכו עד הסוף?
           <br />
-          <span className="font-bold text-[var(--ink)]">
+          <span className="font-medium text-[var(--ink)]">
             כאן פותחים דוכן אמיתי, עם עמוד וקישור לשלוח לכולם
-          </span>{" "}
-         , ומוכרים את זה לחברים. כל דבר שההורים מסכימים לו.
+          </span>
+          , ומוכרים את זה לחברים. כל דבר שההורים מסכימים לו.
         </p>
       </div>
 
@@ -120,52 +120,52 @@ export default function Landing() {
       {!mine && (
         <a
           href="/login"
-          className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between text-[13.5px]"
+          className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
         >
           <span>כבר פתחת דוכן?</span>
-          <span className="font-bold text-[var(--olive)]">כניסה לדוכן שלי ←</span>
+          <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
         </a>
       )}
 
       <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-3">
-        <label className="text-[14px] font-semibold">איך יקראו לדוכן שלך?</label>
+        <label className="t-body font-medium">איך יקראו לדוכן שלך?</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="למשל: הדברים של נועה"
           maxLength={40}
           autoFocus
-          className="field w-full px-4 py-3.5 text-base"
+          className="field w-full px-4 py-4 t-body"
         />
         <button
           disabled={!name.trim()}
-          className="btn btn-primary py-4 text-[15px]"
+          className="btn btn-primary"
         >
           נבנה את הדוכן ←
         </button>
         {IS_LAUNCH ? (
-          <p className="text-[12.5px] text-center leading-relaxed">
-            <span className="font-bold">לבנות את הדוכן שלך במחיר מצחיק!</span>
+          <p className="t-small text-center">
+            <span className="font-medium">לבנות את הדוכן שלך במחיר מצחיק!</span>
             <br />
             <span className="text-[var(--muted)]">
               מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE}, עד {LAUNCH_UNTIL_LABEL}. לבנות זה
               חינם, <b className="text-[var(--ink)]">תשלום חד-פעמי</b>, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
-              <a href="/price" className="underline font-semibold text-[var(--olive)]">
+              <a href="/price" className="underline font-medium text-[var(--ink)]">
                 איך זה עובד?
               </a>
             </span>
           </p>
         ) : (
-          <p className="text-[12px] text-center leading-relaxed text-[var(--muted)]">
+          <p className="t-small text-center text-[var(--muted)]">
             לבנות זה חינם. תשלום חד-פעמי, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
-            <a href="/price" className="underline font-semibold text-[var(--olive)]">
+            <a href="/price" className="underline font-medium text-[var(--ink)]">
               איך זה עובד?
             </a>
           </p>
         )}
       </form>
 
-      <p className="text-[11px] text-[var(--muted)]">
+      <p className="t-small text-[var(--muted)]">
         <a href="/terms" className="underline">תנאי שימוש</a>
         {" · "}
         <a href="/privacy" className="underline">מדיניות פרטיות</a>

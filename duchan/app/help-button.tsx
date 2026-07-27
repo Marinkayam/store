@@ -1,22 +1,21 @@
-import Icon from "./icons";
-
 /**
- * "צריך עזרה?" — קטן ולא בולט בכוונה, קבוע בפינה בכל מסכי ההקמה.
- * לא כפתור מתחרה עם הפעולה הראשית של המסך, רק דרך יציאה שקטה למי שנתקעת.
+ * "עזרה?" — עיגול קטן וקבוע בפינה בכל מסכי ההקמה.
+ * מילה אחת ובלי אייקון: הוא לא אמור להתחרות בפעולה הראשית של המסך,
+ * רק להיות שם למי שנתקע/ת.
  */
 export default function HelpButton({ context }: { context: string }) {
   const sales = (process.env.NEXT_PUBLIC_SALES_WHATSAPP || "972545888471").replace(/\D/g, "");
-  const msg = `היי מרינה! 👋 צריכה עזרה ב${context}.`;
+  const msg = `היי מרינה! 👋 צריך עזרה ב${context}.`;
   return (
     <a
       href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
       target="_blank"
       rel="noreferrer"
-      className="fixed bottom-3 left-3 z-40 flex items-center gap-1 bg-white border border-[var(--line)] px-2.5 py-1.5 text-[10.5px] text-[var(--muted)]"
-      style={{ boxShadow: "0 1px 5px rgba(0,0,0,.08)" }}
+      aria-label="עזרה בוואטסאפ"
+      className="fixed bottom-4 left-4 z-40 w-12 h-12 flex items-center justify-center bg-white border border-[var(--line)] text-[13px] font-medium text-[var(--muted)]"
+      style={{ borderRadius: "999px", boxShadow: "0 2px 8px rgba(0,0,0,.10)" }}
     >
-      <Icon name="phone" size={13} tone="var(--whatsapp)" />
-      צריך עזרה?
+      עזרה?
     </a>
   );
 }
