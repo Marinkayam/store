@@ -462,7 +462,7 @@ export default function StoreView({
                     })()
                   )}
                   <div
-                    className="h-32 flex items-center justify-center text-5xl overflow-hidden"
+                    className="h-40 flex items-center justify-center text-5xl overflow-hidden"
                     style={{ background: "var(--s-thumb)" }}
                   >
                     {vid ? (
@@ -561,7 +561,7 @@ export default function StoreView({
           <div className="w-9 h-1 bg-current opacity-15 mx-auto -mb-1" />
           <div>
             <div
-              className="h-32 flex items-center justify-center text-6xl overflow-hidden"
+              className="h-52 flex items-center justify-center text-6xl overflow-hidden"
               style={{ background: "var(--s-thumb)" }}
             >
               {mediaUrl(current.video_key) ? (

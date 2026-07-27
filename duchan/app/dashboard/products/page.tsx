@@ -751,8 +751,8 @@ export default function ProductsPage() {
 
             <label className="block text-[12px] font-semibold mb-1.5">1. תמונה או וידאו</label>
             <div
-              className="h-38 bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex flex-col items-center justify-center text-5xl overflow-hidden relative mb-1 touch-none select-none"
-              style={{ height: "9.5rem" }}
+              className="bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex flex-col items-center justify-center text-5xl overflow-hidden relative mb-1 touch-none select-none"
+              style={{ height: "13rem" }}
               onPointerDown={onPosPointerDown}
               onPointerMove={onPosPointerMove}
               onPointerUp={onPosPointerUp}
