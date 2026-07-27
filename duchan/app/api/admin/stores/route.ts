@@ -10,10 +10,17 @@ import { normalizePhone } from "@/lib/phone";
 export async function GET() {
   if (!(await requireAdmin())) return NextResponse.json({ error: "אין גישה" }, { status: 403 });
   const db = supabaseAdmin();
-  const { data } = await db
-    .from("stores")
-    .select("id, slug, display_name, emoji, status, parent_email, claim_token, media_bytes, created_at, sms_unlimited")
-    .order("created_at", { ascending: false });
+  const readStores = (cols: string) => db.from("stores").select(cols).order("created_at", { ascending: false });
+  // sms_unlimited עשוי עוד לא להיות בפרודקשן — עמודה חסרה לא אמורה להפיל
+  // את כל רשימת החנויות.
+  let { data, error } = await readStores(
+    "id, slug, display_name, emoji, status, parent_email, claim_token, media_bytes, created_at, sms_unlimited"
+  );
+  if (error) {
+    ({ data } = await readStores(
+      "id, slug, display_name, emoji, status, parent_email, claim_token, media_bytes, created_at"
+    ));
+  }
   return NextResponse.json({ stores: data ?? [] });
 }
 
