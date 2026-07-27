@@ -109,6 +109,19 @@ export default function Landing() {
         </p>
       </div>
 
+      {/* מי שכבר פתחה דוכן וחזרה בלי להיות מחוברת רואה את זה *לפני* טופס
+          הפתיחה, לא אחריו: אחרת יש סיכוי שהיא תתחיל למלא "דוכן חדש" מתוך
+          בלבול, בזמן שכל מה שהיא רצתה זה לחזור ולערוך את הדוכן הקיים. */}
+      {!mine && (
+        <a
+          href="/login"
+          className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between text-[13.5px]"
+        >
+          <span>כבר פתחת דוכן?</span>
+          <span className="font-bold text-[var(--olive)]">כניסה לדוכן שלי ←</span>
+        </a>
+      )}
+
       <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-3">
         <label className="text-[14px] font-semibold">איך יקראו לדוכן שלך?</label>
         <input
@@ -147,21 +160,6 @@ export default function Landing() {
         )}
       </form>
 
-      {/* קו מפריד עדין, ואז הכניסה לחוזרות */}
-      <div className="flex items-center gap-3 w-full max-w-sm">
-        <span className="h-px flex-1 bg-[var(--line)]" />
-        <span className="text-[var(--lavender)] text-sm">♡</span>
-        <span className="h-px flex-1 bg-[var(--line)]" />
-      </div>
-
-      {!mine && (
-        <p className="text-[14px] text-[var(--muted)] -mt-3">
-          כבר פתחת דוכן?{" "}
-          <a href="/login" className="font-bold text-[var(--olive)]">
-            כניסה לדוכן שלי
-          </a>
-        </p>
-      )}
       <p className="text-[11px] text-[var(--muted)]">
         <a href="/terms" className="underline">תנאי שימוש</a>
         {" · "}

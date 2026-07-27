@@ -339,13 +339,24 @@ export default function OrdersPage() {
                 >
                   שולם
                 </button>
-                {/* מספר הקונה לא נאסף אף פעם — השיחה כבר קיימת אצלה בוואטסאפ */}
-                <a
-                  href="https://wa.me/"
-                  className="flex-1 bg-white border border-[var(--line)] py-2 text-xs font-medium text-center"
-                >
-                  פתחי וואטסאפ
-                </a>
+                {/* מספר הקונה נאסף רק אם היא בחרה להשאיר אותו בטופס ההזמנה */}
+                {o.buyer_phone ? (
+                  <a
+                    href={`https://wa.me/${o.buyer_phone}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 bg-white border border-[var(--line)] py-2 text-xs font-medium text-center"
+                  >
+                    וואטסאפ ללקוחה
+                  </a>
+                ) : (
+                  <span
+                    className="flex-1 border border-dashed border-[var(--line)] text-[var(--muted)] py-2 text-xs text-center"
+                    title="הקונה לא השאירה מספר — השיחה כבר קיימת אצלה בוואטסאפ, אפשר לחפש שם לפי מספר ההזמנה"
+                  >
+                    אין מספר
+                  </span>
+                )}
                 <button
                   onClick={() => cancelOrder(o)}
                   className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2 px-3 text-xs"
@@ -362,6 +373,16 @@ export default function OrdersPage() {
                 >
                   נמסר
                 </button>
+                {o.buyer_phone && (
+                  <a
+                    href={`https://wa.me/${o.buyer_phone}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-white border border-[var(--line)] py-2 px-3 text-xs font-medium text-center"
+                  >
+                    וואטסאפ
+                  </a>
+                )}
                 <button
                   onClick={() => cancelOrder(o)}
                   className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2 px-3 text-xs"

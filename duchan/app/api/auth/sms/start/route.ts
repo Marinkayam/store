@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     db.from("phone_otps").select("id", { count: "exact", head: true }).eq("ip_hash", ipHash).gte("created_at", dayAgo),
   ]);
   if ((phoneCount ?? 0) >= PER_PHONE_PER_DAY || (ipCount ?? 0) >= PER_IP_PER_DAY) {
-    return NextResponse.json({ error: "יותר מדי בקשות היום. נסי שוב מחר" }, { status: 429 });
+    return NextResponse.json({ error: "יותר מדי בקשות היום. לנסות שוב מחר" }, { status: 429 });
   }
 
   const code = generateCode();
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       {
         error: isOwner(phone)
           ? `כתיבה ל-DB נכשלה: ${insErr.message}`
-          : "משהו השתבש, נסי שוב",
+          : "משהו השתבש, לנסות שוב",
       },
       { status: 500 }
     );
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
       {
         error: isOwner(phone)
           ? `הספק דחה: ${sent.reason}${sent.code ? ` (${sent.code})` : ""}`
-          : "לא הצלחנו לשלוח את הקוד. נסי שוב עוד רגע",
+          : "לא הצלחנו לשלוח את הקוד. לנסות שוב עוד רגע",
       },
       { status: 502 }
     );

@@ -39,9 +39,9 @@ export async function uploadBlob(
     data = await res.json();
     if (!res.ok) return { error: data.error ?? "ההעלאה נכשלה" };
   } catch {
-    return { error: "אין חיבור לאינטרנט — נסי שוב" };
+    return { error: "אין חיבור לאינטרנט — לנסות שוב" };
   }
-  if (!data.url || !data.key) return { error: "ההעלאה נכשלה — נסי שוב" };
+  if (!data.url || !data.key) return { error: "ההעלאה נכשלה — לנסות שוב" };
 
   // כישלון CORS לא מחזיר תשובה עם סטטוס — הוא *זורק*. בלי ה-try הזה ההבטחה
   // נדחית בשקט, הילדה לא רואה כלום, וזה נראה כאילו הכפתור לא עובד.
@@ -51,7 +51,7 @@ export async function uploadBlob(
       headers: { "Content-Type": contentType },
       body,
     });
-    if (!put.ok) return { error: `ההעלאה נכשלה (${put.status}) — נסי שוב` };
+    if (!put.ok) return { error: `ההעלאה נכשלה (${put.status}) — לנסות שוב` };
   } catch {
     return { error: "ההעלאה נחסמה. אם זה חוזר — זו הגדרת האחסון, תגידי למרינה." };
   }

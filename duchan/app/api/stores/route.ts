@@ -108,10 +108,10 @@ export async function POST(req: NextRequest) {
       .single();
     if (!error) store = data;
     else if (!error.message.includes("slug")) {
-      return NextResponse.json({ error: "משהו השתבש, נסי שוב" }, { status: 500 });
+      return NextResponse.json({ error: "משהו השתבש, לנסות שוב" }, { status: 500 });
     }
   }
-  if (!store) return NextResponse.json({ error: "משהו השתבש, נסי שוב" }, { status: 500 });
+  if (!store) return NextResponse.json({ error: "משהו השתבש, לנסות שוב" }, { status: 500 });
 
   let firstProductId: string | null = null;
   const fp = body.firstProduct;

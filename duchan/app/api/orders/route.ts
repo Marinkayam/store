@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { QUOTAS } from "@/lib/quotas";
+import { normalizePhone } from "@/lib/phone";
 import type { OrderItem } from "@/lib/types";
 
-// POST /api/orders  { slug, items:[{productId, qty}], note? }
+// POST /api/orders  { slug, items:[{productId, qty}], note?, buyerPhone? }
 // המספר של הילדה לא יושב ב-HTML — הוא מוחזר מכאן, רק אחרי שההזמנה נוצרה.
 // המלאי לא יורד כאן (הזמנות רפאים) — הוא יורד ב"שולם".
 
@@ -12,6 +13,7 @@ interface Body {
   slug?: string;
   items?: { productId: string; qty: number; option?: string }[];
   note?: string;
+  buyerPhone?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { slug, items, note } = body;
+  const { slug, items, note, buyerPhone } = body;
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
@@ -108,9 +110,10 @@ export async function POST(req: NextRequest) {
     p_total: total,
     p_note: note?.slice(0, 200) || null,
     p_ip_hash: ipHash,
+    p_buyer_phone: buyerPhone ? normalizePhone(buyerPhone) : null,
   });
   if (orderErr || typeof orderNumber !== "number") {
-    return NextResponse.json({ error: "משהו השתבש, נסי שוב" }, { status: 500 });
+    return NextResponse.json({ error: "משהו השתבש, לנסות שוב" }, { status: 500 });
   }
 
   return NextResponse.json({

@@ -41,6 +41,7 @@ export default function StoreView({
   const [choice, setChoice] = useState<string | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [buyerPhone, setBuyerPhone] = useState("");
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState("");
   // null = לא בעלת החנות (או שעוד לא נבדק). קונה לא רואה מזה כלום.
@@ -215,6 +216,7 @@ export default function StoreView({
           slug: store.slug,
           items: cart.map((l) => ({ productId: l.id, qty: l.qty, option: l.option })),
           note: note.trim() || undefined,
+          buyerPhone: buyerPhone.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -248,6 +250,7 @@ export default function StoreView({
 
       setCart([]);
       setNote("");
+      setBuyerPhone("");
       setOrderOpen(false);
       window.location.href = `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`;
     } catch {
@@ -725,9 +728,19 @@ export default function StoreView({
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="הערה (לא חובה) — אפשר בורוד?"
+            placeholder="הערה (לא חובה): אפשר בורוד?"
             maxLength={200}
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] my-3"
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mt-3 mb-2"
+          />
+          {/* לא חובה: אם יש למי שמוכרת שאלה על ההזמנה, יהיה למי לפנות בוואטסאפ */}
+          <input
+            value={buyerPhone}
+            onChange={(e) => setBuyerPhone(e.target.value)}
+            placeholder="מספר טלפון שלך (לא חובה, למקרה שיש שאלה)"
+            inputMode="tel"
+            maxLength={20}
+            aria-label="מספר טלפון (לא חובה)"
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mb-3"
           />
           {(paySummary || payLink) && (
             <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">

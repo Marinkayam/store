@@ -134,7 +134,6 @@ export async function POST(req: NextRequest) {
     const message = await client.messages.create({
       model: MODEL,
       max_tokens: 200,
-      output_config: { effort: "low" }, // משימה קצרה — אין צורך בחשיבה עמוקה
       system: SYSTEM,
       messages: [
         {
@@ -166,11 +165,13 @@ export async function POST(req: NextRequest) {
 
     if (!text) return NextResponse.json({ error: "לא התקבל תיאור" }, { status: 502 });
     return NextResponse.json({ description: text });
-  } catch {
+  } catch (e) {
+    // רואים את זה בלוגים של השרת — בלעדיה שגיאה אמיתית (מפתח, מכסה, שינוי ב-API) נעלמת בשקט
+    console.error("[ai/describe] failed:", e instanceof Error ? e.message : e);
     // הקרדיט כבר נוכה; בכישלון מחזירים אותו
     try {
       await db.rpc("refund_ai_credit", { p_store: storeId });
     } catch {}
-    return NextResponse.json({ error: "הכתיבה נכשלה — נסי שוב" }, { status: 502 });
+    return NextResponse.json({ error: "הכתיבה נכשלה — לנסות שוב" }, { status: 502 });
   }
 }

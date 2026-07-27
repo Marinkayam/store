@@ -109,64 +109,102 @@ export default function Onboarding() {
       {/* 1 — שם, תמונה, רקע. הכל במסך אחד. */}
       {draft.step === 1 && !result && (
         <div className="w-full flex flex-col gap-5">
-          <h1 className="text-xl font-bold text-center">נפתח לך דוכן</h1>
+          <div className="text-center">
+            <h1 className="text-xl font-bold">נפתח לך דוכן</h1>
+            <p className="text-[12.5px] text-[var(--muted)] mt-1">שלוש בחירות קטנות, וזהו</p>
+          </div>
 
           {/* תצוגה חיה — רואים את הדוכן נבנה תוך כדי */}
           <div className="w-full overflow-hidden card">
             <div className="h-20" style={{ background: coverCss(draft.cover) }} />
             <div className="text-center -mt-8 pb-3">
+              {/* עיגול אחד, לא שני כפתורים לאותה פעולה: מסגרת מקווקוות ותג
+                  מצלמה קטן בפינה מסמנים "זה לחיץ" גם בלי טקסט. */}
               <button
                 onClick={() => avatarRef.current?.click()}
-                className="w-16 h-16 inline-flex items-center justify-center overflow-hidden card text-2xl"
+                aria-label={draft.avatarData ? "להחליף תמונה" : "להוסיף תמונה"}
+                className="relative w-20 h-20 inline-flex items-center justify-center overflow-hidden bg-white text-3xl"
+                style={{
+                  borderRadius: "var(--r)",
+                  border: draft.avatarData ? "1px solid var(--line)" : "2px dashed var(--sand)",
+                  boxShadow: "0 2px 10px rgba(0,0,0,.06)",
+                }}
               >
                 {draft.avatarData ? (
                   <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />
                 ) : (
                   "📷"
                 )}
+                <span
+                  className="absolute -bottom-1 -left-1 w-6 h-6 flex items-center justify-center text-xs bg-[var(--olive)] text-white"
+                  style={{ borderRadius: "999px", border: "2px solid white" }}
+                  aria-hidden
+                >
+                  {draft.avatarData ? "✎" : "+"}
+                </span>
               </button>
               <div className="font-bold mt-2 text-[16px]">{draft.displayName || "הדוכן שלך"}</div>
+              <div className="text-[11px] text-[var(--muted)] mt-0.5">
+                {draft.avatarData ? "לחיצה כדי להחליף" : "לחיצה כדי להוסיף תמונה (לא חובה)"}
+              </div>
             </div>
           </div>
 
           <input ref={avatarRef} type="file" accept="image/*" hidden
             onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
 
-          <input
-            value={draft.displayName}
-            onChange={(e) => set({ displayName: e.target.value })}
-            placeholder="שם הדוכן"
-            aria-label="שם הדוכן"
-            maxLength={40}
-            autoFocus
-            className="field w-full px-4 py-3.5 text-center text-base"
-          />
-
-          <button onClick={() => avatarRef.current?.click()} className="btn btn-secondary py-2.5 text-[13px]">
-            {draft.avatarData ? "להחליף תמונה" : "📷 להוסיף תמונה"}
-          </button>
-
           <div>
-            <div className="text-[13px] font-semibold mb-2">רקע</div>
-            <div className="grid grid-cols-4 gap-2">
-              {COVERS.map((c) => (
-                <button
-                  key={c.key}
-                  onClick={() => set({ cover: c.key })}
-                  aria-label={c.label}
-                  className="h-11"
-                  style={{
-                    background: c.css,
-                    borderRadius: "var(--r)",
-                    border: `1px solid ${draft.cover === c.key ? "var(--olive)" : "var(--line)"}`,
-                    boxShadow: draft.cover === c.key ? "0 0 0 3px rgba(168,164,109,.16)" : "none",
-                  }}
-                />
-              ))}
-            </div>
+            <div className="text-[13px] font-semibold mb-1.5">1. איך יקראו לדוכן שלך?</div>
+            <input
+              value={draft.displayName}
+              onChange={(e) => set({ displayName: e.target.value })}
+              placeholder="למשל: הדברים של נועה"
+              aria-label="שם הדוכן"
+              maxLength={40}
+              autoFocus
+              className="field w-full px-4 py-3.5 text-center text-base"
+            />
           </div>
 
           {photoErr && <p className="text-xs text-[var(--danger)] text-center">{photoErr}</p>}
+
+          <div>
+            <div className="text-[13px] font-semibold mb-2">2. איזה רקע בא לך?</div>
+            {/* כל אריח הוא כפתור עצמאי, גדול מספיק לאצבע, עם וי ברור על מה שנבחר —
+                לא רק מסגרת דקה שקל לפספס. */}
+            <div className="grid grid-cols-4 gap-2.5">
+              {COVERS.map((c) => {
+                const on = draft.cover === c.key;
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => set({ cover: c.key })}
+                    aria-label={c.label}
+                    aria-pressed={on}
+                    className="relative h-14 flex items-end justify-center pb-1"
+                    style={{
+                      background: c.css,
+                      borderRadius: "var(--r)",
+                      border: `2px solid ${on ? "var(--olive)" : "var(--line)"}`,
+                    }}
+                  >
+                    {on && (
+                      <span
+                        className="absolute top-1 left-1 w-5 h-5 flex items-center justify-center text-[11px] bg-[var(--olive)] text-white"
+                        style={{ borderRadius: "999px" }}
+                        aria-hidden
+                      >
+                        ✓
+                      </span>
+                    )}
+                    <span className="text-[9.5px] font-medium" style={{ color: "rgba(0,0,0,.55)" }}>
+                      {c.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <button
             disabled={!draft.displayName.trim()}

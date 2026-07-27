@@ -845,14 +845,21 @@ export default function ProductsPage() {
               </button>
             </div>
 
-            <div className="flex justify-between items-center border border-[var(--line)] px-3 py-2.5 mb-3">
-              <span className="text-[13px]">מעקב מלאי</span>
-              <button
-                onClick={() => setEdit((s) => s && { ...s, trackStock: !s.trackStock })}
-                className={`w-10 h-6 relative transition ${edit.trackStock ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-              >
-                <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.trackStock ? "right-[19px]" : "right-[3px]"}`} />
-              </button>
+            <div className="border border-[var(--line)] px-3 py-2.5 mb-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[13px]">לספור כמה יש לי</span>
+                <button
+                  onClick={() => setEdit((s) => s && { ...s, trackStock: !s.trackStock })}
+                  aria-label="לספור כמה יש לי"
+                  aria-pressed={edit.trackStock}
+                  className={`w-10 h-6 relative transition ${edit.trackStock ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
+                >
+                  <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.trackStock ? "right-[19px]" : "right-[3px]"}`} />
+                </button>
+              </div>
+              <p className="text-[11px] text-[var(--muted)] mt-1 leading-relaxed">
+                כשזה דלוק, קונים רואים "נשארו X" ו"אזל" בחנות שלך, ולא יוכלו להזמין יותר ממה שיש.
+              </p>
             </div>
 
             {edit.trackStock && (

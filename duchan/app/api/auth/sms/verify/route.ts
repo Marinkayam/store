@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     .limit(1)
     .maybeSingle();
 
-  if (!otp) return NextResponse.json({ error: "לא ביקשנו קוד למספר הזה. נסי שוב" }, { status: 400 });
+  if (!otp) return NextResponse.json({ error: "לא ביקשנו קוד למספר הזה. לנסות שוב" }, { status: 400 });
   if (new Date(otp.expires_at).getTime() < Date.now()) {
     return NextResponse.json({ error: "הקוד פג. אפשר לבקש חדש" }, { status: 400 });
   }
@@ -91,20 +91,20 @@ export async function POST(req: NextRequest) {
         user_metadata: { phone },
       });
       if (createErr || !created.user) {
-        return NextResponse.json({ error: "לא הצלחנו לפתוח חשבון. נסי שוב" }, { status: 500 });
+        return NextResponse.json({ error: "לא הצלחנו לפתוח חשבון. לנסות שוב" }, { status: 500 });
       }
       userId = created.user.id;
       isNew = true;
     }
     await db.from("phone_accounts").insert({ phone, user_id: userId });
   }
-  if (!userId) return NextResponse.json({ error: "לא הצלחנו להיכנס. נסי שוב" }, { status: 500 });
+  if (!userId) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
 
   // מחליפים סיסמה ונכנסים איתה מיד. הסיסמה נזרקת בסוף הבקשה.
   const password = randomPassword();
   const { data: updated, error: updErr } = await db.auth.admin.updateUserById(userId, { password });
   if (updErr || !updated.user?.email) {
-    return NextResponse.json({ error: "לא הצלחנו להיכנס. נסי שוב" }, { status: 500 });
+    return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
   }
 
   const supa = await supabaseServer();
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     email: updated.user.email,
     password,
   });
-  if (signInErr) return NextResponse.json({ error: "לא הצלחנו להיכנס. נסי שוב" }, { status: 500 });
+  if (signInErr) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
 
   // האם כבר יש לה חנות — הלקוח צריך לדעת אם להמשיך לאונבורדינג או לדשבורד
   const { data: store } = await db
