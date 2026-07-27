@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { contactWhatsappUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "הצהרת נגישות · דוכן" };
 
@@ -37,10 +37,16 @@ export default function AccessibilityPage() {
         </Section>
 
         <Section title="נתקלת בבעיית נגישות?">
-          נשמח לדעת ולתקן. אפשר לפנות אלינו ולפרט את הבעיה ואת העמוד שבו
-          נתקלת:{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="underline" dir="ltr">{CONTACT_EMAIL}</a>
-          . נחזור בהקדם האפשרי.
+          נשמח לדעת ולתקן. אפשר לפנות אלינו ב
+          <a
+            href={contactWhatsappUrl("היי! נתקלתי בבעיית נגישות באתר של דוכן.")}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            וואטסאפ
+          </a>{" "}
+          ולפרט את הבעיה ואת העמוד שבו נתקלת. נחזור בהקדם האפשרי.
         </Section>
 
         <Section title="עדכון ההצהרה">

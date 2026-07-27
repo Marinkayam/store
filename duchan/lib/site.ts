@@ -25,3 +25,12 @@ export const absolute = (path: string) =>
  * חייבת להיות תיבה שבאמת נקראת — זו הכתובת שאליה הורה יפנה בבקשת מחיקת נתונים.
  */
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@duchan.app";
+
+/**
+ * ערוץ יצירת הקשר שמוצג בתנאי השימוש, במדיניות הפרטיות ובהצהרת הנגישות —
+ * וואטסאפ ולא מייל, כי זו התיבה שבאמת נבדקת. אותו מספר וברירת מחדל כמו
+ * HelpButton, כדי שלא יהיו שני מספרים שונים באתר.
+ */
+export const CONTACT_WHATSAPP = (process.env.NEXT_PUBLIC_SALES_WHATSAPP || "972545888471").replace(/\D/g, "");
+export const contactWhatsappUrl = (msg: string) =>
+  `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(msg)}`;

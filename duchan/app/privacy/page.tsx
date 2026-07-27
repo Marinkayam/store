@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { contactWhatsappUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "מדיניות פרטיות · דוכן" };
 
@@ -81,7 +81,14 @@ export default function PrivacyPage() {
 
         <Section title="שינויים ופניות">
           עדכון מהותי למדיניות יפורסם בעמוד זה. לכל שאלה או בקשה:{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="underline" dir="ltr">{CONTACT_EMAIL}</a>
+          <a
+            href={contactWhatsappUrl("היי! יש לי שאלה לגבי מדיניות הפרטיות בדוכן.")}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            וואטסאפ
+          </a>
         </Section>
 
         <p className="text-xs text-[var(--muted)] mt-8">

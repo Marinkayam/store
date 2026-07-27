@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { contactWhatsappUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "תנאי שימוש · דוכן" };
 
@@ -107,7 +107,14 @@ export default function TermsPage() {
 
         <Section n="12" title="יצירת קשר">
           לשאלות, דיווח על תוכן בעייתי או בקשת הורה לסגירת חנות:{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="underline" dir="ltr">{CONTACT_EMAIL}</a>
+          <a
+            href={contactWhatsappUrl("היי! יש לי שאלה לגבי תנאי השימוש בדוכן.")}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            וואטסאפ
+          </a>
         </Section>
 
         <p className="text-xs text-[var(--muted)] mt-8">
