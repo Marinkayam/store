@@ -47,8 +47,14 @@ async function isTrusted(phone: string): Promise<boolean> {
 // בקרת אבטחה. בלעדיהן מספיק סקריפט אחד כדי לרוקן את החבילה של מרינה.
 
 const RESEND_SECONDS = 60;
-const PER_PHONE_PER_DAY = 5;
-const PER_IP_PER_DAY = 15;
+/**
+ * 5 ליום היה נמוך מדי בפועל: משתמשת אחת אמיתית שנכנסת מכמה מקומות
+ * (מסך הבית, ספארי, הדפדפן של וואטסאפ) מיצתה אותו ביום אחד ונתקעה בחוץ.
+ * המכסה נועדה לעצור סקריפט שמרוקן את חבילת הסמס, לא אותה. חלון החזרה
+ * של דקה בין הודעה להודעה הוא מה שבאמת עוצר הצפה.
+ */
+const PER_PHONE_PER_DAY = 20;
+const PER_IP_PER_DAY = 40;
 
 export async function POST(req: NextRequest) {
   let body: { phone?: string };

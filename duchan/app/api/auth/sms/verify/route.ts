@@ -100,19 +100,50 @@ export async function POST(req: NextRequest) {
   }
   if (!userId) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
 
-  // מחליפים סיסמה ונכנסים איתה מיד. הסיסמה נזרקת בסוף הבקשה.
-  const password = randomPassword();
-  const { data: updated, error: updErr } = await db.auth.admin.updateUserById(userId, { password });
-  if (updErr || !updated.user?.email) {
-    return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
-  }
+  const { data: existing } = await db.auth.admin.getUserById(userId);
+  const email = existing.user?.email;
+  if (!email) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
 
   const supa = await supabaseServer();
-  const { error: signInErr } = await supa.auth.signInWithPassword({
-    email: updated.user.email,
-    password,
-  });
-  if (signInErr) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
+
+  /**
+   * פתיחת הסשן, בלי לגעת בסיסמה.
+   *
+   * קודם זה עבד ע"י החלפת הסיסמה בכל כניסה וכניסה איתה. זה עבד, אבל
+   * Supabase מנתק את *כל* הסשנים האחרים של המשתמשת כשהסיסמה משתנה —
+   * ובאייפון, אפליקציה במסך הבית, ספארי והדפדפן שבתוך וואטסאפ הם שלושה
+   * מקומות נפרדים עם עוגיות נפרדות. כל כניסה באחד מהם ניתקה את השניים
+   * האחרים, וכל ניתוק כזה עלה עוד סמס — עד שנגמרה המכסה היומית.
+   *
+   * magic link שנצרך מיד כאן בשרת פותח סשן חדש ומשאיר את הקיימים חיים.
+   */
+  let signedIn = false;
+  try {
+    const { data: link, error: linkErr } = await db.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+    });
+    const hashed = link?.properties?.hashed_token;
+    if (linkErr || !hashed) {
+      console.error("[sms] generateLink unavailable:", linkErr?.message ?? "no hashed_token");
+    } else {
+      const { error } = await supa.auth.verifyOtp({ token_hash: hashed, type: "email" });
+      if (error) console.error("[sms] verifyOtp failed:", error.message);
+      else signedIn = true;
+    }
+  } catch (e) {
+    console.error("[sms] magic link path threw:", e instanceof Error ? e.message : e);
+  }
+
+  // נפילה לאחור למסלול הישן. הוא מנתק סשנים אחרים, אבל כניסה שעובדת
+  // עדיפה על כניסה שנשברה בגלל שינוי בצד של Supabase.
+  if (!signedIn) {
+    const password = randomPassword();
+    const { error: updErr } = await db.auth.admin.updateUserById(userId, { password });
+    if (updErr) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
+    const { error: signInErr } = await supa.auth.signInWithPassword({ email, password });
+    if (signInErr) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
+  }
 
   // האם כבר יש לה חנות — הלקוח צריך לדעת אם להמשיך לאונבורדינג או לדשבורד
   const { data: store } = await db
