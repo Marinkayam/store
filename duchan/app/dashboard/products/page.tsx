@@ -15,7 +15,6 @@ import {
   type RecorderHandle,
 } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
-import { QUOTAS } from "@/lib/quotas";
 import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
@@ -232,10 +231,6 @@ export default function ProductsPage() {
         previewIsVideo: !!p.video_key,
       };
     } else {
-      if (products.length >= QUOTAS.productsPerStore) {
-        showToast(`אפשר עד ${QUOTAS.productsPerStore} מוצרים בחנות`);
-        return;
-      }
       base = { ...EMPTY_EDIT };
     }
     // שחזור טיוטה אם יש
@@ -507,10 +502,6 @@ export default function ProductsPage() {
   /* ---------- שכפול ---------- */
   async function duplicateProduct() {
     if (!edit?.id || !store) return;
-    if (products.length >= QUOTAS.productsPerStore) {
-      showToast(`אפשר עד ${QUOTAS.productsPerStore} מוצרים בחנות`);
-      return;
-    }
     const src = products.find((p) => p.id === edit.id);
     if (!src) return;
     const supa = supabaseBrowser();
@@ -594,10 +585,6 @@ export default function ProductsPage() {
   }, [loadDeleted]);
 
   async function restore(p: Product) {
-    if (products.length >= QUOTAS.productsPerStore) {
-      showToast(`אין מקום — אפשר עד ${QUOTAS.productsPerStore} מוצרים`);
-      return;
-    }
     const supa = supabaseBrowser();
     await supa.from("products").update({ deleted_at: null }).eq("id", p.id);
     showToast("המוצר חזר לחנות 🎉");
@@ -614,7 +601,7 @@ export default function ProductsPage() {
       <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)]">
         <h1 className="text-lg font-bold">המוצרים שלי</h1>
         <p className="text-xs text-[var(--muted)] font-light">
-          {products.length} מתוך {QUOTAS.productsPerStore}
+          {products.length === 1 ? "מוצר אחד" : `${products.length} מוצרים`}
         </p>
       </header>
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { QUOTAS } from "@/lib/quotas";
 import { normalizePhone } from "@/lib/phone";
 import { safeOptionLabel } from "@/lib/product-options";
 import type { OrderItem } from "@/lib/types";
@@ -43,20 +42,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "החנות סגורה כרגע" }, { status: 404 });
   }
 
-  // 5 הזמנות מ-IP לחנות ליום
+  // נשמר על ההזמנה עצמה (p_ip_hash) לצורך מעקב, לא לשם הגבלת קצב —
+  // אין יותר תקרת הזמנות ליום.
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const ipHash = createHash("sha256").update(`duchan:${ip}`).digest("hex").slice(0, 32);
-  const dayStart = new Date();
-  dayStart.setUTCHours(0, 0, 0, 0);
-  const { count } = await db
-    .from("orders")
-    .select("id", { count: "exact", head: true })
-    .eq("store_id", store.id)
-    .eq("ip_hash", ipHash)
-    .gte("created_at", dayStart.toISOString());
-  if ((count ?? 0) >= QUOTAS.ordersPerIpPerStorePerDay) {
-    return NextResponse.json({ error: "הגעת למגבלת ההזמנות להיום" }, { status: 429 });
-  }
 
   // מאמתים מחירים ומלאי מול ה-DB. לעולם לא סומכים על הלקוח.
   const ids = items.map((i) => i.productId);
