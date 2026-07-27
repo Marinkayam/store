@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { QUOTAS } from "@/lib/quotas";
 import { normalizePhone } from "@/lib/phone";
+import { safeOptionLabel } from "@/lib/product-options";
 import type { OrderItem } from "@/lib/types";
 
 // POST /api/orders  { slug, items:[{productId, qty}], note?, buyerPhone? }
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
     if (choices.length > 0) {
       if (!item.option || !choices.includes(item.option)) {
         return NextResponse.json(
-          { error: `צריך לבחור ${p.option_label || "אפשרות"} ל"${p.name}"` },
+          { error: `צריך לבחור ${safeOptionLabel(p.option_label)} ל"${p.name}"` },
           { status: 400 }
         );
       }

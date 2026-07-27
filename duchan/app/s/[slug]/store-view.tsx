@@ -7,6 +7,7 @@ import { payInstructions, payMethods, payoutLink, payoutSummary, type PayMethod 
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { coverCss } from "@/lib/covers";
+import { safeOptionLabel } from "@/lib/product-options";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 
 interface CartLine {
@@ -499,7 +500,7 @@ export default function StoreView({
                     {inCartQty
                       ? `בסל · ${inCartQty}`
                       : p.options?.length
-                        ? `בחירת ${p.option_label || "אפשרות"}`
+                        ? `בחירת ${safeOptionLabel(p.option_label)}`
                         : "הוספה לסל"}
                   </button>
                 )}
@@ -597,7 +598,7 @@ export default function StoreView({
           {current.options && current.options.length > 0 && (
             <div className="border-t border-current/10 pt-3.5">
               <div className="text-[13px] font-bold text-center mb-2.5 opacity-80">
-                {current.option_label || "אפשרות"}
+                {safeOptionLabel(current.option_label)}
               </div>
               <div className="flex flex-col gap-2">
                 {current.options.map((o) => {
@@ -607,7 +608,7 @@ export default function StoreView({
                       key={o}
                       onClick={() => setChoice(o)}
                       aria-pressed={on}
-                      aria-label={`${current.option_label || "בחירה"}: ${o}`}
+                      aria-label={`${safeOptionLabel(current.option_label)}: ${o}`}
                       className="w-full text-[15px] px-4 py-3.5 border-2 transition flex items-center justify-between gap-2"
                       style={{
                         background: "var(--s-surface)",
@@ -639,7 +640,7 @@ export default function StoreView({
               </div>
               {!choice && (
                 <p className="text-[12px] text-center mt-2.5 opacity-60">
-                  צריך לבחור {current.option_label || "אפשרות"} לפני שמוסיפים לסל
+                  צריך לבחור {safeOptionLabel(current.option_label)} לפני שמוסיפים לסל
                 </p>
               )}
             </div>
@@ -682,7 +683,7 @@ export default function StoreView({
               : maxQty(current) === 0
                 ? "אין יותר במלאי"
                 : current.options?.length && !choice
-                  ? `קודם בוחרים ${current.option_label || "אפשרות"}`
+                  ? `קודם בוחרים ${safeOptionLabel(current.option_label)}`
                   : "הוספה לסל"}
           </button>
         </div>
