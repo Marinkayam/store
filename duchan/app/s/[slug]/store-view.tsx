@@ -77,7 +77,7 @@ export default function StoreView({
   }, [store.slug]);
 
   /**
-   * הילדה רואה את החנות *וגם* את הדרך לניהול; הקונות רואות חנות בלבד.
+   * בעלת/בעל החנות רואה אותה *וגם* את הדרך לניהול; קונים רואים חנות בלבד.
    * הבדיקה נשענת על RLS — השורה חוזרת רק לבעלת החנות, ולכן אין כאן שום
    * מידע שאפשר להוציא מהדף בתור מבקרת. גם מספר ההזמנות החדשות מגיע מ-RLS.
    */
@@ -219,7 +219,7 @@ export default function StoreView({
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error ?? "משהו השתבש, נסי שוב");
+        showToast(data.error ?? "משהו השתבש — לנסות שוב");
         return; // לא מנקים את הסל עד שהשרת אישר
       }
 
@@ -251,7 +251,7 @@ export default function StoreView({
       setOrderOpen(false);
       window.location.href = `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`;
     } catch {
-      showToast("אין חיבור — נסי שוב עוד רגע");
+      showToast("אין חיבור — לנסות שוב עוד רגע");
     } finally {
       setSending(false);
     }

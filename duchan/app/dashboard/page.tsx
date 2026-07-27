@@ -58,7 +58,7 @@ export default function OrdersPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.rpc("mark_order_paid", { p_order: o.id });
     if (error) {
-      showToast("משהו השתבש, נסי שוב");
+      showToast("משהו השתבש — לנסות שוב");
       return;
     }
     showToast("המלאי עודכן");
@@ -77,7 +77,7 @@ export default function OrdersPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.rpc("cancel_order", { p_order: o.id });
     if (error) {
-      showToast("משהו השתבש, נסי שוב");
+      showToast("משהו השתבש — לנסות שוב");
       return;
     }
     showToast(o.status === "sent" ? "ההזמנה בוטלה" : "ההזמנה בוטלה והמלאי חזר");
@@ -127,7 +127,7 @@ export default function OrdersPage() {
       <div className="p-8 text-center text-sm text-[var(--muted)] leading-relaxed">
         עוד אין לך חנות.
         <br />
-        <a href="/onboarding" className="underline text-[var(--ink)]">בואי נפתח אחת ←</a>
+        <a href="/onboarding" className="underline text-[var(--ink)]">נפתח אחת ←</a>
       </div>
     );
 
@@ -226,7 +226,7 @@ export default function OrdersPage() {
             <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
               עוד לא הגיעו הזמנות.
               <br />
-              שלחי את הלינק לחברות שלך 👇
+              לשלוח את הלינק לחברות 👇
               <br />
               <button
                 onClick={() => {
@@ -248,7 +248,7 @@ export default function OrdersPage() {
                 href="/dashboard/share"
                 className="inline-block mt-2 bg-[var(--ink)] text-white px-4 py-2 text-xs"
               >
-                שלחי לחברות
+                שליחה לחברות
               </a>
             </div>
           ))}

@@ -97,7 +97,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
    * שתי דרכים להגיע לדוכן משלך, ובכוונה בסדר הזה:
    *
    * דיבור עם מרינה קודם — מי שמגיעה מדוכן של חברה כמעט תמיד ההורה, והוא
-   * רוצה לשאול לפני שהוא נותן לילדה להתחיל. ההודעה נושאת את שם הדוכן ואת
+   * רוצה לשאול לפני שהוא נותן לילד/ה להתחיל. ההודעה נושאת את שם הדוכן ואת
    * הקוד שלו, כדי שאפשר יהיה לדעת מאיפה הפנייה הגיעה בלי לשאול.
    *
    * המספר מגיע ממשתנה סביבה עם ברירת מחדל, כדי שהחלפת מספר לא תדרוש
@@ -130,7 +130,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
         href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
         className="inline-block mt-4 bg-[var(--whatsapp)] text-white px-6 py-3 text-[13.5px] font-bold"
       >
-        דברי איתי בוואטסאפ
+        לדבר איתי בוואטסאפ
       </a>
       <p className="text-[11.5px] text-[var(--muted)] mt-2">
         מרינה · <span dir="ltr">{sales.replace(/^972/, "0")}</span>
@@ -140,7 +140,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
         href={`/?ref=${slug}`}
         className="inline-block mt-4 border border-[var(--line)] bg-white px-6 py-2.5 text-[13px] font-medium"
       >
-        פתחי חנות משלך
+        לפתוח חנות משלך
       </a>
 
       <p className="text-[11px] text-[var(--faint)] mt-4">

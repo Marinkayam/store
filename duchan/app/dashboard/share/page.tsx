@@ -67,7 +67,7 @@ export default function SharePage() {
             href="/dashboard/products?new=1"
             className="mt-2 bg-[var(--ink)] text-white px-6 py-3 text-[13.5px] font-bold"
           >
-            בואי נוסיף את המוצר הראשון
+            נוסיף את המוצר הראשון
           </a>
         </div>
       </div>

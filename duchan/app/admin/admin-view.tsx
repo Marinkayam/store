@@ -220,7 +220,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
   /**
    * כל פעולה על מוצר מהחמ"ל. גם "מחיקה" היא רכה — deleted_at, עם שחזור.
-   * הודעת ה-toast מפורשת בכוונה: אחרת נראה כאילו מחקת לילדה מוצר לתמיד.
+   * הודעת ה-toast מפורשת בכוונה: אחרת נראה כאילו מחקת מוצר לתמיד בלי לשאול.
    */
   async function productAction(
     productId: string,
@@ -928,7 +928,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                           שמירה
                         </button>
                         <p className="text-[10px] text-[var(--faint)]">
-                          שדות: שם · מחיר · מלאי. הילדה תראה את השינוי בחנות מיד.
+                          שדות: שם · מחיר · מלאי. השינוי יופיע בחנות מיד.
                         </p>
                       </div>
                     )}
@@ -1028,7 +1028,7 @@ function NetworkTab({
   const withCluster = clusters.filter((c) => c.size > 1);
   const alone = clusters.filter((c) => c.size === 1);
 
-  // כמה מהלחיצות על "פתחי חנות משלך" הפכו לחנות בפועל
+  // כמה מהלחיצות על "לפתוח חנות משלך" הפכו לחנות בפועל
   const conversion = totals.refClicks ? Math.round((totals.referred / totals.refClicks) * 100) : 0;
 
   const row = (s: AdminStore, depth: number) => (

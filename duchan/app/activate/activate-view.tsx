@@ -9,7 +9,7 @@ import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../
 // → מצהירים "שילמנו" → המנהלת מאשרת → החנות באוויר והלינק ניתן לשיתוף.
 //
 // שלוש הערות שמסבירות למה זה בנוי ככה:
-// 1. הילדה לא משלמת — ההורה משלם. לכן יש כפתור ייעודי שמעביר את ההסבר להורה.
+// 1. הילד/ה לא משלם/ת — ההורה משלם. לכן יש כפתור ייעודי שמעביר את ההסבר להורה.
 // 2. אין סליקה, ולכן אין מסך "מעבד תשלום". יש הצהרה ואישור ידני, וזה נאמר בגלוי.
 // 3. ההצהרה לא מפעילה את החנות. ההפעלה נעשית בשרת בלבד (טריגר במיגרציה 0008).
 
@@ -54,7 +54,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
   /**
    * ההצהרה נשמרת בשרת ברגע הסימון, ולא רק כשמצהירים על תשלום.
    *
-   * ההורה משלם בביט מחוץ למערכת, ואז הילדה מצהירה. אם האישור היה נשמר רק
+   * ההורה משלם בביט מחוץ למערכת, ואז הילד/ה מצהיר/ה. אם האישור היה נשמר רק
    * בהצהרה, כל מסלול שבו היא סוגרת את הדף באמצע היה מגיע אליי לחמ"ל בלי
    * שום סימן שההורים בכלל יודעים.
    */
@@ -66,7 +66,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
     const { error } = await supa.rpc("set_parent_consent", { p_store: store.id, p_consent: on });
     if (error) {
       setConsent(!on);
-      setErr("לא הצלחנו לשמור את האישור. נסי שוב.");
+      setErr("לא הצלחנו לשמור את האישור — לנסות שוב.");
       return;
     }
     setStore({ ...store, parent_consent_at: on ? new Date().toISOString() : null });
@@ -88,7 +88,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
     });
     setBusy(false);
     if (error) {
-      setErr("משהו השתבש. נסי שוב, או שלחי לי הודעה בוואטסאפ.");
+      setErr("משהו השתבש — אפשר לנסות שוב, או לשלוח לי הודעה בוואטסאפ.");
       return;
     }
     setStore({ ...store, payment_claimed_at: new Date().toISOString(), payment_method: method });
@@ -102,7 +102,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         <p className="text-sm text-[var(--muted)] leading-relaxed text-center">
           עוד אין לך חנות.
           <br />
-          <a href="/onboarding" className="underline text-[var(--ink)]">בואי נפתח אחת ←</a>
+          <a href="/onboarding" className="underline text-[var(--ink)]">נפתח אחת ←</a>
         </p>
       </Shell>
     );
@@ -115,7 +115,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
           <div className="text-5xl">🎊</div>
           <h1 className="text-xl font-bold">החנות שלך באוויר</h1>
           <p className="text-[13px] text-[var(--muted)] leading-relaxed">
-            הלינק פעיל. כל מי שתשלחי לו יכול להיכנס ולהזמין.
+            הלינק פעיל. כל מי שמקבל אותו ממך יכול להיכנס ולהזמין.
           </p>
           <div className="bg-white border border-[var(--line)] px-4 py-3 text-[13px] font-mono" dir="ltr">
             {storeUrl}
@@ -131,7 +131,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
             {copied ? "הועתק ✓" : "העתקת הלינק"}
           </button>
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`בואי לראות את החנות שלי! ${storeUrl}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`רוצה לראות את החנות שלי? ${storeUrl}`)}`}
             className="bg-[var(--whatsapp)] text-white py-3 text-sm font-bold"
           >
             שיתוף בוואטסאפ
@@ -224,7 +224,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       <div className="mt-8 bg-white border border-[var(--line)] p-4">
         <div className="text-[14px] font-bold">צריך אישור של הורה?</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
-          שלחי את ההסבר המלא — מה כלול, מה את לומדת מזה, ואיך אנחנו שומרות עלייך.
+          לשלוח את ההסבר המלא — מה כלול, מה לומדים מזה, ואיך אנחנו שומרים על הבטיחות.
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(
@@ -263,7 +263,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       </div>
 
       {/* אישור הורה — הדבר האחרון שקורה לפני שהדוכן יוצא לעולם.
-          זו הצהרה של הילדה ולא חשבון להורה: אין כאן מסך שני, אין סיסמה
+          זו הצהרה של הילד/ה ולא חשבון להורה: אין כאן מסך שני, אין סיסמה
           להורה ואין מייל לאימות. מה שיש זה רגע אחד שבו היא עוצרת ואומרת
           "כן, הם יודעים" — והחותמת נשמרת בשרת כדי שאראה אותה באישור. */}
       <div
@@ -302,7 +302,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת החנות.
         <br />
         הכסף שקונות משלמות לך על מוצרים עובר <b>ישירות אלייך</b> — בביט או במזומן, איך
-        שתבחרי בהגדרות. אנחנו לא רואות אותו ולא לוקחות ממנו אגורה.
+        שנבחר בהגדרות. אנחנו לא נוגעים בו ולא לוקחים ממנו אגורה.
       </div>
       <div className="flex flex-col gap-2">
         {bitUrl && (

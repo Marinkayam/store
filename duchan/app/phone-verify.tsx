@@ -7,7 +7,7 @@ import { displayPhone } from "@/lib/phone";
  * אימות טלפון בשני מסכים קטנים: מספר → קוד.
  *
  * זה הרכיב היחיד שמאמת מספר, והוא משמש גם בהרשמה וגם בכניסה — כי מבחינת
- * הילדה זו אותה פעולה בדיוק. אין לה מושג אם יש לה כבר חשבון, ואין סיבה
+ * הילד/ה זו אותה פעולה בדיוק. אין לו/לה מושג אם יש כבר חשבון, ואין סיבה
  * שהיא תצטרך לדעת.
  */
 export default function PhoneVerify({
@@ -59,7 +59,7 @@ export default function PhoneVerify({
       setCode("");
       setCooldown(60);
     } catch {
-      setErr("אין חיבור — נסי שוב");
+      setErr("אין חיבור — לנסות שוב");
     } finally {
       setBusy(false);
     }
@@ -83,7 +83,7 @@ export default function PhoneVerify({
       }
       await onVerified(data);
     } catch {
-      setErr("אין חיבור — נסי שוב");
+      setErr("אין חיבור — לנסות שוב");
     } finally {
       setBusy(false);
     }

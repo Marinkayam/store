@@ -247,7 +247,7 @@ export default function PricePage() {
               fontFamily: "'Secular One',sans-serif",
             }}
           >
-            בואי נבנה את החנות שלך
+            נבנה את החנות שלך
           </a>
           <p className="text-[13px] text-[var(--muted)] mt-4 leading-relaxed">
             בונים קודם. משלמים רק כשרוצים לפרסם —

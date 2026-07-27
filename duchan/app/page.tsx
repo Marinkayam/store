@@ -67,17 +67,19 @@ export default function Landing() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-8 bg-[var(--canvas)]">
       {mine && (
+        // כרטיס בתוך זרימת הדף, לא רצועה שחורה שנתלשת ממנה. הרצועה השחורה
+        // המקורית התנגשה עם האיור הרך שמתחתיה ונראתה כמו שני אתרים שונים.
         <a
           href="/dashboard"
-          className="w-full max-w-sm bg-[var(--ink)] text-white px-4 py-3.5 flex items-center gap-3"
+          className="w-full max-w-sm border-[1.5px] border-[var(--olive)] bg-white px-4 py-3 flex items-center gap-3"
         >
           <span className="text-xl">{mine.emoji}</span>
-          <span className="flex-1 text-[13.5px] leading-tight">
-            <b>{mine.name}</b>
+          <span className="flex-1 text-[13px] leading-tight">
+            <span className="text-[var(--muted)]">כבר יש לך דוכן</span>
             <br />
-            <span className="opacity-70">הדוכן שלך מחכה — לניהול</span>
+            <b>{mine.name}</b>
           </span>
-          <span className="text-lg">←</span>
+          <span className="text-[13px] font-bold text-[var(--olive)]">לניהול ←</span>
         </a>
       )}
 
@@ -121,7 +123,7 @@ export default function Landing() {
           disabled={!name.trim()}
           className="btn btn-primary py-4 text-[15px]"
         >
-          בואי נבנה את הדוכן ←
+          נבנה את הדוכן ←
         </button>
         {IS_LAUNCH ? (
           <p className="text-[12.5px] text-center leading-relaxed">

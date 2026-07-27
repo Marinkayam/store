@@ -94,7 +94,7 @@ export default function SettingsPage() {
     if (!store) return;
     const normalized = normalizePhone(phone);
     if (!normalized) {
-      showToast("מספר הוואטסאפ לא נראה תקין — בדקי אותו שוב");
+      showToast("מספר הוואטסאפ לא נראה תקין — לבדוק שוב");
       return;
     }
     const link = payout.payout_link?.trim();
@@ -124,7 +124,7 @@ export default function SettingsPage() {
     };
     const { error } = await supa.from("stores").update(patch).eq("id", store.id);
     if (error) {
-      showToast("השמירה נכשלה — נסי שוב");
+      showToast("השמירה נכשלה — לנסות שוב");
       return;
     }
     setStore({ ...store, ...patch });
@@ -222,7 +222,7 @@ export default function SettingsPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.from("stores").update({ status: next }).eq("id", store.id);
     if (error) {
-      showToast("משהו השתבש, נסי שוב");
+      showToast("משהו השתבש — לנסות שוב");
       return;
     }
     setStore({ ...store, status: next });
@@ -414,13 +414,13 @@ export default function SettingsPage() {
         <div className="bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">על הדוכן</div>
           <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
-            מוצג מתחת לשם, בדף שהקונות רואות.
+            מוצג מתחת לשם, בדף שקונים רואים.
           </p>
           <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">כמה מילים עלייך ועל הדוכן</label>
           <textarea
             value={info.about}
             onChange={(e) => { setInfo({ ...info, about: e.target.value }); setDirty(true); }}
-            placeholder="אני נועה, בת 11, ואני מכינה צמידים מחוטים ומוכרת סקווישים שכבר לא בשימוש."
+            placeholder="לדוגמה: אני בת/בן 11, ואני מכינה צמידים מחוטים ומוכרת סקווישים שכבר לא בשימוש."
             maxLength={300}
             rows={3}
             aria-label="על הדוכן"

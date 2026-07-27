@@ -160,7 +160,7 @@ export default function ProductsPage() {
       setEdit((e) => e && { ...e, description: data.description });
       showToast("כתבנו תיאור — אפשר לשנות אותו");
     } catch {
-      showToast("אין חיבור — נסי שוב");
+      showToast("אין חיבור — לנסות שוב");
     } finally {
       setAiBusy(false);
     }
@@ -185,7 +185,7 @@ export default function ProductsPage() {
 
   /**
    * ?new=1 — הגעה ישירה מסוף פתיחת הדוכן. פותח את העורך מיד, כדי שהמשפט
-   * "בואי נוסיף את המוצר הראשון שלך" יימשך לפעולה ולא למסך רשימה ריק.
+   * "בואי נוסיף את המוצר הראשון שלך" (בכרטיס השיתוף) יימשך לפעולה ולא למסך רשימה ריק.
    */
   const [autoOpened, setAutoOpened] = useState(false);
   useEffect(() => {
@@ -429,7 +429,7 @@ export default function ProductsPage() {
         ({ error } = await supa.from("products").insert({ ...row, store_id: store.id }));
       }
       if (error) {
-        showToast("השמירה נכשלה — נסי שוב");
+        showToast("השמירה נכשלה — לנסות שוב");
         return;
       }
 
@@ -487,7 +487,7 @@ export default function ProductsPage() {
       sort_order: src.sort_order + 1,
     });
     if (error) {
-      showToast("השכפול נכשל — נסי שוב");
+      showToast("השכפול נכשל — לנסות שוב");
       return;
     }
     setEdit(null);
@@ -966,7 +966,7 @@ export default function ProductsPage() {
             href="/dashboard/share"
             className="w-full max-w-xs bg-[var(--ink)] text-white py-4 text-[15px] font-bold"
           >
-            שלחי לחברות
+            שליחה לחברות
           </a>
           {/* להוסיף עוד מוצר זה לא "אחר כך" — זה מה שרוב הבנות יעשו עכשיו,
               ולכן זה כפתור אמיתי ולא שורה אפורה בתחתית */}

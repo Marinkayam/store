@@ -9,7 +9,7 @@ import PhoneVerify from "../phone-verify";
 // שלב 1 מתוך שלושה: לפתוח דוכן. פחות מדקה.
 //
 // שם → תמונה → רקע → מספר → סיימנו. אין ערכות, אין אמוג'י כשלב, ואין מוצר.
-// כל מה שהילדה רוצה בשלב הזה הוא להגיד "זה הדוכן שלי", והכל כאן משרת רק את
+// כל מה שהילד/ה רוצה בשלב הזה הוא להגיד "זה הדוכן שלי", והכל כאן משרת רק את
 // המשפט הזה. מוצרים הם שלב 2 ושיתוף הוא שלב 3, ושניהם קורים אחרי.
 
 interface Draft {
@@ -74,7 +74,7 @@ export default function Onboarding() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? "משהו השתבש, נסי שוב");
+        setErr(data.error ?? "משהו השתבש — לנסות שוב");
         return;
       }
 
@@ -98,7 +98,7 @@ export default function Onboarding() {
       sessionStorage.removeItem("duchan-draft");
       setResult({ slug: data.slug });
     } catch {
-      setErr("אין חיבור — נסי שוב");
+      setErr("אין חיבור — לנסות שוב");
     } finally {
       setBusy(false);
     }
@@ -109,9 +109,9 @@ export default function Onboarding() {
       {/* 1 — שם, תמונה, רקע. הכל במסך אחד. */}
       {draft.step === 1 && !result && (
         <div className="w-full flex flex-col gap-5">
-          <h1 className="text-xl font-bold text-center">בואי נפתח לך דוכן</h1>
+          <h1 className="text-xl font-bold text-center">נפתח לך דוכן</h1>
 
-          {/* תצוגה חיה — היא רואה את הדוכן שלה נבנה תוך כדי */}
+          {/* תצוגה חיה — רואים את הדוכן נבנה תוך כדי */}
           <div className="w-full overflow-hidden card">
             <div className="h-20" style={{ background: coverCss(draft.cover) }} />
             <div className="text-center -mt-8 pb-3">
@@ -200,7 +200,7 @@ export default function Onboarding() {
 
       {/* סיימנו את שלב 1. נכנסים לדוכן עצמו — ומשם מוסיפים מוצרים, כמה
           שרוצים. מסך שנפתח ישר על טופס מוצר בודד גורם להרגשה שזה טופס
-          הרשמה נוסף; מסך של דוכן שיש בו כפתור "+" גורם להרגשה שזה שלה. */}
+          הרשמה נוסף; מסך של דוכן שיש בו כפתור "+" גורם להרגשה שזה שלו/שלה. */}
       {result && (
         <div className="w-full flex flex-col gap-4 text-center">
           <div className="text-5xl">🎊</div>
