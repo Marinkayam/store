@@ -94,7 +94,7 @@ export default function SettingsPage() {
     if (!store) return;
     const normalized = normalizePhone(phone);
     if (!normalized) {
-      showToast("מספר הוואטסאפ לא נראה תקין — לבדוק שוב");
+      showToast("מספר הוואטסאפ לא נראה תקין, לבדוק שוב");
       return;
     }
     const link = payout.payout_link?.trim();
@@ -124,7 +124,7 @@ export default function SettingsPage() {
     };
     const { error } = await supa.from("stores").update(patch).eq("id", store.id);
     if (error) {
-      showToast("השמירה נכשלה — לנסות שוב");
+      showToast("השמירה נכשלה, לנסות שוב");
       return;
     }
     setStore({ ...store, ...patch });
@@ -174,7 +174,7 @@ export default function SettingsPage() {
     setCoverPreview(null);
     setStore({ ...store, cover_key: null });
     refreshStorePage(store.slug);
-    showToast("התמונה הוסרה — חזרנו לרקע");
+    showToast("התמונה הוסרה, חזרנו לרקע");
   }
 
   async function onAvatar(file: File) {
@@ -222,12 +222,12 @@ export default function SettingsPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.from("stores").update({ status: next }).eq("id", store.id);
     if (error) {
-      showToast("משהו השתבש — לנסות שוב");
+      showToast("משהו השתבש, לנסות שוב");
       return;
     }
     setStore({ ...store, status: next });
     await refreshStorePage(store.slug);
-    showToast(next === "paused" ? "החנות בהפסקה — הלינק מציג 'החנות סגורה'" : "החנות פתוחה שוב 🎉");
+    showToast(next === "paused" ? "החנות בהפסקה. הלינק מציג 'החנות סגורה'" : "החנות פתוחה שוב 🎉");
   }
 
   if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
@@ -240,6 +240,31 @@ export default function SettingsPage() {
       <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)]">
         <h1 className="text-lg font-bold">החנות שלי</h1>
       </header>
+
+      {/* ניווט מהיר — הדבר הראשון שרואים, כדי שאין צורך לגלול כדי למצוא משהו */}
+      <div className="sticky top-0 z-30 flex gap-1.5 px-3 py-2.5 bg-white border-b border-[var(--line)] overflow-x-auto">
+        <a
+          href="/dashboard/products"
+          className="shrink-0 flex items-center gap-1 bg-[var(--ink)] text-white px-3 py-1.5 text-[12px] font-bold"
+        >
+          📦 עריכת מוצרים
+        </a>
+        <a href="#identity" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
+          זהות
+        </a>
+        <a href="#design" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
+          עיצוב
+        </a>
+        <a href="#about" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
+          פרטי הדוכן
+        </a>
+        <a href="#order-msg" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
+          הודעת הזמנה
+        </a>
+        <a href="#payment" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
+          תשלום
+        </a>
+      </div>
 
       <div className="p-3 flex flex-col gap-3">
         {/* מצב חופשה */}
@@ -296,7 +321,7 @@ export default function SettingsPage() {
         {/* קאבר: תמונה אמיתית או אחד מהמוכנים. תמונה תמיד גוברת. */}
         <input ref={coverRef} type="file" accept="image/*" hidden
           onChange={(e) => e.target.files?.[0] && onCover(e.target.files[0])} />
-        <div className="bg-white border border-[var(--line)] p-3">
+        <div id="identity" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">הקאבר של הדוכן</div>
           <div
             className="h-24 mt-2 overflow-hidden relative border border-[var(--line)]"
@@ -379,17 +404,21 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div>
+        <div id="design" className="scroll-mt-14">
           <span className="text-[11px] text-[var(--muted)]">ערכת נושא</span>
-          <div className="grid grid-cols-3 gap-1.5 mt-1">
+          <p className="text-[11px] text-[var(--faint)] mt-0.5">כל ערכה משנה את צבעי החנות. לוחצים ורואים למעלה בתצוגה המקדימה.</p>
+          <div className="grid grid-cols-3 gap-1.5 mt-1.5">
             {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, th]) => (
               <button key={k} onClick={() => { setTheme(k); setDirty(true); }}
-                className={` border-[1.5px] bg-white p-2 ${theme === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}>
-                <div className="h-6 mb-1 flex items-center justify-center"
-                  style={{ background: th.bg, border: "1px solid rgba(0,0,0,.07)" }}>
-                  <i className="w-3 h-3 block" style={{ background: th.primary }} />
+                className={`border-[1.5px] p-1.5 ${theme === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                style={{ background: th.bg }}
+              >
+                <div className="h-9 mb-1.5 flex items-center justify-center gap-1"
+                  style={{ border: "1px solid rgba(0,0,0,.07)", background: th.surface }}>
+                  <span className="w-4 h-4 block" style={{ background: th.primary }} />
+                  <span className="w-4 h-4 block" style={{ background: th.ink, opacity: 0.5 }} />
                 </div>
-                <span className="text-[11px] font-medium">{th.label}</span>
+                <span className="text-[11px] font-medium" style={{ color: th.ink }}>{th.label}</span>
               </button>
             ))}
           </div>
@@ -403,7 +432,7 @@ export default function SettingsPage() {
         </label>
         {/* תצוגה מקדימה של הכפתור — כדי לראות שהמספר באמת עובד */}
         {normalizePhone(phone) && (
-          <a href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה — זו אני 🙂")}`}
+          <a href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה, זו אני 🙂")}`}
             target="_blank" rel="noreferrer"
             className="text-xs text-center text-[var(--ok-ink)] underline -mt-1">
             בדיקה: פתיחת וואטסאפ למספר {displayPhone(normalizePhone(phone)!)}
@@ -411,7 +440,7 @@ export default function SettingsPage() {
         )}
 
         {/* על הדוכן: מה שקונה שואלת לפני שהיא קונה */}
-        <div className="bg-white border border-[var(--line)] p-3">
+        <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">על הדוכן</div>
           <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
             מוצג מתחת לשם, בדף שקונים רואים.
@@ -436,7 +465,7 @@ export default function SettingsPage() {
             className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
           />
           <p className="text-[11px] text-[var(--muted)] mt-1">
-            עיר בלבד — לעולם לא כתובת. זה מספיק כדי שקונה תדע אם מסירה הגיונית.
+            רק עיר, לעולם לא כתובת. זה מספיק כדי שקונה תדע אם מסירה הגיונית.
           </p>
         </div>
 
@@ -485,14 +514,14 @@ export default function SettingsPage() {
                 className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
               />
               <p className="text-[11px] text-[var(--muted)] mt-1">
-                אפשר להשאיר ריק — אז כתוב רק שיש משלוח, והמחיר נסגר בוואטסאפ.
+                אפשר להשאיר ריק, ואז כתוב רק שיש משלוח והמחיר נסגר בוואטסאפ.
               </p>
             </>
           )}
         </div>
 
         {/* איך ההזמנה מגיעה אלייך */}
-        <div className="bg-white border border-[var(--line)] p-3">
+        <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">איך ההזמנה מגיעה אלייך</div>
           <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
             הרשימה והסכום נכתבים לבד. את קובעת איך ההודעה נפתחת ואיך היא נגמרת.
@@ -530,11 +559,11 @@ export default function SettingsPage() {
         </div>
 
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
-        <div className="bg-white border border-[var(--line)] p-3">
+        <div id="payment" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">איך משלמים לי</div>
           <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
             מה שתסמני יופיע לקונה לפני שהיא שולחת את ההזמנה, וגם בהודעת הוואטסאפ.
-            הכסף עובר ישירות אלייך — דוכן לא נוגע בו ולא לוקח עמלה.
+            הכסף עובר ישירות אלייך, דוכן לא נוגע בו ולא לוקח עמלה.
           </p>
           <div className="flex flex-col gap-1.5 mt-2.5">
             {([
@@ -596,7 +625,7 @@ export default function SettingsPage() {
           />
           {!payout.payout_bit && !payout.payout_paybox && !payout.payout_cash && (
             <p className="text-[11px] text-[var(--warn-ink)] mt-1.5">
-              לא סימנת כלום — הקונה תצטרך לשאול אותך בוואטסאפ איך לשלם.
+              לא סימנת כלום, הקונה תצטרך לשאול אותך בוואטסאפ איך לשלם.
             </p>
           )}
         </div>
@@ -612,7 +641,7 @@ export default function SettingsPage() {
         <div className="bg-white border border-[var(--line)] p-3 mt-1">
           {!store.activated_at && (
             <div className="text-[11px] text-[var(--warn-ink)] mb-1.5">
-              👀 תצוגה מקדימה — אפשר לשלוח, אי אפשר עדיין להזמין
+              👀 תצוגה מקדימה. אפשר לשלוח, אבל עדיין אי אפשר להזמין
             </div>
           )}
           <div className="text-[11px] text-[var(--muted)] font-mono mb-2" dir="ltr">{storeUrl}</div>
