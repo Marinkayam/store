@@ -89,7 +89,7 @@ export interface Order {
   total: number;
   buyer_note: string | null;
   owner_note: string | null;
-  buyer_phone: string | null; // אופציונלי — הקונה בחרה אם להשאיר אותו
+  buyer_phone: string | null; // אופציונלי, הקונה בחרה אם להשאיר אותו
   status: OrderStatus;
   created_at: string;
 }

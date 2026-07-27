@@ -484,7 +484,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <p className="text-[11px] text-[var(--muted)] mt-1">
-            הגיל לא מוצג בחנות ולעולם לא בקוד המקור. רק עיר, לעולם לא כתובת — זה מספיק כדי שקונה תדע אם מסירה הגיונית.
+            הגיל לא מוצג בחנות ולעולם לא בקוד המקור. רק עיר, לעולם לא כתובת, זה מספיק כדי שקונה תדע אם מסירה הגיונית.
           </p>
         </div>
 
@@ -567,7 +567,7 @@ export default function SettingsPage() {
             {`${info.order_intro.trim() || `היי ${store.display_name.split(" ").pop()}! 👋`}
 ראיתי את הדוכן ואני רוצה להזמין:
 
-• סקוויש אבוקדו × 1 — ₪18
+• סקוויש אבוקדו × 1 · ₪18
 
 סה"כ: ₪18${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}
 אשלם ב${payout.payout_bit ? "ביט" : payout.payout_paybox ? "פייבוקס" : "מזומן"}

@@ -67,7 +67,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
     const { error } = await supa.rpc("set_parent_consent", { p_store: store.id, p_consent: on });
     if (error) {
       setConsent(!on);
-      setErr("לא הצלחנו לשמור את האישור — לנסות שוב.");
+      setErr("לא הצלחנו לשמור את האישור, לנסות שוב.");
       return;
     }
     setStore({ ...store, parent_consent_at: on ? new Date().toISOString() : null });
@@ -89,7 +89,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
     });
     setBusy(false);
     if (error) {
-      setErr("משהו השתבש — אפשר לנסות שוב, או לשלוח לי הודעה בוואטסאפ.");
+      setErr("משהו השתבש, אפשר לנסות שוב, או לשלוח לי הודעה בוואטסאפ.");
       return;
     }
     setStore({ ...store, payment_claimed_at: new Date().toISOString(), payment_method: method });
@@ -158,18 +158,18 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
           <div className="text-5xl">⏳</div>
           <h1 className="text-xl font-bold">קיבלנו, בודקים</h1>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
-            אנחנו מאשרות כל חנות ידנית — לרוב תוך כמה שעות.
+            אנחנו מאשרות כל חנות ידנית, לרוב תוך כמה שעות.
             <br />
             ברגע שזה קורה הלינק נפתח ואפשר לשתף.
           </p>
           <div className="bg-white border border-[var(--line)] p-4 text-right text-[13px] leading-relaxed">
             <div className="font-bold mb-1">בינתיים שווה:</div>
             <div className="text-[var(--muted)]">
-              • להוסיף עוד כמה מוצרים — חנות עם 5 מוצרים נראית רצינית
+              • להוסיף עוד כמה מוצרים, חנות עם 5 מוצרים נראית רצינית
               <br />
               • לכתוב תיאור קצר לכל אחד
               <br />
-              • להגדיר <a href="/dashboard/settings" className="underline">איך משלמים לך</a> — ביט, מזומן או שניהם
+              • להגדיר <a href="/dashboard/settings" className="underline">איך משלמים לך</a>, ביט, מזומן או שניהם
             </div>
           </div>
           <a
@@ -198,11 +198,11 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         <p className="text-[13px] text-[var(--muted)] mt-2 leading-relaxed">
           בנית אותה בחינם, וזה נשאר שלך.
           <br />
-          הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות — תשלום אחד.
+          הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות, תשלום אחד.
         </p>
         {isLaunch && (
           <div className="mt-5 inline-block bg-[var(--wood)] text-white px-3 py-1.5 text-[12.5px] font-bold">
-            🎉 מחיר השקה — עד {launchUntil}
+            🎉 מחיר השקה, עד {launchUntil}
           </div>
         )}
         <div className="mt-3 flex items-baseline justify-center gap-2">
@@ -231,13 +231,13 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       <div className="mt-8 bg-white border border-[var(--line)] p-4">
         <div className="text-[14px] font-bold">צריך אישור של הורה?</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
-          לשלוח את ההסבר המלא — מה כלול, מה לומדים מזה, ואיך אנחנו שומרים על הבטיחות.
+          לשלוח את ההסבר המלא, מה כלול, מה לומדים מזה, ואיך אנחנו שומרים על הבטיחות.
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(
             `בניתי חנות אמיתית באינטרנט! 🛍️\n` +
               (isLaunch
-                ? `יש עכשיו מחיר השקה — ₪${price} במקום ₪${fullPrice}, עד ${launchUntil}.\n`
+                ? `יש עכשיו מחיר השקה, ₪${price} במקום ₪${fullPrice}, עד ${launchUntil}.\n`
                 : `כדי לפרסם אותה צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\n`) +
               `כל ההסבר כאן: ${priceUrl}`
           )}`}
@@ -308,7 +308,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         <br />
         התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת החנות.
         <br />
-        הכסף שקונות משלמות לך על מוצרים עובר <b>ישירות אלייך</b> — בביט או במזומן, איך
+        הכסף שקונות משלמות לך על מוצרים עובר <b>ישירות אלייך</b>, בביט או במזומן, איך
         שנבחר בהגדרות. אנחנו לא נוגעים בו ולא לוקחים ממנו אגורה.
       </div>
       <div className="flex flex-col gap-2">
@@ -334,7 +334,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         <a href={waOwner(`היי מרינה! רוצה להפעיל את החנות "${store.display_name}" (${store.slug}). איך משלמים?`)}
           className="bg-white border border-[var(--line)] py-3 text-[13px] font-bold text-center"
         >
-          💬 יש לי שאלה — לדבר איתך בוואטסאפ
+          💬 יש לי שאלה, לדבר איתך בוואטסאפ
         </a>
       </div>
 
@@ -342,7 +342,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       <div className="mt-8 bg-white border border-[var(--line)] p-4">
         <div className="text-[14px] font-bold">שילמתם? נעדכן אותנו</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
-          זה לא מפעיל את החנות מיד — זה מכניס אותה לרשימה שלי לאישור.
+          זה לא מפעיל את החנות מיד, זה מכניס אותה לרשימה שלי לאישור.
         </p>
         <div className="flex gap-1.5 mt-3">
           {METHODS.map((m) => (
@@ -370,7 +370,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
           disabled={busy || !consentOn}
           className="mt-2 w-full bg-[var(--ink)] text-white py-3.5 text-[14px] font-bold disabled:opacity-40"
         >
-          {busy ? "רגע…" : consentOn ? "שילמנו — לאישור החנות" : "קודם מסמנים שההורים מאשרים ↑"}
+          {busy ? "רגע…" : consentOn ? "שילמנו, לאישור החנות" : "קודם מסמנים שההורים מאשרים ↑"}
         </button>
       </div>
 

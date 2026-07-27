@@ -25,7 +25,7 @@ export function generateCode(): string {
  */
 export function hashCode(phone: string, code: string): string {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error("SUPABASE_SERVICE_ROLE_KEY חסר — אי אפשר לגבב קוד");
+  if (!secret) throw new Error("SUPABASE_SERVICE_ROLE_KEY חסר, אי אפשר לגבב קוד");
   return createHmac("sha256", secret).update(`${phone}:${code}`).digest("hex");
 }
 

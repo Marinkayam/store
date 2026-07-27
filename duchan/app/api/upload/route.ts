@@ -10,7 +10,7 @@ import { QUOTAS } from "@/lib/quotas";
 
 const EXT: Record<string, string> = {
   "image/webp": "webp",
-  "image/jpeg": "jpg", // ספארי ישן לא מקודד webp — הקנבס נופל ל-JPEG
+  "image/jpeg": "jpg", // ספארי ישן לא מקודד webp, הקנבס נופל ל-JPEG
   "video/mp4": "mp4",
   "video/webm": "webm",
 };
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
   if (store.media_bytes + bytes > QUOTAS.mediaBytesPerStore) {
     return NextResponse.json(
-      { error: "נגמר המקום בחנות — אפשר למחוק סרטון ישן כדי לפנות" },
+      { error: "נגמר המקום בחנות, אפשר למחוק סרטון ישן כדי לפנות" },
       { status: 413 }
     );
   }

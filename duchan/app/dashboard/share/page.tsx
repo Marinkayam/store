@@ -61,7 +61,7 @@ export default function SharePage() {
           <p className="text-[13px] text-[var(--muted)] leading-relaxed max-w-xs">
             בדוכן שלך עוד אין מוצרים.
             <br />
-            חברה שתיכנס עכשיו תראה מדף ריק — שווה להוסיף מוצר אחד קודם.
+            חברה שתיכנס עכשיו תראה מדף ריק, שווה להוסיף מוצר אחד קודם.
           </p>
           <a
             href="/dashboard/products?new=1"
@@ -89,7 +89,7 @@ export default function SharePage() {
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
-    showToast("הועתק — אפשר להדביק בכל מקום");
+    showToast("הועתק, אפשר להדביק בכל מקום");
   };
 
   return (
@@ -103,9 +103,9 @@ export default function SharePage() {
 
       {!store.activated_at && (
         <a href="/activate" className="block mx-3 mt-3 bg-[var(--ink)] text-white p-3.5">
-          <div className="text-[13.5px] font-bold">הלינק עובד — בתצוגה מקדימה</div>
+          <div className="text-[13.5px] font-bold">הלינק עובד, בתצוגה מקדימה</div>
           <div className="text-[11.5px] opacity-70 leading-relaxed">
-            חברות כבר יכולות להיכנס ולראות הכל. כדי שיוכלו גם להזמין — לפרסום הדוכן →
+            חברות כבר יכולות להיכנס ולראות הכל. כדי שיוכלו גם להזמין, לפרסום הדוכן →
           </div>
         </a>
       )}
@@ -172,7 +172,7 @@ export default function SharePage() {
         <div className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3.5 mt-2">
           <div className="text-[13.5px] font-bold">להזמין חברה לפתוח חנות</div>
           <p className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-1">
-            כשחברות פותחות חנויות, כולן מוכרות יותר — כי כולן גם קונות.
+            כשחברות פותחות חנויות, כולן מוכרות יותר, כי כולן גם קונות.
             {store.ref_clicks > 0 && (
               <>
                 <br />

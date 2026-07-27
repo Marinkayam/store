@@ -15,7 +15,7 @@ interface CartLine {
   name: string;
   price: number;
   qty: number;
-  option?: string; // "ורוד" — אותו מוצר בשני צבעים הוא שתי שורות בסל
+  option?: string; // "ורוד", אותו מוצר בשני צבעים הוא שתי שורות בסל
 }
 
 /** מזהה שורת סל: מוצר + בחירה. */
@@ -227,7 +227,7 @@ export default function StoreView({
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error ?? "משהו השתבש — לנסות שוב");
+        showToast(data.error ?? "משהו השתבש, לנסות שוב");
         return; // לא מנקים את הסל עד שהשרת אישר
       }
 
@@ -236,7 +236,7 @@ export default function StoreView({
       const lines = (data.items as { name: string; qty: number; price: number; option?: string }[])
         .map(
           (i) =>
-            `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} — ₪${i.price * i.qty}`
+            `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${i.price * i.qty}`
         )
         .join("\n");
       const pay = payInstructions(chosenPay);
@@ -266,7 +266,7 @@ export default function StoreView({
       setOrderOpen(false);
       window.location.href = `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`;
     } catch {
-      showToast("אין חיבור — לנסות שוב עוד רגע");
+      showToast("אין חיבור, לנסות שוב עוד רגע");
     } finally {
       setSending(false);
     }
@@ -321,7 +321,7 @@ export default function StoreView({
           {owner ? (
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
               <span className="text-[11.5px] leading-tight">
-                תצוגה מקדימה — אפשר כבר לשלוח את הלינק לחברות
+                תצוגה מקדימה, אפשר כבר לשלוח את הלינק לחברות
                 <br />
                 <span className="opacity-75">כדי לקבל הזמנות צריך לפרסם</span>
               </span>
@@ -334,7 +334,7 @@ export default function StoreView({
             </div>
           ) : (
             <p className="px-3 py-2 text-[11.5px] text-center leading-tight">
-              👀 תצוגה מקדימה — הדוכן הזה עוד לא נפתח להזמנות
+              👀 תצוגה מקדימה, הדוכן הזה עוד לא נפתח להזמנות
             </p>
           )}
         </div>
@@ -489,7 +489,7 @@ export default function StoreView({
                 {!out && !preview && (
                   <button
                     onClick={() => quickAdd(p)}
-                    aria-label={`הוספה מהירה — ${p.name}`}
+                    aria-label={`הוספה מהירה, ${p.name}`}
                     className="mt-auto mx-2.5 mb-2.5 py-2 text-[12.5px] font-bold"
                     style={
                       inCartQty
@@ -721,7 +721,7 @@ export default function StoreView({
                 <div className="flex items-center border-[1.5px] border-black/15">
                   <button
                     onClick={() => setLineQty(l.id, l.option, l.qty - 1)}
-                    aria-label={`פחות — ${l.name}`}
+                    aria-label={`פחות, ${l.name}`}
                     className="w-8 h-8 text-base leading-none"
                   >
                     −
@@ -730,7 +730,7 @@ export default function StoreView({
                   <button
                     onClick={() => setLineQty(l.id, l.option, Math.min(max, l.qty + 1))}
                     disabled={l.qty >= max}
-                    aria-label={`עוד — ${l.name}`}
+                    aria-label={`עוד, ${l.name}`}
                     className="w-8 h-8 text-base leading-none disabled:opacity-25"
                   >
                     +
@@ -740,7 +740,7 @@ export default function StoreView({
                 <span className="w-14 text-left font-medium">₪{l.price * l.qty}</span>
                 <button
                   onClick={() => setLineQty(l.id, l.option, 0)}
-                  aria-label={`הסרה — ${l.name}`}
+                  aria-label={`הסרה, ${l.name}`}
                   className="w-7 h-8 opacity-45 text-[15px]"
                 >
                   ×

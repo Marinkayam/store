@@ -134,7 +134,7 @@ export default function Onboarding() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? "משהו השתבש — לנסות שוב");
+        setErr(data.error ?? "משהו השתבש, לנסות שוב");
         return;
       }
 
@@ -158,7 +158,7 @@ export default function Onboarding() {
       sessionStorage.removeItem("duchan-draft");
       setResult({ slug: data.slug });
     } catch {
-      setErr("אין חיבור — לנסות שוב");
+      setErr("אין חיבור, לנסות שוב");
     } finally {
       setBusy(false);
     }
@@ -198,7 +198,7 @@ export default function Onboarding() {
             onClick={() => set({ step: 2 })}
             className="btn btn-primary py-3.5 text-[15px]"
           >
-            הלאה — לבחירת רקע ←
+            הלאה, לבחירת רקע ←
           </button>
         </div>
       )}
@@ -294,7 +294,7 @@ export default function Onboarding() {
           <div className="text-center">
             <h1 className="text-xl font-bold">עוד שני פרטים</h1>
             <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
-              שניהם לא חובה — הם רק עוזרים למצוא את הדוכן לפי גיל ואזור.
+              שניהם לא חובה, הם רק עוזרים למצוא את הדוכן לפי גיל ואזור.
             </p>
           </div>
 
@@ -356,7 +356,7 @@ export default function Onboarding() {
           <div className="text-[12px] text-[var(--muted)] leading-relaxed">
             <div className="font-semibold text-[var(--ink)] mb-1">מה יקרה עכשיו:</div>
             <ul className="flex flex-col gap-0.5 list-disc pr-4">
-              <li>הדוכן נפתח — פרטי, רק מי שבונה אותו רואה אותו</li>
+              <li>הדוכן נפתח, פרטי, רק מי שבונה אותו רואה אותו</li>
               <li>מעלים מוצר ראשון עם תמונה ומחיר</li>
               <li>מפרסמים ומשתפים את הקישור</li>
             </ul>
@@ -367,7 +367,7 @@ export default function Onboarding() {
             onClick={() => set({ step: 4 })}
             className="btn btn-primary py-3.5 text-[15px]"
           >
-            הלאה — למספר הטלפון ←
+            הלאה, למספר הטלפון ←
           </button>
         </div>
       )}
@@ -433,7 +433,7 @@ export default function Onboarding() {
             להעלות מוצר ראשון
           </a>
           <a href="/dashboard/products" className="btn btn-tertiary text-[13px] py-2 text-center">
-            אחר כך — לדוכן שלי
+            אחר כך, לדוכן שלי
           </a>
         </div>
       )}

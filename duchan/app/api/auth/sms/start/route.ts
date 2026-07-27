@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: owner
-          ? `חסר בוורסל: ${missing.join(", ")} — לסמן Production ואז Redeploy`
+          ? `חסר בוורסל: ${missing.join(", ")}, לסמן Production ואז Redeploy`
           : "שליחת הקודים לא מוגדרת עדיין",
       },
       { status: 503 }
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!phone) {
-    return NextResponse.json({ error: "המספר לא נראה תקין — בדקי אותו שוב" }, { status: 400 });
+    return NextResponse.json({ error: "המספר לא נראה תקין, בדקי אותו שוב" }, { status: 400 });
   }
 
   const db = supabaseAdmin();
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const sent = await sendSms(phone, `${code} — קוד הכניסה שלך לדוכן. תקף ל-${OTP_TTL_MINUTES} דקות.`);
+  const sent = await sendSms(phone, `קוד הכניסה שלך לדוכן: ${code}. תקף ל-${OTP_TTL_MINUTES} דקות.`);
   if (!sent.ok) {
     console.error("[sms] send failed:", sent.reason, sent.code ?? "");
     return NextResponse.json(

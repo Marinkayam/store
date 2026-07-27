@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     if (!error) {
       store = data;
     } else if (error.message.includes("slug")) {
-      continue; // התנגשות אקראית בסלאג — מנסים שוב עם סלאג חדש
+      continue; // התנגשות אקראית בסלאג, מנסים שוב עם סלאג חדש
     } else if (includeParentAware) {
       console.error("[stores] insert with parent_aware_at failed, retrying without it:", error.message);
       includeParentAware = false;

@@ -8,7 +8,7 @@ import Icon from "@/app/icons";
 // דף החנות הפומבי. SSR, נקרא עם service role, שדות מפורשים בלבד.
 // noindex בכל דף חנות — אין sitemap, אין אינדוקס.
 
-export const revalidate = 60; // קאשינג קצר — כיתה שלמה בחנות אחת לא מפילה את Supabase
+export const revalidate = 60; // קאשינג קצר, כיתה שלמה בחנות אחת לא מפילה את Supabase
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -122,7 +122,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
       </p>
       {IS_LAUNCH && (
         <p className="text-[12.5px] font-bold mt-2.5">
-          🎉 מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE} — עד {LAUNCH_UNTIL_LABEL}
+          🎉 מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE}, עד {LAUNCH_UNTIL_LABEL}
         </p>
       )}
 

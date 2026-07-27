@@ -88,7 +88,7 @@ export async function squareImage(
     const ctx = c.getContext("2d") as CanvasRenderingContext2D | null;
     if (!ctx) throw new MediaError("הדפדפן לא הצליח לעבד את התמונה. לרענן את הדף ולנסות שוב.");
     if (fit === "contain") {
-      ctx.fillStyle = "#F6F0E8"; // --cream — אותו רקע שהתמונה יושבת עליו בכל מקום באתר
+      ctx.fillStyle = "#F6F0E8"; // --cream, אותו רקע שהתמונה יושבת עליו בכל מקום באתר
       ctx.fillRect(0, 0, size, size);
       const scale = Math.min(size / w, size / h);
       const dw = w * scale;
@@ -135,7 +135,7 @@ export function posterFrom(videoUrl: string): Promise<Blob | null> {
 /** בדיקת וידאו מהגלריה: עד 10 שניות ועד 25MB, אחרת דחייה מפורשת. */
 export function validateGalleryVideo(file: File): Promise<{ ok: true } | { ok: false; reason: string }> {
   if (file.size > MAX_VIDEO_BYTES) {
-    return Promise.resolve({ ok: false, reason: "הסרטון כבד מדי — עד 25MB" });
+    return Promise.resolve({ ok: false, reason: "הסרטון כבד מדי, עד 25MB" });
   }
   return new Promise((resolve) => {
     const v = document.createElement("video");
@@ -146,7 +146,7 @@ export function validateGalleryVideo(file: File): Promise<{ ok: true } | { ok: f
       resolve(r);
     };
     v.onloadedmetadata = () => {
-      if (v.duration > MAX_VIDEO_SECONDS) done({ ok: false, reason: "הסרטון ארוך מדי — עד 10 שניות" });
+      if (v.duration > MAX_VIDEO_SECONDS) done({ ok: false, reason: "הסרטון ארוך מדי, עד 10 שניות" });
       else done({ ok: true });
     };
     v.onerror = () => done({ ok: false, reason: "לא הצלחנו לקרוא את הסרטון" });

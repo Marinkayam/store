@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   if (!store?.payment_claimed_at) return NextResponse.json({ ok: true }); // אין מה לדווח
 
   notifyTelegram(
-    `⏳ ${escapeHtml(store.display_name)} הצהירה ששילמה — ממתינה לאישור\n` +
+    `⏳ ${escapeHtml(store.display_name)} הצהירה ששילמה, ממתינה לאישור\n` +
       `${METHOD_LABEL[store.payment_method ?? ""] ?? "לא צוין"}` +
       `${store.payment_ref ? ` · ${escapeHtml(store.payment_ref)}` : ""}\n` +
       absolute("/admin")

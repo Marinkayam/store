@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   // ואם הוא הוגדר שם בטעות — כל החתימות הולכות לכתובת הלא נכונה.
   const endpointOverride = (process.env.R2_ENDPOINT ?? "").trim();
   const endpoint = endpointOverride
-    ? `⚠ R2_ENDPOINT מוגדר (${endpointOverride}) — בפרודקשן הוא אמור להיות ריק`
+    ? `⚠ R2_ENDPOINT מוגדר (${endpointOverride}), בפרודקשן הוא אמור להיות ריק`
     : "✓ ברירת מחדל (cloudflarestorage.com)";
 
   const bucket = process.env.R2_BUCKET ?? "";
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     await c.send(new DeleteObjectCommand({ Bucket: bucket, Key: probeKey }));
     serverWrite = "✓ השרת כותב וקורא מהאחסון";
   } catch (e) {
-    serverWrite = `✗ השרת לא מצליח לכתוב — ${(e as Error).message}`;
+    serverWrite = `✗ השרת לא מצליח לכתוב, ${(e as Error).message}`;
   }
 
   // הכתובת הפומבית: מכאן הדפדפן *קורא* את התמונות. אם היא שגויה, ההעלאה
@@ -65,10 +65,10 @@ export async function GET(req: NextRequest) {
       const res = await fetch(`${base}/${k}`, { cache: "no-store" });
       publicRead = res.ok
         ? "✓ הכתובת הציבורית מחזירה קבצים"
-        : `✗ הכתובת הציבורית מחזירה ${res.status} — הדלי כנראה לא פתוח לקריאה`;
+        : `✗ הכתובת הציבורית מחזירה ${res.status}, הדלי כנראה לא פתוח לקריאה`;
       await c.send(new DeleteObjectCommand({ Bucket: bucket, Key: k })).catch(() => {});
     } catch (e) {
-      publicRead = `✗ הכתובת הציבורית לא נענית — ${(e as Error).message}`;
+      publicRead = `✗ הכתובת הציבורית לא נענית, ${(e as Error).message}`;
     }
   }
 
@@ -87,6 +87,6 @@ export async function GET(req: NextRequest) {
     serverWrite,
     publicRead,
     browserProbe,
-    next: "לפתוח /diag/upload?key=… מהטלפון — זו הבדיקה שמגלה אם הדפדפן נחסם ב-CORS",
+    next: "לפתוח /diag/upload?key=… מהטלפון, זו הבדיקה שמגלה אם הדפדפן נחסם ב-CORS",
   });
 }

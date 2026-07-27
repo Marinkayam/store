@@ -5,7 +5,7 @@ import Icon from "@/app/icons";
 
 export const metadata: Metadata = {
   title: "מה מקבלים בדוכן",
-  description: "חנות אמיתית, לינק לשיתוף, וכל מה שצריך כדי למכור — בתשלום אחד.",
+  description: "חנות אמיתית, לינק לשיתוף, וכל מה שצריך כדי למכור, בתשלום אחד.",
 };
 
 /**
@@ -76,7 +76,7 @@ export default function PricePage() {
         {/* ── בטיחות ── */}
         <h2 className="text-[19px] font-bold text-[var(--ink)] mt-10 mb-1">איך שומרים על הבטיחות</h2>
         <p className="text-[13px] text-[var(--muted)] mb-4">
-          זה לא נוסף אחר כך — ככה זה בנוי מההתחלה.
+          זה לא נוסף אחר כך, ככה זה בנוי מההתחלה.
         </p>
         <SafetyList />
 
@@ -89,7 +89,7 @@ export default function PricePage() {
           <h2 className="text-[18px] font-bold text-[var(--ink)] mt-3.5">מה באמת לומדים כאן</h2>
           <p className="text-[13px] text-[var(--muted)] leading-relaxed mt-2">
             לכולם יש בבית דברים שהם זבל בשבילם ואוצר בשביל מישהו אחר. דוכן הופך את
-            זה לשיעור ראשון ביזמות — כזה שקורה בפועל, לא בתיאוריה.
+            זה לשיעור ראשון ביזמות, כזה שקורה בפועל, לא בתיאוריה.
           </p>
 
           <div className="mt-4">
@@ -108,7 +108,7 @@ export default function PricePage() {
             נבנה את הדוכן ←
           </a>
           <p className="text-[12.5px] text-[var(--muted)] mt-3 leading-relaxed">
-            בונים קודם. משלמים רק כשרוצים לפרסם —
+            בונים קודם. משלמים רק כשרוצים לפרסם,
             <br />
             אפשר לראות הכל בלי להתחייב.
           </p>

@@ -60,7 +60,7 @@ export default function PhoneVerify({
       setCode("");
       setCooldown(60);
     } catch {
-      setErr("אין חיבור — לנסות שוב");
+      setErr("אין חיבור, לנסות שוב");
     } finally {
       setBusy(false);
     }
@@ -84,7 +84,7 @@ export default function PhoneVerify({
       }
       await onVerified(data);
     } catch {
-      setErr("אין חיבור — לנסות שוב");
+      setErr("אין חיבור, לנסות שוב");
     } finally {
       setBusy(false);
     }
@@ -121,7 +121,7 @@ export default function PhoneVerify({
         <div className="bg-[var(--canvas)] border border-[var(--line)] px-3.5 py-3">
           <div className="text-[12.5px] font-semibold">אפשר גם מספר של אמא או אבא</div>
           <p className="text-[11.5px] text-[var(--muted)] leading-relaxed mt-1">
-            הקוד צריך להגיע בהודעה שאפשר לראות. אם זה מספר של מבוגר —
+            הקוד צריך להגיע בהודעה שאפשר לראות. אם זה מספר של מבוגר,
             ההודעות על ההזמנות יגיעו אליו.
           </p>
         </div>
@@ -154,11 +154,11 @@ export default function PhoneVerify({
 
             <FindNumberSteps
               title="באייפון"
-              steps={["פותחים הגדרות", "נכנסים לכללי ואז לאודות", "המספר מופיע בשורה ‘מספר טלפון’"]}
+              steps={["פותחים הגדרות", "גוללים ונכנסים לאפליקציות ואז לטלפון", "המספר מופיע בשורה ‘המספר שלי’"]}
             />
             <FindNumberSteps
               title="באנדרואיד"
-              steps={["פותחים הגדרות", "נכנסים לאודות הטלפון ואז למצב", "המספר מופיע בשורה ‘מספר טלפון’"]}
+              steps={["פותחים הגדרות", "נכנסים לאודות הטלפון", "המספר מופיע בשורה ‘מספר הטלפון שלי’"]}
             />
 
             <button

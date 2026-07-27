@@ -34,7 +34,7 @@ interface EditState {
   // וזו הסיבה שילדה לא יכולה יותר לרשום "צהוב" בתור שם השדה בטעות: אין שדה
   // כזה. המוצר תומך בציר בחירה אחד, ולכן הם מוציאים זה את זה.
   optionKind: "none" | "color" | "size";
-  optionList: string[]; // ["ורוד", "כחול"] — שדה נפרד לכל ערך, לא פסיקים
+  optionList: string[]; // ["ורוד", "כחול"], שדה נפרד לכל ערך, לא פסיקים
   badge: "rare" | "sale" | null;
   imageKey: string | null;
   videoKey: string | null;
@@ -166,9 +166,9 @@ export default function ProductsPage() {
         return;
       }
       setEdit((e) => e && { ...e, description: data.description });
-      showToast("כתבנו תיאור — אפשר לשנות אותו");
+      showToast("כתבנו תיאור, אפשר לשנות אותו");
     } catch {
-      showToast("אין חיבור — לנסות שוב");
+      showToast("אין חיבור, לנסות שוב");
     } finally {
       setAiBusy(false);
     }
@@ -355,7 +355,7 @@ export default function ProductsPage() {
         await videoRef.current.play();
       }
     } catch (e) {
-      showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה — נסי 'מהגלריה'");
+      showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה, נסי 'מהגלריה'");
       setRecOpen(false);
     }
   }
@@ -469,7 +469,7 @@ export default function ProductsPage() {
         ({ error } = await supa.from("products").insert({ ...row, store_id: store.id }));
       }
       if (error) {
-        showToast("השמירה נכשלה — לנסות שוב");
+        showToast("השמירה נכשלה, לנסות שוב");
         return;
       }
 
@@ -493,7 +493,7 @@ export default function ProductsPage() {
     await supa.from("products").update({ deleted_at: new Date().toISOString() }).eq("id", edit.id);
     localStorage.removeItem(draftKey(edit.id));
     setEdit(null);
-    showToast("המוצר נמחק — אפשר לשחזר תוך 30 יום");
+    showToast("המוצר נמחק, אפשר לשחזר תוך 30 יום");
     refresh();
     refreshStorePage();
     loadDeleted();
@@ -523,7 +523,7 @@ export default function ProductsPage() {
       sort_order: src.sort_order + 1,
     });
     if (error) {
-      showToast("השכפול נכשל — לנסות שוב");
+      showToast("השכפול נכשל, לנסות שוב");
       return;
     }
     setEdit(null);
@@ -614,7 +614,7 @@ export default function ProductsPage() {
             <p className="text-sm text-[var(--muted)] leading-relaxed">
               הדוכן שלך ריק בינתיים.
               <br />
-              כל מוצר לוקח פחות מדקה — תמונה, שם, מחיר.
+              כל מוצר לוקח פחות מדקה: תמונה, שם, מחיר.
             </p>
             <button
               onClick={() => openEditor(null)}
@@ -715,7 +715,7 @@ export default function ProductsPage() {
             onClick={() => setDeletedOpen(true)}
             className="text-center text-xs text-[var(--muted)] underline py-2"
           >
-            מוצרים שנמחקו ({deleted.length}) — אפשר לשחזר תוך 30 יום
+            מוצרים שנמחקו ({deleted.length}), אפשר לשחזר תוך 30 יום
           </button>
         )}
       </div>
@@ -742,7 +742,7 @@ export default function ProductsPage() {
                 קיים, אבל אף אחת לא קוראת תקנון; כאן זה נראה ברגע הנכון. */}
             {!edit.id && (
               <p className="text-[11px] text-[var(--muted)] bg-[var(--canvas)] px-3 py-2 mb-3 leading-relaxed">
-                דוכן מיועד למוצרים לא שימושיים ופריטי יד שנייה — צעצועים,
+                דוכן מיועד למוצרים לא שימושיים ופריטי יד שנייה: צעצועים,
                 תכשיטים, פריטי תחביב. בלי אלכוהול, טבק, כלי נשק, תרופות,
                 בעלי חיים או מוצרים מזויפים.{" "}
                 <a href="/terms" target="_blank" className="underline">עוד בתקנון</a>
@@ -789,7 +789,7 @@ export default function ProductsPage() {
                 <>
                   <span>🛍️</span>
                   <span className="text-[11px] text-[var(--muted)] font-sans mt-1">
-                    עוד אין תמונה — לבחור אחת מהכפתורים למטה
+                    עוד אין תמונה, לבחור אחת מהכפתורים למטה
                   </span>
                 </>
               )}
@@ -1091,7 +1091,7 @@ export default function ProductsPage() {
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">
             יש בו מוצר, יש לו לינק, והוא נראה בדיוק כמו שבנית אותו.
             <br />
-            עכשיו הדבר הכי כיף — לשלוח אותו.
+            עכשיו הדבר הכי כיף, לשלוח אותו.
           </p>
           <a
             href="/dashboard/share"

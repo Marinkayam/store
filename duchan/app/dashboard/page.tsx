@@ -58,7 +58,7 @@ export default function OrdersPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.rpc("mark_order_paid", { p_order: o.id });
     if (error) {
-      showToast("משהו השתבש — לנסות שוב");
+      showToast("משהו השתבש, לנסות שוב");
       return;
     }
     showToast("המלאי עודכן");
@@ -77,7 +77,7 @@ export default function OrdersPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.rpc("cancel_order", { p_order: o.id });
     if (error) {
-      showToast("משהו השתבש — לנסות שוב");
+      showToast("משהו השתבש, לנסות שוב");
       return;
     }
     showToast(o.status === "sent" ? "ההזמנה בוטלה" : "ההזמנה בוטלה והמלאי חזר");
@@ -278,7 +278,7 @@ export default function OrdersPage() {
             </div>
             {o.items.map((it, i) => (
               <div key={i} className="text-[13px] py-px">
-                • {it.name} × {it.qty} — ₪{it.qty * it.price}
+                • {it.name} × {it.qty} · ₪{it.qty * it.price}
               </div>
             ))}
             {o.buyer_note && (
@@ -352,7 +352,7 @@ export default function OrdersPage() {
                 ) : (
                   <span
                     className="flex-1 border border-dashed border-[var(--line)] text-[var(--muted)] py-2 text-xs text-center"
-                    title="הקונה לא השאירה מספר — השיחה כבר קיימת אצלה בוואטסאפ, אפשר לחפש שם לפי מספר ההזמנה"
+                    title="הקונה לא השאירה מספר, השיחה כבר קיימת אצלה בוואטסאפ, אפשר לחפש שם לפי מספר ההזמנה"
                   >
                     אין מספר
                   </span>

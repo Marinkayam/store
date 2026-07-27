@@ -29,7 +29,7 @@ export default function ErrorScreen({
       <Icon name="cloud" size={58} tone="var(--sand)" className="text-[var(--wood)]" />
       <h1 className="text-xl font-bold">משהו השתבש אצלנו</h1>
       <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">
-        זו לא את — זו תקלה שלנו, והיא נרשמה.
+        זו לא את, זו תקלה שלנו, והיא נרשמה.
         <br />
         רוב הפעמים ניסיון נוסף פותר את זה.
       </p>

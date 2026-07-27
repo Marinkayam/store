@@ -205,7 +205,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     });
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
-    showToast(activate ? "החנות הופעלה — הלינק פתוח 🎉" : "ההפעלה בוטלה");
+    showToast(activate ? "החנות הופעלה, הלינק פתוח 🎉" : "ההפעלה בוטלה");
   }
 
   async function setAi(storeId: string, aiEnabled: boolean, aiCredits?: number | null) {
@@ -229,7 +229,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     });
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
-    showToast(smsUnlimited ? "סמס ללא הגבלה למספר הזה" : "בוטל — חוזרת למכסה הרגילה");
+    showToast(smsUnlimited ? "סמס ללא הגבלה למספר הזה" : "בוטל, חוזרת למכסה הרגילה");
   }
 
   // איפוס מיידי — פותח כניסה עכשיו בלי לחכות למיגרציה. לא קבוע, רק לרגע הזה.
@@ -239,7 +239,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ storeId, resetSmsQuota: true }),
     });
-    showToast("המכסה אופסה — אפשר להיכנס שוב עכשיו");
+    showToast("המכסה אופסה, אפשר להיכנס שוב עכשיו");
   }
 
   /**
@@ -266,7 +266,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     openDetail(storeId);
     showToast(
       action === "restore" ? "המוצר חזר לחנות"
-      : action === "delete" ? "המוצר הוצא מהחנות — אפשר לשחזר"
+      : action === "delete" ? "המוצר הוצא מהחנות, אפשר לשחזר"
       : action === "hide" ? "המוצר מוסתר מהקונות"
       : action === "show" ? "המוצר חזר להיות מוצג"
       : "המוצר עודכן"
@@ -686,7 +686,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   </span>
                 </div>
                 <div className="text-[11px] text-[var(--muted)]" dir="ltr">
-                  /s/{detail.store.slug} · {displayPhone(detail.store.contact_phone)} · {detail.store.parent_email || "—"}
+                  /s/{detail.store.slug} · {displayPhone(detail.store.contact_phone)} · {detail.store.parent_email || "אין"}
                 </div>
               </div>
             </div>
@@ -718,7 +718,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                 }}
                 className="w-full text-right text-[11px] text-[var(--ok-ink)] bg-[var(--ok-bg)] border border-[var(--ok-line)] px-3 py-2 mb-3"
               >
-                🔗 החנות עוד לא נתבעה — לחיצה מעתיקה את לינק התביעה
+                🔗 החנות עוד לא נתבעה, לחיצה מעתיקה את לינק התביעה
               </button>
             )}
 
@@ -733,15 +733,15 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               }`}
             >
               <div className="text-[10.5px] text-[var(--muted)] mb-1.5">
-                תשלום הקמה לדוכן — לא קשור לאיך שהיא גובה מקונות
+                תשלום הקמה לדוכן, לא קשור לאיך שהיא גובה מקונות
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[12.5px] font-bold flex-1">
                   {detail.store.activated_at
                     ? `🚀 באוויר מאז ${new Date(detail.store.activated_at).toLocaleDateString("he-IL")}`
                     : detail.store.payment_claimed_at
-                      ? "⏳ הצהירה ששילמה — ממתינה לאישור"
-                      : "📝 טיוטה — הלינק סגור"}
+                      ? "⏳ הצהירה ששילמה, ממתינה לאישור"
+                      : "📝 טיוטה, הלינק סגור"}
                 </span>
                 {detail.store.activated_at ? (
                   <button
@@ -1213,7 +1213,7 @@ function NewsTab({
           ))}
         </div>
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80}
-          placeholder="כותרת — למשל: אפשר להעלות וידאו!"
+          placeholder="כותרת, למשל: אפשר להעלות וידאו!"
           className="border border-[var(--line)] px-3 py-2.5 text-sm" />
         <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={500} rows={3}
           placeholder="מה חדש? כתבי לבנות בשפה שלהן…"

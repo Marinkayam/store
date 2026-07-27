@@ -25,7 +25,7 @@ async function handle(req: NextRequest) {
   const { data: existing, error: listErr } = await db.from("admin_phones").select("phone");
   if (listErr) {
     return NextResponse.json(
-      { error: `אין גישה לטבלה — ${listErr.message}`, hint: "להריץ את מיגרציה 0017 בסופרבייס" },
+      { error: `אין גישה לטבלה, ${listErr.message}`, hint: "להריץ את מיגרציה 0017 בסופרבייס" },
       { status: 500 }
     );
   }

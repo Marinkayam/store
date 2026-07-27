@@ -45,8 +45,8 @@ export async function GET(req: NextRequest) {
       : source === "missing"
         ? "✗ חסרה, ואי אפשר לשחזר אותה מהמפתחות"
         : source === "path"
-          ? "⚠ הודבקה כתובת הדשבורד — האתר מתקן את זה לבד, אבל שווה לתקן בוורסל"
-          : "⚠ לא תקינה — האתר שחזר אותה מהמפתח של סופרבייס ועובד. שווה לתקן בוורסל";
+          ? "⚠ הודבקה כתובת הדשבורד, האתר מתקן את זה לבד, אבל שווה לתקן בוורסל"
+          : "⚠ לא תקינה, האתר שחזר אותה מהמפתח של סופרבייס ועובד. שווה לתקן בוורסל";
 
   // הכתיבה ל-DB היא השלב שלפני הספק, ורוב התקלות יושבות דווקא בה: טבלה
   // שהמיגרציה לא רצה עליה, או מפתח service role שגוי. בודקים אותה ממש —
@@ -61,13 +61,13 @@ export async function GET(req: NextRequest) {
       expires_at: new Date(Date.now() + 60_000).toISOString(),
     });
     if (wErr) {
-      db = `✗ כתיבה נכשלה — ${wErr.message}`;
+      db = `✗ כתיבה נכשלה, ${wErr.message}`;
     } else {
       await admin.from("phone_otps").delete().eq("phone", probe);
       db = "✓ כתיבה וקריאה עובדות";
     }
   } catch (e) {
-    db = `✗ אין חיבור ל-DB — ${(e as Error).message}`;
+    db = `✗ אין חיבור ל-DB, ${(e as Error).message}`;
   }
 
   if (db.startsWith("✗")) {
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
       db,
       diagnosis: urlShape.startsWith("✗")
         ? "הכתובת של סופרבייס שגויה וגם המפתחות לא מאפשרים לשחזר אותה. בסופרבייס: Project Settings → Data API → Project URL, ולהדביק ל-NEXT_PUBLIC_SUPABASE_URL בוורסל."
-        : "הבעיה בדאטהבייס ולא בסמס. אם כתוב שהטבלה לא קיימת — להריץ את המיגרציה בסופרבייס. אם כתוב הרשאה — לבדוק את SUPABASE_SERVICE_ROLE_KEY.",
+        : "הבעיה בדאטהבייס ולא בסמס. אם כתוב שהטבלה לא קיימת, להריץ את המיגרציה בסופרבייס. אם כתוב הרשאה, לבדוק את SUPABASE_SERVICE_ROLE_KEY.",
     });
   }
 
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
     provider: res.ok ? "נשלח" : res.reason,
     providerCode: res.ok ? null : res.code ?? null,
     diagnosis: res.ok
-      ? "עובד. אם ההודעה לא הגיעה — בדקי חסימת פרסומות אצל המפעיל."
+      ? "עובד. אם ההודעה לא הגיעה, בדקי חסימת פרסומות אצל המפעיל."
       : res.code === -1
         ? "המפתח, שם המשתמש או הסיסמה שגויים. שימי לב ש-SMS4FREE_USER הוא מספר הנייד שאיתו נרשמת לספק, לא אימייל."
         : res.code === -2

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   const { token, email, password } = body;
   if (!token || !email || !password || password.length < 6) {
-    return NextResponse.json({ error: "חסרים פרטים — סיסמה של 6 תווים לפחות" }, { status: 400 });
+    return NextResponse.json({ error: "חסרים פרטים, סיסמה של 6 תווים לפחות" }, { status: 400 });
   }
 
   const db = supabaseAdmin();
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   });
   if (userErr || !created.user) {
     return NextResponse.json(
-      { error: "לא הצלחנו ליצור חשבון — אולי האימייל כבר רשום" },
+      { error: "לא הצלחנו ליצור חשבון, אולי האימייל כבר רשום" },
       { status: 409 }
     );
   }

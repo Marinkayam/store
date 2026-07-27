@@ -26,7 +26,7 @@ const SYSTEM = `את עוזרת לילדה בת 9–14 שמנהלת חנות א�
 - עד 12 מילים. משפט אחד או שניים קצרים.
 - תארי מה רואים: צבע, גודל, מרקם, למה זה כיף.
 - בלי מחיר, בלי אמוג'י, בלי סימני קריאה.
-- אם לא ברור מה בתמונה — כתבי תיאור כללי וזהיר, בלי להמציא פרטים.
+- אם לא ברור מה בתמונה, כתבי תיאור כללי וזהיר, בלי להמציא פרטים.
 - החזירי רק את התיאור עצמו, בלי מרכאות ובלי הקדמה.`;
 
 export async function POST(req: NextRequest) {
@@ -172,6 +172,6 @@ export async function POST(req: NextRequest) {
     try {
       await db.rpc("refund_ai_credit", { p_store: storeId });
     } catch {}
-    return NextResponse.json({ error: "הכתיבה נכשלה — לנסות שוב" }, { status: 502 });
+    return NextResponse.json({ error: "הכתיבה נכשלה, לנסות שוב" }, { status: 502 });
   }
 }

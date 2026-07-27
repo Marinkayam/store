@@ -15,7 +15,7 @@ export interface Milestone {
   emoji: string;
   title: string;
   hint: string;      // מה צריך לעשות כדי להשיג
-  lesson: string;    // מה למדת — זה הלב של הרעיון
+  lesson: string;    // מה למדת, זה הלב של הרעיון
   reached: boolean;
   progress: number;  // 0..1
 }
@@ -33,7 +33,7 @@ export function milestones(s: StoreStats): Milestone[] {
   return [
     m("first_product", "📸", "המוצר הראשון",
       "מוסיפים מוצר אחד לחנות",
-      "העלית מוצר למכירה — זה הצעד שרוב האנשים לא עושים אף פעם.",
+      "העלית מוצר למכירה, זה הצעד שרוב האנשים לא עושים אף פעם.",
       s.products, 1),
 
     m("five_products", "🛍️", "חמישה מוצרים",
@@ -58,7 +58,7 @@ export function milestones(s: StoreStats): Milestone[] {
 
     m("hundred_shekel", "💯", "מאה שקלים",
       "עוד כמה מכירות ואת שם",
-      "₪100 זה לא סכום קטן — זה עסק שעובד, לא מזל.",
+      "₪100 זה לא סכום קטן, זה עסק שעובד, לא מזל.",
       s.revenue, 100),
 
     m("ten_orders", "🔟", "עשר הזמנות",

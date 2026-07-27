@@ -87,7 +87,7 @@ export default function Landing() {
 
       {from && (
         <div className="card px-4 py-3 text-[13px] text-center max-w-sm">
-          {from.emoji} הגעת מ<span className="font-bold">{from.name}</span> — עכשיו תורך
+          {from.emoji} הגעת מ<span className="font-bold">{from.name}</span>, עכשיו תורך
         </div>
       )}
 
@@ -110,7 +110,7 @@ export default function Landing() {
           <span className="font-bold text-[var(--ink)]">
             כאן פותחים דוכן אמיתי, עם עמוד וקישור לשלוח לכולם
           </span>{" "}
-          — ומוכרים את זה לחברים. כל דבר שההורים מסכימים לו.
+         , ומוכרים את זה לחברים. כל דבר שההורים מסכימים לו.
         </p>
       </div>
 
@@ -149,7 +149,7 @@ export default function Landing() {
             <br />
             <span className="text-[var(--muted)]">
               מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE}, עד {LAUNCH_UNTIL_LABEL}. לבנות זה
-              חינם — <b className="text-[var(--ink)]">תשלום חד-פעמי</b>, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
+              חינם, <b className="text-[var(--ink)]">תשלום חד-פעמי</b>, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
               <a href="/price" className="underline font-semibold text-[var(--olive)]">
                 איך זה עובד?
               </a>

@@ -35,7 +35,7 @@ export default function UploadDiag() {
       const data = (await res.json()) as Status;
       setStatus(data);
       if (!data.browserProbe) {
-        setBrowser("✗ השרת לא הצליח לייצר כתובת חתומה — הבעיה בשרת, לא בדפדפן");
+        setBrowser("✗ השרת לא הצליח לייצר כתובת חתומה, הבעיה בשרת, לא בדפדפן");
         return;
       }
       // בדיוק מה שקורה בהעלאה אמיתית: PUT ישיר מהדפדפן אל האחסון
@@ -47,11 +47,11 @@ export default function UploadDiag() {
         });
         setBrowser(
           put.ok
-            ? "✓ הדפדפן מצליח להעלות — ההעלאות אמורות לעבוד"
-            : `✗ האחסון החזיר ${put.status} — לא CORS אלא הרשאה או חתימה`
+            ? "✓ הדפדפן מצליח להעלות, ההעלאות אמורות לעבוד"
+            : `✗ האחסון החזיר ${put.status}, לא CORS אלא הרשאה או חתימה`
         );
       } catch {
-        setBrowser("✗ הדפדפן נחסם. זו הגדרת CORS בדלי — ראי למטה בדיוק מה להדביק");
+        setBrowser("✗ הדפדפן נחסם. זו הגדרת CORS בדלי, ראי למטה בדיוק מה להדביק");
       }
     })();
   }, [key]);
@@ -95,7 +95,7 @@ export default function UploadDiag() {
       <h1 className="text-lg font-bold">בדיקת העלאות</h1>
 
       <section className="bg-white border border-[var(--line)] p-3">
-        <h2 className="text-[13px] font-bold mb-1">מהדפדפן — זו הבדיקה שקובעת</h2>
+        <h2 className="text-[13px] font-bold mb-1">מהדפדפן, זו הבדיקה שקובעת</h2>
         <p className="text-[14px]">{browser}</p>
       </section>
 
