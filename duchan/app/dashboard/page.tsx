@@ -10,10 +10,10 @@ import type { Order } from "@/lib/types";
 // "שולם" מנכה מלאי (בפונקציית DB אטומית). "נמסר" מקבל קונפטי — המיקרו-אינטראקציה היחידה.
 
 const PILL: Record<string, { label: string; cls: string }> = {
-  sent: { label: "חדש", cls: "bg-[#FFF3E0] text-[#A85B00]" },
-  paid: { label: "שולם", cls: "bg-[#E4F3E9] text-[#1F7A42]" },
-  delivered: { label: "נמסר", cls: "bg-[#EDEEF1] text-[#6B6E7A]" },
-  cancelled: { label: "בוטל", cls: "bg-[#FBE9EA] text-[#D2373B]" },
+  sent: { label: "חדש", cls: "bg-[var(--warn-bg)] text-[var(--warn-ink)]" },
+  paid: { label: "שולם", cls: "bg-[#E4F3E9] text-[var(--ok-ink)]" },
+  delivered: { label: "נמסר", cls: "bg-[var(--sub)] text-[var(--muted)]" },
+  cancelled: { label: "בוטל", cls: "bg-[var(--danger-bg)] text-[var(--danger)]" },
 };
 
 type Filter = "all" | "sent" | "paid" | "delivered" | "cancelled";
@@ -121,13 +121,13 @@ export default function OrdersPage() {
     : [];
   const doneCount = checklist.filter((c) => c.done).length;
 
-  if (loading) return <div className="p-6 text-sm text-[#7A7D8A]">רגע…</div>;
+  if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
   if (!store)
     return (
-      <div className="p-8 text-center text-sm text-[#7A7D8A] leading-relaxed">
+      <div className="p-8 text-center text-sm text-[var(--muted)] leading-relaxed">
         עוד אין לך חנות.
         <br />
-        <a href="/onboarding" className="underline text-[#15161B]">בואי נפתח אחת ←</a>
+        <a href="/onboarding" className="underline text-[var(--ink)]">בואי נפתח אחת ←</a>
       </div>
     );
 
@@ -135,10 +135,10 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC] flex items-start justify-between">
+      <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)] flex items-start justify-between">
         <div>
           <h1 className="text-lg font-bold">היי {firstName} 👋</h1>
-          <p className="text-xs text-[#7A7D8A] font-light">
+          <p className="text-xs text-[var(--muted)] font-light">
             {newCount ? `${newCount} הזמנות חדשות` : "הכל מטופל ✨"}
           </p>
         </div>
@@ -149,7 +149,7 @@ export default function OrdersPage() {
       {!store.activated_at && (
         <a
           href="/activate"
-          className="block mx-3 mt-3 bg-[#15161B] text-white rounded-xl p-3.5"
+          className="block mx-3 mt-3 bg-[var(--ink)] text-white p-3.5"
         >
           <div className="flex items-center gap-3">
             <span className="text-2xl">{store.payment_claimed_at ? "⏳" : "🚀"}</span>
@@ -169,12 +169,12 @@ export default function OrdersPage() {
 
       {/* רשימת השלמה — נעלמת לגמרי כשמסיימים */}
       {doneCount < checklist.length && (
-        <div className="mx-3 mt-3 bg-white border border-[#E6E7EC] rounded-xl p-3 text-xs">
+        <div className="mx-3 mt-3 bg-white border border-[var(--line)] p-3 text-xs">
           <div className="flex justify-between font-medium mb-1.5">
             <span>החנות שלך {doneCount} מתוך {checklist.length}</span>
             <span>{"▓".repeat(doneCount)}{"░".repeat(checklist.length - doneCount)}</span>
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[#7A7D8A]">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[var(--muted)]">
             {checklist.map((c) => (
               <span key={c.label}>{c.done ? "✓" : "○"} {c.label}</span>
             ))}
@@ -185,11 +185,11 @@ export default function OrdersPage() {
 
       {/* הקופה שלי */}
       {revenue > 0 && (
-        <div className="mx-3 mt-3 bg-white border border-[#E6E7EC] rounded-xl p-3 flex items-center gap-3">
+        <div className="mx-3 mt-3 bg-white border border-[var(--line)] p-3 flex items-center gap-3">
           <span className="text-2xl">💰</span>
           <div className="flex-1">
             <div className="text-sm font-bold">₪{revenue} בקופה</div>
-            <div className="text-[11px] text-[#7A7D8A]">
+            <div className="text-[11px] text-[var(--muted)]">
               {sold.length} הזמנות ששולמו{topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
             </div>
           </div>
@@ -207,10 +207,10 @@ export default function OrdersPage() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border ${
+                className={`px-3 py-1.5 text-[11px] font-medium whitespace-nowrap border ${
                   filter === f.key
-                    ? "bg-[#15161B] text-white border-[#15161B]"
-                    : "bg-white text-[#7A7D8A] border-[#E6E7EC]"
+                    ? "bg-[var(--ink)] text-white border-[var(--ink)]"
+                    : "bg-white text-[var(--muted)] border-[var(--line)]"
                 }`}
               >
                 {f.label} · {count}
@@ -223,7 +223,7 @@ export default function OrdersPage() {
       <div className="p-3 flex flex-col gap-2">
         {orders.length === 0 &&
           (store.activated_at ? (
-            <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
+            <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
               עוד לא הגיעו הזמנות.
               <br />
               שלחי את הלינק לחברות שלך 👇
@@ -233,20 +233,20 @@ export default function OrdersPage() {
                   navigator.clipboard.writeText(`${window.location.origin}/s/${store.slug}`);
                   showToast("הלינק הועתק");
                 }}
-                className="mt-2 bg-[#15161B] text-white rounded-lg px-4 py-2 text-xs"
+                className="mt-2 bg-[var(--ink)] text-white px-4 py-2 text-xs"
               >
                 העתקת לינק
               </button>
             </div>
           ) : (
-            <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
+            <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
               הזמנות יגיעו אחרי שהדוכן יפורסם.
               <br />
               בינתיים אפשר לשלוח את הלינק ולראות מה חברות אומרות ✨
               <br />
               <a
                 href="/dashboard/share"
-                className="inline-block mt-2 bg-[#15161B] text-white rounded-lg px-4 py-2 text-xs"
+                className="inline-block mt-2 bg-[var(--ink)] text-white px-4 py-2 text-xs"
               >
                 שלחי לחברות
               </a>
@@ -254,25 +254,25 @@ export default function OrdersPage() {
           ))}
 
         {filtered.length === 0 && orders.length > 0 && (
-          <p className="text-center py-8 text-sm text-[#7A7D8A]">אין הזמנות בסינון הזה.</p>
+          <p className="text-center py-8 text-sm text-[var(--muted)]">אין הזמנות בסינון הזה.</p>
         )}
 
         {filtered.map((o) => (
           <div
             key={o.id}
-            className={`bg-white border rounded-xl p-3 ${
+            className={`bg-white border p-3 ${
               o.status === "paid"
-                ? "bg-[#F6FBF7] border-[#CBE8D4]"
+                ? "bg-[var(--ok-bg)] border-[var(--ok-line)]"
                 : o.status === "delivered" || o.status === "cancelled"
-                  ? "opacity-45 border-[#E6E7EC]"
-                  : "border-[#E6E7EC]"
+                  ? "opacity-45 border-[var(--line)]"
+                  : "border-[var(--line)]"
             }`}
           >
             <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[11px] text-[#7A7D8A]">
+              <span className="text-[11px] text-[var(--muted)]">
                 #{o.order_number} · {new Date(o.created_at).toLocaleDateString("he-IL")}
               </span>
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${PILL[o.status].cls}`}>
+              <span className={`text-[10px] font-medium px-2 py-0.5 ${PILL[o.status].cls}`}>
                 {PILL[o.status].label}
               </span>
             </div>
@@ -282,7 +282,7 @@ export default function OrdersPage() {
               </div>
             ))}
             {o.buyer_note && (
-              <div className="text-[11px] text-[#7A7D8A] italic mt-1">"{o.buyer_note}"</div>
+              <div className="text-[11px] text-[var(--muted)] italic mt-1">"{o.buyer_note}"</div>
             )}
 
             {/* הערה אישית של בעלת החנות */}
@@ -294,11 +294,11 @@ export default function OrdersPage() {
                   placeholder="לארוז בורוד, לתת ביום שלישי…"
                   maxLength={120}
                   autoFocus
-                  className="flex-1 border border-[#E6E7EC] rounded-lg px-2.5 py-1.5 text-[12px]"
+                  className="flex-1 border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
                 />
                 <button
                   onClick={() => saveOwnerNote(o)}
-                  className="bg-[#15161B] text-white rounded-lg px-3 text-[11px] font-medium"
+                  className="bg-[var(--ink)] text-white px-3 text-[11px] font-medium"
                 >
                   שמירה
                 </button>
@@ -309,7 +309,7 @@ export default function OrdersPage() {
                   setNoteEditId(o.id);
                   setNoteText(o.owner_note ?? "");
                 }}
-                className="block text-right text-[11px] text-[#A85B00] bg-[#FFF9EE] border border-[#F5E3C2] rounded-lg px-2.5 py-1.5 mt-1.5 w-full"
+                className="block text-right text-[11px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full"
               >
                 📝 {o.owner_note}
               </button>
@@ -320,14 +320,14 @@ export default function OrdersPage() {
                     setNoteEditId(o.id);
                     setNoteText("");
                   }}
-                  className="text-[11px] text-[#7A7D8A] underline mt-1.5"
+                  className="text-[11px] text-[var(--muted)] underline mt-1.5"
                 >
                   📝 הוספת הערה לעצמי
                 </button>
               )
             )}
 
-            <div className="flex justify-between text-xs font-medium border-t border-[#E6E7EC] mt-2 pt-2">
+            <div className="flex justify-between text-xs font-medium border-t border-[var(--line)] mt-2 pt-2">
               <span>סה"כ</span>
               <span>₪{o.total}</span>
             </div>
@@ -335,20 +335,20 @@ export default function OrdersPage() {
               <div className="flex gap-1.5 mt-2">
                 <button
                   onClick={() => markPaid(o)}
-                  className="flex-1 bg-[#15161B] text-white rounded-lg py-2 text-xs font-medium"
+                  className="flex-1 bg-[var(--ink)] text-white py-2 text-xs font-medium"
                 >
                   שולם
                 </button>
                 {/* מספר הקונה לא נאסף אף פעם — השיחה כבר קיימת אצלה בוואטסאפ */}
                 <a
                   href="https://wa.me/"
-                  className="flex-1 bg-white border border-[#E6E7EC] rounded-lg py-2 text-xs font-medium text-center"
+                  className="flex-1 bg-white border border-[var(--line)] py-2 text-xs font-medium text-center"
                 >
                   פתחי וואטסאפ
                 </a>
                 <button
                   onClick={() => cancelOrder(o)}
-                  className="bg-white border border-[#F0CFD0] text-[#D2373B] rounded-lg py-2 px-3 text-xs"
+                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2 px-3 text-xs"
                 >
                   ביטול
                 </button>
@@ -358,13 +358,13 @@ export default function OrdersPage() {
               <div className="flex gap-1.5 mt-2">
                 <button
                   onClick={(e) => markDelivered(o, e)}
-                  className="flex-1 bg-[#15161B] text-white rounded-lg py-2 text-xs font-medium"
+                  className="flex-1 bg-[var(--ink)] text-white py-2 text-xs font-medium"
                 >
                   נמסר
                 </button>
                 <button
                   onClick={() => cancelOrder(o)}
-                  className="bg-white border border-[#F0CFD0] text-[#D2373B] rounded-lg py-2 px-3 text-xs"
+                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2 px-3 text-xs"
                 >
                   ביטול והחזרת מלאי
                 </button>
@@ -375,7 +375,7 @@ export default function OrdersPage() {
       </div>
 
       {toast && (
-        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[#1B1C22] text-white px-4 py-2.5 rounded-3xl text-[13px] z-[90]">
+        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
           {toast}
         </div>
       )}

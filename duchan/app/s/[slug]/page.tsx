@@ -65,10 +65,10 @@ export default async function StorePage({ params }: Props) {
 
   if (data.state === "closed") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[#F5F6F9] text-center px-8">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--canvas)] text-center px-8">
         <div className="text-5xl">🌙</div>
         <h1 className="text-xl font-bold">החנות סגורה כרגע</h1>
-        <p className="text-sm text-[#7A7D8A]">אולי הלינק השתנה, ואולי היא פשוט נחה.</p>
+        <p className="text-sm text-[var(--muted)]">אולי הלינק השתנה, ואולי היא פשוט נחה.</p>
       </div>
     );
   }
@@ -92,21 +92,21 @@ export default async function StorePage({ params }: Props) {
 
 function OpenYourOwn({ slug }: { slug: string }) {
   return (
-    <div className="bg-[#F5F6F9] border-t border-[#E6E7EC] px-6 py-9 text-center">
+    <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-9 text-center">
       <div className="text-3xl">🛍️</div>
-      <h2 className="text-[15px] font-bold text-[#15161B] mt-2">גם לך יש דברים למכור</h2>
-      <p className="text-[12.5px] text-[#5B5E6B] mt-1.5 leading-relaxed max-w-xs mx-auto">
+      <h2 className="text-[15px] font-bold text-[var(--ink)] mt-2">גם לך יש דברים למכור</h2>
+      <p className="text-[12.5px] text-[var(--muted)] mt-1.5 leading-relaxed max-w-xs mx-auto">
         סקווישים שכבר לא בשימוש, צמידים שהכנת, בגדים שקטנו.
         <br />
         חנות משלך נבנית בכמה דקות, מהטלפון.
       </p>
       <a
         href={`/?ref=${slug}`}
-        className="inline-block mt-4 bg-[#15161B] text-white rounded-xl px-6 py-3 text-[13.5px] font-bold"
+        className="inline-block mt-4 bg-[var(--ink)] text-white px-6 py-3 text-[13.5px] font-bold"
       >
         פתחי חנות משלך
       </a>
-      <p className="text-[11px] text-[#A2A5B0] mt-3">
+      <p className="text-[11px] text-[var(--faint)] mt-3">
         נבנה ב<span className="font-bold">דוכן</span> · חינם לבנייה
       </p>
     </div>

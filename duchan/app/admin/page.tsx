@@ -9,7 +9,7 @@ export default async function AdminPage() {
   const admin = await requireAdmin();
   if (!admin) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-[#7A7D8A]">
+      <div className="min-h-screen flex items-center justify-center text-sm text-[var(--muted)]">
         אין כאן כלום 🌵
       </div>
     );

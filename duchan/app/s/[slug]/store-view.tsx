@@ -220,7 +220,7 @@ export default function StoreView({
       {/* רצועת הבעלים — נצמדת למעלה, אפור-שחור ולא בערכה של החנות, כדי שיהיה
           ברור שזו המערכת ולא הדף שהקונות רואות. קונה לא מקבלת אותה בכלל. */}
       {owner && (
-        <div className="sticky top-0 z-40 bg-[#262626] text-white" dir="rtl">
+        <div className="sticky top-0 z-40 bg-[var(--ink)] text-white" dir="rtl">
           <div className="flex items-center justify-between gap-2 px-3 py-2">
             <span className="text-[11px] opacity-80 leading-tight">
               זו החנות שלך
@@ -228,18 +228,18 @@ export default function StoreView({
               <span className="opacity-70">ככה הקונות רואות אותה</span>
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
-              <a href="/dashboard" className="relative bg-white text-[#15161B] rounded-lg px-2.5 py-1.5 text-[11.5px] font-bold">
+              <a href="/dashboard" className="relative bg-white text-[var(--ink)] px-2.5 py-1.5 text-[11.5px] font-bold">
                 הזמנות
                 {owner.newOrders > 0 && (
-                  <span className="absolute -top-1.5 -left-1.5 min-w-4 h-4 px-1 rounded-full bg-[#E4405F] text-white text-[9.5px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1.5 -left-1.5 min-w-4 h-4 px-1 bg-[var(--danger)] text-white text-[9.5px] font-bold flex items-center justify-center">
                     {owner.newOrders}
                   </span>
                 )}
               </a>
-              <a href="/dashboard/products" className="border border-white/30 rounded-lg px-2.5 py-1.5 text-[11.5px]">
+              <a href="/dashboard/products" className="border border-white/30 px-2.5 py-1.5 text-[11.5px]">
                 מוצרים
               </a>
-              <a href="/dashboard/settings" className="border border-white/30 rounded-lg px-2.5 py-1.5 text-[11.5px]">
+              <a href="/dashboard/settings" className="border border-white/30 px-2.5 py-1.5 text-[11.5px]">
                 עיצוב
               </a>
             </div>
@@ -250,7 +250,7 @@ export default function StoreView({
       {/* תצוגה מקדימה — הדוכן בנוי ונראה, אבל עוד לא נפתח להזמנות.
           הרצועה מחוץ לערכת הנושא בכוונה: זו הודעת מערכת, לא חלק מהחנות. */}
       {preview && (
-        <div className="bg-[#FFF3E0] text-[#A85B00] border-b border-[#F5E3C2]" dir="rtl">
+        <div className="bg-[var(--warn-bg)] text-[var(--warn-ink)] border-b border-[var(--warn-line)]" dir="rtl">
           {owner ? (
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
               <span className="text-[11.5px] leading-tight">
@@ -260,7 +260,7 @@ export default function StoreView({
               </span>
               <a
                 href="/activate"
-                className="shrink-0 bg-[#A85B00] text-white rounded-lg px-3 py-2 text-[11.5px] font-bold"
+                className="shrink-0 bg-[var(--warn-ink)] text-white px-3 py-2 text-[11.5px] font-bold"
               >
                 פרסמי את הדוכן
               </a>
@@ -328,7 +328,7 @@ export default function StoreView({
                 >
                   {out ? (
                     // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
-                    <span className="absolute inset-x-0 top-1/4 z-10 bg-[#262626]/78 text-white text-[13px] font-semibold text-center py-1.5 tracking-wide">
+                    <span className="absolute inset-x-0 top-1/4 z-10 bg-[var(--ink)]/78 text-white text-[13px] font-semibold text-center py-1.5 tracking-wide">
                       אזל
                     </span>
                   ) : (
@@ -340,12 +340,14 @@ export default function StoreView({
                       const key = badgeFor(p, bestSellerId, sold);
                       if (!key) return null;
                       const b = BADGES[key];
-                      // רצועה על כל רוחב הכרטיס ולא שבב בפינה: "אחרון במלאי"
-                      // ארוך מהכרטיס בטלפון וגלש החוצה. רצועה לא יכולה לגלוש.
+                      // שבב קטן בפינת התמונה, לא רצועה על כל הרוחב: ברשת של
+                      // שתי עמודות רצועה צבעונית מושכת יותר תשומת לב מהמוצר
+                      // עצמו, ושש רצועות זו ליד זו הופכות את הדף לרעש.
+                      // הרקע לבן והצבע יושב על הטקסט ועל הקו — קריא על כל תמונה.
                       return (
                         <span
-                          className="absolute inset-x-0 top-0 z-10 text-[10.5px] font-semibold text-center py-1"
-                          style={{ background: b.bg, color: b.fg }}
+                          className="absolute top-0 right-0 z-10 bg-white text-[10px] font-semibold px-1.5 py-0.5 border-b border-r-0 border-t-0 border-l"
+                          style={{ color: b.bg, borderColor: b.bg }}
                         >
                           {b.emoji} {b.label}
                         </span>
@@ -396,7 +398,7 @@ export default function StoreView({
       >
         <span className="text-sm">{cartCount} פריטים · ₪{cartTotal}</span>
         <span
-          className="px-4 py-1.5 rounded-full text-[13px] font-bold"
+          className="px-4 py-1.5 text-[13px] font-bold"
           style={{ background: "var(--s-onprimary)", color: "var(--s-primary)" }}
         >
           הזמנה
@@ -417,12 +419,12 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl px-5 pt-3 pb-7 max-h-[88%] overflow-y-auto"
+          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-7 max-h-[88%] overflow-y-auto"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
-          <div className="w-9 h-1 rounded bg-current opacity-15 mx-auto mb-4" />
+          <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-4" />
           <div
-            className="h-40 rounded-2xl flex items-center justify-center text-6xl overflow-hidden"
+            className="h-40 flex items-center justify-center text-6xl overflow-hidden"
             style={{ background: "var(--s-thumb)" }}
           >
             {mediaUrl(current.video_key) ? (
@@ -460,7 +462,7 @@ export default function StoreView({
                   <button
                     key={o}
                     onClick={() => setChoice(o)}
-                    className="text-[13px] font-medium rounded-full px-4 py-2 border-[1.5px] transition"
+                    className="text-[13px] font-medium px-4 py-2 border-[1.5px] transition"
                     style={
                       choice === o
                         ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
@@ -478,7 +480,7 @@ export default function StoreView({
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               disabled={qty <= 1}
-              className="w-8 h-8 rounded-full border-[1.5px] border-current opacity-55 disabled:opacity-20 text-lg"
+              className="w-8 h-8 border-[1.5px] border-current opacity-55 disabled:opacity-20 text-lg"
             >
               −
             </button>
@@ -486,7 +488,7 @@ export default function StoreView({
             <button
               onClick={() => setQty((q) => Math.min(maxQty(current), q + 1))}
               disabled={qty >= maxQty(current)}
-              className="w-8 h-8 rounded-full border-[1.5px] border-current opacity-55 disabled:opacity-20 text-lg"
+              className="w-8 h-8 border-[1.5px] border-current opacity-55 disabled:opacity-20 text-lg"
             >
               +
             </button>
@@ -494,7 +496,7 @@ export default function StoreView({
           <button
             onClick={addToCart}
             disabled={preview || maxQty(current) === 0 || (!!current.options?.length && !choice)}
-            className="w-full rounded-xl py-3.5 text-[15px] font-bold disabled:opacity-40"
+            className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
           >
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
@@ -513,10 +515,10 @@ export default function StoreView({
       {/* order sheet */}
       {orderOpen && (
         <div
-          className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl px-5 pt-3 pb-7 max-h-[88%] overflow-y-auto"
+          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-7 max-h-[88%] overflow-y-auto"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
-          <div className="w-9 h-1 rounded bg-current opacity-15 mx-auto mb-4" />
+          <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-4" />
           <h2 className="text-base font-bold mb-2.5">ההזמנה שלך</h2>
           {cart.map((l) => (
             <div key={lineKey(l.id, l.option)} className="flex justify-between text-[13px] py-1">
@@ -536,10 +538,10 @@ export default function StoreView({
             onChange={(e) => setNote(e.target.value)}
             placeholder="הערה (לא חובה) — אפשר בורוד?"
             maxLength={200}
-            className="w-full border-[1.5px] border-black/20 bg-transparent rounded-xl px-3 py-2.5 text-[13px] my-3"
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] my-3"
           />
           {paySummary && (
-            <div className="rounded-xl border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
+            <div className=" border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
               <span className="font-bold">אפשר לשלם ב:</span> {paySummary}
               {store.payout_note && (
                 <div className="opacity-70 mt-0.5">{store.payout_note}</div>
@@ -554,8 +556,10 @@ export default function StoreView({
           <button
             onClick={sendOrder}
             disabled={sending}
-            className="w-full rounded-xl py-3.5 text-[15px] font-bold disabled:opacity-40"
-            style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+            className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40"
+            /* ירוק של וואטסאפ ולא צבע הערכה: הכפתור הזה מוציא את הקונה
+               מהאתר אל אפליקציה אחרת, והצבע הוא ההבטחה לאן היא הולכת. */
+            style={{ background: "var(--whatsapp)", color: "#ffffff" }}
           >
             {sending ? "רגע…" : "שליחה בוואטסאפ"}
           </button>
@@ -564,7 +568,7 @@ export default function StoreView({
 
       {/* toast */}
       {toast && (
-        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[#1B1C22] text-white px-4 py-2.5 rounded-3xl text-[13px] z-[90]">
+        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
           {toast}
         </div>
       )}

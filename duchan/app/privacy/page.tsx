@@ -8,10 +8,10 @@ export const metadata: Metadata = { title: "מדיניות פרטיות · דו�
 export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[#15161B]">
-        <a href="/" className="text-xs text-[#7A7D8A] underline">← חזרה לדוכן</a>
+      <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
+        <a href="/" className="text-xs text-[var(--muted)] underline">← חזרה לדוכן</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">מדיניות פרטיות</h1>
-        <p className="text-xs text-[#7A7D8A] mb-8">גרסה 1.0</p>
+        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.0</p>
 
         <Section title="העיקרון">
           דוכן נבנתה סביב איסוף מידע מינימלי. אנחנו אוספים רק את מה שנדרש כדי
@@ -79,7 +79,7 @@ export default function PrivacyPage() {
           <a href={`mailto:${CONTACT_EMAIL}`} className="underline" dir="ltr">{CONTACT_EMAIL}</a>
         </Section>
 
-        <p className="text-xs text-[#7A7D8A] mt-8">
+        <p className="text-xs text-[var(--muted)] mt-8">
           ראו גם: <a href="/terms" className="underline">תנאי השימוש</a>
         </p>
       </div>
@@ -91,7 +91,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section className="mb-6">
       <h2 className="font-bold mb-1.5">{title}</h2>
-      <p className="text-[14px] text-[#3A3C46]">{children}</p>
+      <p className="text-[14px] text-[var(--muted)]">{children}</p>
     </section>
   );
 }

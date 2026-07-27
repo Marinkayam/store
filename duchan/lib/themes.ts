@@ -25,13 +25,14 @@ export interface Theme {
   shadow: string;
 }
 
-const R = "12px";
-const SOFT = "0 2px 12px rgba(0,0,0,0.05)";
+// פינה ישרה בכל הערכות. העיצוב נשען על קו וריווח, לא על עיגול.
+const R = "0px";
+const SOFT = "none";
 
 export const THEMES: Record<ThemeKey, Theme> = {
   cloud:   { label: "שמנת",   bg: "#FBF8F3", surface: "#FFFFFF", ink: "#262626", primary: "#A8A46D", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#F6F0E8", border: "1px solid #D6CFC4", shadow: SOFT },
   berry:   { label: "לבנדר",  bg: "#F7F3F9", surface: "#FFFFFF", ink: "#31243A", primary: "#B89AC8", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#F3EDF7", border: "1px solid #DCD0E4", shadow: SOFT },
-  night:   { label: "לילה",   bg: "#232028", surface: "#2E2A35", ink: "#F4F1EC", primary: "#C9B7DA", onPrimary: "#232028", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#38333F", border: "1px solid #443E4D", shadow: "0 2px 12px rgba(0,0,0,0.25)" },
+  night:   { label: "לילה",   bg: "#232028", surface: "#2E2A35", ink: "#F4F1EC", primary: "#C9B7DA", onPrimary: "#232028", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#38333F", border: "1px solid #443E4D", shadow: "none" },
   pastel:  { label: "זית",    bg: "#F4F5EC", surface: "#FFFFFF", ink: "#2C3020", primary: "#8CA78C", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#EEF1E4", border: "1px solid #D3D6C2", shadow: SOFT },
   candy:   { label: "אפרסק",  bg: "#FDF2EC", surface: "#FFFFFF", ink: "#3A241A", primary: "#D9967A", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#FBEBE1", border: "1px solid #E8D3C6", shadow: SOFT },
   minimal: { label: "עץ",     bg: "#FAF6F1", surface: "#FFFFFF", ink: "#2B2118", primary: "#B9824A", onPrimary: "#FFFFFF", radius: R, font: "'Inter','Heebo',sans-serif",     thumb: "#F5EDE3", border: "1px solid #E0D3C4", shadow: SOFT },

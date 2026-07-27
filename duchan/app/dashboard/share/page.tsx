@@ -39,7 +39,7 @@ export default function SharePage() {
     setTimeout(() => setToast(""), 2200);
   };
 
-  if (loading || !counted) return <div className="p-6 text-sm text-[#7A7D8A]">רגע…</div>;
+  if (loading || !counted) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
   if (!store) return null;
 
   /**
@@ -52,20 +52,20 @@ export default function SharePage() {
   if (products === 0)
     return (
       <div>
-        <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC]">
+        <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)]">
           <h1 className="text-lg font-bold">להפיץ</h1>
         </header>
         <div className="px-6 py-16 text-center flex flex-col items-center gap-3">
           <div className="text-5xl">📦</div>
           <h2 className="text-[15px] font-bold">רגע לפני ששולחים</h2>
-          <p className="text-[13px] text-[#7A7D8A] leading-relaxed max-w-xs">
+          <p className="text-[13px] text-[var(--muted)] leading-relaxed max-w-xs">
             בדוכן שלך עוד אין מוצרים.
             <br />
             חברה שתיכנס עכשיו תראה מדף ריק — שווה להוסיף מוצר אחד קודם.
           </p>
           <a
             href="/dashboard/products?new=1"
-            className="mt-2 bg-[#15161B] text-white rounded-xl px-6 py-3 text-[13.5px] font-bold"
+            className="mt-2 bg-[var(--ink)] text-white px-6 py-3 text-[13.5px] font-bold"
           >
             בואי נוסיף את המוצר הראשון
           </a>
@@ -94,15 +94,15 @@ export default function SharePage() {
 
   return (
     <div>
-      <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC]">
+      <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)]">
         <h1 className="text-lg font-bold">להפיץ</h1>
-        <p className="text-xs text-[#7A7D8A] font-light">
+        <p className="text-xs text-[var(--muted)] font-light">
           הודעות מוכנות. בוחרים, משנים אם בא לך, ושולחים.
         </p>
       </header>
 
       {!store.activated_at && (
-        <a href="/activate" className="block mx-3 mt-3 bg-[#15161B] text-white rounded-xl p-3.5">
+        <a href="/activate" className="block mx-3 mt-3 bg-[var(--ink)] text-white p-3.5">
           <div className="text-[13.5px] font-bold">הלינק עובד — בתצוגה מקדימה</div>
           <div className="text-[11.5px] opacity-70 leading-relaxed">
             חברות כבר יכולות להיכנס ולראות הכל. כדי שיוכלו גם להזמין — לפרסום הדוכן →
@@ -115,7 +115,7 @@ export default function SharePage() {
           const open = openKey === t.key;
           const text = textFor(t.key);
           return (
-            <div key={t.key} className="bg-white border border-[#E6E7EC] rounded-xl overflow-hidden">
+            <div key={t.key} className="bg-white border border-[var(--line)] overflow-hidden">
               <button
                 onClick={() => setOpenKey(open ? "" : t.key)}
                 className="w-full flex items-center gap-3 p-3 text-right"
@@ -123,9 +123,9 @@ export default function SharePage() {
                 <span className="text-xl">{t.icon}</span>
                 <div className="flex-1">
                   <div className="text-[13.5px] font-bold">{t.label}</div>
-                  <div className="text-[11px] text-[#7A7D8A]">{t.when}</div>
+                  <div className="text-[11px] text-[var(--muted)]">{t.when}</div>
                 </div>
-                <span className="text-[#A2A5B0] text-xs">{open ? "▲" : "▼"}</span>
+                <span className="text-[var(--faint)] text-xs">{open ? "▲" : "▼"}</span>
               </button>
 
               {open && (
@@ -134,18 +134,18 @@ export default function SharePage() {
                     value={text}
                     onChange={(e) => setEdited({ ...edited, [t.key]: e.target.value })}
                     rows={Math.max(4, text.split("\n").length + 1)}
-                    className="w-full border border-[#E6E7EC] rounded-xl p-3 text-[13px] leading-relaxed bg-[#FAFBFC]"
+                    className="w-full border border-[var(--line)] p-3 text-[13px] leading-relaxed bg-[var(--canvas)]"
                   />
                   <div className="flex gap-1.5 mt-2">
                     <button
                       onClick={() => send(text)}
-                      className="flex-1 bg-[#25D366] text-white rounded-lg py-2.5 text-[12.5px] font-bold"
+                      className="flex-1 bg-[var(--whatsapp)] text-white py-2.5 text-[12.5px] font-bold"
                     >
                       שליחה בוואטסאפ
                     </button>
                     <button
                       onClick={() => copy(text)}
-                      className="flex-1 border border-[#E6E7EC] rounded-lg py-2.5 text-[12.5px] font-medium"
+                      className="flex-1 border border-[var(--line)] py-2.5 text-[12.5px] font-medium"
                     >
                       העתקה
                     </button>
@@ -156,7 +156,7 @@ export default function SharePage() {
                           delete next[t.key];
                           setEdited(next);
                         }}
-                        className="border border-[#E6E7EC] rounded-lg px-3 text-[12.5px] text-[#7A7D8A]"
+                        className="border border-[var(--line)] px-3 text-[12.5px] text-[var(--muted)]"
                       >
                         איפוס
                       </button>
@@ -169,9 +169,9 @@ export default function SharePage() {
         })}
 
         {/* הזמנת חברות לפתוח חנות — הלולאה שמייצרת את הרשת */}
-        <div className="bg-[#FFF9EE] border border-[#F5E3C2] rounded-xl p-3.5 mt-2">
+        <div className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3.5 mt-2">
           <div className="text-[13.5px] font-bold">להזמין חברה לפתוח חנות</div>
-          <p className="text-[12px] text-[#A85B00] leading-relaxed mt-1">
+          <p className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-1">
             כשחברות פותחות חנויות, כולן מוכרות יותר — כי כולן גם קונות.
             {store.ref_clicks > 0 && (
               <>
@@ -183,20 +183,20 @@ export default function SharePage() {
           <div className="flex gap-1.5 mt-2.5">
             <button
               onClick={() => send(inviteText(ctx, refLink))}
-              className="flex-1 bg-[#15161B] text-white rounded-lg py-2.5 text-[12.5px] font-bold"
+              className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
             >
               שליחת הזמנה
             </button>
             <button
               onClick={() => copy(refLink)}
-              className="flex-1 bg-white border border-[#F5E3C2] rounded-lg py-2.5 text-[12.5px] font-medium"
+              className="flex-1 bg-white border border-[var(--warn-line)] py-2.5 text-[12.5px] font-medium"
             >
               העתקת הלינק
             </button>
           </div>
         </div>
 
-        <div className="text-center text-[11.5px] text-[#7A7D8A] leading-relaxed px-4 py-4">
+        <div className="text-center text-[11.5px] text-[var(--muted)] leading-relaxed px-4 py-4">
           טיפ: הודעה אחת לקבוצה עובדת פחות טוב מחמש הודעות אישיות.
           <br />
           אנשים עונים למי שפונה אליהם בשם.
@@ -204,7 +204,7 @@ export default function SharePage() {
       </div>
 
       {toast && (
-        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[#1B1C22] text-white px-4 py-2.5 rounded-3xl text-[13px] z-[90]">
+        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
           {toast}
         </div>
       )}

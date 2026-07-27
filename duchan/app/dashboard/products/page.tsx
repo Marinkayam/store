@@ -560,14 +560,14 @@ export default function ProductsPage() {
     loadDeleted();
   }
 
-  if (loading) return <div className="p-6 text-sm text-[#7A7D8A]">רגע…</div>;
+  if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
   if (!store) return null;
 
   return (
     <div>
-      <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC]">
+      <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)]">
         <h1 className="text-lg font-bold">המוצרים שלי</h1>
-        <p className="text-xs text-[#7A7D8A] font-light">
+        <p className="text-xs text-[var(--muted)] font-light">
           {products.length} מתוך {QUOTAS.productsPerStore}
         </p>
       </header>
@@ -578,14 +578,14 @@ export default function ProductsPage() {
         {products.length === 0 && (
           <div className="text-center py-12 flex flex-col items-center gap-3">
             <div className="text-5xl">🛍️</div>
-            <p className="text-sm text-[#7A7D8A] leading-relaxed">
+            <p className="text-sm text-[var(--muted)] leading-relaxed">
               הדוכן שלך ריק בינתיים.
               <br />
               כל מוצר לוקח פחות מדקה — תמונה, שם, מחיר.
             </p>
             <button
               onClick={() => openEditor(null)}
-              className="mt-1 bg-[#15161B] text-white rounded-xl px-6 py-3 text-[13.5px] font-bold"
+              className="mt-1 bg-[var(--ink)] text-white px-6 py-3 text-[13.5px] font-bold"
             >
               הוספת מוצר ראשון
             </button>
@@ -599,14 +599,14 @@ export default function ProductsPage() {
             <div
               key={p.id}
               onClick={() => openEditor(p)}
-              className={`bg-white border border-[#E6E7EC] rounded-xl p-2.5 flex gap-2.5 items-center text-right cursor-pointer ${out || hidden ? "opacity-55" : ""}`}
+              className={`bg-white border border-[var(--line)] p-2.5 flex gap-2.5 items-center text-right cursor-pointer ${out || hidden ? "opacity-55" : ""}`}
             >
               {/* סידור */}
               <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => move(p, -1)}
                   disabled={idx === 0}
-                  className="w-6 h-6 rounded border border-[#E6E7EC] bg-[#F5F6F9] text-[10px] leading-none disabled:opacity-25"
+                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[10px] leading-none disabled:opacity-25"
                   aria-label="להזיז למעלה"
                 >
                   ▲
@@ -614,16 +614,16 @@ export default function ProductsPage() {
                 <button
                   onClick={() => move(p, 1)}
                   disabled={idx === products.length - 1}
-                  className="w-6 h-6 rounded border border-[#E6E7EC] bg-[#F5F6F9] text-[10px] leading-none disabled:opacity-25"
+                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[10px] leading-none disabled:opacity-25"
                   aria-label="להזיז למטה"
                 >
                   ▼
                 </button>
               </div>
-              <div className="w-13 h-13 min-w-13 rounded-lg bg-[#F5F6F9] flex items-center justify-center text-2xl overflow-hidden relative">
+              <div className="w-13 h-13 min-w-13 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden relative">
                 {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                 {p.video_key && (
-                  <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1 rounded">
+                  <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1 ">
                     וידאו
                   </span>
                 )}
@@ -632,24 +632,24 @@ export default function ProductsPage() {
                 {/* השורה כולה פותחת עריכה, אבל בלי סימן אי אפשר לדעת את זה */}
                 <div className="text-sm font-medium flex items-center gap-1.5">
                   {p.name}
-                  <span className="text-[10px] text-[#A2A5B0] font-normal">✎ עריכה</span>
+                  <span className="text-[10px] text-[var(--faint)] font-normal">✎ עריכה</span>
                 </div>
                 {p.description && (
-                  <div className="text-[11px] text-[#7A7D8A] truncate">{p.description}</div>
+                  <div className="text-[11px] text-[var(--muted)] truncate">{p.description}</div>
                 )}
                 <div className="flex gap-1.5 items-center mt-1 flex-wrap">
                   <span className="text-[13px] font-medium">₪{p.price}</span>
                   {hidden && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#EDEEF1] text-[#6B6E7A]">מוסתר</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
                   )}
                   {!p.track_stock ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F5F6F9] text-[#7A7D8A]">בלי מעקב</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">בלי מעקב</span>
                   ) : out ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FBE9EA] text-[#D2373B] font-bold">אזל</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
                   ) : p.stock <= 2 ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFF3E0] text-[#A85B00]">נשארו {p.stock}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
                   ) : (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F5F6F9] text-[#7A7D8A]">{p.stock} במלאי</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">{p.stock} במלאי</span>
                   )}
                 </div>
               </div>
@@ -658,7 +658,7 @@ export default function ProductsPage() {
                 <div className="flex flex-col gap-1 items-center" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => quickStock(p, 1)}
-                    className="w-7 h-7 rounded-lg border border-[#E6E7EC] bg-white text-sm"
+                    className="w-7 h-7 border border-[var(--line)] bg-white text-sm"
                     aria-label="הוספה למלאי"
                   >
                     +
@@ -666,7 +666,7 @@ export default function ProductsPage() {
                   <button
                     onClick={() => quickStock(p, -1)}
                     disabled={p.stock === 0}
-                    className="w-7 h-7 rounded-lg border border-[#E6E7EC] bg-white text-sm disabled:opacity-25"
+                    className="w-7 h-7 border border-[var(--line)] bg-white text-sm disabled:opacity-25"
                     aria-label="הורדה מהמלאי"
                   >
                     −
@@ -680,7 +680,7 @@ export default function ProductsPage() {
         {deleted.length > 0 && (
           <button
             onClick={() => setDeletedOpen(true)}
-            className="text-center text-xs text-[#7A7D8A] underline py-2"
+            className="text-center text-xs text-[var(--muted)] underline py-2"
           >
             מוצרים שנמחקו ({deleted.length}) — אפשר לשחזר תוך 30 יום
           </button>
@@ -691,7 +691,7 @@ export default function ProductsPage() {
       <button
         onClick={() => openEditor(null)}
         aria-label="מוצר חדש"
-        className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] h-12 rounded-2xl bg-[#15161B] text-white text-[15px] font-bold shadow-lg z-30 flex items-center justify-center gap-2"
+        className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] h-12 bg-[var(--ink)] text-white text-[15px] font-bold  z-30 flex items-center justify-center gap-2"
       >
         <span className="text-xl font-light">+</span> מוצר חדש
       </button>
@@ -700,11 +700,11 @@ export default function ProductsPage() {
       {edit && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setEdit(null)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white rounded-t-3xl px-4 pt-3 pb-6 max-h-[90%] overflow-y-auto">
-            <div className="w-9 h-1 rounded bg-black/15 mx-auto mb-3.5" />
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-6 max-h-[90%] overflow-y-auto">
+            <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
 
-            <div className="h-38 rounded-xl bg-[#F5F6F9] border-[1.5px] border-dashed border-[#D3D5DC] flex items-center justify-center text-5xl overflow-hidden relative mb-2.5" style={{ height: "9.5rem" }}>
+            <div className="h-38 bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex items-center justify-center text-5xl overflow-hidden relative mb-2.5" style={{ height: "9.5rem" }}>
               {edit.previewUrl ? (
                 <>
                   <button
@@ -716,7 +716,7 @@ export default function ProductsPage() {
                         imageKey: null, videoKey: null, posterKey: null,
                       })
                     }
-                    className="absolute top-1.5 left-1.5 bg-black/55 text-white w-6 h-6 rounded-full text-sm z-10"
+                    className="absolute top-1.5 left-1.5 bg-black/55 text-white w-6 h-6 text-sm z-10"
                   >
                     ✕
                   </button>
@@ -739,42 +739,42 @@ export default function ProductsPage() {
               onChange={(e) => e.target.files?.[0] && onGalleryVideo(e.target.files[0])} />
 
             <div className="flex gap-2 mb-3.5">
-              <button onClick={openRecorder} className="flex-1 border border-[#E6E7EC] rounded-lg py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
+              <button onClick={openRecorder} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
                 <span className="text-base">🎬</span>הקלטת וידאו
               </button>
-              <button onClick={() => photoRef.current?.click()} className="flex-1 border border-[#E6E7EC] rounded-lg py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
+              <button onClick={() => photoRef.current?.click()} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
                 <span className="text-base">📷</span>תמונה
               </button>
-              <button onClick={() => galleryRef.current?.click()} className="flex-1 border border-[#E6E7EC] rounded-lg py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
+              <button onClick={() => galleryRef.current?.click()} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
                 <span className="text-base">🖼️</span>מהגלריה
               </button>
             </div>
 
-            <label className="block text-[11px] text-[#7A7D8A] mb-1">שם המוצר</label>
+            <label className="block text-[11px] text-[var(--muted)] mb-1">שם המוצר</label>
             <input value={edit.name} maxLength={40} aria-label="שם המוצר"
               onChange={(e) => setEdit((s) => s && { ...s, name: e.target.value })}
-              className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3" />
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3" />
 
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[11px] text-[#7A7D8A]">תיאור קצר</label>
+              <label className="block text-[11px] text-[var(--muted)]">תיאור קצר</label>
               {store.ai_enabled && (edit.pendingImage || edit.imageKey || edit.posterKey) && (
                 <button onClick={writeDescription} disabled={aiBusy}
-                  className="text-[11px] text-[#15161B] border border-[#E6E7EC] rounded-lg px-2 py-1 disabled:opacity-50">
+                  className="text-[11px] text-[var(--ink)] border border-[var(--line)] px-2 py-1 disabled:opacity-50">
                   {aiBusy ? "כותבים…" : "✨ כתבי לי תיאור"}
                 </button>
               )}
             </div>
             <textarea value={edit.description} maxLength={120} rows={2} placeholder="רך במיוחד, חוזר לאט"
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
-              className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3 resize-none" />
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3 resize-none" />
 
-            <label className="block text-[11px] text-[#7A7D8A] mb-1">מחיר (₪)</label>
+            <label className="block text-[11px] text-[var(--muted)] mb-1">מחיר (₪)</label>
             <input value={edit.price} type="number" inputMode="numeric" aria-label="מחיר"
               onChange={(e) => setEdit((s) => s && { ...s, price: e.target.value })}
-              className="w-full border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm mb-3" />
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3" />
 
             {/* אפשרויות לבחירה — צבע, מידה, טעם. אחת פר מוצר, בלי מלאי נפרד. */}
-            <label className="block text-[11px] text-[#7A7D8A] mb-1">
+            <label className="block text-[11px] text-[var(--muted)] mb-1">
               אפשרויות לבחירה (לא חובה)
             </label>
             <div className="flex gap-2 mb-2">
@@ -784,7 +784,7 @@ export default function ProductsPage() {
                 placeholder="צבע"
                 aria-label="שם האפשרות"
                 onChange={(e) => setEdit((s) => s && { ...s, optionLabel: e.target.value })}
-                className="w-24 border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm"
+                className="w-24 border border-[var(--line)] px-3 py-2.5 text-sm"
               />
               <input
                 value={edit.optionsText}
@@ -792,90 +792,92 @@ export default function ProductsPage() {
                 placeholder="ורוד, כחול, צהוב"
                 aria-label="הבחירות"
                 onChange={(e) => setEdit((s) => s && { ...s, optionsText: e.target.value })}
-                className="flex-1 border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm"
+                className="flex-1 border border-[var(--line)] px-3 py-2.5 text-sm"
               />
             </div>
             {optionValues.length > 0 ? (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {optionValues.map((o) => (
-                  <span key={o} className="text-[11px] bg-[#F5F6F9] rounded-full px-2.5 py-1">
+                  // data-chip ולא מחלקת עיצוב: בדיקה שנתלית על שם מחלקה נשברת
+                  // בכל שינוי עיצובי, ואז מחפשים באג שאין
+                  <span key={o} data-chip="option" className="text-[11px] bg-[var(--canvas)] border border-[var(--line)] px-2.5 py-1">
                     {o}
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-[#A2A5B0] mb-3">
+              <p className="text-[11px] text-[var(--faint)] mb-3">
                 מפרידים בפסיק. הקונה תבחר אחת לפני שהיא מוסיפה לסל.
               </p>
             )}
 
             {/* תגיות. רק שתיים לבחירה — השאר מחושבות מהמכירות ומהמלאי, וזה
                 בכוונה: "הכי נמכר" שאפשר להדביק הוא מדבקה, לא הישג. */}
-            <label className="block text-[11px] text-[#7A7D8A] mb-1">תגית (לא חובה)</label>
+            <label className="block text-[11px] text-[var(--muted)] mb-1">תגית (לא חובה)</label>
             <div className="flex gap-2 mb-1">
               {PICKABLE.map((b) => (
                 <button
                   key={b.key}
                   onClick={() => setEdit((s) => s && { ...s, badge: s.badge === b.key ? null : b.key })}
-                  className={`flex-1 rounded-lg border py-2 text-[12.5px] transition ${
+                  className={`flex-1 border py-2 text-[12.5px] transition ${
                     edit.badge === b.key
-                      ? "border-[#15161B] bg-[#15161B] text-white font-bold"
-                      : "border-[#E6E7EC] bg-white"
+                      ? "border-[var(--ink)] bg-[var(--ink)] text-white font-bold"
+                      : "border-[var(--line)] bg-white"
                   }`}
                 >
                   {b.emoji} {b.label}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-[#A2A5B0] mb-3 leading-relaxed">
+            <p className="text-[11px] text-[var(--faint)] mb-3 leading-relaxed">
               ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי מופיעות לבד, לפי מה שבאמת קורה בחנות.
             </p>
 
-            <div className="flex justify-between items-center border border-[#E6E7EC] rounded-lg px-3 py-2.5 mb-3">
+            <div className="flex justify-between items-center border border-[var(--line)] px-3 py-2.5 mb-3">
               <span className="text-[13px]">מוצג בחנות</span>
               <button
                 onClick={() => setEdit((s) => s && { ...s, isVisible: !s.isVisible })}
-                className={`w-10 h-6 rounded-full relative transition ${edit.isVisible ? "bg-[#1F7A42]" : "bg-[#D6D8DE]"}`}
+                className={`w-10 h-6 relative transition ${edit.isVisible ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
               >
-                <i className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white transition-all ${edit.isVisible ? "right-[19px]" : "right-[3px]"}`} />
+                <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.isVisible ? "right-[19px]" : "right-[3px]"}`} />
               </button>
             </div>
 
-            <div className="flex justify-between items-center border border-[#E6E7EC] rounded-lg px-3 py-2.5 mb-3">
+            <div className="flex justify-between items-center border border-[var(--line)] px-3 py-2.5 mb-3">
               <span className="text-[13px]">מעקב מלאי</span>
               <button
                 onClick={() => setEdit((s) => s && { ...s, trackStock: !s.trackStock })}
-                className={`w-10 h-6 rounded-full relative transition ${edit.trackStock ? "bg-[#1F7A42]" : "bg-[#D6D8DE]"}`}
+                className={`w-10 h-6 relative transition ${edit.trackStock ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
               >
-                <i className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white transition-all ${edit.trackStock ? "right-[19px]" : "right-[3px]"}`} />
+                <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.trackStock ? "right-[19px]" : "right-[3px]"}`} />
               </button>
             </div>
 
             {edit.trackStock && (
               <>
-                <label className="block text-[11px] text-[#7A7D8A] mb-1">כמה יש לי כאלה</label>
-                <div className="flex items-center gap-3 border border-[#E6E7EC] rounded-lg px-3 py-2 mb-3">
+                <label className="block text-[11px] text-[var(--muted)] mb-1">כמה יש לי כאלה</label>
+                <div className="flex items-center gap-3 border border-[var(--line)] px-3 py-2 mb-3">
                   <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
-                    className="w-8 h-8 rounded-lg border border-[#E6E7EC] bg-[#F5F6F9] text-base">−</button>
+                    className="w-8 h-8 border border-[var(--line)] bg-[var(--canvas)] text-base">−</button>
                   <span className="flex-1 text-center text-base font-semibold">{edit.stock}</span>
                   <button onClick={() => setEdit((s) => s && { ...s, stock: s.stock + 1 })}
-                    className="w-8 h-8 rounded-lg border border-[#E6E7EC] bg-[#F5F6F9] text-base">+</button>
+                    className="w-8 h-8 border border-[var(--line)] bg-[var(--canvas)] text-base">+</button>
                 </div>
               </>
             )}
 
             <button onClick={save} disabled={busy}
-              className="w-full bg-[#15161B] text-white rounded-xl py-3 text-sm font-bold disabled:opacity-50">
+              className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold disabled:opacity-50">
               {busy ? "שומרים…" : "שמירה"}
             </button>
             {edit.id && (
               <>
                 <button onClick={duplicateProduct}
-                  className="w-full mt-2 border border-[#E6E7EC] rounded-xl py-2.5 text-sm">
+                  className="w-full mt-2 border border-[var(--line)] py-2.5 text-sm">
                   שכפול המוצר
                 </button>
                 <button onClick={softDelete}
-                  className="w-full mt-2 border border-[#F0CFD0] text-[#D2373B] rounded-xl py-2.5 text-sm">
+                  className="w-full mt-2 border border-[var(--danger-line)] text-[var(--danger)] py-2.5 text-sm">
                   מחיקת המוצר
                 </button>
               </>
@@ -888,28 +890,28 @@ export default function ProductsPage() {
       {deletedOpen && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setDeletedOpen(false)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white rounded-t-3xl px-4 pt-3 pb-6 max-h-[70%] overflow-y-auto">
-            <div className="w-9 h-1 rounded bg-black/15 mx-auto mb-3.5" />
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-6 max-h-[70%] overflow-y-auto">
+            <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">מוצרים שנמחקו</h2>
             {deleted.length === 0 && (
-              <p className="text-sm text-[#7A7D8A] py-4 text-center">אין מוצרים לשחזור.</p>
+              <p className="text-sm text-[var(--muted)] py-4 text-center">אין מוצרים לשחזור.</p>
             )}
             {deleted.map((p) => {
               const img = mediaUrl(p.poster_key) ?? mediaUrl(p.image_key);
               return (
-                <div key={p.id} className="flex gap-3 items-center py-2 border-b border-[#F0F1F4] last:border-0">
-                  <div className="w-10 h-10 rounded-lg bg-[#F5F6F9] flex items-center justify-center text-lg overflow-hidden">
+                <div key={p.id} className="flex gap-3 items-center py-2 border-b border-[var(--line)] last:border-0">
+                  <div className="w-10 h-10 bg-[var(--canvas)] flex items-center justify-center text-lg overflow-hidden">
                     {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>
-                    <div className="text-[11px] text-[#7A7D8A]">
+                    <div className="text-[11px] text-[var(--muted)]">
                       נמחק ב-{new Date(p.deleted_at!).toLocaleDateString("he-IL")} · ₪{p.price}
                     </div>
                   </div>
                   <button
                     onClick={() => restore(p)}
-                    className="bg-[#15161B] text-white rounded-lg px-3.5 py-2 text-xs font-medium"
+                    className="bg-[var(--ink)] text-white px-3.5 py-2 text-xs font-medium"
                   >
                     שחזור
                   </button>
@@ -922,10 +924,10 @@ export default function ProductsPage() {
 
       {/* recorder overlay */}
       {recOpen && (
-        <div className="fixed inset-0 bg-[#0B0B0F] z-[70] flex flex-col items-center justify-between py-8">
+        <div className="fixed inset-0 bg-[var(--ink)] z-[70] flex flex-col items-center justify-between py-8">
           <video ref={videoRef} muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-90" />
-          <button onClick={closeRecorder} className="absolute top-5 left-4 bg-black/45 text-white w-8 h-8 rounded-full z-10">✕</button>
-          <div className="relative z-10 text-white text-xs bg-black/45 px-3.5 py-1.5 rounded-full">
+          <button onClick={closeRecorder} className="absolute top-5 left-4 bg-black/45 text-white w-8 h-8 z-10">✕</button>
+          <div className="relative z-10 text-white text-xs bg-black/45 px-3.5 py-1.5 ">
             לחיצה ארוכה כדי להקליט · עד {RECORD_SECONDS} שניות · בלי קול
           </div>
           <div
@@ -937,10 +939,10 @@ export default function ProductsPage() {
           >
             <svg className="absolute inset-0 -rotate-90" viewBox="0 0 84 84">
               <circle cx="42" cy="42" r="39" fill="none" strokeWidth="5" stroke="rgba(255,255,255,.28)" />
-              <circle cx="42" cy="42" r="39" fill="none" strokeWidth="5" stroke="#FF4757"
+              <circle cx="42" cy="42" r="39" fill="none" strokeWidth="5" stroke="var(--danger)"
                 strokeDasharray="245" strokeDashoffset={245 * (1 - recProgress)} />
             </svg>
-            <div className={`bg-[#FF4757] transition-all ${recLive ? "w-9 h-9 rounded-xl" : "w-15 h-15 rounded-full"}`}
+            <div className={`bg-[var(--danger)] transition-all ${recLive ? "w-9 h-9 " : "w-15 h-15 "}`}
               style={recLive ? { width: 34, height: 34 } : { width: 60, height: 60 }} />
           </div>
         </div>
@@ -953,14 +955,14 @@ export default function ProductsPage() {
         <div className="fixed inset-0 z-[95] bg-white flex flex-col items-center justify-center text-center px-8 gap-4">
           <div className="text-6xl">🎉</div>
           <h2 className="text-[22px] font-bold leading-tight">הדוכן שלך באוויר!</h2>
-          <p className="text-[13.5px] text-[#7A7D8A] leading-relaxed max-w-xs">
+          <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">
             יש בו מוצר, יש לו לינק, והוא נראה בדיוק כמו שבנית אותו.
             <br />
             עכשיו הדבר הכי כיף — לשלוח אותו.
           </p>
           <a
             href="/dashboard/share"
-            className="w-full max-w-xs bg-[#15161B] text-white rounded-xl py-4 text-[15px] font-bold"
+            className="w-full max-w-xs bg-[var(--ink)] text-white py-4 text-[15px] font-bold"
           >
             שלחי לחברות
           </a>
@@ -971,21 +973,21 @@ export default function ProductsPage() {
               setCelebrate(false);
               openEditor(null);
             }}
-            className="w-full max-w-xs border-[1.5px] border-[#E6E7EC] rounded-xl py-3.5 text-[14px] font-bold"
+            className="w-full max-w-xs border-[1.5px] border-[var(--line)] py-3.5 text-[14px] font-bold"
           >
             להוסיף עוד מוצר
           </button>
-          <a href={`/s/${store.slug}`} className="text-[13px] text-[#15161B] underline">
+          <a href={`/s/${store.slug}`} className="text-[13px] text-[var(--ink)] underline">
             לראות איך הדוכן נראה
           </a>
-          <button onClick={() => setCelebrate(false)} className="text-[12.5px] text-[#A2A5B0]">
+          <button onClick={() => setCelebrate(false)} className="text-[12.5px] text-[var(--faint)]">
             סגירה
           </button>
         </div>
       )}
 
       {toast && (
-        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[#1B1C22] text-white px-4 py-2.5 rounded-3xl text-[13px] z-[90]">
+        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
           {toast}
         </div>
       )}

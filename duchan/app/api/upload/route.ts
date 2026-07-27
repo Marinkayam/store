@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
     !contentType || !(contentType in EXT) ||
     !bytes || bytes <= 0 || bytes > QUOTAS.maxUploadBytes
   ) {
-    return NextResponse.json({ error: "קובץ לא נתמך" }, { status: 400 });
+    // הסוג נכנס להודעה בכוונה: "קובץ לא נתמך" בלי פרטים שלח אותנו לחפש
+    // באפלה כשסרטוני אייפון (video/quicktime) נדחו כולם.
+    return NextResponse.json(
+      { error: `קובץ לא נתמך${contentType ? ` (${contentType})` : ""}` },
+      { status: 400 }
+    );
   }
   if (kind !== "video" && !IMAGE_TYPES.includes(contentType)) {
     return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });

@@ -1,7 +1,8 @@
 "use client";
 
-// מרכז הניהול של מרינה. ארבעה אזורים:
-// סקירה (מספרים חיים) · חנויות (תיק חנות + וואטסאפ) · מה מוכרות (גלריה) · עדכונים (הודעות לבנות)
+// מרכז הניהול של מרינה. שישה אזורים:
+// לאישור (חנויות ששילמו ומחכות) · סקירה (מספרים חיים) · חנויות (תיק חנות + וואטסאפ)
+// · רשת (מי הביאה את מי) · מה מוכרות (גלריה) · עדכונים (הודעות לבנות)
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { displayPhone } from "@/lib/phone";
@@ -43,6 +44,7 @@ interface AdminStore {
   ai_credits: number | null;
   created_at: string;
   activated_at: string | null;
+  parent_consent_at: string | null;
   payment_claimed_at: string | null;
   payment_method: string | null;
   payment_ref: string | null;
@@ -117,15 +119,15 @@ const mediaUrl = (key: string | null) =>
   key ? `${(process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? "").replace(/\/$/, "")}/${key}` : null;
 
 const STATUS_PILL: Record<string, string> = {
-  active: "bg-[#E4F3E9] text-[#1F7A42]",
-  paused: "bg-[#FFF3E0] text-[#A85B00]",
-  blocked: "bg-[#FBE9EA] text-[#D2373B]",
+  active: "bg-[#E4F3E9] text-[var(--ok-ink)]",
+  paused: "bg-[var(--warn-bg)] text-[var(--warn-ink)]",
+  blocked: "bg-[var(--danger-bg)] text-[var(--danger)]",
 };
 const STATUS_LABEL: Record<string, string> = { active: "פעילה", paused: "מושהית", blocked: "חסומה" };
 
 /* ---------- component ---------- */
 
-type Tab = "overview" | "stores" | "network" | "explore" | "news";
+type Tab = "approvals" | "overview" | "stores" | "network" | "explore" | "news";
 
 const METHOD_LABEL: Record<string, string> = {
   bit: "ביט",
@@ -136,6 +138,9 @@ const METHOD_LABEL: Record<string, string> = {
 
 export default function AdminView({ aiConfigured = false }: { aiConfigured?: boolean }) {
   const [tab, setTab] = useState<Tab>("overview");
+  // אם מישהי מחכה לאישור — נוחתים שם. הסקירה נעימה, אבל ילדה ששילמה
+  // ומחכה היא הדבר היחיד בחמ"ל שכל שעה שעוברת עולה בו אמון.
+  const [landed, setLanded] = useState(false);
   const [totals, setTotals] = useState<Totals | null>(null);
   const [stores, setStores] = useState<AdminStore[]>([]);
   const [search, setSearch] = useState("");
@@ -243,6 +248,12 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     );
   }
 
+  useEffect(() => {
+    if (landed || !totals) return;
+    setLanded(true);
+    if (totals.pendingActivation > 0) setTab("approvals");
+  }, [totals, landed]);
+
   const filtered = useMemo(() => {
     const q = search.trim();
     if (!q) return stores;
@@ -251,25 +262,41 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     );
   }, [stores, search]);
 
+  /** מי שהצהירה ששילמה ומחכה לי, והכי ותיקה קודם — היא מחכה הכי הרבה זמן */
+  const waitingPayment = useMemo(
+    () =>
+      stores
+        .filter((s) => !s.activated_at && s.payment_claimed_at)
+        .sort((a, b) => (a.payment_claimed_at! < b.payment_claimed_at! ? -1 : 1)),
+    [stores]
+  );
+
+  /** בנו דוכן ולא ביקשו לפרסם. לא פעולה — תמונת מצב. */
+  const draftsNoClaim = useMemo(
+    () => stores.filter((s) => !s.activated_at && !s.payment_claimed_at),
+    [stores]
+  );
+
   const waLink = (s: { contact_phone: string; display_name: string }) =>
     `https://wa.me/${s.contact_phone}?text=${encodeURIComponent(
       `היי! כאן מרינה מדוכן 👋\nראיתי את "${s.display_name}" ורציתי לומר שלום 💜`
     )}`;
 
   return (
-    <main className="min-h-screen bg-[#F5F6F9]">
+    <main className="min-h-screen bg-[var(--canvas)]">
       <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4 pb-16">
         <header className="flex items-center justify-between">
           <h1 className="text-lg font-bold">דוכן · חמ"ל 👑</h1>
           {totals && (
-            <span className="text-xs text-[#7A7D8A]">
+            <span className="text-xs text-[var(--muted)]">
               {totals.activeStores}/{totals.stores} חנויות פעילות
             </span>
           )}
         </header>
 
-        <div className="flex bg-[#DCDCE4] rounded-xl p-0.5 sticky top-2 z-20 shadow-sm">
+        <div className="flex bg-[var(--sub)] p-0.5 sticky top-2 z-20 ">
           {([
+            ["approvals", "לאישור"],
             ["overview", "סקירה"],
             ["stores", "חנויות"],
             ["network", "רשת"],
@@ -279,27 +306,132 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`flex-1 py-2 rounded-lg text-[13px] font-medium transition ${tab === k ? "bg-white shadow-sm" : "text-[#7A7D8A]"}`}
+              className={`flex-1 py-2 text-[13px] font-medium transition ${tab === k ? "bg-white " : "text-[var(--muted)]"}`}
             >
               {label}
+              {/* הספירה יושבת על הלשונית ולא רק בפנים: חנות שמחכה לאישור היא
+                  ילדה שכבר שילמה ומחכה, וזה הדבר היחיד בחמ"ל שדוחק בזמן. */}
+              {k === "approvals" && (totals?.pendingActivation ?? 0) > 0 && (
+                <span className="mr-1.5 bg-[var(--danger)] text-white text-[10px] font-bold px-1.5 py-0.5">
+                  {totals!.pendingActivation}
+                </span>
+              )}
             </button>
           ))}
         </div>
+
+        {/* ── לאישור ── המסך שבו מרינה מאשרת חנויות ששילמו.
+            הוא לשונית ראשונה ולא פינה בתוך "סקירה", כי זו הפעולה היחידה
+            בחמ"ל שילדה ממתינה לה בפועל. */}
+        {tab === "approvals" && (
+          <>
+            <section className="bg-white border border-[var(--line)] p-3">
+              <h2 className="text-sm font-bold">חנויות שהצהירו על תשלום</h2>
+              <p className="text-[11.5px] text-[var(--muted)] mt-0.5 leading-relaxed">
+                הכסף מגיע בביט או בפייבוקס, מחוץ למערכת. כאן מאשרים שהוא התקבל,
+                והלינק של החנות נפתח להזמנות מיד.
+              </p>
+            </section>
+
+            {waitingPayment.length === 0 ? (
+              <div className="bg-white border border-[var(--line)] p-8 text-center">
+                <div className="text-3xl">✓</div>
+                <p className="text-[13px] font-bold mt-2">אין חנויות שמחכות</p>
+                <p className="text-[11.5px] text-[var(--muted)] mt-1">
+                  כשילדה תלחץ "שילמנו", היא תופיע כאן.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {waitingPayment.map((s) => (
+                  <div key={s.id} className="bg-white border border-[var(--warn-line)] p-3">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar s={s} size={10} />
+                      <div className="flex-1 min-w-0">
+                        <button
+                          onClick={() => { setTab("stores"); openDetail(s.id); }}
+                          className="text-[14px] font-bold truncate block text-right"
+                        >
+                          {s.display_name}
+                        </button>
+                        <div className="text-[11.5px] text-[var(--muted)]">
+                          הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
+                          {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
+                          {s.payment_ref && ` · על שם ${s.payment_ref}`}
+                        </div>
+                        <div className="text-[11.5px] text-[var(--muted)]">
+                          {s.products} מוצרים · {s.viewsTotal} כניסות
+                          {/* אישור ההורים הוא תנאי להצהרה, ולכן הוא אמור להיות
+                              מסומן תמיד. אם הוא חסר — זו חנות ותיקה, ושווה לדעת. */}
+                          {s.parent_consent_at
+                            ? " · ✓ ההורים מאשרים"
+                            : " · ⚠ בלי אישור הורים"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5 mt-2.5">
+                      <button
+                        onClick={() => setActivation(s.id, true, 200)}
+                        className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
+                      >
+                        אישור והפעלה
+                      </button>
+                      <a
+                        href={`/s/${s.slug}`}
+                        target="_blank"
+                        className="border border-[var(--line)] py-2.5 px-3 text-[12.5px] font-medium text-center"
+                      >
+                        לחנות
+                      </a>
+                      <a
+                        href={waLink(s)}
+                        target="_blank"
+                        className="border border-[var(--line)] py-2.5 px-3 text-[12.5px] font-medium text-center"
+                      >
+                        וואטסאפ
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* בנות שבנו דוכן ועוד לא ביקשו לפרסם — לא פעולה, אבל כן תמונת מצב */}
+            {draftsNoClaim.length > 0 && (
+              <section className="bg-white border border-[var(--line)] p-3">
+                <h2 className="text-[13px] font-bold">בנו דוכן ועוד לא פרסמו · {draftsNoClaim.length}</h2>
+                <div className="flex flex-col gap-1.5 mt-2">
+                  {draftsNoClaim.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => { setTab("stores"); openDetail(s.id); }}
+                      className="flex items-center gap-2.5 text-right border-t border-[var(--line)] pt-1.5 first:border-0 first:pt-0"
+                    >
+                      <Avatar s={s} size={8} />
+                      <span className="text-[12.5px] flex-1 truncate">{s.display_name}</span>
+                      <span className="text-[11px] text-[var(--muted)]">{s.products} מוצרים</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
 
         {/* ── סקירה ── */}
         {tab === "overview" && totals && (
           <>
             {/* ממתינות להפעלה — הדבר היחיד שחוסם כסף וילדה מרוצה. תמיד ראשון. */}
             {totals.pendingActivation > 0 && (
-              <section className="bg-[#FFF9EE] border border-[#F5E3C2] rounded-xl p-3">
-                <h2 className="text-sm font-bold mb-2 text-[#A85B00]">
+              <section className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3">
+                <h2 className="text-sm font-bold mb-2 text-[var(--warn-ink)]">
                   ⏳ ממתינות לאישור תשלום · {totals.pendingActivation}
                 </h2>
                 <div className="flex flex-col gap-2">
                   {stores
                     .filter((s) => !s.activated_at && s.payment_claimed_at)
                     .map((s) => (
-                      <div key={s.id} className="bg-white border border-[#F5E3C2] rounded-lg p-2.5">
+                      <div key={s.id} className="bg-white border border-[var(--warn-line)] p-2.5">
                         <div className="flex items-center gap-2.5">
                           <Avatar s={s} size={9} />
                           <div className="flex-1 min-w-0">
@@ -309,7 +441,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                             >
                               {s.display_name}
                             </button>
-                            <div className="text-[11px] text-[#7A7D8A]">
+                            <div className="text-[11px] text-[var(--muted)]">
                               הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
                               {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
                               {s.payment_ref && ` · ${s.payment_ref}`}
@@ -319,14 +451,14 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                         <div className="flex gap-1.5 mt-2">
                           <button
                             onClick={() => setActivation(s.id, true, 200)}
-                            className="flex-1 bg-[#15161B] text-white rounded-lg py-2 text-[11.5px] font-bold"
+                            className="flex-1 bg-[var(--ink)] text-white py-2 text-[11.5px] font-bold"
                           >
                             אישור והפעלה
                           </button>
                           <a
                             href={waLink(s)}
                             target="_blank"
-                            className="flex-1 border border-[#E6E7EC] rounded-lg py-2 text-[11.5px] font-medium text-center"
+                            className="flex-1 border border-[var(--line)] py-2 text-[11.5px] font-medium text-center"
                           >
                             וואטסאפ
                           </a>
@@ -346,7 +478,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               <Stat label="מוצרים באוויר" value={totals.products} sub={`${totals.stores} חנויות`} icon="🛍️" />
             </div>
 
-            <section className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+            <section className="bg-white border border-[var(--line)] p-3">
               <h2 className="text-sm font-bold mb-2">הכי נצפות השבוע</h2>
               {[...stores]
                 .sort((a, b) => b.views7d - a.views7d)
@@ -356,26 +488,26 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     className="w-full flex items-center gap-2.5 py-1.5 text-right">
                     <Avatar s={s} size={8} />
                     <span className="flex-1 text-[13px] font-medium truncate">{s.display_name}</span>
-                    <span className="text-[12px] text-[#7A7D8A]">{s.views7d} כניסות · ₪{s.revenue}</span>
+                    <span className="text-[12px] text-[var(--muted)]">{s.views7d} כניסות · ₪{s.revenue}</span>
                   </button>
                 ))}
-              {stores.length === 0 && <p className="text-xs text-[#7A7D8A] py-3">עוד אין חנויות.</p>}
+              {stores.length === 0 && <p className="text-xs text-[var(--muted)] py-3">עוד אין חנויות.</p>}
             </section>
 
-            <section className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+            <section className="bg-white border border-[var(--line)] p-3">
               <h2 className="text-sm font-bold mb-2">דורשות תשומת לב</h2>
               {stores.filter((s) => s.ordersNew > 0 || (s.products === 0 && s.status === "active")).slice(0, 6).map((s) => (
                 <button key={s.id} onClick={() => { setTab("stores"); openDetail(s.id); }}
                   className="w-full flex items-center gap-2.5 py-1.5 text-right">
                   <Avatar s={s} size={8} />
                   <span className="flex-1 text-[13px] truncate">{s.display_name}</span>
-                  <span className="text-[11px] text-[#A85B00]">
+                  <span className="text-[11px] text-[var(--warn-ink)]">
                     {s.ordersNew > 0 ? `${s.ordersNew} הזמנות מחכות` : "חנות ריקה"}
                   </span>
                 </button>
               ))}
               {stores.every((s) => s.ordersNew === 0 && !(s.products === 0 && s.status === "active")) && (
-                <p className="text-xs text-[#7A7D8A] py-2">הכל מטופל ✨</p>
+                <p className="text-xs text-[var(--muted)] py-2">הכל מטופל ✨</p>
               )}
             </section>
           </>
@@ -388,47 +520,47 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="חיפוש לפי שם, לינק או אימייל…"
-              className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-2.5 text-sm"
+              className="w-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm"
             />
             <div className="flex flex-col gap-2">
               {filtered.map((s) => (
                 <button key={s.id} onClick={() => openDetail(s.id)}
-                  className="bg-white border border-[#E6E7EC] rounded-xl p-3 text-right hover:border-[#15161B] transition">
+                  className="bg-white border border-[var(--line)] p-3 text-right hover:border-[var(--ink)] transition">
                   <div className="flex items-center gap-2.5">
                     <Avatar s={s} size={10} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold truncate">{s.display_name}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${STATUS_PILL[s.status]}`}>
+                        <span className={`text-[10px] px-2 py-0.5 ${STATUS_PILL[s.status]}`}>
                           {STATUS_LABEL[s.status]}
                         </span>
                         {s.claim_token && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EDEEF1] text-[#6B6E7A]">לא נתבעה</span>
+                          <span className="text-[10px] px-2 py-0.5 bg-[var(--sub)] text-[var(--muted)]">לא נתבעה</span>
                         )}
                         {!s.activated_at && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${s.payment_claimed_at ? "bg-[#FFF3E0] text-[#A85B00]" : "bg-[#EDEEF1] text-[#6B6E7A]"}`}>
+                          <span className={`text-[10px] px-2 py-0.5 ${s.payment_claimed_at ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]" : "bg-[var(--sub)] text-[var(--muted)]"}`}>
                             {s.payment_claimed_at ? "ממתינה לאישור" : "טיוטה"}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-[#7A7D8A] mt-0.5">
+                      <div className="text-[11px] text-[var(--muted)] mt-0.5">
                         {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{s.revenue}
-                        {s.ordersNew > 0 && <b className="text-[#A85B00]"> · {s.ordersNew} חדשות</b>}
+                        {s.ordersNew > 0 && <b className="text-[var(--warn-ink)]"> · {s.ordersNew} חדשות</b>}
                       </div>
-                      <div className="text-[11px] text-[#7A7D8A] mt-0.5">
+                      <div className="text-[11px] text-[var(--muted)] mt-0.5">
                         📈 התקדמות: {reachedCount(milestones({
                           products: s.products, orders: s.ordersTotal, paidOrders: s.ordersPaid,
                           revenue: s.revenue, views: s.viewsTotal,
                         }))}/7
-                        {s.ai_enabled && <span className="text-[#1F7A42]"> · ✨ פרימיום</span>}
+                        {s.ai_enabled && <span className="text-[var(--ok-ink)]"> · ✨ פרימיום</span>}
                       </div>
                     </div>
-                    <span className="text-[#7A7D8A]">‹</span>
+                    <span className="text-[var(--muted)]">‹</span>
                   </div>
                 </button>
               ))}
               {filtered.length === 0 && (
-                <p className="text-center text-sm text-[#7A7D8A] py-8">לא נמצאו חנויות.</p>
+                <p className="text-center text-sm text-[var(--muted)] py-8">לא נמצאו חנויות.</p>
               )}
             </div>
           </>
@@ -446,22 +578,22 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
         {/* ── מה מוכרות ── */}
         {tab === "explore" && (
           <div className="flex flex-col gap-3">
-            {explore.length === 0 && <p className="text-center text-sm text-[#7A7D8A] py-10">עוד אין חנויות פעילות.</p>}
+            {explore.length === 0 && <p className="text-center text-sm text-[var(--muted)] py-10">עוד אין חנויות פעילות.</p>}
             {explore.map((s) => (
-              <div key={s.id} className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+              <div key={s.id} className="bg-white border border-[var(--line)] p-3">
                 <div className="flex items-center gap-2.5 mb-2">
                   <Avatar s={s} size={10} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold truncate">{s.display_name}</div>
-                    {s.tagline && <div className="text-[11px] text-[#7A7D8A] truncate">{s.tagline}</div>}
+                    {s.tagline && <div className="text-[11px] text-[var(--muted)] truncate">{s.tagline}</div>}
                   </div>
                   <a href={`/s/${s.slug}`} target="_blank"
-                    className="border border-[#E6E7EC] rounded-lg px-3 py-1.5 text-[11px] whitespace-nowrap">
+                    className="border border-[var(--line)] px-3 py-1.5 text-[11px] whitespace-nowrap">
                     לחנות ←
                   </a>
                 </div>
                 {s.products.length === 0 ? (
-                  <p className="text-[11px] text-[#7A7D8A]">עוד אין מוצרים.</p>
+                  <p className="text-[11px] text-[var(--muted)]">עוד אין מוצרים.</p>
                 ) : (
                   <div className="flex gap-1.5 overflow-x-auto pb-1">
                     {s.products.map((p, i) => {
@@ -469,10 +601,10 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                       const out = p.track_stock && p.stock === 0;
                       return (
                         <div key={i} className={`min-w-20 w-20 ${out ? "opacity-45" : ""}`}>
-                          <div className="w-20 h-20 rounded-lg bg-[#F5F6F9] flex items-center justify-center text-2xl overflow-hidden relative">
+                          <div className="w-20 h-20 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden relative">
                             {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                             {p.video_key && (
-                              <span className="absolute bottom-0.5 left-1 text-[8px] bg-black/60 text-white px-1 rounded">▶</span>
+                              <span className="absolute bottom-0.5 left-1 text-[8px] bg-black/60 text-white px-1 ">▶</span>
                             )}
                           </div>
                           <div className="text-[10px] truncate mt-0.5">{p.name}</div>
@@ -497,13 +629,13 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
       {detail && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setDetail(null)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-2xl mx-auto z-50 bg-white rounded-t-3xl px-4 pt-3 pb-8 max-h-[92%] overflow-y-auto">
+          <div className="fixed bottom-0 inset-x-0 max-w-2xl mx-auto z-50 bg-white px-4 pt-3 pb-8 max-h-[92%] overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-9 h-1 rounded bg-black/15 mx-auto" />
+              <div className="w-9 h-1 bg-black/15 mx-auto" />
               <button
                 onClick={() => setDetail(null)}
                 aria-label="סגירה"
-                className="absolute top-3 left-4 w-8 h-8 rounded-full bg-[#F5F6F9] text-[#7A7D8A] text-sm"
+                className="absolute top-3 left-4 w-8 h-8 bg-[var(--canvas)] text-[var(--muted)] text-sm"
               >
                 ✕
               </button>
@@ -514,11 +646,11 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold truncate">{detail.store.display_name}</h2>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${STATUS_PILL[detail.store.status]}`}>
+                  <span className={`text-[10px] px-2 py-0.5 ${STATUS_PILL[detail.store.status]}`}>
                     {STATUS_LABEL[detail.store.status]}
                   </span>
                 </div>
-                <div className="text-[11px] text-[#7A7D8A]" dir="ltr">
+                <div className="text-[11px] text-[var(--muted)]" dir="ltr">
                   /s/{detail.store.slug} · {displayPhone(detail.store.contact_phone)} · {detail.store.parent_email || "—"}
                 </div>
               </div>
@@ -526,18 +658,18 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
             <div className="flex gap-1.5 my-3 flex-wrap">
               <a href={waLink(detail.store)} target="_blank"
-                className="bg-[#25D366] text-white rounded-lg px-3.5 py-2 text-xs font-medium">
+                className="bg-[var(--whatsapp)] text-white px-3.5 py-2 text-xs font-medium">
                 💬 וואטסאפ לבעלת החנות
               </a>
               <a href={`/s/${detail.store.slug}`} target="_blank"
-                className="border border-[#E6E7EC] rounded-lg px-3.5 py-2 text-xs font-medium">
+                className="border border-[var(--line)] px-3.5 py-2 text-xs font-medium">
                 צפייה בחנות
               </a>
               {(["active", "paused", "blocked"] as const)
                 .filter((st) => st !== detail.store.status)
                 .map((st) => (
                   <button key={st} onClick={() => setStatus(detail.store.id, st)}
-                    className={`border rounded-lg px-3.5 py-2 text-xs font-medium ${st === "blocked" ? "border-[#F0CFD0] text-[#D2373B]" : "border-[#E6E7EC]"}`}>
+                    className={`border px-3.5 py-2 text-xs font-medium ${st === "blocked" ? "border-[var(--danger-line)] text-[var(--danger)]" : "border-[var(--line)]"}`}>
                     {st === "active" ? "הפעלה" : st === "paused" ? "השהיה" : "חסימה"}
                   </button>
                 ))}
@@ -549,7 +681,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   navigator.clipboard.writeText(`${window.location.origin}/claim/${detail.store.claim_token}`);
                   showToast("לינק התביעה הועתק");
                 }}
-                className="w-full text-right text-[11px] text-[#1F7A42] bg-[#F6FBF7] border border-[#CBE8D4] rounded-lg px-3 py-2 mb-3"
+                className="w-full text-right text-[11px] text-[var(--ok-ink)] bg-[var(--ok-bg)] border border-[var(--ok-line)] px-3 py-2 mb-3"
               >
                 🔗 החנות עוד לא נתבעה — לחיצה מעתיקה את לינק התביעה
               </button>
@@ -557,15 +689,15 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
             {/* הפעלה ותשלום */}
             <div
-              className={`rounded-xl p-3 mb-3 border ${
-                detail.store.activated_at
-                  ? "bg-[#F6FBF7] border-[#CBE8D4]"
+              className={` p-3 mb-3 border ${
+ detail.store.activated_at
+                  ? "bg-[var(--ok-bg)] border-[var(--ok-line)]"
                   : detail.store.payment_claimed_at
-                    ? "bg-[#FFF9EE] border-[#F5E3C2]"
-                    : "bg-[#F5F6F9] border-[#E6E7EC]"
+                    ? "bg-[var(--warn-bg)] border-[var(--warn-line)]"
+                    : "bg-[var(--canvas)] border-[var(--line)]"
               }`}
             >
-              <div className="text-[10.5px] text-[#7A7D8A] mb-1.5">
+              <div className="text-[10.5px] text-[var(--muted)] mb-1.5">
                 תשלום הקמה לדוכן — לא קשור לאיך שהיא גובה מקונות
               </div>
               <div className="flex items-center gap-2">
@@ -579,20 +711,20 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                 {detail.store.activated_at ? (
                   <button
                     onClick={() => setActivation(detail.store.id, false)}
-                    className="border border-[#E6E7EC] bg-white rounded-lg px-2.5 py-1.5 text-[11px]"
+                    className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]"
                   >
                     ביטול הפעלה
                   </button>
                 ) : (
                   <button
                     onClick={() => setActivation(detail.store.id, true, 200)}
-                    className="bg-[#15161B] text-white rounded-lg px-3 py-1.5 text-[11px] font-medium"
+                    className="bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium"
                   >
                     אישור והפעלה
                   </button>
                 )}
               </div>
-              <div className="text-[11px] text-[#7A7D8A] mt-1.5">
+              <div className="text-[11px] text-[var(--muted)] mt-1.5">
                 {detail.store.payment_claimed_at && (
                   <>
                     הצהרה: {new Date(detail.store.payment_claimed_at).toLocaleDateString("he-IL")}
@@ -622,19 +754,19 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
             </div>
 
             {/* איך היא גובה מקונות — לידיעה בלבד. הכסף הזה לא עובר דרכנו. */}
-            <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">
-              <div className="text-[11px] text-[#7A7D8A] mb-1">איך היא גובה מקונות</div>
+            <div className="bg-[var(--canvas)] p-3 mb-3">
+              <div className="text-[11px] text-[var(--muted)] mb-1">איך היא גובה מקונות</div>
               <div className="text-[12.5px]">
                 {payoutSummary(detail.store) || "לא הגדירה עדיין"}
                 {detail.store.payout_note && (
-                  <span className="text-[#7A7D8A]"> · {detail.store.payout_note}</span>
+                  <span className="text-[var(--muted)]"> · {detail.store.payout_note}</span>
                 )}
               </div>
             </div>
 
             {/* מסע + פרימיום */}
-            <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">
-              <div className="text-[11px] text-[#7A7D8A] mb-2">ההתקדמות שלה</div>
+            <div className="bg-[var(--canvas)] p-3 mb-3">
+              <div className="text-[11px] text-[var(--muted)] mb-2">ההתקדמות שלה</div>
               <div className="flex flex-wrap gap-1.5">
                 {milestones({
                   products: detail.store.products, orders: detail.store.ordersTotal,
@@ -642,41 +774,41 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   views: detail.store.viewsTotal,
                 }).map((ms) => (
                   <span key={ms.key} title={ms.title}
-                    className={`text-[11px] px-2 py-1 rounded-lg border ${ms.reached ? "bg-[#F6FBF7] border-[#CBE8D4]" : "bg-white border-[#E6E7EC] opacity-50"}`}>
+                    className={`text-[11px] px-2 py-1 border ${ms.reached ? "bg-[var(--ok-bg)] border-[var(--ok-line)]" : "bg-white border-[var(--line)] opacity-50"}`}>
                     <span className={ms.reached ? "" : "grayscale"}>{ms.emoji}</span> {ms.title}
                   </span>
                 ))}
               </div>
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#E6E7EC]">
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--line)]">
                 <span className="text-[12px] flex-1">
                   ✨ כתיבה אוטומטית
                   {detail.store.ai_enabled ? (
-                    <span className="text-[#7A7D8A]">
+                    <span className="text-[var(--muted)]">
                       {" · "}{detail.store.ai_credits === null ? "ללא הגבלה" : `${detail.store.ai_credits} נשארו`}
                     </span>
                   ) : (
-                    <span className="text-[#A85B00]">{" · כבוי לחנות הזו"}</span>
+                    <span className="text-[var(--warn-ink)]">{" · כבוי לחנות הזו"}</span>
                   )}
                 </span>
                 {detail.store.ai_enabled ? (
                   <>
                     <button onClick={() => setAi(detail.store.id, true, (detail.store.ai_credits ?? 0) + 50)}
-                      className="border border-[#E6E7EC] bg-white rounded-lg px-2.5 py-1.5 text-[11px]">+50</button>
+                      className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]">+50</button>
                     <button onClick={() => setAi(detail.store.id, false)}
-                      className="border border-[#E6E7EC] bg-white rounded-lg px-2.5 py-1.5 text-[11px]">כיבוי</button>
+                      className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]">כיבוי</button>
                   </>
                 ) : (
                   <button
                     onClick={() => setAi(detail.store.id, true, 50)}
                     disabled={!aiConfigured}
-                    className="bg-[#15161B] text-white rounded-lg px-3 py-1.5 text-[11px] font-medium disabled:opacity-30"
+                    className="bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium disabled:opacity-30"
                   >
                     הדלקה מחדש · 50
                   </button>
                 )}
               </div>
               {!aiConfigured && (
-                <div className="text-[11px] text-[#A85B00] mt-2">
+                <div className="text-[11px] text-[var(--warn-ink)] mt-2">
                   <b>אין מפתח Anthropic בשרת.</b> כתיבה אוטומטית דלוקה לכל החנויות,
                   אז כל ילדה שתלחץ "כתבי לי תיאור" תקבל שגיאה. צריך להגדיר{" "}
                   <code>ANTHROPIC_API_KEY</code> ולפרוס מחדש.
@@ -685,17 +817,17 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
             </div>
 
             {/* כניסות 14 יום */}
-            <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">
-              <div className="text-[11px] text-[#7A7D8A] mb-2">כניסות · 14 ימים אחרונים</div>
+            <div className="bg-[var(--canvas)] p-3 mb-3">
+              <div className="text-[11px] text-[var(--muted)] mb-2">כניסות · 14 ימים אחרונים</div>
               <div className="flex items-end gap-1 h-14">
                 {buildDays(detail.views).map((d) => (
                   <div key={d.day} className="flex-1 flex flex-col items-center gap-0.5" title={`${d.day}: ${d.views}`}>
-                    <div className="w-full bg-[#15161B] rounded-sm min-h-[2px]"
+                    <div className="w-full bg-[var(--ink)] min-h-[2px]"
                       style={{ height: `${d.pct}%`, opacity: d.views ? 1 : 0.12 }} />
                   </div>
                 ))}
               </div>
-              <div className="text-[11px] text-[#7A7D8A] mt-1.5">
+              <div className="text-[11px] text-[var(--muted)] mt-1.5">
                 {detail.views.reduce((s, v) => s + v.views, 0)} כניסות בתקופה
               </div>
             </div>
@@ -712,14 +844,14 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                 const open = editProduct?.id === p.id;
                 return (
                   <div key={p.id}
-                    className={`border border-[#E6E7EC] rounded-lg p-2 ${p.deleted_at ? "bg-[#FAFAFB] opacity-70" : "bg-white"}`}>
+                    className={`border border-[var(--line)] p-2 ${p.deleted_at ? "bg-[#FAFAFB] opacity-70" : "bg-white"}`}>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-md bg-[#F5F6F9] flex items-center justify-center text-lg overflow-hidden shrink-0">
+                      <div className="w-9 h-9 bg-[var(--canvas)] flex items-center justify-center text-lg overflow-hidden shrink-0">
                         {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-medium truncate">{p.name}</div>
-                        <div className="text-[10px] text-[#7A7D8A]">
+                        <div className="text-[10px] text-[var(--muted)]">
                           ₪{p.price}
                           {p.track_stock ? ` · מלאי ${p.stock}` : " · בלי מעקב"}
                           {p.is_visible === false && " · מוסתר"}
@@ -728,7 +860,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                       </div>
                       {p.deleted_at ? (
                         <button onClick={() => productAction(p.id, detail.store.id, "restore")}
-                          className="text-[11px] border border-[#E6E7EC] rounded-lg px-2.5 py-1.5 shrink-0">
+                          className="text-[11px] border border-[var(--line)] px-2.5 py-1.5 shrink-0">
                           שחזור
                         </button>
                       ) : (
@@ -742,18 +874,18 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                               )
                             }
                             aria-label="עריכה"
-                            className="text-[11px] border border-[#E6E7EC] rounded-lg px-2 py-1.5">
+                            className="text-[11px] border border-[var(--line)] px-2 py-1.5">
                             {open ? "סגירה" : "✏️"}
                           </button>
                           <button
                             onClick={() => productAction(p.id, detail.store.id, p.is_visible === false ? "show" : "hide")}
                             aria-label={p.is_visible === false ? "הצגה" : "הסתרה"}
-                            className="text-[11px] border border-[#E6E7EC] rounded-lg px-2 py-1.5">
+                            className="text-[11px] border border-[var(--line)] px-2 py-1.5">
                             {p.is_visible === false ? "👁️" : "🙈"}
                           </button>
                           <button onClick={() => productAction(p.id, detail.store.id, "delete")}
                             aria-label="הוצאה מהחנות"
-                            className="text-[11px] border border-[#F2C9C9] text-[#B4232A] rounded-lg px-2 py-1.5">
+                            className="text-[11px] border border-[var(--danger-line)] text-[var(--danger)] px-2 py-1.5">
                             🗑️
                           </button>
                         </div>
@@ -761,17 +893,17 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     </div>
 
                     {open && editProduct && (
-                      <div className="mt-2 pt-2 border-t border-[#EEEFF3] flex flex-col gap-1.5">
+                      <div className="mt-2 pt-2 border-t border-[var(--line)] flex flex-col gap-1.5">
                         <input value={editProduct.name} maxLength={40} aria-label="שם המוצר"
                           onChange={(e) => setEditProduct((s) => s && { ...s, name: e.target.value })}
-                          className="w-full border border-[#E6E7EC] rounded-lg px-2.5 py-2 text-[13px]" />
+                          className="w-full border border-[var(--line)] px-2.5 py-2 text-[13px]" />
                         <div className="flex gap-1.5">
                           <input value={editProduct.price} type="number" inputMode="numeric" aria-label="מחיר"
                             onChange={(e) => setEditProduct((s) => s && { ...s, price: e.target.value })}
-                            className="flex-1 border border-[#E6E7EC] rounded-lg px-2.5 py-2 text-[13px]" />
+                            className="flex-1 border border-[var(--line)] px-2.5 py-2 text-[13px]" />
                           <input value={editProduct.stock} type="number" inputMode="numeric" aria-label="מלאי"
                             onChange={(e) => setEditProduct((s) => s && { ...s, stock: e.target.value })}
-                            className="flex-1 border border-[#E6E7EC] rounded-lg px-2.5 py-2 text-[13px]" />
+                            className="flex-1 border border-[var(--line)] px-2.5 py-2 text-[13px]" />
                         </div>
                         <button
                           onClick={() =>
@@ -781,10 +913,10 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                               stock: Number(editProduct.stock),
                             })
                           }
-                          className="bg-[#15161B] text-white rounded-lg py-2 text-[13px] font-bold">
+                          className="bg-[var(--ink)] text-white py-2 text-[13px] font-bold">
                           שמירה
                         </button>
-                        <p className="text-[10px] text-[#A2A5B0]">
+                        <p className="text-[10px] text-[var(--faint)]">
                           שדות: שם · מחיר · מלאי. הילדה תראה את השינוי בחנות מיד.
                         </p>
                       </div>
@@ -792,36 +924,36 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   </div>
                 );
               })}
-              {detail.products.length === 0 && <p className="text-xs text-[#7A7D8A]">עוד אין מוצרים.</p>}
+              {detail.products.length === 0 && <p className="text-xs text-[var(--muted)]">עוד אין מוצרים.</p>}
             </div>
 
             {/* הזמנות אחרונות */}
             <h3 className="text-sm font-bold mb-1.5">הזמנות אחרונות</h3>
             <div className="flex flex-col gap-1.5">
               {detail.orders.map((o) => (
-                <div key={o.id} className="flex items-center gap-2 border border-[#E6E7EC] rounded-lg p-2 bg-white text-[12px]">
-                  <span className="text-[#7A7D8A]">#{o.order_number}</span>
+                <div key={o.id} className="flex items-center gap-2 border border-[var(--line)] p-2 bg-white text-[12px]">
+                  <span className="text-[var(--muted)]">#{o.order_number}</span>
                   <span className="flex-1 truncate">
                     {o.items.map((i) => `${i.name}×${i.qty}`).join(", ")}
                   </span>
                   <span className="font-medium">₪{o.total}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    o.status === "sent" ? "bg-[#FFF3E0] text-[#A85B00]"
-                    : o.status === "paid" ? "bg-[#E4F3E9] text-[#1F7A42]"
-                    : o.status === "delivered" ? "bg-[#EDEEF1] text-[#6B6E7A]"
-                    : "bg-[#FBE9EA] text-[#D2373B]"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 ${
+                    o.status === "sent" ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]"
+                    : o.status === "paid" ? "bg-[#E4F3E9] text-[var(--ok-ink)]"
+                    : o.status === "delivered" ? "bg-[var(--sub)] text-[var(--muted)]"
+                    : "bg-[var(--danger-bg)] text-[var(--danger)]"}`}>
                     {o.status === "sent" ? "חדש" : o.status === "paid" ? "שולם" : o.status === "delivered" ? "נמסר" : "בוטל"}
                   </span>
                 </div>
               ))}
-              {detail.orders.length === 0 && <p className="text-xs text-[#7A7D8A]">עוד אין הזמנות.</p>}
+              {detail.orders.length === 0 && <p className="text-xs text-[var(--muted)]">עוד אין הזמנות.</p>}
             </div>
           </div>
         </>
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-1/2 translate-x-1/2 bg-[#1B1C22] text-white px-4 py-2.5 rounded-3xl text-[13px] z-[90]">
+        <div className="fixed bottom-6 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
           {toast}
         </div>
       )}
@@ -833,10 +965,10 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
 function Stat({ label, value, sub, icon }: { label: string; value: number | string; sub: string; icon: string }) {
   return (
-    <div className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+    <div className="bg-white border border-[var(--line)] p-3">
       <div className="text-lg">{icon}</div>
       <div className="text-xl font-bold mt-1">{value}</div>
-      <div className="text-[11px] text-[#7A7D8A]">{label} · {sub}</div>
+      <div className="text-[11px] text-[var(--muted)]">{label} · {sub}</div>
     </div>
   );
 }
@@ -845,7 +977,7 @@ function Avatar({ s, size }: { s: { avatar_key?: string | null; emoji: string };
   const url = mediaUrl(s.avatar_key ?? null);
   const px = size * 4;
   return (
-    <div className="rounded-full bg-[#F5F6F9] flex items-center justify-center overflow-hidden flex-shrink-0"
+    <div className=" bg-[var(--canvas)] flex items-center justify-center overflow-hidden flex-shrink-0"
       style={{ width: px, height: px, fontSize: px * 0.5 }}>
       {url ? <img src={url} alt="" className="w-full h-full object-cover" /> : s.emoji}
     </div>
@@ -895,16 +1027,16 @@ function NetworkTab({
         className="w-full flex items-center gap-2 py-1.5 text-right"
         style={{ paddingRight: depth * 18 }}
       >
-        {depth > 0 && <span className="text-[#C9CBD3] text-[11px]">└</span>}
+        {depth > 0 && <span className="text-[var(--faint)] text-[11px]">└</span>}
         <Avatar s={s} size={depth ? 7 : 9} />
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-medium truncate">
             {s.display_name}
             {!s.activated_at && (
-              <span className="text-[10px] text-[#A85B00] font-normal"> · טיוטה</span>
+              <span className="text-[10px] text-[var(--warn-ink)] font-normal"> · טיוטה</span>
             )}
           </div>
-          <div className="text-[10.5px] text-[#7A7D8A]">
+          <div className="text-[10.5px] text-[var(--muted)]">
             {s.brought > 0 ? `הביאה ${s.brought} · ` : ""}
             {s.ref_clicks === 1 ? "לחיצה אחת" : `${s.ref_clicks} לחיצות`} ·{" "}
             {s.products === 1 ? "מוצר אחד" : `${s.products} מוצרים`}
@@ -922,29 +1054,29 @@ function NetworkTab({
         <Stat label="לחיצות על 'פתחי חנות'" value={totals.refClicks} sub={`${conversion}% נפתחו`} icon="👆" />
       </div>
 
-      <section className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+      <section className="bg-white border border-[var(--line)] p-3">
         <h2 className="text-sm font-bold">אשכולות</h2>
-        <p className="text-[11px] text-[#7A7D8A] mb-2">
+        <p className="text-[11px] text-[var(--muted)] mb-2">
           חנות שהביאה חנויות אחרות. כאן נמצאות הכיתות והשכונות.
         </p>
         {withCluster.length === 0 && (
-          <p className="text-xs text-[#7A7D8A] py-3">עוד אף חנות לא הביאה חנות אחרת.</p>
+          <p className="text-xs text-[var(--muted)] py-3">עוד אף חנות לא הביאה חנות אחרת.</p>
         )}
         {withCluster.map(({ root, size }) => (
-          <div key={root.id} className="border-t border-[#F0F1F4] pt-2 mt-2 first:border-0 first:mt-0 first:pt-0">
-            <div className="text-[11px] font-bold text-[#1F7A42] mb-1">אשכול של {size} חנויות</div>
+          <div key={root.id} className="border-t border-[var(--line)] pt-2 mt-2 first:border-0 first:mt-0 first:pt-0">
+            <div className="text-[11px] font-bold text-[var(--ok-ink)] mb-1">אשכול של {size} חנויות</div>
             {row(root, 0)}
           </div>
         ))}
       </section>
 
-      <section className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+      <section className="bg-white border border-[var(--line)] p-3">
         <h2 className="text-sm font-bold mb-2">הגיעו לבד · {alone.length}</h2>
         {alone.slice(0, 20).map(({ root }) => row(root, 0))}
         {alone.length > 20 && (
-          <p className="text-[11px] text-[#7A7D8A] pt-2">ועוד {alone.length - 20}…</p>
+          <p className="text-[11px] text-[var(--muted)] pt-2">ועוד {alone.length - 20}…</p>
         )}
-        {alone.length === 0 && <p className="text-xs text-[#7A7D8A] py-2">אין.</p>}
+        {alone.length === 0 && <p className="text-xs text-[var(--muted)] py-2">אין.</p>}
       </section>
     </>
   );
@@ -1011,46 +1143,46 @@ function NewsTab({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="bg-white border border-[#E6E7EC] rounded-xl p-3 flex flex-col gap-2">
+      <div className="bg-white border border-[var(--line)] p-3 flex flex-col gap-2">
         <span className="text-sm font-bold">עדכון חדש לבנות</span>
         <div className="flex gap-1.5">
           {["✨", "🎉", "🛍️", "🎬", "💡", "🚀"].map((e) => (
             <button key={e} onClick={() => setEmoji(e)}
-              className={`w-9 h-9 rounded-lg border-[1.5px] text-lg ${emoji === e ? "border-[#15161B]" : "border-[#E6E7EC]"}`}>
+              className={`w-9 h-9 border-[1.5px] text-lg ${emoji === e ? "border-[var(--ink)]" : "border-[var(--line)]"}`}>
               {e}
             </button>
           ))}
         </div>
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80}
           placeholder="כותרת — למשל: אפשר להעלות וידאו!"
-          className="border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm" />
+          className="border border-[var(--line)] px-3 py-2.5 text-sm" />
         <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={500} rows={3}
           placeholder="מה חדש? כתבי לבנות בשפה שלהן…"
-          className="border border-[#E6E7EC] rounded-lg px-3 py-2.5 text-sm resize-none" />
+          className="border border-[var(--line)] px-3 py-2.5 text-sm resize-none" />
         <button onClick={publish} disabled={busy || !title.trim() || !body.trim()}
-          className="bg-[#15161B] text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-40">
+          className="bg-[var(--ink)] text-white py-2.5 text-sm font-medium disabled:opacity-40">
           {busy ? "מפרסמים…" : "פרסום לכל הדשבורדים"}
         </button>
       </div>
 
       {news.map((n) => (
-        <div key={n.id} className="bg-white border border-[#E6E7EC] rounded-xl p-3">
+        <div key={n.id} className="bg-white border border-[var(--line)] p-3">
           <div className="flex items-start gap-2">
             <span className="text-xl">{n.emoji}</span>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold">{n.title}</div>
-              <p className="text-[13px] text-[#3A3C46] whitespace-pre-line mt-0.5">{n.body}</p>
-              <div className="text-[10px] text-[#7A7D8A] mt-1">
+              <p className="text-[13px] text-[var(--muted)] whitespace-pre-line mt-0.5">{n.body}</p>
+              <div className="text-[10px] text-[var(--muted)] mt-1">
                 {new Date(n.created_at).toLocaleDateString("he-IL")}
               </div>
             </div>
-            <button onClick={() => remove(n.id)} className="text-[11px] text-[#D2373B] underline">
+            <button onClick={() => remove(n.id)} className="text-[11px] text-[var(--danger)] underline">
               מחיקה
             </button>
           </div>
         </div>
       ))}
-      {news.length === 0 && <p className="text-center text-sm text-[#7A7D8A] py-6">עוד לא פרסמת עדכונים.</p>}
+      {news.length === 0 && <p className="text-center text-sm text-[var(--muted)] py-6">עוד לא פרסמת עדכונים.</p>}
     </div>
   );
 }

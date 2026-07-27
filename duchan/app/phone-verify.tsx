@@ -93,7 +93,7 @@ export default function PhoneVerify({
     return (
       <div className="w-full flex flex-col gap-3">
         <h1 className="text-lg font-bold text-center">{title}</h1>
-        <p className="text-[12.5px] text-[#7A7D8A] text-center -mt-1 leading-relaxed">{subtitle}</p>
+        <p className="text-[12.5px] text-[var(--muted)] text-center -mt-1 leading-relaxed">{subtitle}</p>
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -102,18 +102,18 @@ export default function PhoneVerify({
           autoComplete="tel"
           placeholder="050-123-4567"
           aria-label="מספר טלפון"
-          className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3 text-center text-base tracking-wide"
+          className="w-full border border-[var(--line)] bg-white px-4 py-3 text-center text-base tracking-wide"
           onKeyDown={(e) => e.key === "Enter" && phone.trim() && sendCode()}
         />
-        {err && <p className="text-xs text-[#D2373B] text-center">{err}</p>}
+        {err && <p className="text-xs text-[var(--danger)] text-center">{err}</p>}
         <button
           onClick={sendCode}
           disabled={busy || phone.replace(/\D/g, "").length < 9}
-          className="bg-[#15161B] text-white rounded-xl py-3.5 text-sm font-bold disabled:opacity-30"
+          className="bg-[var(--ink)] text-white py-3.5 text-sm font-bold disabled:opacity-30"
         >
           {busy ? "שולחים…" : cta}
         </button>
-        <p className="text-[11.5px] text-[#A2A5B0] text-center leading-relaxed">
+        <p className="text-[11.5px] text-[var(--faint)] text-center leading-relaxed">
           נשלח לך קוד בהודעה. זה גם המספר שאליו יגיעו ההזמנות בוואטסאפ.
         </p>
       </div>
@@ -123,7 +123,7 @@ export default function PhoneVerify({
   return (
     <div className="w-full flex flex-col gap-3">
       <h1 className="text-lg font-bold text-center">הקוד שקיבלת</h1>
-      <p className="text-[12.5px] text-[#7A7D8A] text-center -mt-1">
+      <p className="text-[12.5px] text-[var(--muted)] text-center -mt-1">
         שלחנו הודעה ל-{displayPhone(phone.replace(/\D/g, "").replace(/^0/, "972"))}
       </p>
       <input
@@ -141,20 +141,20 @@ export default function PhoneVerify({
         maxLength={6}
         placeholder="______"
         aria-label="קוד אימות"
-        className="w-full border border-[#E6E7EC] bg-white rounded-xl px-4 py-3.5 text-center text-2xl font-bold tracking-[0.5em]"
+        className="w-full border border-[var(--line)] bg-white px-4 py-3.5 text-center text-2xl font-bold tracking-[0.5em]"
       />
-      {err && <p className="text-xs text-[#D2373B] text-center">{err}</p>}
-      {busy && <p className="text-xs text-[#7A7D8A] text-center">רגע…</p>}
+      {err && <p className="text-xs text-[var(--danger)] text-center">{err}</p>}
+      {busy && <p className="text-xs text-[var(--muted)] text-center">רגע…</p>}
       <button
         onClick={() => setStep("phone")}
-        className="text-xs text-[#7A7D8A] underline"
+        className="text-xs text-[var(--muted)] underline"
       >
         המספר לא נכון? לשנות
       </button>
       <button
         onClick={sendCode}
         disabled={cooldown > 0 || busy}
-        className="text-xs text-[#7A7D8A] underline disabled:opacity-40 disabled:no-underline"
+        className="text-xs text-[var(--muted)] underline disabled:opacity-40 disabled:no-underline"
       >
         {cooldown > 0 ? `לא קיבלתי — אפשר לשלוח שוב בעוד ${cooldown}` : "לא קיבלתי, לשלוח שוב"}
       </button>

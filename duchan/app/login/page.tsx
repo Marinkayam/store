@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import PhoneVerify from "../phone-verify";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 // כניסה בסמס בלבד. אין סיסמה לזכור ואין מייל להקליד.
 //
@@ -11,6 +12,21 @@ import PhoneVerify from "../phone-verify";
 
 function Login() {
   const params = useSearchParams();
+
+  /**
+   * מחוברת? לא מבקשים מספר.
+   *
+   * הסשן חי בעוגייה ושורד סגירת דפדפן, אבל מסך הכניסה לא בדק אותו — אז מי
+   * שהגיעה שוב ללינק ראתה שדה טלפון ריק והסיקה, בצדק, שהמערכת שכחה אותה.
+   */
+  useEffect(() => {
+    supabaseBrowser()
+      .auth.getUser()
+      .then(({ data }) => {
+        if (data.user) window.location.replace(params.get("next") ?? "/dashboard");
+      })
+      .catch(() => {});
+  }, [params]);
 
   return (
     <PhoneVerify
@@ -39,7 +55,7 @@ export default function LoginPage() {
           <Login />
         </Suspense>
       </div>
-      <a href="/" className="text-xs text-[#7A7D8A]">
+      <a href="/" className="text-xs text-[var(--muted)]">
         עוד אין לך חנות? <span className="underline">פותחים אחת בדקות</span>
       </a>
     </main>

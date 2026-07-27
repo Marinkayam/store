@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 // עמוד הנחיתה: שדה אחד. בלי אימייל. הבנייה מתחילה לפני ההרשמה.
 // ?ref=<slug> — הגיעה מחנות של חברה. השיוך נשמר בטיוטה ועובר ליצירת החנות.
@@ -11,6 +12,28 @@ export default function Landing() {
   const [name, setName] = useState("");
   const [ref, setRef] = useState<string | null>(null);
   const [from, setFrom] = useState<{ name: string; emoji: string } | null>(null);
+  // יש כבר דוכן ומחוברת? הדף הזה חייב לומר את זה לפני הכל.
+  const [mine, setMine] = useState<{ name: string; emoji: string } | null>(null);
+
+  /**
+   * מי שכבר מחוברת נחתה כאן וראתה "איך קוראים לדוכן שלך?" — כאילו המערכת
+   * לא מכירה אותה. הסשן היה שם כל הזמן; פשוט אף אחד לא שאל אותו.
+   */
+  useEffect(() => {
+    const supa = supabaseBrowser();
+    supa.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      supa
+        .from("stores")
+        .select("display_name, emoji")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data: store }) => {
+          if (store) setMine({ name: store.display_name, emoji: store.emoji ?? "🛍️" });
+        });
+    });
+  }, []);
 
   // קוראים מ-window ולא מ-useSearchParams כדי לא לעטוף את הדף ב-Suspense
   useEffect(() => {
@@ -41,6 +64,21 @@ export default function Landing() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-8 bg-[var(--canvas)]">
+      {mine && (
+        <a
+          href="/dashboard"
+          className="w-full max-w-sm bg-[var(--ink)] text-white px-4 py-3.5 flex items-center gap-3"
+        >
+          <span className="text-xl">{mine.emoji}</span>
+          <span className="flex-1 text-[13.5px] leading-tight">
+            <b>{mine.name}</b>
+            <br />
+            <span className="opacity-70">הדוכן שלך מחכה — לניהול</span>
+          </span>
+          <span className="text-lg">←</span>
+        </a>
+      )}
+
       {from && (
         <div className="card px-4 py-3 text-[13px] text-center max-w-sm">
           {from.emoji} הגעת מ<span className="font-bold">{from.name}</span> — עכשיו תורך
@@ -83,9 +121,11 @@ export default function Landing() {
         </p>
       </form>
 
-      <a href="/login" className="text-[14px] font-semibold text-[var(--olive)]">
-        כבר יש לי דוכן
-      </a>
+      {!mine && (
+        <a href="/login" className="text-[14px] font-semibold text-[var(--olive)]">
+          כבר יש לי דוכן
+        </a>
+      )}
       <p className="text-[11px] text-[var(--muted)]">
         <a href="/terms" className="underline">תנאי שימוש</a>
         {" · "}

@@ -91,15 +91,15 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
     setStore({ ...store, payment_claimed_at: new Date().toISOString(), payment_method: method });
   }
 
-  if (loading) return <Shell><p className="text-sm text-[#7A7D8A]">רגע…</p></Shell>;
+  if (loading) return <Shell><p className="text-sm text-[var(--muted)]">רגע…</p></Shell>;
 
   if (!store)
     return (
       <Shell>
-        <p className="text-sm text-[#7A7D8A] leading-relaxed text-center">
+        <p className="text-sm text-[var(--muted)] leading-relaxed text-center">
           עוד אין לך חנות.
           <br />
-          <a href="/onboarding" className="underline text-[#15161B]">בואי נפתח אחת ←</a>
+          <a href="/onboarding" className="underline text-[var(--ink)]">בואי נפתח אחת ←</a>
         </p>
       </Shell>
     );
@@ -111,10 +111,10 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
         <div className="text-center flex flex-col gap-4">
           <div className="text-5xl">🎊</div>
           <h1 className="text-xl font-bold">החנות שלך באוויר</h1>
-          <p className="text-[13px] text-[#7A7D8A] leading-relaxed">
+          <p className="text-[13px] text-[var(--muted)] leading-relaxed">
             הלינק פעיל. כל מי שתשלחי לו יכול להיכנס ולהזמין.
           </p>
-          <div className="bg-white border border-[#E6E7EC] rounded-xl px-4 py-3 text-[13px] font-mono" dir="ltr">
+          <div className="bg-white border border-[var(--line)] px-4 py-3 text-[13px] font-mono" dir="ltr">
             {storeUrl}
           </div>
           <button
@@ -123,17 +123,17 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
               setCopied(true);
               setTimeout(() => setCopied(false), 2000);
             }}
-            className="bg-[#15161B] text-white rounded-xl py-3 text-sm font-bold"
+            className="bg-[var(--ink)] text-white py-3 text-sm font-bold"
           >
             {copied ? "הועתק ✓" : "העתקת הלינק"}
           </button>
           <a
             href={`https://wa.me/?text=${encodeURIComponent(`בואי לראות את החנות שלי! ${storeUrl}`)}`}
-            className="bg-[#25D366] text-white rounded-xl py-3 text-sm font-bold"
+            className="bg-[var(--whatsapp)] text-white py-3 text-sm font-bold"
           >
             שיתוף בוואטסאפ
           </a>
-          <a href="/dashboard" className="text-sm text-[#7A7D8A] underline">
+          <a href="/dashboard" className="text-sm text-[var(--muted)] underline">
             לניהול החנות ←
           </a>
         </div>
@@ -147,14 +147,14 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
         <div className="text-center flex flex-col gap-4">
           <div className="text-5xl">⏳</div>
           <h1 className="text-xl font-bold">קיבלנו, בודקים</h1>
-          <p className="text-[13.5px] text-[#3A3C46] leading-relaxed">
+          <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
             אנחנו מאשרות כל חנות ידנית — לרוב תוך כמה שעות.
             <br />
             ברגע שזה קורה הלינק נפתח ואפשר לשתף.
           </p>
-          <div className="bg-white border border-[#E6E7EC] rounded-xl p-4 text-right text-[13px] leading-relaxed">
+          <div className="bg-white border border-[var(--line)] p-4 text-right text-[13px] leading-relaxed">
             <div className="font-bold mb-1">בינתיים שווה:</div>
-            <div className="text-[#5B5E6B]">
+            <div className="text-[var(--muted)]">
               • להוסיף עוד כמה מוצרים — חנות עם 5 מוצרים נראית רצינית
               <br />
               • לכתוב תיאור קצר לכל אחד
@@ -164,11 +164,11 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
           </div>
           <a
             href={waOwner(`היי מרינה! שילמנו על החנות "${store.display_name}" (${store.slug}). אפשר לאשר?`)}
-            className="bg-[#25D366] text-white rounded-xl py-3 text-sm font-bold"
+            className="bg-[var(--whatsapp)] text-white py-3 text-sm font-bold"
           >
             לשלוח לי תזכורת בוואטסאפ
           </a>
-          <a href="/dashboard/products" className="text-sm text-[#7A7D8A] underline">
+          <a href="/dashboard/products" className="text-sm text-[var(--muted)] underline">
             להוספת מוצרים ←
           </a>
         </div>
@@ -185,16 +185,16 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
           <br />
           לצאת לעולם
         </h1>
-        <p className="text-[13px] text-[#7A7D8A] mt-2 leading-relaxed">
+        <p className="text-[13px] text-[var(--muted)] mt-2 leading-relaxed">
           בנית אותה בחינם, וזה נשאר שלך.
           <br />
           הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות — תשלום אחד.
         </p>
         <div className="mt-5 inline-flex items-baseline gap-1.5">
           <span className="text-5xl font-bold">₪{price}</span>
-          <span className="text-sm text-[#7A7D8A]">פעם אחת, לתמיד</span>
+          <span className="text-sm text-[var(--muted)]">פעם אחת, לתמיד</span>
         </div>
-        <p className="text-[12px] text-[#7A7D8A] mt-1.5">
+        <p className="text-[12px] text-[var(--muted)] mt-1.5">
           בלי מנוי · בלי עמלה על מכירות · כל שקל שתרוויחי נשאר אצלך
         </p>
       </div>
@@ -207,22 +207,22 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
       </div>
 
       {/* ההורה הוא זה שמשלם — נותנים לו את ההסבר במקום להשאיר אותה להסביר לבד */}
-      <div className="mt-8 bg-white border border-[#E6E7EC] rounded-2xl p-4">
+      <div className="mt-8 bg-white border border-[var(--line)] p-4">
         <div className="text-[14px] font-bold">צריך אישור של הורה?</div>
-        <p className="text-[12.5px] text-[#5B5E6B] leading-relaxed mt-1">
+        <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
           שלחי את ההסבר המלא — מה כלול, מה את לומדת מזה, ואיך אנחנו שומרות עלייך.
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(
             `בניתי חנות אמיתית באינטרנט! 🛍️\nכדי לפרסם אותה צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\nכל ההסבר כאן: ${priceUrl}`
           )}`}
-          className="mt-3 block text-center bg-[#25D366] text-white rounded-xl py-2.5 text-[13px] font-bold"
+          className="mt-3 block text-center bg-[var(--whatsapp)] text-white py-2.5 text-[13px] font-bold"
         >
           שליחת ההסבר להורה בוואטסאפ
         </a>
         <button
           onClick={() => setShowParent((v) => !v)}
-          className="mt-2 w-full text-[12px] text-[#7A7D8A] underline"
+          className="mt-2 w-full text-[12px] text-[var(--muted)] underline"
         >
           {showParent ? "סגירה" : "או להראות את זה כאן"}
         </button>
@@ -249,12 +249,12 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
           להורה ואין מייל לאימות. מה שיש זה רגע אחד שבו היא עוצרת ואומרת
           "כן, הם יודעים" — והחותמת נשמרת בשרת כדי שאראה אותה באישור. */}
       <div
-        className={`mt-9 rounded-2xl p-4 border-[1.5px] ${
-          consentOn ? "bg-[#F6FBF7] border-[#CBE8D4]" : "bg-white border-[#F5E3C2]"
+        className={`mt-9 p-4 border-[1.5px] ${
+          consentOn ? "bg-[var(--ok-bg)] border-[var(--ok-line)]" : "bg-white border-[var(--warn-line)]"
         }`}
       >
         <div className="text-[14px] font-bold">לפני שמפרסמים</div>
-        <p className="text-[12.5px] text-[#5B5E6B] leading-relaxed mt-1">
+        <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
           דוכן אמיתי באינטרנט זה דבר גדול. אנחנו רוצות לדעת שההורים שלך בעניין.
         </p>
         <label className="flex items-start gap-2.5 mt-3 cursor-pointer">
@@ -263,7 +263,7 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
             checked={consentOn}
             onChange={(e) => toggleConsent(e.target.checked)}
             aria-label="אישור הורים"
-            className="mt-0.5 w-5 h-5 shrink-0 accent-[#15161B]"
+            className="mt-0.5 w-5 h-5 shrink-0 accent-[var(--ink)]"
           />
           <span className="text-[13px] leading-relaxed">
             אני מאשרת שההורים שלי יודעים ומאשרים לי לנהל את הדוכן.
@@ -273,12 +273,12 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
 
       {/* תשלום */}
       <h2 className="text-base font-bold mt-9 mb-1">איך משלמים לדוכן</h2>
-      <p className="text-[12.5px] text-[#7A7D8A] mb-3 leading-relaxed">
+      <p className="text-[12.5px] text-[var(--muted)] mb-3 leading-relaxed">
         אנחנו לא סולקות כרטיסי אשראי ולא שומרות פרטי תשלום. משלמים בביט או בפייבוקס,
         ואני מאשרת את החנות ידנית.
       </p>
       {/* הבלבול הכי סביר כאן הוא בין שני סוגי הכסף. אומרים את זה במפורש. */}
-      <div className="bg-[#F6FBF7] border border-[#CBE8D4] rounded-xl p-3 mb-3 text-[12.5px] leading-relaxed">
+      <div className="bg-[var(--ok-bg)] border border-[var(--ok-line)] p-3 mb-3 text-[12.5px] leading-relaxed">
         <span className="font-bold">שני דברים נפרדים לגמרי:</span>
         <br />
         התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת החנות.
@@ -298,7 +298,7 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
           </a>
         )}
         {!bitUrl && !payboxUrl && ownerWhatsapp && (
-          <div className="bg-white border border-[#E6E7EC] rounded-xl p-3.5 text-[13px] leading-relaxed">
+          <div className="bg-white border border-[var(--line)] p-3.5 text-[13px] leading-relaxed">
             שולחים ביט או פייבוקס למספר{" "}
             <span className="font-bold" dir="ltr">
               {ownerWhatsapp.replace(/^972/, "0")}
@@ -307,16 +307,16 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
           </div>
         )}
         <a href={waOwner(`היי מרינה! רוצה להפעיל את החנות "${store.display_name}" (${store.slug}). איך משלמים?`)}
-          className="bg-white border border-[#E6E7EC] rounded-xl py-3 text-[13px] font-bold text-center"
+          className="bg-white border border-[var(--line)] py-3 text-[13px] font-bold text-center"
         >
           💬 יש לי שאלה — לדבר איתך בוואטסאפ
         </a>
       </div>
 
       {/* הצהרה */}
-      <div className="mt-8 bg-white border border-[#E6E7EC] rounded-2xl p-4">
+      <div className="mt-8 bg-white border border-[var(--line)] p-4">
         <div className="text-[14px] font-bold">שילמתם? נעדכן אותנו</div>
-        <p className="text-[12.5px] text-[#5B5E6B] leading-relaxed mt-1">
+        <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
           זה לא מפעיל את החנות מיד — זה מכניס אותה לרשימה שלי לאישור.
         </p>
         <div className="flex gap-1.5 mt-3">
@@ -324,8 +324,8 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
             <button
               key={m.key}
               onClick={() => setMethod(m.key)}
-              className={`flex-1 rounded-xl border-[1.5px] py-2.5 text-[12px] font-medium ${
-                method === m.key ? "border-[#15161B] bg-[#15161B] text-white" : "border-[#E6E7EC]"
+              className={`flex-1 border-[1.5px] py-2.5 text-[12px] font-medium ${
+                method === m.key ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)]"
               }`}
             >
               {m.icon} {m.label}
@@ -337,23 +337,23 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
           onChange={(e) => setRef(e.target.value)}
           placeholder="על שם מי שולם? (לא חובה)"
           maxLength={60}
-          className="mt-2 w-full border border-[#E6E7EC] rounded-xl px-3.5 py-2.5 text-[13px]"
+          className="mt-2 w-full border border-[var(--line)] px-3.5 py-2.5 text-[13px]"
         />
-        {err && <p className="text-[12px] text-[#D2373B] mt-2">{err}</p>}
+        {err && <p className="text-[12px] text-[var(--danger)] mt-2">{err}</p>}
         <button
           onClick={declarePaid}
           disabled={busy || !consentOn}
-          className="mt-2 w-full bg-[#15161B] text-white rounded-xl py-3.5 text-[14px] font-bold disabled:opacity-40"
+          className="mt-2 w-full bg-[var(--ink)] text-white py-3.5 text-[14px] font-bold disabled:opacity-40"
         >
           {busy ? "רגע…" : consentOn ? "שילמנו — לאישור החנות" : "קודם מסמנים שההורים מאשרים ↑"}
         </button>
       </div>
 
       <div className="text-center mt-8">
-        <a href="/dashboard" className="text-[13px] text-[#7A7D8A] underline">
+        <a href="/dashboard" className="text-[13px] text-[var(--muted)] underline">
           לא עכשיו, חזרה לחנות ←
         </a>
-        <p className="text-[11px] text-[#A2A5B0] mt-4 leading-relaxed">
+        <p className="text-[11px] text-[var(--faint)] mt-4 leading-relaxed">
           כל מה שבנית נשמר, גם אם לא תפעילי עכשיו.
           <br />
           <a href="/terms" className="underline">תנאי שימוש</a>
@@ -366,11 +366,11 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
 }
 
 const payBtn =
-  "bg-[#15161B] text-white rounded-xl py-3.5 text-[14px] font-bold text-center block";
+  "bg-[var(--ink)] text-white  py-3.5 text-[14px] font-bold text-center block";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[#F5F6F9]">
+    <main className="min-h-screen bg-[var(--canvas)]">
       <div className="max-w-md mx-auto px-5 py-10">{children}</div>
     </main>
   );

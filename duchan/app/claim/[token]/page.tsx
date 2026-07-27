@@ -42,7 +42,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
       <div className="text-center">
         <div className="text-4xl mb-2">🎁</div>
         <h1 className="text-xl font-bold">החנות מחכה לך</h1>
-        <p className="text-sm text-[#7A7D8A] mt-1">בוחרים אימייל וסיסמה — וזהו.</p>
+        <p className="text-sm text-[var(--muted)] mt-1">בוחרים אימייל וסיסמה — וזהו.</p>
       </div>
       <form onSubmit={submit} className="w-full max-w-sm flex flex-col gap-3">
         <input
@@ -52,7 +52,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
           onChange={(e) => setEmail(e.target.value)}
           placeholder="אימייל"
           required
-          className="w-full border border-[#E6E7EC] bg-white rounded-xl px-3 py-2.5 text-sm text-left"
+          className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-sm text-left"
         />
         <input
           type="password"
@@ -61,12 +61,12 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
           onChange={(e) => setPassword(e.target.value)}
           placeholder="סיסמה (6 תווים לפחות)"
           required
-          className="w-full border border-[#E6E7EC] bg-white rounded-xl px-3 py-2.5 text-sm text-left"
+          className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-sm text-left"
         />
-        {err && <p className="text-xs text-[#D2373B]">{err}</p>}
+        {err && <p className="text-xs text-[var(--danger)]">{err}</p>}
         <button
           disabled={busy}
-          className="bg-[#15161B] text-white rounded-xl py-3 text-sm font-medium disabled:opacity-50"
+          className="bg-[var(--ink)] text-white py-3 text-sm font-medium disabled:opacity-50"
         >
           {busy ? "רגע…" : "קבלת החנות 🎉"}
         </button>
