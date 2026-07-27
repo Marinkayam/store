@@ -103,15 +103,33 @@ export async function POST(req: NextRequest) {
     total += p.price * qty;
   }
 
-  // מספור + כתיבה בטרנזקציה אחת — שתי קונות בו-זמניות מקבלות מספרים שונים
-  const { data: orderNumber, error: orderErr } = await db.rpc("place_order", {
+  // מספור + כתיבה בטרנזקציה אחת — שתי קונות בו-זמניות מקבלות מספרים שונים.
+  //
+  // p_buyer_phone נוסף במיגרציה 0020. אם הקוד עולה לפני שהמיגרציה רצה על
+  // הדאטהבייס, ל-place_order אין פרמטר כזה ו-PostgREST מחזיר "function not
+  // found" — וזה היה מפיל *כל* הזמנה בכל חנות, בדיוק כמו התקלה עם
+  // payout_link. נופלים לחתימה הישנה בלי מספר הקונה, ומזמינים ממשיכות
+  // לעבוד עד שהמיגרציה מתעדכנת.
+  let orderNumber: number | null = null;
+  let orderErr;
+  ({ data: orderNumber, error: orderErr } = await db.rpc("place_order", {
     p_store: store.id,
     p_items: snapshot,
     p_total: total,
     p_note: note?.slice(0, 200) || null,
     p_ip_hash: ipHash,
     p_buyer_phone: buyerPhone ? normalizePhone(buyerPhone) : null,
-  });
+  }));
+  if (orderErr) {
+    console.error("[orders] place_order with buyer_phone failed, falling back:", orderErr.message);
+    ({ data: orderNumber, error: orderErr } = await db.rpc("place_order", {
+      p_store: store.id,
+      p_items: snapshot,
+      p_total: total,
+      p_note: note?.slice(0, 200) || null,
+      p_ip_hash: ipHash,
+    }));
+  }
   if (orderErr || typeof orderNumber !== "number") {
     return NextResponse.json({ error: "משהו השתבש, לנסות שוב" }, { status: 500 });
   }
