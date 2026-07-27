@@ -128,24 +128,17 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
 
       <a
         href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
-        className="inline-block mt-4 bg-[var(--whatsapp)] text-white px-6 py-3 text-[13.5px] font-bold"
+        className="inline-block mt-4 bg-[var(--whatsapp)] text-white px-4 py-2 text-[12px] font-bold"
       >
         לדבר איתי בוואטסאפ
       </a>
-      <p className="text-[11.5px] text-[var(--muted)] mt-2">
-        מרינה · <span dir="ltr">{sales.replace(/^972/, "0")}</span>
-      </p>
 
       <a
         href={`/?ref=${slug}`}
         className="inline-block mt-4 border border-[var(--line)] bg-white px-6 py-2.5 text-[13px] font-medium"
       >
-        לפתוח חנות משלך
+        לפתוח דוכן משלך
       </a>
-
-      <p className="text-[11px] text-[var(--faint)] mt-4">
-        נבנה ב<span className="font-bold">דוכן</span> · חינם לבנייה
-      </p>
     </div>
   );
 }
