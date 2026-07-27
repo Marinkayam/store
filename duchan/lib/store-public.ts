@@ -23,46 +23,91 @@ export type PublicStoreResult =
  * הקריאה הפומבית היחידה של חנות. שרת בלבד, service role, שדות מפורשים —
  * contact_phone ו-parent_email לא יוצאים מכאן לעולם.
  */
+/**
+ * העמודות שהדף הפומבי קורא, בשתי רמות.
+ *
+ * הקוד עולה לאוויר לפני שהמיגרציה רצה על הדאטהבייס — זה הסדר הרגיל של
+ * דיפלוי, לא תקלה. אבל PostgREST מחזיר שגיאה על עמודה שאינה קיימת, ושגיאה
+ * כזו הפילה את *כל* דפי החנויות ל"החנות סגורה": שדה חדש אחד השבית את
+ * המוצר כולו עבור כל הקונות.
+ *
+ * לכן יש BASE — העמודות שקיימות מאז ומתמיד — ו-EXTRA, מה שנוסף לאחרונה.
+ * מנסים את המלא, ואם הוא נופל חוזרים לבסיס. חנות בלי לינק תשלום עדיפה
+ * פי אלף על חנות סגורה.
+ */
+const STORE_BASE =
+  "id, slug, display_name, emoji, tagline, theme, cover_key, avatar_key, status, activated_at";
+const STORE_FULL = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payout_cash, payout_note, payout_link`;
+
+const PRODUCT_BASE =
+  "id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, created_at";
+const PRODUCT_FULL = `${PRODUCT_BASE}, option_label, options, badge`;
+
 export const getPublicStore = cache(async (slug: string): Promise<PublicStoreResult> => {
   const db = supabaseAdmin();
 
-  const { data: store } = await db
-    .from("stores")
-    .select(
-      "id, slug, display_name, emoji, tagline, theme, cover_key, cover_preset, avatar_key, status, activated_at, payout_bit, payout_paybox, payout_cash, payout_note, payout_link"
-    )
-    .eq("slug", slug)
-    .maybeSingle();
+  const readStore = (cols: string) =>
+    db.from("stores").select(cols).eq("slug", slug).maybeSingle();
+
+  let { data: store, error } = await readStore(STORE_FULL);
+  if (error) {
+    // רואים את זה בלוגים של השרת, ובינתיים החנות ממשיכה לעבוד
+    console.error("[store] full select failed, falling back:", error.message);
+    ({ data: store } = await readStore(STORE_BASE));
+  }
 
   if (!store) return { state: "closed" };
+  const row = store as unknown as Record<string, unknown> & {
+    id: string;
+    status: string;
+    activated_at: string | null;
+  };
 
   // חנות מושבתת מהחמ"ל סגורה בכל מצב — גם לפני פרסום
-  if (store.status !== "active") return { state: "closed" };
+  if (row.status !== "active") return { state: "closed" };
 
-  const { data: products } = await db
-    .from("products")
-    .select("id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, option_label, options, badge, created_at")
-    .eq("store_id", store.id)
-    .is("deleted_at", null)
-    .or("is_visible.is.null,is_visible.eq.true") // null = מוצג (שורות ותיקות)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
+  const readProducts = (cols: string) =>
+    db
+      .from("products")
+      .select(cols)
+      .eq("store_id", row.id)
+      .is("deleted_at", null)
+      .or("is_visible.is.null,is_visible.eq.true") // null = מוצג (שורות ותיקות)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+  let { data: products, error: prodErr } = await readProducts(PRODUCT_FULL);
+  if (prodErr) {
+    console.error("[store] full product select failed, falling back:", prodErr.message);
+    ({ data: products } = await readProducts(PRODUCT_BASE));
+  }
 
   // "הכי נמכר" נגזר מהזמנות ששולמו בלבד — ראה ההסבר ב-lib/badges.ts
   const { data: sold } = await db
     .from("orders")
     .select("items")
-    .eq("store_id", store.id)
+    .eq("store_id", row.id)
     .in("status", ["paid", "delivered"]);
 
-  const list = (products ?? []) as PublicProduct[];
+  const list = (products ?? []) as unknown as PublicProduct[];
   const bestSellerId = bestSellerOf(sold ?? [], list);
   const soldIds = soldProductIds(sold ?? [], list);
 
-  const { id: _id, status: _status, activated_at: activatedAt, ...pub } = store;
+  const { id: _id, status: _status, activated_at: activatedAt, ...rest } = row;
+  // ברירות מחדל לשדות שאולי לא חזרו: הדף חייב לעבוד גם בלעדיהם
+  const pub = {
+    cover_preset: null,
+    payout_bit: false,
+    payout_paybox: false,
+    payout_cash: false,
+    payout_note: null,
+    payout_link: null,
+    ...rest,
+  } as unknown as PublicStore;
+
   return {
     state: activatedAt ? "live" : "preview",
-    store: pub as PublicStore,
+    store: pub,
     products: list,
     bestSellerId,
     soldIds,
