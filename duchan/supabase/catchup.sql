@@ -1,0 +1,416 @@
+-- ═══════════════════════════════════════════════════════════════
+--  דוכן — עדכון דאטהבייס קיים
+--
+--  להדביק ב-Supabase → SQL Editor → Run.
+--  בטוח להרצה חוזרת: מה שכבר קיים פשוט מדולג.
+--
+--  נוצר אוטומטית ע"י scripts/gen-catchup.mjs — אין לערוך ביד.
+-- ═══════════════════════════════════════════════════════════════
+
+begin;
+
+create table if not exists schema_migrations (
+  name text primary key,
+  applied_at timestamptz not null default now()
+);
+
+-- ───────────────────────────────────────────────────────────────
+-- 0008_activation.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0008 — הפעלת חנות בתשלום חד-פעמי.
+-- הילדה בונה הכל בחינם. הלינק נפתח לשיתוף רק אחרי שהחנות הופעלה.
+-- אנחנו לא סולקים כסף: היא משלמת בביט/פייבוקס והמנהלת מאשרת ידנית.
+
+alter table stores add column if not exists activated_at       timestamptz;
+alter table stores add column if not exists payment_claimed_at timestamptz;
+alter table stores add column if not exists payment_method     text;
+alter table stores add column if not exists payment_ref        text;
+alter table stores add column if not exists payment_amount     int;
+
+comment on column stores.activated_at       is 'רגע ההפעלה. null = טיוטה, הלינק לא פומבי.';
+comment on column stores.payment_claimed_at is 'הילדה הצהירה ששילמה. ממתין לאישור המנהלת.';
+
+-- חנויות שנפתחו לפני מודל התשלום ממשיכות לעבוד. מיגרציות רק מוסיפות.
+update stores set activated_at = created_at where activated_at is null;
+
+-- ההפעלה נעשית בשרת בלבד.
+-- ל-RLS יש policy אחד רחב על stores (own_store, for all), כך שבלי השמירה הזו
+-- הבעלות יכולה פשוט לעדכן activated_at מהדפדפן ולפרסם בלי לשלם.
+-- למפתח service role אין sub ב-JWT, ולכן auth.uid() שלו null — וזה מה שמבדיל.
+--
+-- security definer כאן הוא חובה ולא נוחות: הטריגר רץ בהקשר של כל מי שמעדכן
+-- את stores, ולא לכל תפקיד יש הרשאה על סכמת auth. בלי זה כל UPDATE על חנות
+-- נופל ב-"permission denied for schema auth". auth.uid() קוראת GUC של הבקשה,
+-- ולכן היא עדיין מחזירה את המשתמשת האמיתית גם תחת security definer.
+create or replace function guard_store_activation()
+returns trigger language plpgsql security definer as $$
+begin
+  if auth.uid() is not null then
+    new.activated_at   := old.activated_at;
+    new.payment_amount := old.payment_amount;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists stores_guard_activation on stores;
+create trigger stores_guard_activation
+  before update on stores
+  for each row execute function guard_store_activation();
+
+-- הצהרת תשלום של הילדה. security definer כדי שהחותמת תהיה של השרת ולא של הדפדפן.
+create or replace function claim_store_payment(p_store uuid, p_method text, p_ref text)
+returns void language plpgsql security definer as $$
+begin
+  if not exists (
+    select 1 from stores s where s.id = p_store and s.owner_id = auth.uid()
+  ) then
+    raise exception 'not allowed';
+  end if;
+
+  update stores
+     set payment_claimed_at = now(),
+         payment_method     = nullif(left(coalesce(p_method, ''), 20), ''),
+         payment_ref        = nullif(left(coalesce(p_ref, ''), 60), '')
+   where id = p_store
+     and activated_at is null;   -- חנות פעילה לא מצהירה שוב
+end $$;
+
+do $$ begin
+  if exists (select from pg_roles where rolname = 'authenticated') then
+    grant execute on function claim_store_payment(uuid, text, text) to authenticated;
+  end if;
+end $$;
+
+insert into schema_migrations (name) values ('0008_activation.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0009_referrals.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0009 — מאיפה הגיעה כל חנות.
+-- כך נבנית הרשת: ילדה רואה חנות של חברה, לוחצת "גם אני רוצה", ופותחת חנות
+-- שרשומה כמי שהגיעה ממנה. מהאדמין רואים את האשכולות — כיתה, שכבה, שכונה.
+
+alter table stores add column if not exists referred_by     uuid references stores(id) on delete set null;
+alter table stores add column if not exists referral_source text;
+alter table stores add column if not exists ref_clicks      int not null default 0;
+
+comment on column stores.referred_by     is 'החנות שממנה הגיעה. null = הגיעה ישירות.';
+comment on column stores.referral_source is 'store | direct | admin';
+comment on column stores.ref_clicks      is 'כמה פעמים לחצו "פתחי חנות משלך" מדף החנות הזו.';
+
+create index if not exists stores_referred_by_idx on stores (referred_by);
+
+-- הגנה: הבעלות לא משנה שיוך אחרי היצירה (ולא מפעילה חנות — ראה 0008).
+-- security definer מאותה סיבה שמוסברת ב-0008.
+create or replace function guard_store_activation()
+returns trigger language plpgsql security definer as $$
+begin
+  if auth.uid() is not null then
+    new.activated_at   := old.activated_at;
+    new.payment_amount := old.payment_amount;
+    new.referred_by    := old.referred_by;
+    new.ref_clicks     := old.ref_clicks;
+  end if;
+  return new;
+end $$;
+
+-- ספירת לחיצות על "פתחי חנות משלך". אטומית — כמה מבקרות בו-זמנית זה המצב הרגיל.
+create or replace function bump_ref_click(p_store uuid)
+returns void language sql security definer as $$
+  update stores set ref_clicks = ref_clicks + 1 where id = p_store
+$$;
+
+-- לא מסתמכים על default privileges: פונקציה חדשה שאין עליה grant נכשלת בשקט
+do $$ begin
+  if exists (select from pg_roles where rolname = 'service_role') then
+    grant execute on function bump_ref_click(uuid) to service_role;
+  end if;
+  if exists (select from pg_roles where rolname = 'authenticated') then
+    grant execute on function bump_ref_click(uuid) to authenticated;
+  end if;
+end $$;
+
+insert into schema_migrations (name) values ('0009_referrals.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0010_payouts.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0010 — הפרדה מלאה בין שני סוגי כסף שאין ביניהם שום קשר:
+--
+--   1. התשלום לדוכן   — ₪200 חד-פעמי על הקמת החנות. עמודות payment_* (מיגרציה 0008).
+--                        עובר למנהלת, מאושר ידנית, ומופיע בחמ"ל.
+--   2. הכסף של הילדה  — מה שקונה משלמת לה על מוצר. עמודות payout_* (כאן).
+--                        לא עובר דרכנו, לא נספר אצלנו, ואין לנו עליו עמלה.
+--
+-- payout_* הן העדפות תצוגה בלבד: הן אומרות לקונה איך לשלם, וזהו.
+-- אנחנו לא מסלקים, לא מאמתים תשלום ולא יודעים אם שולם — הילדה מסמנת "שולם" בעצמה.
+
+alter table stores add column if not exists payout_bit    boolean not null default true;
+alter table stores add column if not exists payout_paybox boolean not null default false;
+alter table stores add column if not exists payout_cash   boolean not null default true;
+alter table stores add column if not exists payout_note   text;
+
+comment on column stores.payout_bit  is 'הילדה מקבלת ביט (למספר הוואטסאפ שלה)';
+comment on column stores.payout_cash is 'הילדה מקבלת מזומן במסירה';
+comment on column stores.payout_note is 'הערה חופשית לקונה: "ביט לאמא 052-...", "מזומן מדויק בבקשה"';
+
+insert into schema_migrations (name) values ('0010_payouts.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0011_ai_for_everyone.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0011 — כתיבת תיאורים ב-AI לכולן, לא כפרימיום.
+--
+-- ההיגיון: תיאור עולה ~0.6 אגורות ב-Haiku. חנות עם 20 מוצרים = ~12 אגורות.
+-- הסף הזה נמוך מכדי להצדיק גדר, והפיצ'ר עוזר בדיוק במקום שילדה בת עשר נתקעת —
+-- היא יודעת לצלם, היא לא יודעת לנסח.
+--
+-- הקרדיטים נשארים, אבל לא כמנגנון מכירה — כתקרה נגד לולאה או שימוש לרעה.
+-- 50 מכסה 20 מוצרים עם המון ניסיונות חוזרים.
+
+alter table stores alter column ai_enabled set default true;
+alter table stores alter column ai_credits set default 50;
+
+-- חנויות קיימות מקבלות את זה גם הן
+update stores set ai_enabled = true where coalesce(ai_enabled, false) = false;
+update stores set ai_credits = 50 where ai_credits is null;
+
+comment on column stores.ai_enabled is 'דלוק כברירת מחדל. המנהלת יכולה לכבות לחנות בעייתית.';
+comment on column stores.ai_credits is 'תקרת שימוש, לא מכסת מכירה. null = ללא הגבלה.';
+
+insert into schema_migrations (name) values ('0011_ai_for_everyone.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0012_product_options.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0012 — אפשרות בחירה אחת לכל מוצר: צבע, מידה, טעם.
+--
+-- מכוון שזו *אפשרות אחת* ולא מטריצת וריאנטים. "חולצה S/M/L × 3 צבעים עם מלאי
+-- לכל שילוב" הוא מוצר אחר לגמרי: הוא מכפיל את מסך עריכת המוצר, דורש ניהול מלאי
+-- דו-ממדי, וילדה בת עשר נופלת בו. כאן: תווית אחת ורשימת בחירות.
+--
+-- המלאי נשאר על המוצר כולו ולא פר בחירה — מסיבה זהה.
+-- הבחירה של הקונה נכנסת ל-snapshot של ההזמנה ולהודעת הוואטסאפ.
+
+alter table products add column if not exists option_label text;
+alter table products add column if not exists options      text[];
+
+comment on column products.option_label is 'התווית שהילדה בחרה: "צבע" · "מידה" · "טעם". null = אין אפשרויות.';
+comment on column products.options      is 'הבחירות עצמן. הקונה חייבת לבחור אחת לפני הוספה לסל.';
+
+insert into schema_migrations (name) values ('0012_product_options.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0013_phone_auth.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0013 — כניסה בסמס במקום מייל וסיסמה.
+--
+-- ילדה בת עשר לא ממציאה סיסמה ולא זוכרת אותה, וזה היה המסך שבו נטשו. במקום
+-- מייל + סיסמה + טלפון של הורה יש עכשיו שדה אחד: המספר שלה. אותו מספר הוא גם
+-- מספר הוואטסאפ שאליו יגיעו ההזמנות, אז אין כאן שני שדות שאפשר לבלבל ביניהם.
+--
+-- הקודים לא נשמרים כטקסט. נשמר HMAC, וכל אימות מוגבל בניסיונות ובזמן.
+-- שתי הטבלאות האלה נגישות ל-service role בלבד: RLS דלוק ואין להן שום policy,
+-- ולכן anon ו-authenticated לא רואים מהן כלום גם אם ינחשו את השם.
+
+create table if not exists phone_otps (
+  id          uuid primary key default gen_random_uuid(),
+  phone       text not null,
+  code_hash   text not null,
+  expires_at  timestamptz not null,
+  attempts    int not null default 0,
+  consumed_at timestamptz,
+  ip_hash     text,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists phone_otps_phone_idx on phone_otps (phone, created_at desc);
+create index if not exists phone_otps_created_idx on phone_otps (created_at);
+
+-- מיפוי מספר → משתמש. בלעדיו היינו צריכים לסרוק את רשימת המשתמשים בכל כניסה.
+create table if not exists phone_accounts (
+  phone      text primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists phone_accounts_user_idx on phone_accounts (user_id);
+
+alter table phone_otps     enable row level security;
+alter table phone_accounts enable row level security;
+
+-- RLS בלי policy כבר חוסם, אבל ההרשאות נשללות במפורש כדי לא להישען על שכבה
+-- אחת בלבד: ברירות המחדל של Supabase מעניקות הרשאה לטבלאות חדשות, ושתי
+-- הטבלאות האלה הן החומר שממנו מורכבת הכניסה לחשבון.
+revoke all on phone_otps     from anon, authenticated;
+revoke all on phone_accounts from anon, authenticated;
+grant  all on phone_otps     to service_role;
+grant  all on phone_accounts to service_role;
+
+comment on table phone_otps is 'קודי אימות חד-פעמיים. HMAC בלבד, לא הקוד עצמו. service role בלבד.';
+comment on table phone_accounts is 'מספר טלפון מאומת → משתמש. service role בלבד.';
+
+-- המכסה עוברת מאימייל של הורה לטלפון של הילדה. טלפון הוא מזהה חזק יותר
+-- למניעת ריבוי חנויות: אפשר להמציא כתובת מייל, קשה יותר להשיג עוד מספר.
+create index if not exists stores_contact_phone_idx on stores (contact_phone);
+
+insert into schema_migrations (name) values ('0013_phone_auth.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0014_badges.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0014 — תגיות על מוצרים.
+--
+-- שתי משפחות, ובכוונה:
+--
+-- תגיות שהילדה בוחרת:  💎 נדיר · 🎁 מבצע
+-- תגיות שהמערכת מחשבת: ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי
+--
+-- ההפרדה היא הלקח העסקי עצמו. "הכי נמכר" שאפשר להדביק על כל מוצר הוא מדבקה;
+-- "הכי נמכר" שמחושב מהזמנות ששולמו הוא משוב אמיתי על מה השוק באמת רצה. ילדה
+-- שרואה את הכוכב עובר ממוצר למוצר לומדת משהו שאי אפשר ללמד בהסבר.
+--
+-- התגיות המחושבות לא נשמרות בטבלה — הן נגזרות בקריאה. תגית שנשמרת מתיישנת:
+-- "אחרון במלאי" שנכתב אתמול משקר היום.
+
+alter table products add column if not exists badge text;
+
+alter table products drop constraint if exists products_badge_check;
+alter table products add constraint products_badge_check
+  check (badge is null or badge in ('rare', 'sale'));
+
+comment on column products.badge is 'תגית שהילדה בחרה: rare · sale. null = אין. המחושבות לא נשמרות כאן.';
+
+insert into schema_migrations (name) values ('0014_badges.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0015_cover_presets.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0015 — קאבר מוכן לבחירה, לא רק העלאה.
+--
+-- באונבורדינג ילדה עוד לא צילמה כלום, ולבקש ממנה תמונת קאבר לפני שיש לה
+-- חנות זה לבקש החלטה על משהו שהיא לא רואה. רשימת קאברים מוכנים נותנת לה
+-- חנות שנראית גמורה בשנייה, ואפשר להחליף בתמונה אמיתית מתי שתרצה.
+--
+-- הקאברים הם גרדיאנטים בקוד ולא קבצים: אפס בייטים באחסון, אפס תעבורה,
+-- והם נראים חד בכל רזולוציה. cover_key גובר עליהם כשיש תמונה אמיתית.
+
+alter table stores add column if not exists cover_preset text;
+
+comment on column stores.cover_preset is 'מפתח קאבר מוכן מ-lib/covers.ts. cover_key (תמונה שהועלתה) גובר עליו.';
+
+insert into schema_migrations (name) values ('0015_cover_presets.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0016_parent_consent.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0016 — אישור הורה לפני פרסום, במקום בקרה הורית.
+--
+-- אין כאן חשבון להורה, אין אימות ואין מסך נפרד. יש הצהרה אחת של הילדה,
+-- ברגע היחיד שבו היא באמת רלוונטית: לפני שהדוכן יוצא לעולם. עד אז היא
+-- בונה, מעצבת ומשתפת תצוגה מקדימה — ואין מה לאשר.
+--
+-- החותמת נשמרת בשרת ולא נכתבת מהדפדפן, כדי שיהיה לזה ערך אמיתי כשמסתכלים
+-- על החנות בחמ"ל.
+
+alter table stores add column if not exists parent_consent_at timestamptz;
+
+comment on column stores.parent_consent_at is
+  'הילדה אישרה שההורים יודעים ומאשרים. תנאי להצהרת תשלום.';
+
+-- חנויות שכבר פורסמו לא נדרשות לאשר רטרואקטיבית — הן כבר עברו אישור ידני
+update stores set parent_consent_at = activated_at
+ where parent_consent_at is null and activated_at is not null;
+
+create or replace function set_parent_consent(p_store uuid, p_consent boolean)
+returns void language plpgsql security definer as $$
+begin
+  if not exists (
+    select 1 from stores s where s.id = p_store and s.owner_id = auth.uid()
+  ) then
+    raise exception 'not allowed';
+  end if;
+
+  update stores
+     set parent_consent_at = case when p_consent then now() else null end
+   where id = p_store;
+end $$;
+
+-- ההצהרה על תשלום היא הצעד שמכניס את החנות לרשימת האישורים שלי, ולכן
+-- הבדיקה יושבת כאן ולא רק ב-UI: צ'קבוקס בדפדפן אפשר לעקוף, פונקציה בשרת לא.
+create or replace function claim_store_payment(p_store uuid, p_method text, p_ref text)
+returns void language plpgsql security definer as $$
+begin
+  if not exists (
+    select 1 from stores s where s.id = p_store and s.owner_id = auth.uid()
+  ) then
+    raise exception 'not allowed';
+  end if;
+
+  if not exists (
+    select 1 from stores s where s.id = p_store and s.parent_consent_at is not null
+  ) then
+    raise exception 'parent consent required';
+  end if;
+
+  update stores
+     set payment_claimed_at = now(),
+         payment_method     = nullif(left(coalesce(p_method, ''), 20), ''),
+         payment_ref        = nullif(left(coalesce(p_ref, ''), 60), '')
+   where id = p_store
+     and activated_at is null;   -- חנות פעילה לא מצהירה שוב
+end $$;
+
+do $$ begin
+  if exists (select from pg_roles where rolname = 'authenticated') then
+    grant execute on function set_parent_consent(uuid, boolean) to authenticated;
+    grant execute on function claim_store_payment(uuid, text, text) to authenticated;
+  end if;
+end $$;
+
+insert into schema_migrations (name) values ('0016_parent_consent.sql') on conflict do nothing;
+
+-- ───────────────────────────────────────────────────────────────
+-- 0017_admin_phones.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0017 — רשימת המנהלות בדאטהבייס, לא רק במשתני סביבה.
+--
+-- הכניסה עברה לסמס, והזיהוי כמנהלת נשען על ADMIN_PHONES בוורסל. משתנה סביבה
+-- שלא הוגדר (או הוגדר בסביבה הלא נכונה, או בלי Redeploy) נועל את המנהלת מחוץ
+-- לחמ"ל שלה — וזו נעילה שאי אפשר לפרוץ מבפנים, כי כדי להיכנס צריך להיות
+-- מנהלת. שורה בטבלה נשמרת פעם אחת ולא תלויה בדיפלוי.
+--
+-- ADMIN_PHONES ו-ADMIN_EMAILS ממשיכים לעבוד; זו תוספת, לא החלפה.
+
+create table if not exists admin_phones (
+  phone      text primary key,          -- E.164 ללא +: 972501234567
+  note       text,
+  created_at timestamptz not null default now()
+);
+
+comment on table admin_phones is
+  'מספרים שמורשים לחמ"ל. נכתב רק מהשרת (CRON_SECRET), לעולם לא מהדפדפן.';
+
+alter table admin_phones enable row level security;
+
+-- אין policy בכוונה: RLS בלי policy חוסם הכל. ההרשאות נשללות גם במפורש
+-- כדי לא להישען על שכבה אחת — הטבלה הזו היא רשימת המפתחות לבית.
+revoke all on admin_phones from anon, authenticated;
+grant  all on admin_phones to service_role;
+
+insert into schema_migrations (name) values ('0017_admin_phones.sql') on conflict do nothing;
+
+commit;
+
+-- אחרי ההרצה: לרענן את הקאש של ה-API
+notify pgrst, 'reload schema';

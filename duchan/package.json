@@ -10,7 +10,8 @@
     "migrate": "node scripts/migrate.mjs",
     "gen:setup": "node scripts/gen-setup.mjs",
     "check": "node scripts/check-setup.mjs",
-    "check:dns": "node scripts/check-dns.mjs"
+    "check:dns": "node scripts/check-dns.mjs",
+    "gen:catchup": "node scripts/gen-catchup.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
