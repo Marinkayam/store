@@ -232,6 +232,16 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     showToast(smsUnlimited ? "סמס ללא הגבלה למספר הזה" : "בוטל — חוזרת למכסה הרגילה");
   }
 
+  // איפוס מיידי — פותח כניסה עכשיו בלי לחכות למיגרציה. לא קבוע, רק לרגע הזה.
+  async function resetSmsQuota(storeId: string) {
+    await fetch("/api/admin/stores", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storeId, resetSmsQuota: true }),
+    });
+    showToast("המכסה אופסה — אפשר להיכנס שוב עכשיו");
+  }
+
   /**
    * כל פעולה על מוצר מהחמ"ל. גם "מחיקה" היא רכה — deleted_at, עם שחזור.
    * הודעת ה-toast מפורשת בכוונה: אחרת נראה כאילו מחקת מוצר לתמיד בלי לשאול.
@@ -854,6 +864,13 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     : "bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium"}
                 >
                   {detail.store.sms_unlimited ? "כיבוי" : "הפעלה"}
+                </button>
+                <button
+                  onClick={() => resetSmsQuota(detail.store.id)}
+                  aria-label="איפוס מכסת סמס עכשיו"
+                  className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]"
+                >
+                  איפוס עכשיו
                 </button>
               </div>
             </div>

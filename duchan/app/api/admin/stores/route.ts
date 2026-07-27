@@ -62,6 +62,7 @@ export async function PATCH(req: NextRequest) {
     activate?: boolean;
     paymentAmount?: number;
     smsUnlimited?: boolean;
+    resetSmsQuota?: boolean;
   };
   try {
     body = await req.json();
@@ -69,6 +70,17 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
   if (!body.storeId) return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
+
+  const db = supabaseAdmin();
+
+  // איפוס מיידי של מכסת הסמס להיום — פועל על phone_otps הקיימת, בלי תלות
+  // בעמודת sms_unlimited. שימושי כשילדה תקועה עכשיו והמיגרציה עדיין לא רצה.
+  if (body.resetSmsQuota) {
+    const { data: s } = await db.from("stores").select("contact_phone").eq("id", body.storeId).maybeSingle();
+    if (s?.contact_phone) {
+      await db.from("phone_otps").delete().eq("phone", s.contact_phone);
+    }
+  }
 
   const patch: Record<string, unknown> = {};
 
@@ -98,10 +110,10 @@ export async function PATCH(req: NextRequest) {
   }
   if (body.smsUnlimited !== undefined) patch.sms_unlimited = body.smsUnlimited;
   if (Object.keys(patch).length === 0) {
+    if (body.resetSmsQuota) return NextResponse.json({ ok: true });
     return NextResponse.json({ error: "אין מה לעדכן" }, { status: 400 });
   }
 
-  const db = supabaseAdmin();
   const { data: updated } = await db
     .from("stores")
     .update(patch)
