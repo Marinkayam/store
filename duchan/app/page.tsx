@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { ACTIVATION_PRICE, FULL_PRICE, IS_LAUNCH, LAUNCH_UNTIL_LABEL } from "@/lib/pricing";
 import StallArt from "./stall-art";
+import HelpButton from "./help-button";
 
 // עמוד הנחיתה: שדה אחד. בלי אימייל. הבנייה מתחילה לפני ההרשמה.
 // ?ref=<slug> — הגיעה מחנות של חברה. השיוך נשמר בטיוטה ועובר ליצירת החנות.
@@ -66,6 +67,7 @@ export default function Landing() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-8 bg-[var(--canvas)]">
+      <HelpButton context="פתיחת דוכן" />
       {mine && (
         // כרטיס בתוך זרימת הדף, לא רצועה שחורה שנתלשת ממנה. הרצועה השחורה
         // המקורית התנגשה עם האיור הרך שמתחתיה ונראתה כמו שני אתרים שונים.

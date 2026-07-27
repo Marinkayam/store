@@ -5,6 +5,7 @@ import { COVERS, DEFAULT_COVER, coverCss } from "@/lib/covers";
 import { squareImage, MediaError } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "../phone-verify";
+import HelpButton from "../help-button";
 
 // שלב 1 מתוך שלושה: לפתוח דוכן. פחות מדקה.
 //
@@ -17,10 +18,20 @@ interface Draft {
   displayName: string;
   avatarData: string | null;
   cover: string;
+  age: string;
+  city: string;
   ref: string | null;
 }
 
-const EMPTY: Draft = { step: 1, displayName: "", avatarData: null, cover: DEFAULT_COVER.key, ref: null };
+const EMPTY: Draft = {
+  step: 1,
+  displayName: "",
+  avatarData: null,
+  cover: DEFAULT_COVER.key,
+  age: "",
+  city: "",
+  ref: null,
+};
 
 function loadDraft(): Draft {
   try {
@@ -69,6 +80,8 @@ export default function Onboarding() {
         body: JSON.stringify({
           displayName: draft!.displayName,
           coverPreset: draft!.cover,
+          age: draft!.age ? Number(draft!.age) : undefined,
+          city: draft!.city.trim() || undefined,
           ref: draft!.ref,
         }),
       });
@@ -106,6 +119,7 @@ export default function Onboarding() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-10 gap-5 max-w-md mx-auto">
+      <HelpButton context="פתיחת הדוכן" />
       {/* 1 — שם, תמונה, רקע. הכל במסך אחד. */}
       {draft.step === 1 && !result && (
         <div className="w-full flex flex-col gap-5">
@@ -203,6 +217,32 @@ export default function Onboarding() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <div className="text-[13px] font-semibold mb-1.5">3. גיל (לא חובה)</div>
+              <input
+                value={draft.age}
+                onChange={(e) => set({ age: e.target.value.replace(/\D/g, "").slice(0, 2) })}
+                placeholder="11"
+                aria-label="גיל"
+                inputMode="numeric"
+                maxLength={2}
+                className="field w-full px-4 py-3.5 text-center text-base"
+              />
+            </div>
+            <div className="flex-[1.4]">
+              <div className="text-[13px] font-semibold mb-1.5">עיר (לא חובה)</div>
+              <input
+                value={draft.city}
+                onChange={(e) => set({ city: e.target.value })}
+                placeholder="רמת גן"
+                aria-label="עיר"
+                maxLength={30}
+                className="field w-full px-4 py-3.5 text-center text-base"
+              />
             </div>
           </div>
 

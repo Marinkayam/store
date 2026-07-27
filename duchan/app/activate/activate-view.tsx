@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../dashboard/use-store";
 import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../price/sections";
+import HelpButton from "../help-button";
 
 // הפלואו: בונים בחינם → רוצים לשתף → כאן מסבירים כמה ולמה → משלמים בביט/פייבוקס
 // → מצהירים "שילמנו" → המנהלת מאשרת → החנות באוויר והלינק ניתן לשיתוף.
@@ -389,6 +390,7 @@ const payBtn =
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-[var(--canvas)]">
+      <HelpButton context="הפעלת הדוכן" />
       <div className="max-w-md mx-auto px-5 py-10">{children}</div>
     </main>
   );

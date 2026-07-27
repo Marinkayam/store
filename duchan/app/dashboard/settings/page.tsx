@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [info, setInfo] = useState({
     about: "",
     city: "",
+    age: "" as string,
     ships: false,
     shipping_note: "",
     shipping_price: "" as string,
@@ -59,6 +60,7 @@ export default function SettingsPage() {
     setInfo({
       about: store.about ?? "",
       city: store.city ?? "",
+      age: store.age == null ? "" : String(store.age),
       ships: store.ships ?? false,
       shipping_note: store.shipping_note ?? "",
       shipping_price: store.shipping_price == null ? "" : String(store.shipping_price),
@@ -116,6 +118,7 @@ export default function SettingsPage() {
       payout_link: payout.payout_link?.trim() || null,
       about: info.about.trim() || null,
       city: info.city.trim() || null,
+      age: info.age !== "" && Number(info.age) >= 5 && Number(info.age) <= 18 ? Number(info.age) : null,
       ships: info.ships,
       shipping_note: info.ships ? info.shipping_note.trim() || null : null,
       shipping_price: info.ships && info.shipping_price !== "" ? Math.max(0, Math.min(200, Math.round(Number(info.shipping_price) || 0))) : null,
@@ -455,17 +458,33 @@ export default function SettingsPage() {
             aria-label="על הדוכן"
             className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
           />
-          <label className="block text-[11px] text-[var(--muted)] mt-2 mb-1">עיר</label>
-          <input
-            value={info.city}
-            onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-            placeholder="למשל: רמת גן"
-            maxLength={30}
-            aria-label="עיר"
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-          />
+          <div className="flex gap-2 mt-2">
+            <div className="w-20">
+              <label className="block text-[11px] text-[var(--muted)] mb-1">גיל</label>
+              <input
+                value={info.age}
+                onChange={(e) => { setInfo({ ...info, age: e.target.value.replace(/\D/g, "").slice(0, 2) }); setDirty(true); }}
+                placeholder="11"
+                inputMode="numeric"
+                maxLength={2}
+                aria-label="גיל"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-[11px] text-[var(--muted)] mb-1">עיר</label>
+              <input
+                value={info.city}
+                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
+                placeholder="למשל: רמת גן"
+                maxLength={30}
+                aria-label="עיר"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
+            </div>
+          </div>
           <p className="text-[11px] text-[var(--muted)] mt-1">
-            רק עיר, לעולם לא כתובת. זה מספיק כדי שקונה תדע אם מסירה הגיונית.
+            הגיל לא מוצג בחנות ולעולם לא בקוד המקור. רק עיר, לעולם לא כתובת — זה מספיק כדי שקונה תדע אם מסירה הגיונית.
           </p>
         </div>
 

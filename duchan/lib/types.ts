@@ -37,6 +37,8 @@ export interface Store {
   // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה (מיגרציה 0019)
   about: string | null;
   city: string | null;
+  // גיל, לא תאריך לידה — פחות מזהה. לעולם לא בקריאה הפומבית (מיגרציה 0021)
+  age: number | null;
   ships: boolean;
   shipping_note: string | null;
   shipping_price: number | null;

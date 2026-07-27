@@ -17,6 +17,8 @@ interface Body {
   tagline?: string;
   theme?: string;
   contactPhone?: string;
+  age?: number;
+  city?: string;
   ref?: string | null; // הסלאג של החנות שממנה הגיעה
   firstProduct?: {
     name: string;
@@ -42,6 +44,11 @@ export async function POST(req: NextRequest) {
 
   const displayName = body.displayName?.trim().slice(0, 40);
   if (!displayName) return NextResponse.json({ error: "לחנות צריך שם" }, { status: 400 });
+
+  // שניהם לא חובה. גיל מחוץ לטווח נשמר כלא-קיים במקום לדחות את כל הבקשה —
+  // זה שדה עזר לפיד עתידי, לא משהו שצריך לחסום עליו פתיחת דוכן.
+  const age = Number.isInteger(body.age) && body.age! >= 5 && body.age! <= 18 ? body.age : null;
+  const city = body.city?.trim().slice(0, 30) || null;
 
   const theme = body.theme && body.theme in THEMES ? body.theme : "cloud";
   // רשימה סגורה — מפתח קאבר שלא קיים היה מוגש כרקע ריק
@@ -98,6 +105,8 @@ export async function POST(req: NextRequest) {
         theme,
         cover_preset: coverPreset,
         contact_phone: contactPhone,
+        age,
+        city,
         // נשמר רק אם יש כתובת אמיתית. בכניסה בסמס אין כזו, והכתובת הפנימית
         // @phone.duchan.app היא לא מייל שמישהי קוראת — אין טעם לשמור אותה.
         parent_email: user.email?.endsWith("@phone.duchan.app") ? null : user.email?.toLowerCase() ?? null,
