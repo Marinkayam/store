@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendSms, smsConfigured } from "@/lib/sms";
 import { normalizePhone } from "@/lib/phone";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { resolveSupabaseUrl } from "@/lib/supabase/url";
 
 // GET /api/sms-status?key=<CRON_SECRET>[&to=05XXXXXXXX]
 //
@@ -37,15 +38,15 @@ export async function GET(req: NextRequest) {
    * (supabase.com/dashboard/project/…) במקום ה-Project URL. בלי להראות את
    * הצורה אי אפשר לראות את זה, ועם צורה בלבד לא נחשף שום סוד.
    */
-  const rawUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
-  let urlShape: string;
-  if (!rawUrl) urlShape = "✗ חסר";
-  else if (rawUrl.endsWith("/")) urlShape = "✗ יש סלאש מיותר בסוף";
-  // סביבת הבדיקות המקומית מצביעה לשים ולא ל-supabase.co, וזה תקין
-  else if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(rawUrl)) urlShape = "✓ מקומית";
-  else if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(rawUrl)) {
-    urlShape = "✗ לא בצורה הנכונה — צריך https://xxxx.supabase.co בלבד, בלי נתיב";
-  } else urlShape = "✓ תקינה";
+  const { source } = resolveSupabaseUrl();
+  const urlShape =
+    source === "env"
+      ? "✓ תקינה"
+      : source === "missing"
+        ? "✗ חסרה, ואי אפשר לשחזר אותה מהמפתחות"
+        : source === "path"
+          ? "⚠ הודבקה כתובת הדשבורד — האתר מתקן את זה לבד, אבל שווה לתקן בוורסל"
+          : "⚠ לא תקינה — האתר שחזר אותה מהמפתח של סופרבייס ועובד. שווה לתקן בוורסל";
 
   // הכתיבה ל-DB היא השלב שלפני הספק, ורוב התקלות יושבות דווקא בה: טבלה
   // שהמיגרציה לא רצה עליה, או מפתח service role שגוי. בודקים אותה ממש —
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest) {
       supabaseUrl: urlShape,
       db,
       diagnosis: urlShape.startsWith("✗")
-        ? "הכתובת של סופרבייס שגויה. בסופרבייס: Project Settings → Data API → Project URL. להעתיק בדיוק, בלי סלאש בסוף, ולהדביק ל-NEXT_PUBLIC_SUPABASE_URL בוורסל."
+        ? "הכתובת של סופרבייס שגויה וגם המפתחות לא מאפשרים לשחזר אותה. בסופרבייס: Project Settings → Data API → Project URL, ולהדביק ל-NEXT_PUBLIC_SUPABASE_URL בוורסל."
         : "הבעיה בדאטהבייס ולא בסמס. אם כתוב שהטבלה לא קיימת — להריץ את המיגרציה בסופרבייס. אם כתוב הרשאה — לבדוק את SUPABASE_SERVICE_ROLE_KEY.",
     });
   }

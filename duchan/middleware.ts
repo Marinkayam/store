@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { supabaseUrl } from "@/lib/supabase/url";
 import { NextResponse, type NextRequest } from "next/server";
 
 // רענון session של Supabase + הגנה על הדשבורד.
@@ -8,7 +9,7 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl(),
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {

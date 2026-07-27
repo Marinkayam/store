@@ -4,13 +4,17 @@ import { supabaseAdmin } from "./supabase/admin";
 import { normalizePhone } from "./phone";
 
 /**
- * אדמין לפי ADMIN_PHONES או ADMIN_EMAILS. אין טבלת roles ב-v1.
+ * אדמין לפי admin_phones בדאטהבייס, ADMIN_PHONES או ADMIN_EMAILS.
  *
  * הטלפון נבדק גם הוא כי הכניסה עברה לסמס: משתמשת שנכנסה עם מספר מקבלת כתובת
  * פנימית מסוג 972…@phone.duchan.app, שלעולם לא תתאים לרשימת האימיילים. בלי
  * הבדיקה הזו המנהלת ננעלת מחוץ לחמ"ל שלה עצמה ברגע שהיא נכנסת בטלפון.
  *
  * ADMIN_EMAILS נשאר עבור חשבונות שנפתחו לפני המעבר.
+ *
+ * הטבלה admin_phones נוספה כי משתנה סביבה חסר נעל את המנהלת מחוץ לחמ"ל שלה,
+ * ומשם אין דרך חזרה — כדי להיכנס צריך להיות מנהלת. שורה בטבלה שורדת דיפלוי,
+ * שינוי סביבה והעברה בין חשבונות.
  */
 export async function requireAdmin(): Promise<{ email: string } | null> {
   const supa = await supabaseServer();
@@ -24,19 +28,24 @@ export async function requireAdmin(): Promise<{ email: string } | null> {
   if (user.email && emails.includes(user.email.toLowerCase())) return { email: user.email };
 
   // הרשימה מנורמלת כדי ש-050-123-4567 ו-972501234567 יהיו אותו דבר
-  const phones = list(process.env.ADMIN_PHONES)
-    .map((p) => normalizePhone(p))
-    .filter((p): p is string => !!p);
-  if (phones.length === 0) return null;
-
-  const { data: acct } = await supabaseAdmin()
+  const db = supabaseAdmin();
+  const { data: acct } = await db
     .from("phone_accounts")
     .select("phone")
     .eq("user_id", user.id)
     .maybeSingle();
+  if (!acct?.phone) return null;
 
-  if (acct?.phone && phones.includes(acct.phone)) {
-    return { email: user.email ?? acct.phone };
-  }
-  return null;
+  // הרשימה מנורמלת כדי ש-050-123-4567 ו-972501234567 יהיו אותו דבר
+  const phones = list(process.env.ADMIN_PHONES)
+    .map((p) => normalizePhone(p))
+    .filter((p): p is string => !!p);
+  if (phones.includes(acct.phone)) return { email: user.email ?? acct.phone };
+
+  const { data: row } = await db
+    .from("admin_phones")
+    .select("phone")
+    .eq("phone", acct.phone)
+    .maybeSingle();
+  return row ? { email: user.email ?? acct.phone } : null;
 }
