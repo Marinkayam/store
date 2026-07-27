@@ -746,7 +746,8 @@ export default function ProductsPage() {
       {edit && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setEdit(null)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-6 max-h-[90%] overflow-y-auto">
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white max-h-[90%] flex flex-col">
+          <div className="px-4 pt-3 overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
 
@@ -993,6 +994,12 @@ export default function ProductsPage() {
               </>
             )}
 
+          </div>
+
+          {/* קבועה בתחתית ולא בתוך הגלילה — כדי שהצעד הבא לא ייעלם מתחת למסך.
+              "לא מובן מה צריך לעשות" התברר להיות שהיא לא הגיעה לכפתור בכלל,
+              לא שהיא לא ידעה שצריך ללחוץ עליו. */}
+          <div className="px-4 py-3 pb-6 border-t border-[var(--line)] shrink-0 bg-white">
             <button onClick={save} disabled={busy}
               className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold disabled:opacity-50">
               {busy ? "שומרים…" : "שמירה"}
@@ -1009,6 +1016,7 @@ export default function ProductsPage() {
                 </button>
               </>
             )}
+          </div>
           </div>
         </>
       )}
