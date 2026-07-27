@@ -158,6 +158,22 @@ h3 {
   box-shadow: 0 0 0 3px rgba(168, 164, 109, 0.16);
 }
 
+/* איור הדוכן בדף הבית: נדנוד עדין, כמו דוכן שוק ברוח.
+   איטי ובאמפליטודה קטנה בכוונה — התנועה אמורה למשוך את העין לרגע,
+   לא להתחרות בטופס שמתחתיה. */
+@keyframes stall-sway {
+  0%, 100% { transform: rotate(-1.1deg) translateY(0); }
+  50%      { transform: rotate(1.1deg) translateY(-5px); }
+}
+.stall-sway {
+  transform-origin: 50% 100%; /* מסתובב סביב הבסיס, כמו שלט תלוי */
+  animation: stall-sway 4.5s ease-in-out infinite;
+}
+/* מי שביקש/ה פחות תנועה במערכת ההפעלה לא אמור/ה לקבל אנימציה בכלל */
+@media (prefers-reduced-motion: reduce) {
+  .stall-sway { animation: none; }
+}
+
 /* אנימציית סקוויש לאימוג'י בחנות */
 @keyframes squish {
   0%, 72%, 100% { transform: scale(1, 1); }

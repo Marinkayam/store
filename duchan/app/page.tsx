@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { ACTIVATION_PRICE, FULL_PRICE, IS_LAUNCH, LAUNCH_UNTIL_LABEL } from "@/lib/pricing";
 import StallArt from "./stall-art";
 import HelpButton from "./help-button";
 
@@ -95,15 +94,9 @@ export default function Landing() {
           "כל מה שרוצים" היא ההבטחה ו"וההורים מסכימים" הוא הגבול — הם נאמרים
           באותה נשימה בכוונה, כדי שאף אחד מהם לא יישמע כמו תוספת קטנה. */}
       <div className="text-center flex flex-col items-center">
-        <StallArt className="w-56 h-auto" />
+        <StallArt className="w-56 h-auto stall-sway" />
         <h1 className="text-[2.75rem] leading-none font-semibold tracking-[-0.03em] mt-2">דוכן</h1>
-        <div className="flex items-center gap-2 mt-3 text-[var(--lavender)]">
-          <span className="text-[10px] tracking-[0.3em]">····</span>
-          <span className="text-base">❦</span>
-          <span className="text-[10px] tracking-[0.3em]">····</span>
-        </div>
-        <h2 className="t-heading text-[var(--olive)] mt-4">הדוכן שלך מתחיל כאן</h2>
-        <p className="t-sub mt-3 max-w-[19rem]">
+        <p className="t-sub mt-4 max-w-[19rem]">
           יש צעצועים שכבר לא משחקים בהם? בגדים עם התווית שעוד לא לבשו? ספר
           שכבר קראו, או סקוויש שכבר מעכו עד הסוף?
           <br />
@@ -143,26 +136,15 @@ export default function Landing() {
         >
           נבנה את הדוכן ←
         </button>
-        {IS_LAUNCH ? (
-          <p className="t-small text-center">
-            <span className="font-medium">לבנות את הדוכן שלך במחיר מצחיק!</span>
-            <br />
-            <span className="text-[var(--muted)]">
-              מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE}, עד {LAUNCH_UNTIL_LABEL}. לבנות זה
-              חינם, <b className="text-[var(--ink)]">תשלום חד-פעמי</b>, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
-              <a href="/price" className="underline font-medium text-[var(--ink)]">
-                איך זה עובד?
-              </a>
-            </span>
-          </p>
-        ) : (
-          <p className="t-small text-center text-[var(--muted)]">
-            לבנות זה חינם. תשלום חד-פעמי, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
-            <a href="/price" className="underline font-medium text-[var(--ink)]">
-              איך זה עובד?
-            </a>
-          </p>
-        )}
+        {/* פירוט המחיר עבר כולו ל-/price. כאן נשאר משפט אחד שמסיר את החשש
+            המיידי ("זה עולה לי כסף עכשיו?"), והקישור עצמו הוא כפתור ולא
+            שורה קטנה בתחתית — זו השאלה הראשונה שכל הורה שואל. */}
+        <p className="t-small text-center text-[var(--muted)]">
+          לבנות זה חינם. תשלום חד-פעמי רק כשרוצים לפרסם.
+        </p>
+        <a href="/price" className="btn btn-secondary">
+          איך זה עובד?
+        </a>
       </form>
 
       <p className="t-small text-[var(--muted)]">
