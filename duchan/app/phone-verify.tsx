@@ -27,6 +27,7 @@ export default function PhoneVerify({
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [showFindHelp, setShowFindHelp] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
 
   // ספירה לאחור לכפתור "לא קיבלתי" — בלי זה היא לוחצת שוב ושוב ומקבלת שגיאה
@@ -91,6 +92,7 @@ export default function PhoneVerify({
 
   if (step === "phone") {
     return (
+      <>
       <div className="w-full flex flex-col gap-3">
         <h1 className="text-lg font-bold text-center">{title}</h1>
         <p className="text-[12.5px] text-[var(--muted)] text-center -mt-1 leading-relaxed">{subtitle}</p>
@@ -113,22 +115,62 @@ export default function PhoneVerify({
         >
           {busy ? "שולחים…" : cta}
         </button>
-        <p className="text-[11.5px] text-[var(--faint)] text-center leading-relaxed">
-          נשלח לך קוד בהודעה כדי להיכנס. זה גם המספר שאליו יגיעו ההזמנות
-          בוואטסאפ, אז זה יכול להיות שלך או של אחד ההורים.
-        </p>
-        {/* לא כל ילדה יודעת את המספר בעל פה, ולא כל ילדה יש לה טלפון משלה —
-            details/summary כי זה מידע שרוב הילדות לא צריכות לראות בכלל */}
-        <details className="text-[11.5px] text-[var(--muted)] text-center">
-          <summary className="cursor-pointer underline list-none">לא יודעת מה המספר?</summary>
-          <p className="mt-1.5 leading-relaxed">
-            אפשר להשתמש במספר של אמא או אבא — מי שדרכו את/ה רוצה שההזמנות
-            יגיעו. אם זה הטלפון שביד עכשיו: באייפון — הגדרות ← כללי ← אודות
-            ← מספר טלפון. באנדרואיד — הגדרות ← אודות הטלפון ← מצב ← מספר
-            טלפון.
+
+        {/* לא כל ילד/ה יש לו/לה טלפון משלו/משלה — המספר יכול להיות של הורה,
+            וזה בכוונה לא הערת שוליים אלא תיבה עצמאית */}
+        <div className="bg-[var(--canvas)] border border-[var(--line)] px-3.5 py-3">
+          <div className="text-[12.5px] font-semibold">אפשר גם מספר של אמא או אבא</div>
+          <p className="text-[11.5px] text-[var(--muted)] leading-relaxed mt-1">
+            הקוד צריך להגיע בהודעה שאפשר לראות. אם זה מספר של מבוגר —
+            ההודעות על ההזמנות יגיעו אליו.
           </p>
-        </details>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowFindHelp(true)}
+          className="text-[11.5px] text-[var(--muted)] underline"
+        >
+          לא יודעים מה המספר?
+        </button>
       </div>
+
+      {showFindHelp && (
+        <>
+          <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setShowFindHelp(false)} />
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-6 max-h-[85%] overflow-y-auto">
+            <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
+            <div className="flex items-start justify-between mb-1">
+              <h2 className="text-base font-bold">איך מוצאים את המספר</h2>
+              <button
+                onClick={() => setShowFindHelp(false)}
+                aria-label="סגירה"
+                className="w-7 h-7 shrink-0 flex items-center justify-center text-[var(--muted)]"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-[12.5px] text-[var(--muted)] mb-4">שתי דרכים, לפי הטלפון:</p>
+
+            <FindNumberSteps
+              title="באייפון"
+              steps={["פותחים הגדרות", "נכנסים לכללי ואז לאודות", "המספר מופיע בשורה ‘מספר טלפון’"]}
+            />
+            <FindNumberSteps
+              title="באנדרואיד"
+              steps={["פותחים הגדרות", "נכנסים לאודות הטלפון ואז למצב", "המספר מופיע בשורה ‘מספר טלפון’"]}
+            />
+
+            <button
+              onClick={() => setShowFindHelp(false)}
+              className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold mt-2"
+            >
+              מצאנו, אפשר להמשיך
+            </button>
+          </div>
+        </>
+      )}
+      </>
     );
   }
 
@@ -168,8 +210,30 @@ export default function PhoneVerify({
         disabled={cooldown > 0 || busy}
         className="text-xs text-[var(--muted)] underline disabled:opacity-40 disabled:no-underline"
       >
-        {cooldown > 0 ? `לא קיבלתי — אפשר לשלוח שוב בעוד ${cooldown}` : "לא קיבלתי, לשלוח שוב"}
+        {cooldown > 0 ? `לא הגיעה הודעה? אפשר לשלוח שוב בעוד ${cooldown}` : "לא הגיעה הודעה? לשלוח שוב"}
       </button>
+    </div>
+  );
+}
+
+/** רשימת שלבים ממוספרת למציאת מספר הטלפון במכשיר */
+function FindNumberSteps({ title, steps }: { title: string; steps: string[] }) {
+  return (
+    <div className="mb-4">
+      <div className="text-[13px] font-bold mb-1.5">{title}</div>
+      <ol className="flex flex-col">
+        {steps.map((s, i) => (
+          <li
+            key={i}
+            className="flex gap-2.5 py-1.5 border-b border-[var(--line)] last:border-0 text-[13px]"
+          >
+            <span className="text-[var(--faint)] text-[11px] pt-0.5 shrink-0">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span className="leading-relaxed">{s}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
