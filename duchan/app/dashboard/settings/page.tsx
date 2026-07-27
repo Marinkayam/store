@@ -7,6 +7,7 @@ import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
+import { isPayoutLink } from "@/lib/payouts";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -27,6 +28,7 @@ export default function SettingsPage() {
     payout_paybox: false,
     payout_cash: true,
     payout_note: "" as string | null,
+    payout_link: "" as string | null,
   });
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -47,6 +49,7 @@ export default function SettingsPage() {
       payout_paybox: store.payout_paybox ?? false,
       payout_cash: store.payout_cash ?? true,
       payout_note: store.payout_note ?? "",
+      payout_link: store.payout_link ?? "",
     });
   }, [store]);
 
@@ -72,6 +75,11 @@ export default function SettingsPage() {
       showToast("מספר הוואטסאפ לא נראה תקין — בדקי אותו שוב");
       return;
     }
+    const link = payout.payout_link?.trim();
+    if (link && !isPayoutLink(link)) {
+      showToast("אפשר להדביק כאן רק לינק של ביט או פייבוקס");
+      return;
+    }
     const supa = supabaseBrowser();
     const patch = {
       display_name: name.trim() || store.display_name,
@@ -83,6 +91,7 @@ export default function SettingsPage() {
       payout_paybox: payout.payout_paybox,
       payout_cash: payout.payout_cash,
       payout_note: payout.payout_note?.trim() || null,
+      payout_link: payout.payout_link?.trim() || null,
     };
     const { error } = await supa.from("stores").update(patch).eq("id", store.id);
     if (error) {
@@ -356,12 +365,40 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
+          {/* לינק תשלום — הופך "תשלמי לי בפייבוקס" ללחיצה אחת.
+              מותרים רק לינקים של ביט ופייבוקס, וזה נאכף גם בדאטהבייס. */}
+          <label className="block text-[11px] text-[var(--muted)] mt-3 mb-1">
+            לינק לתשלום (לא חובה)
+          </label>
+          <input
+            value={payout.payout_link ?? ""}
+            onChange={(e) => { setPayout({ ...payout, payout_link: e.target.value }); setDirty(true); }}
+            placeholder="להדביק כאן לינק מביט או מפייבוקס"
+            aria-label="לינק לתשלום"
+            dir="ltr"
+            maxLength={200}
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+          />
+          <p className="text-[11px] text-[var(--muted)] mt-1 leading-relaxed">
+            בפייבוקס או בביט: פותחים את האפליקציה, "בקשת תשלום" או "הלינק שלי",
+            ומעתיקים. הקונה תראה כפתור שמעביר אותה ישר לשם.
+          </p>
+          {!!payout.payout_link?.trim() && !isPayoutLink(payout.payout_link.trim()) && (
+            <p className="text-[11px] text-[var(--danger)] mt-1">
+              זה לא נראה כמו לינק של ביט או פייבוקס. מטעמי בטיחות אפשר רק אותם.
+            </p>
+          )}
+
+          <label className="block text-[11px] text-[var(--muted)] mt-3 mb-1">
+            הערה לקונה (לא חובה)
+          </label>
           <input
             value={payout.payout_note ?? ""}
             onChange={(e) => { setPayout({ ...payout, payout_note: e.target.value }); setDirty(true); }}
-            placeholder='הערה לקונה — "ביט לאמא: 052-1234567"'
+            placeholder='למשל: "ביט לאמא: 052-1234567"'
+            aria-label="הערה לקונה"
             maxLength={80}
-            className="mt-2 w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
           />
           {!payout.payout_bit && !payout.payout_paybox && !payout.payout_cash && (
             <p className="text-[11px] text-[var(--warn-ink)] mt-1.5">

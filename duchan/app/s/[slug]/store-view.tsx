@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { payoutOrderLine, payoutSummary } from "@/lib/payouts";
+import { payoutLink, payoutOrderLine, payoutSummary } from "@/lib/payouts";
 import { BADGES, badgeFor } from "@/lib/badges";
 import { coverCss } from "@/lib/covers";
 import type { PublicProduct, PublicStore } from "@/lib/types";
@@ -49,6 +49,7 @@ export default function StoreView({
   // אמצעי התשלום שהחנות מקבלת — שמות בלבד, בלי מספרים ובלי פרטי חשבון
   const paySummary = payoutSummary(store);
   const payLine = payoutOrderLine(store);
+  const payLink = payoutLink(store);
 
   // ספירת כניסה — פעם אחת לביקור (sessionStorage מונע ספירה כפולה בניווט פנימי)
   useEffect(() => {
@@ -138,25 +139,64 @@ export default function StoreView({
     setChoice(p.options?.length === 1 ? p.options[0] : null);
   }
 
-  function addToCart() {
-    if (!current) return;
-    const opt = choice ?? undefined;
-    const key = lineKey(current.id, opt);
+  /** מוסיף לסל. מקור אחד גם לגיליון המוצר וגם להוספה המהירה מהרשת. */
+  function addLine(p: PublicProduct, amount: number, option?: string) {
+    const key = lineKey(p.id, option);
     setCart((c) => {
       const ex = c.find((l) => lineKey(l.id, l.option) === key);
       if (ex) {
-        return c.map((l) =>
-          lineKey(l.id, l.option) === key ? { ...l, qty: l.qty + qty } : l
-        );
+        return c.map((l) => (lineKey(l.id, l.option) === key ? { ...l, qty: l.qty + amount } : l));
       }
-      return [
-        ...c,
-        { id: current.id, name: current.name, price: current.price, qty, ...(opt ? { option: opt } : {}) },
-      ];
+      return [...c, { id: p.id, name: p.name, price: p.price, qty: amount, ...(option ? { option } : {}) }];
     });
+    showToast("נוסף לסל");
+  }
+
+  function addToCart() {
+    if (!current) return;
+    addLine(current, qty, choice ?? undefined);
     setCurrent(null);
     setChoice(null);
-    showToast("נוסף לסל");
+  }
+
+  /** שינוי כמות בשורת סל. אפס מוריד את השורה. */
+  function setLineQty(id: string, option: string | undefined, next: number) {
+    const key = lineKey(id, option);
+    setCart((c) =>
+      next <= 0
+        ? c.filter((l) => lineKey(l.id, l.option) !== key)
+        : c.map((l) => (lineKey(l.id, l.option) === key ? { ...l, qty: next } : l))
+    );
+  }
+
+  /** התקרה לשורה: המלאי, פחות מה שכבר בסל מאותו מוצר בבחירות אחרות. */
+  function lineMax(l: CartLine): number {
+    const p = products.find((x) => x.id === l.id);
+    if (!p || !p.track_stock) return 99;
+    const otherLines = cart
+      .filter((x) => x.id === l.id && lineKey(x.id, x.option) !== lineKey(l.id, l.option))
+      .reduce((s, x) => s + x.qty, 0);
+    return Math.max(0, p.stock - otherLines);
+  }
+
+  /**
+   * הוספה מהירה מהרשת, בלי לפתוח את המוצר.
+   *
+   * זה המסלול של קונה שכבר יודעת מה היא רוצה — היא לא צריכה לקרוא תיאור
+   * כדי לקנות סקוויש שהיא רואה. מוצר עם בחירה (צבע, מידה) עדיין נפתח:
+   * אי אפשר להוסיף לסל דבר שלא נבחר, וניחוש כאן יגיע להזמנה שגויה.
+   */
+  function quickAdd(p: PublicProduct) {
+    if (preview) return;
+    if (p.options?.length) {
+      openProduct(p);
+      return;
+    }
+    if (maxQty(p) === 0) {
+      showToast("אין יותר במלאי");
+      return;
+    }
+    addLine(p, 1);
   }
 
   async function sendOrder() {
@@ -315,16 +355,23 @@ export default function StoreView({
               const img = mediaUrl(p.image_key);
               const vid = mediaUrl(p.video_key);
               const poster = mediaUrl(p.poster_key);
+              const inCartQty = inCart(p.id);
               return (
-                <button
+                // div ולא button: בתוך הכרטיס יש כפתור הוספה מהירה משלו,
+                // וכפתור בתוך כפתור אינו HTML תקין ומתנהג שונה בין דפדפנים
+                <div
                   key={p.id}
-                  onClick={() => !out && openProduct(p)}
-                  className={`text-right overflow-hidden relative transition active:translate-y-[1px] ${out ? "opacity-45 pointer-events-none" : ""}`}
+                  className={`text-right overflow-hidden relative flex flex-col ${out ? "opacity-45 pointer-events-none" : ""}`}
                   style={{
                     background: "var(--s-surface)",
                     border: "var(--s-border)" as string,
                     boxShadow: out ? "none" : ("var(--s-shadow)" as string),
                   }}
+                >
+                <button
+                  onClick={() => !out && openProduct(p)}
+                  aria-label={p.name}
+                  className="text-right transition active:translate-y-[1px]"
                 >
                   {out ? (
                     // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
@@ -376,6 +423,27 @@ export default function StoreView({
                     </div>
                   </div>
                 </button>
+
+                {/* הוספה מהירה — הכפתור שמאפשר לקנות בלי לפתוח כלום */}
+                {!out && !preview && (
+                  <button
+                    onClick={() => quickAdd(p)}
+                    aria-label={`הוספה מהירה — ${p.name}`}
+                    className="mt-auto mx-2.5 mb-2.5 py-2 text-[12.5px] font-bold"
+                    style={
+                      inCartQty
+                        ? { background: "var(--s-thumb)", color: "var(--s-ink)" }
+                        : { background: "var(--s-primary)", color: "var(--s-onprimary)" }
+                    }
+                  >
+                    {inCartQty
+                      ? `בסל · ${inCartQty}`
+                      : p.options?.length
+                        ? `בחירת ${p.option_label || "אפשרות"}`
+                        : "הוספה לסל"}
+                  </button>
+                )}
+                </div>
               );
             })}
           </div>
@@ -495,6 +563,7 @@ export default function StoreView({
           </div>
           <button
             onClick={addToCart}
+            aria-label="הוספה לסל"
             disabled={preview || maxQty(current) === 0 || (!!current.options?.length && !choice)}
             className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
@@ -514,21 +583,69 @@ export default function StoreView({
 
       {/* order sheet */}
       {orderOpen && (
+        <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setOrderOpen(false)} />
+      )}
+      {orderOpen && (
         <div
           className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-7 max-h-[88%] overflow-y-auto"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-4" />
           <h2 className="text-base font-bold mb-2.5">ההזמנה שלך</h2>
-          {cart.map((l) => (
-            <div key={lineKey(l.id, l.option)} className="flex justify-between text-[13px] py-1">
-              <span>
-                {l.name}
-                {l.option ? ` (${l.option})` : ""} × {l.qty}
-              </span>
-              <span>₪{l.price * l.qty}</span>
-            </div>
-          ))}
+          {/* כל שורה ניתנת לעריכה כאן. קונה שרוצה שניים במקום אחד לא אמורה
+              לצאת, לנקות את הסל ולהתחיל מחדש — היא פשוט תוותר. */}
+          {cart.map((l) => {
+            const max = lineMax(l);
+            return (
+              <div
+                key={lineKey(l.id, l.option)}
+                data-cart-line=""
+                className="flex items-center gap-2 text-[13px] py-2 border-b border-black/5"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="truncate" data-line-name="">
+                    {l.name}
+                    {l.option ? ` (${l.option})` : ""}
+                  </div>
+                  <div className="opacity-55 text-[11.5px]">₪{l.price} ליחידה</div>
+                </div>
+
+                <div className="flex items-center border-[1.5px] border-black/15">
+                  <button
+                    onClick={() => setLineQty(l.id, l.option, l.qty - 1)}
+                    aria-label={`פחות — ${l.name}`}
+                    className="w-8 h-8 text-base leading-none"
+                  >
+                    −
+                  </button>
+                  <span className="w-7 text-center text-[13px] font-bold">{l.qty}</span>
+                  <button
+                    onClick={() => setLineQty(l.id, l.option, Math.min(max, l.qty + 1))}
+                    disabled={l.qty >= max}
+                    aria-label={`עוד — ${l.name}`}
+                    className="w-8 h-8 text-base leading-none disabled:opacity-25"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <span className="w-14 text-left font-medium">₪{l.price * l.qty}</span>
+                <button
+                  onClick={() => setLineQty(l.id, l.option, 0)}
+                  aria-label={`הסרה — ${l.name}`}
+                  className="w-7 h-8 opacity-45 text-[15px]"
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
+
+          {cart.length === 0 && (
+            <p className="text-[13px] opacity-60 py-6 text-center">
+              הסל ריק. אפשר לסגור ולהמשיך לבחור.
+            </p>
+          )}
           <div className="flex justify-between text-sm font-bold border-t border-black/10 mt-2 pt-2.5">
             <span>סה"כ</span>
             <span>₪{cartTotal}</span>
@@ -540,11 +657,26 @@ export default function StoreView({
             maxLength={200}
             className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] my-3"
           />
-          {paySummary && (
-            <div className=" border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
-              <span className="font-bold">אפשר לשלם ב:</span> {paySummary}
-              {store.payout_note && (
-                <div className="opacity-70 mt-0.5">{store.payout_note}</div>
+          {(paySummary || payLink) && (
+            <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
+              {paySummary && (
+                <>
+                  <span className="font-bold">אפשר לשלם ב:</span> {paySummary}
+                </>
+              )}
+              {store.payout_note && <div className="opacity-70 mt-0.5">{store.payout_note}</div>}
+              {/* לינק התשלום נפתח בלשונית חדשה: הסל והטופס נשארים כאן,
+                  והקונה חוזרת לשלוח את ההזמנה אחרי ששילמה. */}
+              {payLink && (
+                <a
+                  href={payLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="mt-2 block text-center py-2.5 text-[13px] font-bold"
+                  style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+                >
+                  {payLink.label} ←
+                </a>
               )}
             </div>
           )}

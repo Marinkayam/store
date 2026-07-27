@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getPublicStore } from "@/lib/store-public";
 import { themeCssVars, themeOrDefault } from "@/lib/themes";
+import { ACTIVATION_PRICE, FULL_PRICE, IS_LAUNCH, LAUNCH_UNTIL_LABEL } from "@/lib/pricing";
 import StoreView from "./store-view";
 
 // דף החנות הפומבי. SSR, נקרא עם service role, שדות מפורשים בלבד.
@@ -106,7 +107,8 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
   const msg =
     `היי מרינה! 👋\n` +
     `הגעתי מהדוכן "${name}" (${slug}) באתר דוכן,\n` +
-    `ואני רוצה גם דוכן מכירות כזה.`;
+    `ואני רוצה גם דוכן מכירות כזה` +
+    (IS_LAUNCH ? ` (ראיתי שיש מחיר השקה ₪${ACTIVATION_PRICE} עד ${LAUNCH_UNTIL_LABEL}).` : ".");
 
   return (
     <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-9 text-center">
@@ -117,6 +119,11 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
         <br />
         דוכן משלך נבנה בכמה דקות, מהטלפון.
       </p>
+      {IS_LAUNCH && (
+        <p className="text-[12.5px] font-bold mt-2.5">
+          🎉 מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE} — עד {LAUNCH_UNTIL_LABEL}
+        </p>
+      )}
 
       <a
         href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}

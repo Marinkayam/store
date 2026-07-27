@@ -15,6 +15,9 @@ import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../
 
 interface Props {
   price: number;
+  fullPrice: number;
+  isLaunch: boolean;
+  launchUntil: string;
   bitUrl: string;
   payboxUrl: string;
   ownerWhatsapp: string;
@@ -26,7 +29,7 @@ const METHODS = [
   { key: "other", label: "דרך אחרת", icon: "🤝" },
 ];
 
-export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }: Props) {
+export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, bitUrl, payboxUrl, ownerWhatsapp }: Props) {
   const { store, setStore, loading } = useStore();
   const [showParent, setShowParent] = useState(false);
   const [method, setMethod] = useState<string>("bit");
@@ -190,10 +193,21 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
           <br />
           הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות — תשלום אחד.
         </p>
-        <div className="mt-5 inline-flex items-baseline gap-1.5">
+        {isLaunch && (
+          <div className="mt-5 inline-block bg-[var(--wood)] text-white px-3 py-1.5 text-[12.5px] font-bold">
+            🎉 מחיר השקה — עד {launchUntil}
+          </div>
+        )}
+        <div className="mt-3 flex items-baseline justify-center gap-2">
           <span className="text-5xl font-bold">₪{price}</span>
+          {isLaunch && (
+            <span className="text-2xl text-[var(--faint)] line-through">₪{fullPrice}</span>
+          )}
           <span className="text-sm text-[var(--muted)]">פעם אחת, לתמיד</span>
         </div>
+        {isLaunch && (
+          <p className="text-[14px] font-bold mt-2">לבנות את הדוכן שלך במחיר מצחיק!</p>
+        )}
         <p className="text-[12px] text-[var(--muted)] mt-1.5">
           בלי מנוי · בלי עמלה על מכירות · כל שקל שתרוויחי נשאר אצלך
         </p>
@@ -214,7 +228,11 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(
-            `בניתי חנות אמיתית באינטרנט! 🛍️\nכדי לפרסם אותה צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\nכל ההסבר כאן: ${priceUrl}`
+            `בניתי חנות אמיתית באינטרנט! 🛍️\n` +
+              (isLaunch
+                ? `יש עכשיו מחיר השקה — ₪${price} במקום ₪${fullPrice}, עד ${launchUntil}.\n`
+                : `כדי לפרסם אותה צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\n`) +
+              `כל ההסבר כאן: ${priceUrl}`
           )}`}
           className="mt-3 block text-center bg-[var(--whatsapp)] text-white py-2.5 text-[13px] font-bold"
         >

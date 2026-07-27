@@ -14,6 +14,26 @@ export interface PayoutPrefs {
   payout_paybox: boolean;
   payout_cash: boolean;
   payout_note: string | null;
+  payout_link?: string | null;
+}
+
+/** רק ביט ופייבוקס. אותה רשימה בדיוק כמו בטריגר שבמיגרציה 0018. */
+const PAY_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(paybox\.co\.il|payboxapp\.com|bitpay\.co\.il)(\/|$)/i;
+
+export function isPayoutLink(url: string): boolean {
+  return PAY_HOSTS.test(url.trim());
+}
+
+/**
+ * הלינק כפי שמותר להציג אותו לקונה, ואיך לקרוא לו.
+ *
+ * הבדיקה חוזרת גם כאן ולא רק בשמירה: שורה שנכתבה לפני הטריגר, או ידנית
+ * מהדאטהבייס, לא תהפוך לקישור יוצא בדף פומבי.
+ */
+export function payoutLink(p: PayoutPrefs): { url: string; label: string } | null {
+  const url = p.payout_link?.trim();
+  if (!url || !isPayoutLink(url)) return null;
+  return { url, label: /bitpay/i.test(url) ? "תשלום בביט" : "תשלום בפייבוקס" };
 }
 
 /** שמות אמצעי התשלום שהחנות מקבלת. בטוח להצגה ב-HTML — אין כאן מספרים. */
@@ -37,7 +57,9 @@ export function payoutSummary(p: PayoutPrefs): string {
 export function payoutOrderLine(p: PayoutPrefs): string {
   const labels = payoutLabels(p);
   const note = p.payout_note?.trim();
-  if (!labels.length && !note) return "";
+  const link = payoutLink(p);
+  if (!labels.length && !note && !link) return "";
   const head = labels.length ? `אפשר לשלם ב: ${labels.join(" / ")}` : "";
-  return [head, note].filter(Boolean).join("\n");
+  // הלינק נכנס גם להודעת הוואטסאפ: שם ההזמנה נסגרת בפועל, ושם נוח לשלם
+  return [head, link ? `${link.label}: ${link.url}` : "", note].filter(Boolean).join("\n");
 }

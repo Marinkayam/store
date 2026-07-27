@@ -23,7 +23,7 @@ export function GetsList({ compact = false }: { compact?: boolean }) {
       ))}
       {compact && (
         <p className="text-[12px] text-[var(--muted)] text-center">
-          ועוד: המסע שלי · עוזרת כתיבה · בלי מנוי, לתמיד ·{" "}
+          ועוד: עוזרת כתיבה · מלאי · בלי מנוי, לתמיד ·{" "}
           <a href="/price" target="_blank" className="underline">
             הפירוט המלא
           </a>

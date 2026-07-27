@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { milestones, reachedCount } from "@/lib/milestones";
 import { payoutSummary } from "@/lib/payouts";
+import { ACTIVATION_PRICE } from "@/lib/pricing";
 
 /* ---------- types ---------- */
 
@@ -381,7 +382,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     </div>
                     <div className="flex gap-1.5 mt-2.5">
                       <button
-                        onClick={() => setActivation(s.id, true, 200)}
+                        onClick={() => setActivation(s.id, true, ACTIVATION_PRICE)}
                         className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
                       >
                         אישור והפעלה
@@ -460,7 +461,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                         </div>
                         <div className="flex gap-1.5 mt-2">
                           <button
-                            onClick={() => setActivation(s.id, true, 200)}
+                            onClick={() => setActivation(s.id, true, ACTIVATION_PRICE)}
                             className="flex-1 bg-[var(--ink)] text-white py-2 text-[11.5px] font-bold"
                           >
                             אישור והפעלה
@@ -727,7 +728,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   </button>
                 ) : (
                   <button
-                    onClick={() => setActivation(detail.store.id, true, 200)}
+                    onClick={() => setActivation(detail.store.id, true, ACTIVATION_PRICE)}
                     className="bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium"
                   >
                     אישור והפעלה

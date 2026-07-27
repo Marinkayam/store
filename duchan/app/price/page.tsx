@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ACTIVATION_PRICE, GETS, LEARNS, PAYBACK } from "@/lib/pricing";
+import { ACTIVATION_PRICE, FULL_PRICE, GETS, IS_LAUNCH, LAUNCH_UNTIL_LABEL, LEARNS, PAYBACK } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "מה מקבלים בדוכן",
@@ -54,15 +54,29 @@ export default function PricePage() {
           </p>
 
           <div className="mt-7 inline-flex flex-col items-center bg-white px-9 py-6">
-            <div className="flex items-baseline gap-1.5">
+            {/* המחיר הישן נשאר על המסך ומחוק: מספר לבדו לא אומר "מבצע" */}
+            {IS_LAUNCH && (
+              <div className="text-[12.5px] font-bold text-[var(--wood)] mb-1.5">
+                🎉 מחיר השקה — עד {LAUNCH_UNTIL_LABEL}
+              </div>
+            )}
+            <div className="flex items-baseline gap-2">
               <span
                 className="text-[54px] leading-none font-bold text-[var(--ink)]"
                 style={{ fontFamily: "'Secular One',sans-serif" }}
               >
                 ₪{ACTIVATION_PRICE}
               </span>
+              {IS_LAUNCH && (
+                <span className="text-[22px] text-[var(--faint)] line-through">₪{FULL_PRICE}</span>
+              )}
             </div>
             <div className="text-[13px] text-[var(--faint)] mt-1.5">פעם אחת · לתמיד</div>
+            {IS_LAUNCH && (
+              <div className="text-[13px] font-bold text-[var(--ink)] mt-2">
+                לבנות את הדוכן שלך במחיר מצחיק!
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap justify-center gap-2 mt-6">

@@ -12,7 +12,44 @@ const num = (v: string | undefined, fallback: number) => {
   return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
 };
 
-export const ACTIVATION_PRICE = num(process.env.NEXT_PUBLIC_ACTIVATION_PRICE, 200);
+/** המחיר המלא. זה מה שיהיה אחרי ההשקה. */
+export const FULL_PRICE = num(process.env.NEXT_PUBLIC_ACTIVATION_PRICE, 200);
+
+/**
+ * מחיר השקה, עם תאריך סיום.
+ *
+ * התאריך הוא מקור אמת אחד: המחיר, השורה שמופיעה על המסכים והחישוב של
+ * ההחזר כולם נגזרים ממנו. כשהוא עובר, הכל חוזר למחיר המלא לבד — בלי
+ * שאף אחד יצטרך לזכור לשנות משהו, ובלי מבצע שנשאר תלוי באוויר חודשיים.
+ *
+ * השוואה בזמן שרת ובזמן לקוח יכולה ליפול על אזור זמן; לכן הגבול הוא סוף
+ * היום בישראל, מפורש.
+ */
+export const LAUNCH_PRICE = num(process.env.NEXT_PUBLIC_LAUNCH_PRICE, 50);
+export const LAUNCH_UNTIL = new Date(
+  process.env.NEXT_PUBLIC_LAUNCH_UNTIL ?? "2026-07-30T20:59:59Z"
+);
+
+export function launchActive(now: Date = new Date()): boolean {
+  return LAUNCH_PRICE < FULL_PRICE && now.getTime() <= LAUNCH_UNTIL.getTime();
+}
+
+/** "30.7.2026" — לתצוגה */
+export const LAUNCH_UNTIL_LABEL = LAUNCH_UNTIL.toLocaleDateString("he-IL", {
+  day: "numeric",
+  month: "numeric",
+  year: "numeric",
+  timeZone: "Asia/Jerusalem",
+});
+
+/**
+ * המחיר שגובים בפועל.
+ *
+ * מחושב פעם אחת בטעינת המודול ולא בכל קריאה: כך אותו מספר מוצג במסך,
+ * נכנס להודעה להורה ונרשם בחמ"ל, ואין מצב שהמחיר משתנה באמצע התהליך.
+ */
+export const ACTIVATION_PRICE = launchActive() ? LAUNCH_PRICE : FULL_PRICE;
+export const IS_LAUNCH = ACTIVATION_PRICE < FULL_PRICE;
 
 /** לינק תשלום אישי. ריק = מציגים את המספר לביט ידני. */
 export const PAY_BIT_URL = process.env.NEXT_PUBLIC_PAY_BIT_URL ?? "";
@@ -72,11 +109,6 @@ export const GETS = [
     icon: "💰",
     title: "הקופה שלי",
     body: "כמה הרווחת, כמה הזמנות היו, ומה הכי נמכר אצלך.",
-  },
-  {
-    icon: "🎯",
-    title: "המסע שלי",
-    body: "שבע אבני דרך. אחרי כל אחת כתוב מה בדיוק למדת בדרך.",
   },
   {
     icon: "✨",

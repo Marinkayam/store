@@ -33,6 +33,7 @@ export interface Store {
   payout_paybox: boolean;
   payout_cash: boolean;
   payout_note: string | null;
+  payout_link: string | null; // לינק ביט/פייבוקס. נאכף בטריגר (מיגרציה 0018).
   referred_by: string | null;
   referral_source: string | null;
   ref_clicks: number;
@@ -97,6 +98,7 @@ export interface PublicStore {
   payout_paybox: boolean;
   payout_cash: boolean;
   payout_note: string | null;
+  payout_link: string | null;
 }
 
 export interface PublicProduct {
