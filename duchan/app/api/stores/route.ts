@@ -6,6 +6,8 @@ import { randomSlug } from "@/lib/slug";
 import { QUOTAS } from "@/lib/quotas";
 import { THEMES } from "@/lib/themes";
 import { COVERS, DEFAULT_COVER } from "@/lib/covers";
+import { notifyTelegram } from "@/lib/telegram";
+import { absolute } from "@/lib/site";
 
 // POST /api/stores — נקרא בסוף האונבורדינג, אחרי supabase.auth.signUp.
 // מאמת טלפון (נרמול בשמירה!), אוכף 3 חנויות לאימייל, ומגריל slug אקראי.
@@ -153,5 +155,15 @@ export async function POST(req: NextRequest) {
     firstProductId = prod?.id ?? null;
   }
 
+  // לא חוסמים את התשובה לילדה בשביל התראה למרינה
+  notifyTelegram(
+    `🆕 חנות חדשה נפתחה: <b>${escapeHtml(displayName)}</b>\n${absolute(`/s/${store.slug}`)}`
+  );
+
   return NextResponse.json({ slug: store.slug, storeId: store.id, firstProductId });
+}
+
+/** טלגרם מפרש HTML ב-parse_mode — לא סומכים על שם חנות שהילדה הקלידה */
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

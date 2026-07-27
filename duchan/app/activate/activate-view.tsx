@@ -93,6 +93,12 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       return;
     }
     setStore({ ...store, payment_claimed_at: new Date().toISOString(), payment_method: method });
+    // לא חוסמים על זה — אם הטלגרם לא מוגדר או נכשל, ההצהרה עצמה כבר הצליחה
+    fetch("/api/stores/notify-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storeId: store.id }),
+    }).catch(() => {});
   }
 
   if (loading) return <Shell><p className="text-sm text-[var(--muted)]">רגע…</p></Shell>;
