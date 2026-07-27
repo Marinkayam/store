@@ -31,9 +31,11 @@ interface EditState {
   trackStock: boolean;
   stock: number;
   isVisible: boolean;
-  hasOptions: boolean;   // יש לזה כמה צבעים/מידות לבחור? שאלה קודם, שדות רק אחר כך
-  optionLabel: string;   // "צבע" · "מידה" — ריק = אין אפשרויות
-  optionsText: string;   // "ורוד, כחול, צהוב" — נשמר כמערך
+  // צבע ומידה הם שני מתגים נפרדים ונבדלים, לא שדה טקסט חופשי לשם הקטגוריה —
+  // וזו הסיבה שילדה לא יכולה יותר לרשום "צהוב" בתור שם השדה בטעות: אין שדה
+  // כזה. המוצר תומך בציר בחירה אחד, ולכן הם מוציאים זה את זה.
+  optionKind: "none" | "color" | "size";
+  optionList: string[]; // ["ורוד", "כחול"] — שדה נפרד לכל ערך, לא פסיקים
   badge: "rare" | "sale" | null;
   imageKey: string | null;
   videoKey: string | null;
@@ -58,9 +60,8 @@ const EMPTY_EDIT: EditState = {
   trackStock: true,
   stock: 1,
   isVisible: true,
-  hasOptions: false,
-  optionLabel: "",
-  optionsText: "",
+  optionKind: "none",
+  optionList: [""],
   badge: null,
   imageKey: null,
   videoKey: null,
@@ -112,13 +113,12 @@ export default function ProductsPage() {
   }, [celebrate]);
 
   /**
-   * הבחירות כפי שיישמרו: "ורוד, כחול,, ורוד " → ["ורוד","כחול"].
-   * מקור אמת אחד גם לשבבים בעורך וגם לשמירה — אחרת היא רואה שלוש בחירות
-   * ובחנות מופיעות שתיים.
+   * הבחירות כפי שיישמרו: שדות ריקים וכפולים נופלים. מקור אמת אחד גם
+   * לשבבים בעורך וגם לשמירה — אחרת היא רואה שלוש בחירות ובחנות מופיעות שתיים.
    */
   const optionValues = useMemo(
-    () => [...new Set((edit?.optionsText ?? "").split(",").map((o) => o.trim()).filter(Boolean))].slice(0, 12),
-    [edit?.optionsText]
+    () => [...new Set((edit?.optionList ?? []).map((o) => o.trim()).filter(Boolean))].slice(0, 12),
+    [edit?.optionList]
   );
 
   /** דף החנות מוגש מקאש של 60 שניות — מרעננים אותו מיד אחרי שינוי מוצרים */
@@ -218,9 +218,10 @@ export default function ProductsPage() {
         description: p.description ?? "",
         price: String(p.price),
         trackStock: p.track_stock,
-        hasOptions: (p.options?.length ?? 0) > 0,
-        optionLabel: p.option_label ?? "",
-        optionsText: (p.options ?? []).join(", "),
+        // מוצר ישן עם שם קטגוריה חופשי (למשל מהבאג הקודם) נטען כברירת מחדל
+        // כ"צבע" — היא יכולה פשוט לעבור למידה אם זה מה שהתכוונו אליו
+        optionKind: !p.options?.length ? "none" : p.option_label === "מידה" ? "size" : "color",
+        optionList: p.options?.length ? p.options : [""],
         badge: p.badge ?? null,
         stock: p.stock,
         isVisible: p.is_visible !== false,
@@ -247,8 +248,8 @@ export default function ProductsPage() {
           name: d.name ?? base.name,
           description: d.description ?? base.description,
           price: d.price ?? base.price,
-          optionLabel: d.optionLabel ?? base.optionLabel,
-          optionsText: d.optionsText ?? base.optionsText,
+          optionKind: d.optionKind ?? base.optionKind,
+          optionList: d.optionList ?? base.optionList,
         };
       }
     } catch {}
@@ -263,8 +264,8 @@ export default function ProductsPage() {
         name: edit.name,
         description: edit.description,
         price: edit.price,
-        optionLabel: edit.optionLabel,
-        optionsText: edit.optionsText,
+        optionKind: edit.optionKind,
+        optionList: edit.optionList,
       })
     );
   }, [edit]);
@@ -456,7 +457,7 @@ export default function ProductsPage() {
         description: edit.description.trim() || null,
         price: Math.max(0, Math.floor(Number(edit.price) || 0)),
         track_stock: edit.trackStock,
-        option_label: optionValues.length ? edit.optionLabel.trim() || "בחרי" : null,
+        option_label: optionValues.length ? (edit.optionKind === "size" ? "מידה" : "צבע") : null,
         options: optionValues.length ? optionValues : null,
         badge: edit.badge,
         stock: Math.max(0, edit.stock),
@@ -846,71 +847,85 @@ export default function ProductsPage() {
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3 resize-none" />
 
-            {/* אפשרויות לבחירה — צבע, מידה, טעם. אחת פר מוצר, בלי מלאי נפרד.
-                שני שדות זה ליד זה בעבר בילבלו: מוכרת מילאה צבע (למשל "לבן")
-                בשדה השם במקום ברשימת הבחירות, וקונה ראתה כותרת חסרת פשר.
-                עכשיו כל שדה בשורה נפרדת עם תווית ודוגמה מפורשת, וסדר הפוך —
-                קודם הבחירות עצמן, כי זה מה שחייבים למלא. */}
-            <div className="flex justify-between items-center border border-[var(--line)] px-3 py-2.5 mb-3">
-              <span className="text-[13px]">יש לזה עוד צבעים או מידות?</span>
-              <button
-                onClick={() =>
-                  setEdit((s) => {
-                    if (!s) return s;
-                    const on = !s.hasOptions;
-                    // כיבוי מנקה גם את הטקסט — אחרת נשאר "צבע" שמור בלי
-                    // שהיא רואה אותו, וקונה תתבקש לבחור משהו שלא קיים
-                    return on
-                      ? { ...s, hasOptions: on }
-                      : { ...s, hasOptions: on, optionsText: "", optionLabel: "" };
-                  })
-                }
-                aria-label="יש לזה כמה צבעים או מידות לבחור"
-                aria-pressed={edit.hasOptions}
-                className={`w-10 h-6 relative transition ${edit.hasOptions ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-              >
-                <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.hasOptions ? "right-[19px]" : "right-[3px]"}`} />
-              </button>
+            {/* צבע ומידה: שני כפתורים נפרדים שמוציאים זה את זה, לא שדה טקסט
+                לשם הקטגוריה. זה מה שמנע את הבאג הקודם: אין יותר שדה חופשי
+                שאפשר לרשום בו בטעות צבע במקום השם. */}
+            <div className="mb-1.5">
+              <span className="text-[13px]">יש לזה כמה צבעים או מידות?</span>
+            </div>
+            <div className="flex gap-2 mb-3">
+              {(["color", "size"] as const).map((kind) => {
+                const on = edit.optionKind === kind;
+                return (
+                  <button
+                    key={kind}
+                    onClick={() =>
+                      setEdit((s) => {
+                        if (!s) return s;
+                        const nextKind = s.optionKind === kind ? "none" : kind;
+                        // מעבר בין צבע למידה, או כיבוי, מנקה את הרשימה —
+                        // אחרת נשארים "צבעים" שמורים בתור מידות ולהפך
+                        return nextKind === s.optionKind
+                          ? s
+                          : { ...s, optionKind: nextKind, optionList: [""] };
+                      })
+                    }
+                    aria-pressed={on}
+                    aria-label={kind === "color" ? "יש לזה כמה צבעים" : "יש לזה כמה מידות"}
+                    className={`flex-1 border-[1.5px] py-2.5 text-[13px] font-semibold ${
+                      on ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white"
+                    }`}
+                  >
+                    {kind === "color" ? "צבע" : "מידה"}
+                  </button>
+                );
+              })}
             </div>
 
-            {edit.hasOptions && (
+            {edit.optionKind !== "none" && (
               <>
                 <label className="block text-[10.5px] text-[var(--faint)] mb-1">
-                  הצבעים או המידות, מופרדים בפסיק
+                  {edit.optionKind === "color" ? "אילו צבעים אפשר לבחור?" : "אילו מידות אפשר לבחור?"}
                 </label>
-                <input
-                  value={edit.optionsText}
-                  maxLength={120}
-                  placeholder="לבן, ורוד, כחול"
-                  aria-label="הבחירות"
-                  onChange={(e) => setEdit((s) => s && { ...s, optionsText: e.target.value })}
-                  className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-2"
-                />
-                <label className="block text-[10.5px] text-[var(--faint)] mb-1">
-                  איך קוראים לזה? (למשל: צבע, מידה)
-                </label>
-                <input
-                  value={edit.optionLabel}
-                  maxLength={12}
-                  placeholder="צבע"
-                  aria-label="שם האפשרות"
-                  onChange={(e) => setEdit((s) => s && { ...s, optionLabel: e.target.value })}
-                  className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-2"
-                />
-                {optionValues.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {optionValues.map((o) => (
-                      // data-chip ולא מחלקת עיצוב: בדיקה שנתלית על שם מחלקה נשברת
-                      // בכל שינוי עיצובי, ואז מחפשים באג שאין
-                      <span key={o} data-chip="option" className="text-[11px] bg-[var(--canvas)] border border-[var(--line)] px-2.5 py-1">
-                        {o}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-[var(--faint)] mb-3">
-                    מפרידים בפסיק. הקונה תבחר אחת לפני שהיא מוסיפה לסל.
-                  </p>
+                <div className="flex flex-col gap-1.5 mb-2">
+                  {edit.optionList.map((v, i) => (
+                    <div key={i} className="flex gap-1.5">
+                      <input
+                        value={v}
+                        maxLength={20}
+                        placeholder={edit.optionKind === "color" ? `למשל: ${["ורוד", "לבן", "כחול"][i % 3]}` : `למשל: ${["S", "M", "L"][i % 3]}`}
+                        aria-label={`${edit.optionKind === "color" ? "צבע" : "מידה"} ${i + 1}`}
+                        onChange={(e) =>
+                          setEdit((s) => {
+                            if (!s) return s;
+                            const list = [...s.optionList];
+                            list[i] = e.target.value;
+                            return { ...s, optionList: list };
+                          })
+                        }
+                        className="flex-1 border border-[var(--line)] px-3 py-2.5 text-sm"
+                      />
+                      {edit.optionList.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setEdit((s) => s && { ...s, optionList: s.optionList.filter((_, j) => j !== i) })
+                          }
+                          aria-label={`הסרת ${edit.optionKind === "color" ? "צבע" : "מידה"} ${i + 1}`}
+                          className="w-11 border border-[var(--line)] text-[var(--muted)] text-[15px]"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {edit.optionList.length < 12 && (
+                  <button
+                    onClick={() => setEdit((s) => s && { ...s, optionList: [...s.optionList, ""] })}
+                    className="w-full border border-dashed border-[#D3D5DC] py-2.5 text-[12.5px] text-[var(--muted)] mb-3"
+                  >
+                    + עוד {edit.optionKind === "color" ? "צבע" : "מידה"}
+                  </button>
                 )}
               </>
             )}
