@@ -34,15 +34,43 @@ export const PICKABLE: { key: "rare" | "sale"; emoji: string; label: string }[] 
  * התגית שתוצג למוצר. `bestSellerId` מגיע מחישוב על הזמנות ששולמו —
  * ראה bestSellerOf למטה.
  */
-export function badgeFor(p: PublicProduct, bestSellerId: string | null): BadgeKey | null {
+export function badgeFor(
+  p: PublicProduct,
+  bestSellerId: string | null,
+  soldIds: Set<string> = new Set()
+): BadgeKey | null {
   // "אזל" הוא לא תגית אלא רצועה על התמונה, ומטופל בנפרד
   if (p.track_stock && p.stock === 0) return null;
-  if (p.track_stock && p.stock === 1) return "last";
+  /**
+   * "אחרון במלאי" רק אחרי שנמכרה ממנו לפחות יחידה אחת.
+   *
+   * רוב מה שנמכר כאן הוא דבר יחיד — סקוויש אחד, צמיד אחד — ולכן כמות 1 היא
+   * מצב הפתיחה הרגיל ולא נדירות. בלי התנאי הזה כל הדוכן מתמלא ברצועות
+   * צהובות ביום הראשון, והתגית שאמורה לומר "תמהרי" לא אומרת כלום.
+   */
+  if (p.track_stock && p.stock === 1 && soldIds.has(p.id)) return "last";
   if (bestSellerId && p.id === bestSellerId) return "best";
   if (p.badge === "sale") return "sale";
   if (p.badge === "rare") return "rare";
   if (Date.now() - new Date(p.created_at).getTime() < NEW_DAYS * 24 * 60 * 60 * 1000) return "new";
   return null;
+}
+
+/** המוצרים שכבר נמכרה מהם לפחות יחידה אחת (הזמנות ששולמו בלבד). */
+export function soldProductIds(
+  orders: { items: { id?: string; name: string; qty: number }[] }[],
+  products: { id: string; name: string }[]
+): string[] {
+  const live = new Set(products.map((p) => p.id));
+  const nameToId = new Map(products.map((p) => [p.name, p.id]));
+  const ids = new Set<string>();
+  for (const o of orders) {
+    for (const item of o.items ?? []) {
+      const id = item.id ?? nameToId.get(item.name);
+      if (id && live.has(id) && (Number(item.qty) || 0) > 0) ids.add(id);
+    }
+  }
+  return [...ids];
 }
 
 /**

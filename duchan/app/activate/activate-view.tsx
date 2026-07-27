@@ -34,6 +34,7 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [copied, setCopied] = useState(false);
+  const [consent, setConsent] = useState<boolean | null>(null);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const storeUrl = store ? `${origin}/s/${store.slug}` : "";
@@ -44,8 +45,36 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
       ? `https://wa.me/${ownerWhatsapp}?text=${encodeURIComponent(text)}`
       : `https://wa.me/?text=${encodeURIComponent(text)}`;
 
+  // מסומן = מה שבמסך אם נגעו בו, אחרת מה שכבר שמור בחנות
+  const consentOn = consent ?? !!store?.parent_consent_at;
+
+  /**
+   * ההצהרה נשמרת בשרת ברגע הסימון, ולא רק כשמצהירים על תשלום.
+   *
+   * ההורה משלם בביט מחוץ למערכת, ואז הילדה מצהירה. אם האישור היה נשמר רק
+   * בהצהרה, כל מסלול שבו היא סוגרת את הדף באמצע היה מגיע אליי לחמ"ל בלי
+   * שום סימן שההורים בכלל יודעים.
+   */
+  async function toggleConsent(on: boolean) {
+    if (!store) return;
+    setConsent(on);
+    setErr("");
+    const supa = supabaseBrowser();
+    const { error } = await supa.rpc("set_parent_consent", { p_store: store.id, p_consent: on });
+    if (error) {
+      setConsent(!on);
+      setErr("לא הצלחנו לשמור את האישור. נסי שוב.");
+      return;
+    }
+    setStore({ ...store, parent_consent_at: on ? new Date().toISOString() : null });
+  }
+
   async function declarePaid() {
     if (!store) return;
+    if (!consentOn) {
+      setErr("קודם צריך לסמן שההורים יודעים ומאשרים.");
+      return;
+    }
     setBusy(true);
     setErr("");
     const supa = supabaseBrowser();
@@ -159,7 +188,7 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
         <p className="text-[13px] text-[#7A7D8A] mt-2 leading-relaxed">
           בנית אותה בחינם, וזה נשאר שלך.
           <br />
-          כדי לפתוח את הלינק לשיתוף — תשלום אחד.
+          הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות — תשלום אחד.
         </p>
         <div className="mt-5 inline-flex items-baseline gap-1.5">
           <span className="text-5xl font-bold">₪{price}</span>
@@ -213,6 +242,33 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
             </div>
           </div>
         )}
+      </div>
+
+      {/* אישור הורה — הדבר האחרון שקורה לפני שהדוכן יוצא לעולם.
+          זו הצהרה של הילדה ולא חשבון להורה: אין כאן מסך שני, אין סיסמה
+          להורה ואין מייל לאימות. מה שיש זה רגע אחד שבו היא עוצרת ואומרת
+          "כן, הם יודעים" — והחותמת נשמרת בשרת כדי שאראה אותה באישור. */}
+      <div
+        className={`mt-9 rounded-2xl p-4 border-[1.5px] ${
+          consentOn ? "bg-[#F6FBF7] border-[#CBE8D4]" : "bg-white border-[#F5E3C2]"
+        }`}
+      >
+        <div className="text-[14px] font-bold">לפני שמפרסמים</div>
+        <p className="text-[12.5px] text-[#5B5E6B] leading-relaxed mt-1">
+          דוכן אמיתי באינטרנט זה דבר גדול. אנחנו רוצות לדעת שההורים שלך בעניין.
+        </p>
+        <label className="flex items-start gap-2.5 mt-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consentOn}
+            onChange={(e) => toggleConsent(e.target.checked)}
+            aria-label="אישור הורים"
+            className="mt-0.5 w-5 h-5 shrink-0 accent-[#15161B]"
+          />
+          <span className="text-[13px] leading-relaxed">
+            אני מאשרת שההורים שלי יודעים ומאשרים לי לנהל את הדוכן.
+          </span>
+        </label>
       </div>
 
       {/* תשלום */}
@@ -286,10 +342,10 @@ export default function ActivateView({ price, bitUrl, payboxUrl, ownerWhatsapp }
         {err && <p className="text-[12px] text-[#D2373B] mt-2">{err}</p>}
         <button
           onClick={declarePaid}
-          disabled={busy}
+          disabled={busy || !consentOn}
           className="mt-2 w-full bg-[#15161B] text-white rounded-xl py-3.5 text-[14px] font-bold disabled:opacity-40"
         >
-          {busy ? "רגע…" : "שילמנו — לאישור החנות"}
+          {busy ? "רגע…" : consentOn ? "שילמנו — לאישור החנות" : "קודם מסמנים שההורים מאשרים ↑"}
         </button>
       </div>
 

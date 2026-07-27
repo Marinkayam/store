@@ -25,6 +25,8 @@ export interface Store {
   payment_method: string | null;
   payment_ref: string | null;
   payment_amount: number | null;
+  // הצהרת הילדה שההורים יודעים ומאשרים. תנאי להצהרת תשלום (מיגרציה 0016).
+  parent_consent_at: string | null;
   // payout_* = איך הקונה משלמת לילדה. אין לזה קשר ל-payment_* שלמעלה,
   // שהן התשלום החד-פעמי לדוכן על הקמת החנות.
   payout_bit: boolean;

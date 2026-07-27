@@ -198,19 +198,18 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* סיימנו את שלב 1 — ישר לשלב 2, בלי תפריט ובלי בחירה */}
+      {/* סיימנו את שלב 1. נכנסים לדוכן עצמו — ומשם מוסיפים מוצרים, כמה
+          שרוצים. מסך שנפתח ישר על טופס מוצר בודד גורם להרגשה שזה טופס
+          הרשמה נוסף; מסך של דוכן שיש בו כפתור "+" גורם להרגשה שזה שלה. */}
       {result && (
         <div className="w-full flex flex-col gap-4 text-center">
           <div className="text-5xl">🎊</div>
           <h1 className="text-xl font-bold">הדוכן שלך נפתח</h1>
           <p className="text-[14px] leading-relaxed">
-            בואי נוסיף את המוצר הראשון שלך.
+            עכשיו נכנסים פנימה וממלאים אותו במוצרים.
           </p>
-          <a href="/dashboard/products?new=1" className="btn btn-primary py-3.5 text-[15px]">
-            להוסיף מוצר ←
-          </a>
-          <a href="/dashboard" className="text-[13px] text-[var(--olive)] font-semibold">
-            אחר כך
+          <a href="/dashboard/products" className="btn btn-primary py-3.5 text-[15px]">
+            לדוכן שלי ←
           </a>
         </div>
       )}

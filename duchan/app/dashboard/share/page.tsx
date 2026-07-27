@@ -11,6 +11,8 @@ import { SHARE_TEXTS, inviteText, type ShareContext } from "@/lib/share-texts";
 export default function SharePage() {
   const { store, loading } = useStore();
   const [products, setProducts] = useState(0);
+  // null עד שהספירה חוזרת — בלי זה מסך "קודם מוצר אחד" מהבהב לרגע לכל אחת
+  const [counted, setCounted] = useState(false);
   const [topProduct, setTopProduct] = useState<string | null>(null);
   const [openKey, setOpenKey] = useState<string>("launch");
   const [edited, setEdited] = useState<Record<string, string>>({});
@@ -28,6 +30,7 @@ export default function SharePage() {
       .then(({ data }) => {
         setProducts(data?.length ?? 0);
         setTopProduct(data?.[0]?.name ?? null);
+        setCounted(true);
       });
   }, [store]);
 
@@ -36,8 +39,39 @@ export default function SharePage() {
     setTimeout(() => setToast(""), 2200);
   };
 
-  if (loading) return <div className="p-6 text-sm text-[#7A7D8A]">רגע…</div>;
+  if (loading || !counted) return <div className="p-6 text-sm text-[#7A7D8A]">רגע…</div>;
   if (!store) return null;
+
+  /**
+   * שיתוף נפתח רק אחרי מוצר אחד.
+   *
+   * דוכן ריק ששולחים לחברות הוא הכישלון הכי יקר כאן: החברה נכנסת, רואה
+   * "עוד אין כאן מוצרים", ולא חוזרת. הסדר הוא לא גחמה — קודם יש מה למכור,
+   * ורק אז מזמינים אנשים לראות.
+   */
+  if (products === 0)
+    return (
+      <div>
+        <header className="bg-white px-4 pt-6 pb-3 border-b border-[#E6E7EC]">
+          <h1 className="text-lg font-bold">להפיץ</h1>
+        </header>
+        <div className="px-6 py-16 text-center flex flex-col items-center gap-3">
+          <div className="text-5xl">📦</div>
+          <h2 className="text-[15px] font-bold">רגע לפני ששולחים</h2>
+          <p className="text-[13px] text-[#7A7D8A] leading-relaxed max-w-xs">
+            בדוכן שלך עוד אין מוצרים.
+            <br />
+            חברה שתיכנס עכשיו תראה מדף ריק — שווה להוסיף מוצר אחד קודם.
+          </p>
+          <a
+            href="/dashboard/products?new=1"
+            className="mt-2 bg-[#15161B] text-white rounded-xl px-6 py-3 text-[13.5px] font-bold"
+          >
+            בואי נוסיף את המוצר הראשון
+          </a>
+        </div>
+      </div>
+    );
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const link = `${origin}/s/${store.slug}`;
@@ -69,9 +103,9 @@ export default function SharePage() {
 
       {!store.activated_at && (
         <a href="/activate" className="block mx-3 mt-3 bg-[#15161B] text-white rounded-xl p-3.5">
-          <div className="text-[13.5px] font-bold">הלינק עוד לא פעיל</div>
+          <div className="text-[13.5px] font-bold">הלינק עובד — בתצוגה מקדימה</div>
           <div className="text-[11.5px] opacity-70 leading-relaxed">
-            אפשר להכין את ההודעות כבר עכשיו. לפרסום החנות →
+            חברות כבר יכולות להיכנס ולראות הכל. כדי שיוכלו גם להזמין — לפרסום הדוכן →
           </div>
         </a>
       )}

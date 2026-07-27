@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { useStore } from "../use-store";
+import { useStore, confettiBurst } from "../use-store";
 import {
   squareImage,
   posterFrom,
@@ -70,6 +70,8 @@ export default function ProductsPage() {
   const [edit, setEdit] = useState<EditState | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
+  // המוצר הראשון נשמר עכשיו — הרגע שבו הדוכן מפסיק להיות ריק
+  const [celebrate, setCelebrate] = useState(false);
 
   // הקלטה
   const [recOpen, setRecOpen] = useState(false);
@@ -90,6 +92,14 @@ export default function ProductsPage() {
     setToast(m);
     setTimeout(() => setToast(""), 2600);
   };
+
+  useEffect(() => {
+    if (!celebrate) return;
+    const w = window.innerWidth;
+    [0.25, 0.5, 0.75].forEach((x, i) =>
+      setTimeout(() => confettiBurst(w * x, window.innerHeight * 0.28), i * 140)
+    );
+  }, [celebrate]);
 
   /**
    * הבחירות כפי שיישמרו: "ורוד, כחול,, ורוד " → ["ורוד","כחול"].
@@ -419,7 +429,11 @@ export default function ProductsPage() {
       }
 
       localStorage.removeItem(draftKey(edit.id));
-      showToast(edit.trackStock && edit.stock === 0 ? "המוצר סומן כאזל" : edit.id ? "המוצר עודכן" : "המוצר נוסף לחנות");
+      // המוצר הראשון לא מקבל טוסט קטן שנעלם אחרי שתי שניות. זה השלב שבו
+      // הדוכן הופך לדבר אמיתי שאפשר לשלוח, ואומרים את זה בגדול ומיד.
+      const isFirst = !edit.id && products.length === 0;
+      if (isFirst) setCelebrate(true);
+      else showToast(edit.trackStock && edit.stock === 0 ? "המוצר סומן כאזל" : edit.id ? "המוצר עודכן" : "המוצר נוסף לחנות");
       setEdit(null);
       refresh();
       refreshStorePage();
@@ -555,12 +569,23 @@ export default function ProductsPage() {
       </header>
 
       <div className="p-3 flex flex-col gap-2">
+        {/* דוכן ריק זה לא מסך שגיאה — זו הזמנה. הכפתור יושב כאן וגם למעלה,
+            כי מסך ריק שמפנה ל-"+" קטן בפינה משאיר אותה לחפש. */}
         {products.length === 0 && (
-          <p className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
-            עוד לא הוספת מוצרים.
-            <br />
-            לוחצים על + ומתחילים.
-          </p>
+          <div className="text-center py-12 flex flex-col items-center gap-3">
+            <div className="text-5xl">🛍️</div>
+            <p className="text-sm text-[#7A7D8A] leading-relaxed">
+              הדוכן שלך ריק בינתיים.
+              <br />
+              כל מוצר לוקח פחות מדקה — תמונה, שם, מחיר.
+            </p>
+            <button
+              onClick={() => openEditor(null)}
+              className="mt-1 bg-[#15161B] text-white rounded-xl px-6 py-3 text-[13.5px] font-bold"
+            >
+              הוספת מוצר ראשון
+            </button>
+          </div>
         )}
         {products.map((p, idx) => {
           const out = p.track_stock && p.stock === 0;
@@ -910,6 +935,44 @@ export default function ProductsPage() {
             <div className={`bg-[#FF4757] transition-all ${recLive ? "w-9 h-9 rounded-xl" : "w-15 h-15 rounded-full"}`}
               style={recLive ? { width: 34, height: 34 } : { width: 60, height: 60 }} />
           </div>
+        </div>
+      )}
+
+      {/* המוצר הראשון עלה — הדוכן באוויר.
+          המסך הזה עושה דבר אחד: מוציא אותה מכאן אל השיתוף. "אחר כך" קיים,
+          אבל הוא קטן ואפור, כי הצעד הבא האמיתי הוא לשלוח את הלינק. */}
+      {celebrate && store && (
+        <div className="fixed inset-0 z-[95] bg-white flex flex-col items-center justify-center text-center px-8 gap-4">
+          <div className="text-6xl">🎉</div>
+          <h2 className="text-[22px] font-bold leading-tight">הדוכן שלך באוויר!</h2>
+          <p className="text-[13.5px] text-[#7A7D8A] leading-relaxed max-w-xs">
+            יש בו מוצר, יש לו לינק, והוא נראה בדיוק כמו שבנית אותו.
+            <br />
+            עכשיו הדבר הכי כיף — לשלוח אותו.
+          </p>
+          <a
+            href="/dashboard/share"
+            className="w-full max-w-xs bg-[#15161B] text-white rounded-xl py-4 text-[15px] font-bold"
+          >
+            שלחי לחברות
+          </a>
+          {/* להוסיף עוד מוצר זה לא "אחר כך" — זה מה שרוב הבנות יעשו עכשיו,
+              ולכן זה כפתור אמיתי ולא שורה אפורה בתחתית */}
+          <button
+            onClick={() => {
+              setCelebrate(false);
+              openEditor(null);
+            }}
+            className="w-full max-w-xs border-[1.5px] border-[#E6E7EC] rounded-xl py-3.5 text-[14px] font-bold"
+          >
+            להוסיף עוד מוצר
+          </button>
+          <a href={`/s/${store.slug}`} className="text-[13px] text-[#15161B] underline">
+            לראות איך הדוכן נראה
+          </a>
+          <button onClick={() => setCelebrate(false)} className="text-[12.5px] text-[#A2A5B0]">
+            סגירה
+          </button>
         </div>
       )}
 

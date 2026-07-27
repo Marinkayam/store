@@ -416,7 +416,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                         {s.ordersNew > 0 && <b className="text-[#A85B00]"> · {s.ordersNew} חדשות</b>}
                       </div>
                       <div className="text-[11px] text-[#7A7D8A] mt-0.5">
-                        🎯 מסע: {reachedCount(milestones({
+                        📈 התקדמות: {reachedCount(milestones({
                           products: s.products, orders: s.ordersTotal, paidOrders: s.ordersPaid,
                           revenue: s.revenue, views: s.viewsTotal,
                         }))}/7
@@ -634,7 +634,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
             {/* מסע + פרימיום */}
             <div className="bg-[#F5F6F9] rounded-xl p-3 mb-3">
-              <div className="text-[11px] text-[#7A7D8A] mb-2">המסע שלה</div>
+              <div className="text-[11px] text-[#7A7D8A] mb-2">ההתקדמות שלה</div>
               <div className="flex flex-wrap gap-1.5">
                 {milestones({
                   products: detail.store.products, orders: detail.store.ordersTotal,

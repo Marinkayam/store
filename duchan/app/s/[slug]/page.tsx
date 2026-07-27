@@ -16,11 +16,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPublicStore(slug);
 
-  if (data.state !== "live") {
-    return {
-      title: data.state === "pending" ? "החנות בהכנה" : "החנות סגורה",
-      robots: { index: false, follow: false },
-    };
+  if (data.state === "closed") {
+    return { title: "החנות סגורה", robots: { index: false, follow: false } };
   }
 
   const title = data.store.display_name;
@@ -66,21 +63,6 @@ export default async function StorePage({ params }: Props) {
   const { slug } = await params;
   const data = await getPublicStore(slug);
 
-  // החנות קיימת אבל עוד לא פורסמה. זה לא כישלון — זה "עוד רגע".
-  if (data.state === "pending") {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[#F5F6F9] text-center px-8">
-        <div className="text-5xl">{data.emoji}</div>
-        <h1 className="text-xl font-bold">{data.name} בהכנה</h1>
-        <p className="text-sm text-[#7A7D8A] leading-relaxed">
-          החנות הזו עוד לא נפתחה רשמית.
-          <br />
-          שווה לחזור עוד קצת ✨
-        </p>
-      </div>
-    );
-  }
-
   if (data.state === "closed") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[#F5F6F9] text-center px-8">
@@ -95,7 +77,13 @@ export default async function StorePage({ params }: Props) {
 
   return (
     <div style={themeCssVars(theme) as React.CSSProperties}>
-      <StoreView store={data.store} products={data.products} bestSellerId={data.bestSellerId} />
+      <StoreView
+        store={data.store}
+        products={data.products}
+        bestSellerId={data.bestSellerId}
+        soldIds={data.soldIds}
+        preview={data.state === "preview"}
+      />
       {/* הלולאה: מי שראתה חנות של חברה יכולה לפתוח אחת משלה, והשיוך נשמר */}
       <OpenYourOwn slug={data.store.slug} />
     </div>

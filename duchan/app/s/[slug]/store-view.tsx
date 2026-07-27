@@ -23,10 +23,16 @@ export default function StoreView({
   store,
   products,
   bestSellerId,
+  soldIds,
+  preview = false,
 }: {
   store: PublicStore;
   products: PublicProduct[];
   bestSellerId: string | null;
+  /** מוצרים שכבר נמכרו — קובע אם "אחרון במלאי" באמת אומר משהו */
+  soldIds: string[];
+  /** הדוכן עוד לא פורסם: רואים הכל, אי אפשר להזמין. */
+  preview?: boolean;
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [current, setCurrent] = useState<PublicProduct | null>(null);
@@ -154,7 +160,7 @@ export default function StoreView({
   }
 
   async function sendOrder() {
-    if (!cart.length || sending) return;
+    if (!cart.length || sending || preview) return;
     setSending(true);
     try {
       const res = await fetch("/api/orders", {
@@ -199,6 +205,7 @@ export default function StoreView({
     }
   }
 
+  const sold = useMemo(() => new Set(soldIds), [soldIds]);
   const cover = mediaUrl(store.cover_key);
 
   return (
@@ -237,6 +244,32 @@ export default function StoreView({
               </a>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* תצוגה מקדימה — הדוכן בנוי ונראה, אבל עוד לא נפתח להזמנות.
+          הרצועה מחוץ לערכת הנושא בכוונה: זו הודעת מערכת, לא חלק מהחנות. */}
+      {preview && (
+        <div className="bg-[#FFF3E0] text-[#A85B00] border-b border-[#F5E3C2]" dir="rtl">
+          {owner ? (
+            <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+              <span className="text-[11.5px] leading-tight">
+                תצוגה מקדימה — אפשר כבר לשלוח את הלינק לחברות
+                <br />
+                <span className="opacity-75">כדי לקבל הזמנות צריך לפרסם</span>
+              </span>
+              <a
+                href="/activate"
+                className="shrink-0 bg-[#A85B00] text-white rounded-lg px-3 py-2 text-[11.5px] font-bold"
+              >
+                פרסמי את הדוכן
+              </a>
+            </div>
+          ) : (
+            <p className="px-3 py-2 text-[11.5px] text-center leading-tight">
+              👀 תצוגה מקדימה — הדוכן הזה עוד לא נפתח להזמנות
+            </p>
+          )}
         </div>
       )}
 
@@ -304,7 +337,7 @@ export default function StoreView({
                       // שתי עמודות הופכות את כולן לרעש. הצבע קבוע לכל תגית
                       // ולא נגזר מהערכה — "מבצע" חייב להיראות אותו דבר בכל
                       // חנות, אחרת הוא מפסיק להיות שפה משותפת בין החנויות.
-                      const key = badgeFor(p, bestSellerId);
+                      const key = badgeFor(p, bestSellerId, sold);
                       if (!key) return null;
                       const b = BADGES[key];
                       // רצועה על כל רוחב הכרטיס ולא שבב בפינה: "אחרון במלאי"
@@ -460,15 +493,19 @@ export default function StoreView({
           </div>
           <button
             onClick={addToCart}
-            disabled={maxQty(current) === 0 || (!!current.options?.length && !choice)}
+            disabled={preview || maxQty(current) === 0 || (!!current.options?.length && !choice)}
             className="w-full rounded-xl py-3.5 text-[15px] font-bold disabled:opacity-40"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
           >
-            {maxQty(current) === 0
-              ? "אין יותר במלאי"
-              : current.options?.length && !choice
-                ? `קודם בוחרים ${current.option_label || "אפשרות"}`
-                : "הוספה לסל"}
+            {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
+                לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
+            {preview
+              ? "הדוכן עוד לא נפתח להזמנות"
+              : maxQty(current) === 0
+                ? "אין יותר במלאי"
+                : current.options?.length && !choice
+                  ? `קודם בוחרים ${current.option_label || "אפשרות"}`
+                  : "הוספה לסל"}
           </button>
         </div>
       )}

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore, confettiBurst } from "./use-store";
 import WhatsNew from "./whats-new";
-import Journey from "./journey";
 import type { Order } from "@/lib/types";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
@@ -156,12 +155,12 @@ export default function OrdersPage() {
             <span className="text-2xl">{store.payment_claimed_at ? "⏳" : "🚀"}</span>
             <div className="flex-1">
               <div className="text-[13.5px] font-bold">
-                {store.payment_claimed_at ? "מחכות לאישור התשלום" : "החנות שלך עוד לא פורסמה"}
+                {store.payment_claimed_at ? "מחכות לאישור התשלום" : "הדוכן שלך בתצוגה מקדימה"}
               </div>
               <div className="text-[11.5px] opacity-70 leading-relaxed">
                 {store.payment_claimed_at
-                  ? "קיבלנו את ההודעה. ברגע שנאשר, הלינק נפתח."
-                  : "הכל שמור. כדי לשתף את הלינק צריך לפרסם אותה →"}
+                  ? "קיבלנו את ההודעה. ברגע שנאשר, אפשר יהיה לקבל הזמנות."
+                  : "הלינק כבר עובד ואפשר לשלוח אותו. כדי לקבל הזמנות צריך לפרסם →"}
               </div>
             </div>
           </div>
@@ -183,8 +182,6 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
-
-      <Journey store={store} />
 
       {/* הקופה שלי */}
       {revenue > 0 && (
@@ -243,9 +240,16 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="text-center py-14 text-sm text-[#7A7D8A] leading-loose">
-              הזמנות יגיעו אחרי שהחנות תפורסם.
+              הזמנות יגיעו אחרי שהדוכן יפורסם.
               <br />
-              בינתיים שווה להוסיף עוד מוצרים ✨
+              בינתיים אפשר לשלוח את הלינק ולראות מה חברות אומרות ✨
+              <br />
+              <a
+                href="/dashboard/share"
+                className="inline-block mt-2 bg-[#15161B] text-white rounded-lg px-4 py-2 text-xs"
+              >
+                שלחי לחברות
+              </a>
             </div>
           ))}
 

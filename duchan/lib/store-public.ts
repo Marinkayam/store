@@ -2,12 +2,21 @@ import "server-only";
 import { cache } from "react";
 import { supabaseAdmin } from "./supabase/admin";
 import type { PublicStore, PublicProduct } from "./types";
-import { bestSellerOf } from "./badges";
+import { bestSellerOf, soldProductIds } from "./badges";
 
-/** לחנות שלא הופעלה יש מסך משלה — היא בהכנה, לא סגורה. */
+/**
+ * חנות שלא הופעלה עדיין היא "תצוגה מקדימה" ולא "סגורה": הלינק עובד, החברות
+ * רואות חנות אמיתית עם המוצרים, ורק ההזמנה חסומה. זו הנקודה שבה היא מתאהבת
+ * — קודם רואים משהו חי, ורק אחר כך מבקשים מההורה לשלם.
+ */
 export type PublicStoreResult =
-  | { state: "live"; store: PublicStore; products: PublicProduct[]; bestSellerId: string | null }
-  | { state: "pending"; name: string; emoji: string }
+  | {
+      state: "live" | "preview";
+      store: PublicStore;
+      products: PublicProduct[];
+      bestSellerId: string | null;
+      soldIds: string[];
+    }
   | { state: "closed" };
 
 /**
@@ -27,10 +36,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
 
   if (!store) return { state: "closed" };
 
-  // טיוטה — הלינק עוד לא נפתח לשיתוף. מסך אחר מ"סגורה".
-  if (!store.activated_at) {
-    return { state: "pending", name: store.display_name, emoji: store.emoji };
-  }
+  // חנות מושבתת מהחמ"ל סגורה בכל מצב — גם לפני פרסום
   if (store.status !== "active") return { state: "closed" };
 
   const { data: products } = await db
@@ -51,7 +57,14 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
 
   const list = (products ?? []) as PublicProduct[];
   const bestSellerId = bestSellerOf(sold ?? [], list);
+  const soldIds = soldProductIds(sold ?? [], list);
 
-  const { id: _id, status: _status, activated_at: _act, ...pub } = store;
-  return { state: "live", store: pub as PublicStore, products: list, bestSellerId };
+  const { id: _id, status: _status, activated_at: activatedAt, ...pub } = store;
+  return {
+    state: activatedAt ? "live" : "preview",
+    store: pub as PublicStore,
+    products: list,
+    bestSellerId,
+    soldIds,
+  };
 });
