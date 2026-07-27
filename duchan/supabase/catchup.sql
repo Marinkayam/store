@@ -538,6 +538,18 @@ alter table stores add constraint stores_age_check check (age is null or (age be
 
 insert into schema_migrations (name) values ('0021_store_age.sql') on conflict do nothing;
 
+-- ───────────────────────────────────────────────────────────────
+-- 0022_sms_unlimited.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- דגל פר-חנות שפוטר את מספר הטלפון שלה ממכסת הסמס היומית, בלי להעניק לה
+-- גישת אדמין. שימושי ללקוחה שבודקת הרבה ונתקעת במכסה שנועדה לעצור הצפה,
+-- לא אותה. נשלט מהחמ"ל בלבד.
+
+alter table stores add column if not exists sms_unlimited boolean not null default false;
+
+insert into schema_migrations (name) values ('0022_sms_unlimited.sql') on conflict do nothing;
+
 commit;
 
 -- אחרי ההרצה: לרענן את הקאש של ה-API

@@ -30,6 +30,17 @@ async function isOwner(phone: string): Promise<boolean> {
   return !!data;
 }
 
+/**
+ * לקוחה שהמנהלת סימנה בחמ"ל כפטורה ממכסת הסמס, בלי לתת לה גישת אדמין.
+ * לא קשורה ל-isOwner: זו לא הופכת אותה למנהלת, רק מוציאה אותה מהמכסה שנועדה
+ * לעצור הצפה — לא לקוחה אמיתית שבודקת את החנות שלה הרבה.
+ */
+async function isTrusted(phone: string): Promise<boolean> {
+  const db = supabaseAdmin();
+  const { data } = await db.from("stores").select("id").eq("contact_phone", phone).eq("sms_unlimited", true).limit(1);
+  return !!data && data.length > 0;
+}
+
 // POST /api/auth/sms/start { phone } — שולח קוד בסמס.
 //
 // כל הודעה כאן עולה כסף אמיתי, ולכן ההגבלות הן בקרת עלות בדיוק כמו שהן
@@ -49,6 +60,7 @@ export async function POST(req: NextRequest) {
 
   const phone = normalizePhone(body.phone ?? "");
   const owner = phone ? await isOwner(phone) : false;
+  const trusted = phone ? await isTrusted(phone) : false;
 
   if (!smsConfigured()) {
     // למנהלת מפרטים איזה משתנה בדיוק חסר, כדי שלא תצטרך לנחש בין ארבעה
@@ -95,7 +107,7 @@ export async function POST(req: NextRequest) {
     db.from("phone_otps").select("id", { count: "exact", head: true }).eq("phone", phone).gte("created_at", dayAgo),
     db.from("phone_otps").select("id", { count: "exact", head: true }).eq("ip_hash", ipHash).gte("created_at", dayAgo),
   ]);
-  if (!owner && ((phoneCount ?? 0) >= PER_PHONE_PER_DAY || (ipCount ?? 0) >= PER_IP_PER_DAY)) {
+  if (!owner && !trusted && ((phoneCount ?? 0) >= PER_PHONE_PER_DAY || (ipCount ?? 0) >= PER_IP_PER_DAY)) {
     return NextResponse.json({ error: "יותר מדי בקשות היום. לנסות שוב מחר" }, { status: 429 });
   }
 

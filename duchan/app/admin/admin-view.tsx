@@ -43,6 +43,7 @@ interface AdminStore {
   media_bytes: number;
   ai_enabled: boolean | null;
   ai_credits: number | null;
+  sms_unlimited: boolean | null;
   created_at: string;
   activated_at: string | null;
   parent_consent_at: string | null;
@@ -216,6 +217,19 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
     showToast(aiEnabled ? "כתיבה אוטומטית הופעלה ✨" : "כתיבה אוטומטית כובתה");
+  }
+
+  // פוטר את מספר הטלפון של החנות ממכסת הסמס היומית — בלי גישת אדמין.
+  // ללקוחה שבודקת הרבה ונתקעת במכסה שנועדה לעצור הצפה, לא אותה.
+  async function setSmsUnlimited(storeId: string, smsUnlimited: boolean) {
+    await fetch("/api/admin/stores", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storeId, smsUnlimited }),
+    });
+    refresh();
+    if (detail?.store.id === storeId) openDetail(storeId);
+    showToast(smsUnlimited ? "סמס ללא הגבלה למספר הזה" : "בוטל — חוזרת למכסה הרגילה");
   }
 
   /**
@@ -825,6 +839,23 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   <code>ANTHROPIC_API_KEY</code> ולפרוס מחדש.
                 </div>
               )}
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--line)]">
+                <span className="text-[12px] flex-1">
+                  📱 סמס ללא הגבלה
+                  <span className="text-[var(--muted)]">
+                    {" · "}{detail.store.sms_unlimited ? "פעיל למספר הזה" : "מכסה רגילה (5 ליום)"}
+                  </span>
+                </span>
+                <button
+                  onClick={() => setSmsUnlimited(detail.store.id, !detail.store.sms_unlimited)}
+                  aria-label={detail.store.sms_unlimited ? "כיבוי סמס ללא הגבלה" : "הפעלת סמס ללא הגבלה"}
+                  className={detail.store.sms_unlimited
+                    ? "border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]"
+                    : "bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium"}
+                >
+                  {detail.store.sms_unlimited ? "כיבוי" : "הפעלה"}
+                </button>
+              </div>
             </div>
 
             {/* כניסות 14 יום */}

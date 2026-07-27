@@ -12,7 +12,7 @@ export async function GET() {
   const db = supabaseAdmin();
   const { data } = await db
     .from("stores")
-    .select("id, slug, display_name, emoji, status, parent_email, claim_token, media_bytes, created_at")
+    .select("id, slug, display_name, emoji, status, parent_email, claim_token, media_bytes, created_at, sms_unlimited")
     .order("created_at", { ascending: false });
   return NextResponse.json({ stores: data ?? [] });
 }
@@ -61,6 +61,7 @@ export async function PATCH(req: NextRequest) {
     aiCredits?: number | null;
     activate?: boolean;
     paymentAmount?: number;
+    smsUnlimited?: boolean;
   };
   try {
     body = await req.json();
@@ -95,6 +96,7 @@ export async function PATCH(req: NextRequest) {
   if (body.aiCredits !== undefined) {
     patch.ai_credits = body.aiCredits === null ? null : Math.max(0, Math.floor(body.aiCredits));
   }
+  if (body.smsUnlimited !== undefined) patch.sms_unlimited = body.smsUnlimited;
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: "אין מה לעדכן" }, { status: 400 });
   }
