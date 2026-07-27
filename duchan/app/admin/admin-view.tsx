@@ -613,7 +613,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                       return (
                         <div key={i} className={`min-w-20 w-20 ${out ? "opacity-45" : ""}`}>
                           <div className="w-20 h-20 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden relative">
-                            {img ? <img src={img} alt="" className="w-full h-full object-contain" /> : "🛍️"}
+                            {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                             {p.video_key && (
                               <span className="absolute bottom-0.5 left-1 text-[8px] bg-black/60 text-white px-1 ">▶</span>
                             )}
@@ -858,7 +858,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     className={`border border-[var(--line)] p-2 ${p.deleted_at ? "bg-[#FAFAFB] opacity-70" : "bg-white"}`}>
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 bg-[var(--canvas)] flex items-center justify-center text-lg overflow-hidden shrink-0">
-                        {img ? <img src={img} alt="" className="w-full h-full object-contain" /> : "🛍️"}
+                        {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-medium truncate">{p.name}</div>

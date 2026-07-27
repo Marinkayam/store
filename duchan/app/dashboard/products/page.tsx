@@ -42,6 +42,11 @@ interface EditState {
   pendingPoster: Blob | null;
   previewUrl: string | null;
   previewIsVideo: boolean;
+  // הקובץ הגולמי שנבחר עכשיו, לפני עיבוד לריבוע — כדי שאפשר יהיה למקם
+  // מחדש בלי לבקש ממנה לצלם שוב. null לתמונה שכבר שמורה (אין לנו את
+  // הקובץ המקורי שלה יותר).
+  pendingImageRaw: File | Blob | null;
+  imagePos: { x: number; y: number };
 }
 
 const EMPTY_EDIT: EditState = {
@@ -63,6 +68,8 @@ const EMPTY_EDIT: EditState = {
   pendingPoster: null,
   previewUrl: null,
   previewIsVideo: false,
+  pendingImageRaw: null,
+  imagePos: { x: 50, y: 50 },
 };
 
 export default function ProductsPage() {
@@ -265,7 +272,7 @@ export default function ProductsPage() {
     // בשקט: הילדה בוחרת תמונה, לא קורה כלום, ואין מה להגיד לה.
     let blob: Blob;
     try {
-      blob = await squareImage(file, 900, "contain");
+      blob = await squareImage(file, 900, "cover", { x: 50, y: 50 });
     } catch (e) {
       showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
       return;
@@ -274,14 +281,48 @@ export default function ProductsPage() {
       e && {
         ...e,
         pendingImage: blob,
+        pendingImageRaw: file,
+        imagePos: { x: 50, y: 50 },
         pendingVideo: null,
         pendingPoster: null,
         videoKey: null,
         posterKey: null,
-        previewUrl: URL.createObjectURL(blob),
+        // גולמי, לא מעובד: כדי שאפשר יהיה לגרור ולמקם בלי לחתוך שום דבר לצמיתות
+        previewUrl: URL.createObjectURL(file),
         previewIsVideo: false,
       }
     );
+  }
+
+  /* ---------- מיקום תמונה: גוררים כדי לבחור מה יופיע בריבוע ---------- */
+  const posDrag = useRef<{ x: number; y: number; pos: { x: number; y: number } } | null>(null);
+
+  function onPosPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (!edit?.pendingImageRaw) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    posDrag.current = { x: e.clientX, y: e.clientY, pos: edit.imagePos };
+  }
+
+  function onPosPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!posDrag.current) return;
+    const box = e.currentTarget.getBoundingClientRect();
+    const dx = e.clientX - posDrag.current.x;
+    const dy = e.clientY - posDrag.current.y;
+    // גרירה ימינה חושפת את הצד השמאלי של התמונה — ולכן האחוז זז הפוך לתנועת האצבע
+    const clamp = (n: number) => Math.min(100, Math.max(0, n));
+    const nx = clamp(posDrag.current.pos.x - (dx / box.width) * 100);
+    const ny = clamp(posDrag.current.pos.y - (dy / box.height) * 100);
+    setEdit((s) => s && { ...s, imagePos: { x: nx, y: ny } });
+  }
+
+  async function onPosPointerUp() {
+    if (!posDrag.current) return;
+    posDrag.current = null;
+    if (!edit?.pendingImageRaw) return;
+    try {
+      const blob = await squareImage(edit.pendingImageRaw, 900, "cover", edit.imagePos);
+      setEdit((s) => s && { ...s, pendingImage: blob });
+    } catch {}
   }
 
   async function onGalleryVideo(file: File) {
@@ -622,7 +663,7 @@ export default function ProductsPage() {
                 </button>
               </div>
               <div className="w-13 h-13 min-w-13 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden relative">
-                {img ? <img src={img} alt="" className="w-full h-full object-contain" /> : "🛍️"}
+                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                 {p.video_key && (
                   <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1 ">
                     וידאו
@@ -705,7 +746,14 @@ export default function ProductsPage() {
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
 
-            <div className="h-38 bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex items-center justify-center text-5xl overflow-hidden relative mb-2.5" style={{ height: "9.5rem" }}>
+            <div
+              className="h-38 bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex items-center justify-center text-5xl overflow-hidden relative mb-1 touch-none select-none"
+              style={{ height: "9.5rem" }}
+              onPointerDown={onPosPointerDown}
+              onPointerMove={onPosPointerMove}
+              onPointerUp={onPosPointerUp}
+              onPointerCancel={onPosPointerUp}
+            >
               {edit.previewUrl ? (
                 <>
                   <button
@@ -713,7 +761,8 @@ export default function ProductsPage() {
                       setEdit((e) => e && {
                         ...e,
                         previewUrl: null, previewIsVideo: false,
-                        pendingImage: null, pendingVideo: null, pendingPoster: null,
+                        pendingImage: null, pendingImageRaw: null, imagePos: { x: 50, y: 50 },
+                        pendingVideo: null, pendingPoster: null,
                         imageKey: null, videoKey: null, posterKey: null,
                       })
                     }
@@ -724,13 +773,23 @@ export default function ProductsPage() {
                   {edit.previewIsVideo ? (
                     <video src={edit.previewUrl} muted loop playsInline autoPlay className="w-full h-full object-cover" />
                   ) : (
-                    <img src={edit.previewUrl} alt="" className="w-full h-full object-contain" />
+                    <img
+                      src={edit.previewUrl}
+                      alt=""
+                      className="w-full h-full pointer-events-none"
+                      style={{ objectFit: "cover", objectPosition: `${edit.imagePos.x}% ${edit.imagePos.y}%` }}
+                    />
                   )}
                 </>
               ) : (
                 "🛍️"
               )}
             </div>
+            {edit.previewUrl && !edit.previewIsVideo && edit.pendingImageRaw && (
+              <p className="text-[11px] text-[var(--muted)] text-center mb-2.5">
+                גוררים בתמונה כדי לבחור מה יופיע בריבוע
+              </p>
+            )}
 
             {/* בלי capture — אחרת הטלפון פותח מצלמה ישירות ואי אפשר לבחור
                 תמונה שכבר צולמה. ראה ההערה הזהה במסך האונבורדינג. */}
@@ -922,7 +981,7 @@ export default function ProductsPage() {
               return (
                 <div key={p.id} className="flex gap-3 items-center py-2 border-b border-[var(--line)] last:border-0">
                   <div className="w-10 h-10 bg-[var(--canvas)] flex items-center justify-center text-lg overflow-hidden">
-                    {img ? <img src={img} alt="" className="w-full h-full object-contain" /> : "🛍️"}
+                    {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>

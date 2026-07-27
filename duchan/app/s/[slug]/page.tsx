@@ -139,7 +139,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
         href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
         className="block mt-3 text-[12px] text-[var(--muted)] underline"
       >
-        יש לך שאלות? לדבר איתי בוואטסאפ
+        יש לך שאלות? אשמח לענות בוואטסאפ
       </a>
     </div>
   );

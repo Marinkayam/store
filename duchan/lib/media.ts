@@ -78,7 +78,9 @@ async function decodeImage(file: File | Blob) {
 export async function squareImage(
   file: File | Blob,
   size = 900,
-  fit: "cover" | "contain" = "cover"
+  fit: "cover" | "contain" = "cover",
+  /** רק ל-cover: איזה חלק מהתמונה במרכז הריבוע. 50/50 = אמצע, כמו קודם. */
+  pos: { x: number; y: number } = { x: 50, y: 50 }
 ): Promise<Blob> {
   const { src, w, h, done } = await decodeImage(file);
   try {
@@ -94,7 +96,9 @@ export async function squareImage(
       ctx.drawImage(src, 0, 0, w, h, (size - dw) / 2, (size - dh) / 2, dw, dh);
     } else {
       const side = Math.min(w, h);
-      ctx.drawImage(src, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
+      const sx = ((w - side) * pos.x) / 100;
+      const sy = ((h - side) * pos.y) / 100;
+      ctx.drawImage(src, sx, sy, side, side, 0, 0, size, size);
     }
     return await canvasToImageBlob(c);
   } finally {

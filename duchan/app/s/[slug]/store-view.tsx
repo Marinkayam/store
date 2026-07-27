@@ -57,6 +57,11 @@ export default function StoreView({
   const [payWith, setPayWith] = useState<PayMethod | null>(null);
   const chosenPay = payWith ?? methods[0]?.key ?? null;
 
+  // האם הקונה הזו רוצה משלוח או מסירה אישית — בחירה לכל הזמנה, לא הגדרה
+  // קבועה של החנות. ברירת המחדל היא מה שהחנות מציעה, כי זו הסיבה שהיא
+  // מוצגת מלכתחילה.
+  const [wantsShipping, setWantsShipping] = useState(true);
+
   // ספירת כניסה — פעם אחת לביקור (sessionStorage מונע ספירה כפולה בניווט פנימי)
   useEffect(() => {
     const key = `duchan-visited-${store.slug}`;
@@ -234,9 +239,14 @@ export default function StoreView({
         )
         .join("\n");
       const pay = payInstructions(chosenPay);
-      const shipLine = store.ships
-        ? `\nמשלוח: ${store.shipping_note || "בתיאום"}${store.shipping_price ? ` · ₪${store.shipping_price}` : ""}`
-        : "";
+      // הבחירה בין משלוח למסירה אישית היא של הקונה הזו, לא הגדרה קבועה של
+      // החנות — אחרת כל הזמנה "מקבלת" משלוח גם ממי שמעדיפה למסור ביד.
+      const shipLine =
+        store.ships && wantsShipping
+          ? `\nמשלוח: ${store.shipping_note || "בתיאום"}${store.shipping_price ? ` · ₪${store.shipping_price}` : ""}`
+          : store.ships
+            ? "\nמסירה אישית, בלי משלוח"
+            : "";
       const msg =
         `${store.order_intro?.trim() || `היי ${firstName}! 👋`}\n` +
         `ראיתי את הדוכן ואני רוצה להזמין:\n\n${lines}\n\n` +
@@ -251,6 +261,7 @@ export default function StoreView({
       setCart([]);
       setNote("");
       setBuyerPhone("");
+      setWantsShipping(true);
       setOrderOpen(false);
       window.location.href = `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`;
     } catch {
@@ -457,7 +468,7 @@ export default function StoreView({
                     {vid ? (
                       <video src={vid} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
                     ) : img ? (
-                      <img src={img} alt={p.name} className="w-full h-full object-contain" />
+                      <img src={img} alt={p.name} className="w-full h-full object-cover" />
                     ) : (
                       <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
                     )}
@@ -561,7 +572,7 @@ export default function StoreView({
                   className="w-full h-full object-cover"
                 />
               ) : mediaUrl(current.image_key) ? (
-                <img src={mediaUrl(current.image_key)!} alt="" className="w-full h-full object-contain" />
+                <img src={mediaUrl(current.image_key)!} alt="" className="w-full h-full object-cover" />
               ) : (
                 "🛍️"
               )}
@@ -746,6 +757,47 @@ export default function StoreView({
             <span>סה"כ</span>
             <span>₪{cartTotal}</span>
           </div>
+
+          {/* בחירה לכל הזמנה, לא רק הגדרת ברירת מחדל של החנות — קונה שרוצה
+              לאסוף בעצמה לא צריכה "לקבל" משלוח שהיא לא ביקשה. */}
+          {store.ships && (
+            <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mt-3">
+              <div className="font-bold mb-1.5">איך לקבל?</div>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setWantsShipping(true)}
+                  aria-pressed={wantsShipping}
+                  className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                  style={
+                    wantsShipping
+                      ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
+                      : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                  }
+                >
+                  משלוח
+                </button>
+                <button
+                  onClick={() => setWantsShipping(false)}
+                  aria-pressed={!wantsShipping}
+                  className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                  style={
+                    !wantsShipping
+                      ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
+                      : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                  }
+                >
+                  מסירה אישית
+                </button>
+              </div>
+              {wantsShipping && (
+                <p className="opacity-60 text-[11.5px] mt-1.5">
+                  {store.shipping_note || "בתיאום"}
+                  {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
+                </p>
+              )}
+            </div>
+          )}
+
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
