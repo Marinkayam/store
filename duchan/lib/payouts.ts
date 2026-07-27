@@ -50,20 +50,12 @@ export function payMethods(p: PayoutPrefs): { key: PayMethod; label: string }[] 
 /**
  * ההוראות לאמצעי שהקונה בחרה, כפי שהן נכנסות להודעת הוואטסאפ.
  *
- * הפרטים נבנים רק אחרי שהשרת אישר את ההזמנה, ולכן אפשר לכלול כאן את המספר
- * של הילדה: הוא לא יושב ב-HTML של הדף, והקונה ממילא כותבת אליו עכשיו.
+ * בכוונה בלי מספר ובלי לינק: את הפרטים המדויקים למי ולאן לשלם, בעלת/בעל
+ * הדוכן משלימה בעצמה בשיחה, לא המערכת.
  */
-export function payInstructions(
-  p: PayoutPrefs,
-  method: PayMethod | null,
-  phone: string
-): string {
-  const local = phone.replace(/^972/, "0");
-  const link = payoutLink(p);
-  if (method === "bit") return `אשלם בביט למספר ${local}`;
-  if (method === "paybox") {
-    return link ? `אשלם בפייבוקס: ${link.url}` : "אשלם בפייבוקס";
-  }
+export function payInstructions(method: PayMethod | null): string {
+  if (method === "bit") return "אשלם בביט";
+  if (method === "paybox") return "אשלם בפייבוקס";
   if (method === "cash") return "אשלם במזומן במסירה";
   return "";
 }

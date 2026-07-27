@@ -233,7 +233,7 @@ export default function StoreView({
             `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} — ₪${i.price * i.qty}`
         )
         .join("\n");
-      const pay = payInstructions(store, chosenPay, data.phone);
+      const pay = payInstructions(chosenPay);
       const shipLine = store.ships
         ? `\nמשלוח: ${store.shipping_note || "בתיאום"}${store.shipping_price ? ` · ₪${store.shipping_price}` : ""}`
         : "";
