@@ -114,8 +114,20 @@ export default function PhoneVerify({
           {busy ? "שולחים…" : cta}
         </button>
         <p className="text-[11.5px] text-[var(--faint)] text-center leading-relaxed">
-          נשלח לך קוד בהודעה. זה גם המספר שאליו יגיעו ההזמנות בוואטסאפ.
+          נשלח לך קוד בהודעה כדי להיכנס. זה גם המספר שאליו יגיעו ההזמנות
+          בוואטסאפ, אז זה יכול להיות שלך או של אחד ההורים.
         </p>
+        {/* לא כל ילדה יודעת את המספר בעל פה, ולא כל ילדה יש לה טלפון משלה —
+            details/summary כי זה מידע שרוב הילדות לא צריכות לראות בכלל */}
+        <details className="text-[11.5px] text-[var(--muted)] text-center">
+          <summary className="cursor-pointer underline list-none">לא יודעת מה המספר?</summary>
+          <p className="mt-1.5 leading-relaxed">
+            אפשר להשתמש במספר של אמא או אבא — מי שדרכו את/ה רוצה שההזמנות
+            יגיעו. אם זה הטלפון שביד עכשיו: באייפון — הגדרות ← כללי ← אודות
+            ← מספר טלפון. באנדרואיד — הגדרות ← אודות הטלפון ← מצב ← מספר
+            טלפון.
+          </p>
+        </details>
       </div>
     );
   }

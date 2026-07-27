@@ -267,12 +267,18 @@ export default function Onboarding() {
             </span>
           </label>
 
+          {/* לילדה שלוחצת בפעם הראשונה, "הלאה" הוא לא ברור מספיק — לאן?
+              שורה אחת מסבירה בדיוק מה יקרה, לא רק שמשהו יקרה. */}
+          <p className="text-[11px] text-center text-[var(--muted)] -mt-1">
+            בשלב הבא: מספר טלפון, כדי לשלוח לך קוד אימות ולשמור את הדוכן.
+          </p>
+
           <button
             disabled={!draft.displayName.trim() || !draft.parentAware}
             onClick={() => set({ step: 2 })}
             className="btn btn-primary py-3.5 text-[15px]"
           >
-            הלאה ←
+            הלאה — למספר הטלפון ←
           </button>
         </div>
       )}

@@ -150,7 +150,7 @@ export default function Landing() {
             <br />
             <span className="text-[var(--muted)]">
               מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE}, עד {LAUNCH_UNTIL_LABEL}. לבנות זה
-              חינם — משלמים רק כשרוצים לפרסם את הדוכן.{" "}
+              חינם — <b className="text-[var(--ink)]">תשלום חד-פעמי</b>, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
               <a href="/price" className="underline font-semibold text-[var(--olive)]">
                 איך זה עובד?
               </a>
@@ -158,7 +158,7 @@ export default function Landing() {
           </p>
         ) : (
           <p className="text-[12px] text-center leading-relaxed text-[var(--muted)]">
-            לבנות זה חינם. משלמים רק כשרוצים לפרסם את הדוכן.{" "}
+            לבנות זה חינם. תשלום חד-פעמי, רק אחרי שהדוכן כבר מוקם ורוצים לפרסם אותו.{" "}
             <a href="/price" className="underline font-semibold text-[var(--olive)]">
               איך זה עובד?
             </a>
