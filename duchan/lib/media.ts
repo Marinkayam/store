@@ -66,15 +66,36 @@ async function decodeImage(file: File | Blob) {
   }
 }
 
-/** חיתוך לריבוע + דחיסה + מחיקת EXIF. אל תדלג על השלב הזה. */
-export async function squareImage(file: File | Blob, size = 900): Promise<Blob> {
+/**
+ * ריבוע קבוע + דחיסה + מחיקת EXIF. אל תדלג על השלב הזה.
+ *
+ * שני מצבים: "cover" חותך למרכז (טוב לתמונת פרופיל וקאבר — הן ממילא
+ * מוצגות דרך object-cover, אז חיתוך קשיח בעיבוד לא מוסיף שום דבר).
+ * "contain" לא חותך כלום — ממזערים את התמונה כולה לתוך הריבוע ומשלימים
+ * את השוליים ברקע אחיד. זה מה שמוצרים צריכים: קונה לא אמורה לגלות
+ * שחצי מהמוצר נחתך כי הוא לא היה מרובע כשצילמו אותו.
+ */
+export async function squareImage(
+  file: File | Blob,
+  size = 900,
+  fit: "cover" | "contain" = "cover"
+): Promise<Blob> {
   const { src, w, h, done } = await decodeImage(file);
   try {
-    const side = Math.min(w, h);
     const c = makeCanvas(size);
     const ctx = c.getContext("2d") as CanvasRenderingContext2D | null;
-    if (!ctx) throw new MediaError("הדפדפן לא הצליח לעבד את התמונה. נסי לרענן את הדף.");
-    ctx.drawImage(src, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
+    if (!ctx) throw new MediaError("הדפדפן לא הצליח לעבד את התמונה. לרענן את הדף ולנסות שוב.");
+    if (fit === "contain") {
+      ctx.fillStyle = "#F6F0E8"; // --cream — אותו רקע שהתמונה יושבת עליו בכל מקום באתר
+      ctx.fillRect(0, 0, size, size);
+      const scale = Math.min(size / w, size / h);
+      const dw = w * scale;
+      const dh = h * scale;
+      ctx.drawImage(src, 0, 0, w, h, (size - dw) / 2, (size - dh) / 2, dw, dh);
+    } else {
+      const side = Math.min(w, h);
+      ctx.drawImage(src, (w - side) / 2, (h - side) / 2, side, side, 0, 0, size, size);
+    }
     return await canvasToImageBlob(c);
   } finally {
     done();

@@ -457,7 +457,7 @@ export default function StoreView({
                     {vid ? (
                       <video src={vid} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
                     ) : img ? (
-                      <img src={img} alt={p.name} className="w-full h-full object-cover" />
+                      <img src={img} alt={p.name} className="w-full h-full object-contain" />
                     ) : (
                       <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
                     )}
@@ -561,7 +561,7 @@ export default function StoreView({
                   className="w-full h-full object-cover"
                 />
               ) : mediaUrl(current.image_key) ? (
-                <img src={mediaUrl(current.image_key)!} alt="" className="w-full h-full object-cover" />
+                <img src={mediaUrl(current.image_key)!} alt="" className="w-full h-full object-contain" />
               ) : (
                 "🛍️"
               )}
@@ -579,12 +579,14 @@ export default function StoreView({
           </div>
 
           {/* בחירה — חייבים לבחור לפני הוספה לסל.
-              שורות מלאות-רוחב במקום שבבים צמודים: אצבע על מסך קטן לא יכולה
-              לפספס שורה שלמה כמו שהיא מפספסת שבב דחוס ליד שבבים אחרים. */}
+              רשימה פשוטה עם עיגול סימון, לא כפתור מלא-צבע: בלוק צבעוני גדול
+              נראה כמו מדבקה או פרסומת, במיוחד כששם האפשרות מוזן לא נכון
+              (למשל "לבן" בתור שם השדה במקום כאחת הבחירות) — עדיף שורה
+              רגועה וברורה מאשר עיצוב שמנסה "לתקן" ניסוח עם צבע חזק. */}
           {current.options && current.options.length > 0 && (
             <div className="border-t border-current/10 pt-3.5">
-              <div className="text-[14px] font-bold text-center mb-2.5">
-                {current.option_label ? `לבחור ${current.option_label}` : "לבחור אפשרות"}
+              <div className="text-[13px] font-bold text-center mb-2.5 opacity-80">
+                {current.option_label || "אפשרות"}
               </div>
               <div className="flex flex-col gap-2">
                 {current.options.map((o) => {
@@ -595,29 +597,30 @@ export default function StoreView({
                       onClick={() => setChoice(o)}
                       aria-pressed={on}
                       aria-label={`${current.option_label || "בחירה"}: ${o}`}
-                      className="w-full text-[15px] font-semibold px-4 py-3.5 border-2 transition flex items-center justify-between gap-2"
-                      style={
-                        on
-                          ? {
-                              background: "var(--s-primary)",
-                              color: "var(--s-onprimary)",
-                              borderColor: "var(--s-primary)",
-                            }
-                          : { borderColor: "currentColor", opacity: 0.85, background: "var(--s-thumb)" }
-                      }
+                      className="w-full text-[15px] px-4 py-3.5 border-2 transition flex items-center justify-between gap-2"
+                      style={{
+                        background: "var(--s-surface)",
+                        borderColor: on ? "var(--s-primary)" : "currentColor",
+                        color: "var(--s-ink)",
+                        opacity: on ? 1 : 0.65,
+                        fontWeight: on ? 700 : 500,
+                      }}
                     >
                       {o}
                       <span
-                        className="w-6 h-6 flex items-center justify-center shrink-0 text-[13px]"
+                        className="w-5 h-5 flex items-center justify-center shrink-0"
                         style={{
                           borderRadius: "999px",
-                          border: `2px solid ${on ? "var(--s-onprimary)" : "currentColor"}`,
-                          background: on ? "var(--s-onprimary)" : "transparent",
-                          color: "var(--s-primary)",
+                          border: `2px solid ${on ? "var(--s-primary)" : "currentColor"}`,
                         }}
                         aria-hidden
                       >
-                        {on ? "✓" : ""}
+                        {on && (
+                          <span
+                            className="w-2.5 h-2.5"
+                            style={{ borderRadius: "999px", background: "var(--s-primary)" }}
+                          />
+                        )}
                       </span>
                     </button>
                   );

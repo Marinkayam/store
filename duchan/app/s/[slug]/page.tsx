@@ -112,11 +112,11 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
     (IS_LAUNCH ? ` (ראיתי שיש מחיר השקה ₪${ACTIVATION_PRICE} עד ${LAUNCH_UNTIL_LABEL}).` : ".");
 
   return (
-    <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-9 text-center">
-      <Icon name="stall" size={54} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
+    <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-8 text-center">
+      <Icon name="stall" size={36} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
       <h2 className="text-[15px] font-bold text-[var(--ink)] mt-2">רוצה גם דוכן מכירות כזה?</h2>
       <p className="text-[12.5px] text-[var(--muted)] mt-1.5 leading-relaxed max-w-xs mx-auto">
-        סקווישים שכבר לא בשימוש, צמידים שהכנת, בגדים שקטנו.
+        סקווישים שכבר לא בשימוש, צמידים, בגדים שקטנו.
         <br />
         דוכן משלך נבנה בכמה דקות, מהטלפון.
       </p>
@@ -126,18 +126,20 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
         </p>
       )}
 
+      {/* פתיחת דוכן היא הפעולה העיקרית — הכפתור הבולט. פנייה בוואטסאפ היא
+          לשאלה, ולכן קישור טקסט קטן מתחתיו, לא כפתור מתחרה. */}
       <a
-        href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
-        className="inline-block mt-4 bg-[var(--whatsapp)] text-white px-4 py-2 text-[12px] font-bold"
+        href={`/?ref=${slug}`}
+        className="btn btn-primary inline-block mt-4 px-8 py-3 text-[13.5px]"
       >
-        לדבר איתי בוואטסאפ
+        לפתוח דוכן משלך
       </a>
 
       <a
-        href={`/?ref=${slug}`}
-        className="inline-block mt-4 border border-[var(--line)] bg-white px-6 py-2.5 text-[13px] font-medium"
+        href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
+        className="block mt-3 text-[12px] text-[var(--muted)] underline"
       >
-        לפתוח דוכן משלך
+        יש לך שאלות? לדבר איתי בוואטסאפ
       </a>
     </div>
   );

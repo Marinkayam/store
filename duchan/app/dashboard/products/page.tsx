@@ -265,7 +265,7 @@ export default function ProductsPage() {
     // בשקט: הילדה בוחרת תמונה, לא קורה כלום, ואין מה להגיד לה.
     let blob: Blob;
     try {
-      blob = await squareImage(file);
+      blob = await squareImage(file, 900, "contain");
     } catch (e) {
       showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
       return;
@@ -622,7 +622,7 @@ export default function ProductsPage() {
                 </button>
               </div>
               <div className="w-13 h-13 min-w-13 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden relative">
-                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
+                {img ? <img src={img} alt="" className="w-full h-full object-contain" /> : "🛍️"}
                 {p.video_key && (
                   <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1 ">
                     וידאו
@@ -724,7 +724,7 @@ export default function ProductsPage() {
                   {edit.previewIsVideo ? (
                     <video src={edit.previewUrl} muted loop playsInline autoPlay className="w-full h-full object-cover" />
                   ) : (
-                    <img src={edit.previewUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={edit.previewUrl} alt="" className="w-full h-full object-contain" />
                   )}
                 </>
               ) : (
@@ -774,28 +774,40 @@ export default function ProductsPage() {
               onChange={(e) => setEdit((s) => s && { ...s, price: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3" />
 
-            {/* אפשרויות לבחירה — צבע, מידה, טעם. אחת פר מוצר, בלי מלאי נפרד. */}
+            {/* אפשרויות לבחירה — צבע, מידה, טעם. אחת פר מוצר, בלי מלאי נפרד.
+                שני שדות זה ליד זה בעבר בילבלו: מוכרת מילאה צבע (למשל "לבן")
+                בשדה השם במקום ברשימת הבחירות, וקונה ראתה כותרת חסרת פשר.
+                עכשיו כל שדה בשורה נפרדת עם תווית ודוגמה מפורשת, וסדר הפוך —
+                קודם הבחירות עצמן, כי זה מה שחייבים למלא. */}
             <label className="block text-[11px] text-[var(--muted)] mb-1">
               אפשרויות לבחירה (לא חובה)
             </label>
-            <div className="flex gap-2 mb-2">
-              <input
-                value={edit.optionLabel}
-                maxLength={12}
-                placeholder="צבע"
-                aria-label="שם האפשרות"
-                onChange={(e) => setEdit((s) => s && { ...s, optionLabel: e.target.value })}
-                className="w-24 border border-[var(--line)] px-3 py-2.5 text-sm"
-              />
-              <input
-                value={edit.optionsText}
-                maxLength={120}
-                placeholder="ורוד, כחול, צהוב"
-                aria-label="הבחירות"
-                onChange={(e) => setEdit((s) => s && { ...s, optionsText: e.target.value })}
-                className="flex-1 border border-[var(--line)] px-3 py-2.5 text-sm"
-              />
-            </div>
+            <label className="block text-[10.5px] text-[var(--faint)] mb-1">
+              הצבעים או המידות, מופרדים בפסיק
+            </label>
+            <input
+              value={edit.optionsText}
+              maxLength={120}
+              placeholder="לבן, ורוד, כחול"
+              aria-label="הבחירות"
+              onChange={(e) => setEdit((s) => s && { ...s, optionsText: e.target.value })}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-2"
+            />
+            {optionValues.length > 0 && (
+              <>
+                <label className="block text-[10.5px] text-[var(--faint)] mb-1">
+                  איך קוראים לזה? (למשל: צבע, מידה)
+                </label>
+                <input
+                  value={edit.optionLabel}
+                  maxLength={12}
+                  placeholder="צבע"
+                  aria-label="שם האפשרות"
+                  onChange={(e) => setEdit((s) => s && { ...s, optionLabel: e.target.value })}
+                  className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-2"
+                />
+              </>
+            )}
             {optionValues.length > 0 ? (
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {optionValues.map((o) => (
@@ -910,7 +922,7 @@ export default function ProductsPage() {
               return (
                 <div key={p.id} className="flex gap-3 items-center py-2 border-b border-[var(--line)] last:border-0">
                   <div className="w-10 h-10 bg-[var(--canvas)] flex items-center justify-center text-lg overflow-hidden">
-                    {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
+                    {img ? <img src={img} alt="" className="w-full h-full object-contain" /> : "🛍️"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>

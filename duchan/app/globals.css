@@ -54,8 +54,8 @@
   --shadow: none;
   --shadow-lift: none;
 
-  --font-display: "Fraunces", "Heebo", Georgia, serif;
-  --font-body: "Inter", "Heebo", system-ui, sans-serif;
+  --font-display: "Heebo", system-ui, sans-serif;
+  --font-body: "Heebo", system-ui, sans-serif;
 }
 
 * {
@@ -71,11 +71,13 @@ body {
   color: var(--ink);
 }
 
-/* כותרות בפונט התצוגה. Heebo מטפלת בעברית בפועל דרך ה-fallback. */
+/* כותרות: אותה משפחה כמו הגוף (Heebo), אבל משקל כבד יותר שנותן להן זהות
+   משלהן בלי לגרור פונט שני שלא תומך בעברית. */
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
+  font-weight: 800;
   letter-spacing: -0.01em;
 }
 
