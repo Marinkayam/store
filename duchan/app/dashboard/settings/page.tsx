@@ -7,7 +7,7 @@ import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
-import { isPayoutLink, payoutLabels, payoutLine } from "@/lib/payouts";
+import { deliveryLine, isPayoutLink, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 
@@ -286,7 +286,15 @@ export default function SettingsPage() {
   /* שורת התשלום בהודעה מונה את כל מה שסומן, ולא את מה שהקונה בחרה:
      בשלב ההודעה עוד לא שילמו, אז מה שמועיל זה מה שהדוכן מקבל. */
   const payLabels = payoutLabels(payout);
-  const payExampleLine = payoutLine(payout);
+  /* התצוגה מדגימה קונה שבחרה — לכן האמצעי הראשון שסימנת, ולא הרשימה
+     כולה. זה בדיוק מה שיגיע אלייך בפועל. */
+  const payExampleLine = payoutLine(payout, payMethods(payout)[0]?.key ?? null);
+  const shipExampleLine = deliveryLine({
+    ships: info.ships,
+    wantsShipping: true,
+    note: info.shipping_note,
+    price: info.shipping_price === "" ? null : Number(info.shipping_price),
+  });
 
   return (
     <div>
@@ -713,11 +721,11 @@ export default function SettingsPage() {
 • סקוויש אבוקדו × 1 · ₪18
 • צמיד קשת × 2 · ₪30
 
-סה"כ: ₪48${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}${payLabels.length ? `\n${payExampleLine}` : ""}`}
+סה"כ: ₪48${shipExampleLine ? `\n${shipExampleLine}` : ""}${payExampleLine ? `\n${payExampleLine}` : ""}`}
           </div>
           <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
             {payLabels.length
-              ? `שורת התשלום מציגה את מה שסימנת למטה: ${payLabels.join(" / ")}.`
+              ? `הקונה בוחרת בקופה מתוך מה שסימנת למטה (${payLabels.join(" / ")}), ומה שהיא בחרה מופיע בהודעה.`
               : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
           </p>
         </div>

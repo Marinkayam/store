@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { payMethods, payoutLine, payoutLink, payoutSummary, type PayMethod } from "@/lib/payouts";
+import { deliveryLine, payMethods, payoutLine, payoutLink, payoutSummary, type PayMethod } from "@/lib/payouts";
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { coverCss } from "@/lib/covers";
@@ -244,16 +244,17 @@ export default function StoreView({
             `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${i.price * i.qty}`
         )
         .join("\n");
-      // מה שהדוכן מקבל, לא מה שהקונה הבטיחה: בשלב ההודעה עוד לא שילמו.
-      const pay = payoutLine(store);
-      // הבחירה בין משלוח למסירה אישית היא של הקונה הזו, לא הגדרה קבועה של
-      // החנות — אחרת כל הזמנה "מקבלת" משלוח גם ממי שמעדיפה למסור ביד.
-      const shipLine =
-        store.ships && wantsShipping
-          ? `\nמשלוח: ${store.shipping_note || "בתיאום"}${store.shipping_price ? ` · ₪${store.shipping_price}` : ""}`
-          : store.ships
-            ? "\nמסירה אישית, בלי משלוח"
-            : "";
+      // שתי השורות האלה מתארות את מה ש*הקונה בחרה*, ולא את מה שהדוכן
+      // מציע. בעלת הדוכן כבר יודעת מה היא מקבלת ואיך היא מוסרת; מה שהיא
+      // צריכה מההודעה זה מה נבחר בפועל בהזמנה הזו.
+      const pay = payoutLine(store, chosenPay);
+      const ship = deliveryLine({
+        ships: store.ships,
+        wantsShipping,
+        note: store.shipping_note,
+        price: store.shipping_price,
+      });
+      const shipLine = ship ? `\n${ship}` : "";
       // בלי שורת פתיחה ובלי שורת סיום שהבעלות מנסחת: ההודעה קבועה וברורה,
       // ומה שמשתנה בה זה רק מה שהקונה באמת בחרה.
       // שם *הקונה* ומספר ההזמנה יושבים בשורה הראשונה ולא בסוף. ברשימת
