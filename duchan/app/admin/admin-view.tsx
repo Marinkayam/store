@@ -347,7 +347,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               {/* הספירה יושבת על הלשונית ולא רק בפנים: חנות שמחכה לאישור היא
                   ילדה שכבר שילמה ומחכה, וזה הדבר היחיד בחמ"ל שדוחק בזמן. */}
               {k === "approvals" && (totals?.pendingActivation ?? 0) > 0 && (
-                <span className="mr-1.5 bg-[var(--danger)] text-white text-[10px] font-bold px-1.5 py-0.5">
+                <span className="mr-1.5 bg-[var(--danger)] text-white text-[11px] font-bold px-1.5 py-0.5">
                   {totals!.pendingActivation}
                 </span>
               )}
@@ -362,7 +362,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
           <>
             <section className="bg-white border border-[var(--line)] p-3">
               <h2 className="text-sm font-bold">חנויות שהצהירו על תשלום</h2>
-              <p className="text-[11.5px] text-[var(--muted)] mt-0.5 leading-relaxed">
+              <p className="text-[12.5px] text-[var(--muted)] mt-0.5 leading-relaxed">
                 הכסף מגיע בביט או בפייבוקס, מחוץ למערכת. כאן מאשרים שהוא התקבל,
                 והלינק של החנות נפתח להזמנות מיד.
               </p>
@@ -372,7 +372,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               <div className="bg-white border border-[var(--line)] p-8 text-center">
                 <div className="text-3xl">✓</div>
                 <p className="text-[13px] font-bold mt-2">אין חנויות שמחכות</p>
-                <p className="text-[11.5px] text-[var(--muted)] mt-1">
+                <p className="text-[12.5px] text-[var(--muted)] mt-1">
                   כשילדה תלחץ "שילמנו", היא תופיע כאן.
                 </p>
               </div>
@@ -389,12 +389,12 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                         >
                           {s.display_name}
                         </button>
-                        <div className="text-[11.5px] text-[var(--muted)]">
+                        <div className="text-[12.5px] text-[var(--muted)]">
                           הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
                           {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
                           {s.payment_ref && ` · על שם ${s.payment_ref}`}
                         </div>
-                        <div className="text-[11.5px] text-[var(--muted)]">
+                        <div className="text-[12.5px] text-[var(--muted)]">
                           {s.products} מוצרים · {s.viewsTotal} כניסות
                           {/* אישור ההורים הוא תנאי להצהרה, ולכן הוא אמור להיות
                               מסומן תמיד. אם הוא חסר — זו חנות ותיקה, ושווה לדעת. */}
@@ -444,7 +444,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     >
                       <Avatar s={s} size={8} />
                       <span className="text-[12.5px] flex-1 truncate">{s.display_name}</span>
-                      <span className="text-[11px] text-[var(--muted)]">{s.products} מוצרים</span>
+                      <span className="text-[12px] text-[var(--muted)]">{s.products} מוצרים</span>
                     </button>
                   ))}
                 </div>
@@ -476,7 +476,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                             >
                               {s.display_name}
                             </button>
-                            <div className="text-[11px] text-[var(--muted)]">
+                            <div className="text-[12px] text-[var(--muted)]">
                               הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
                               {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
                               {s.payment_ref && ` · ${s.payment_ref}`}
@@ -486,14 +486,14 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                         <div className="flex gap-1.5 mt-2">
                           <button
                             onClick={() => setActivation(s.id, true, ACTIVATION_PRICE)}
-                            className="flex-1 bg-[var(--ink)] text-white py-2 text-[11.5px] font-bold"
+                            className="flex-1 bg-[var(--ink)] text-white py-2 text-[12.5px] font-bold"
                           >
                             אישור והפעלה
                           </button>
                           <a
                             href={waLink(s)}
                             target="_blank"
-                            className="flex-1 border border-[var(--line)] py-2 text-[11.5px] font-medium text-center"
+                            className="flex-1 border border-[var(--line)] py-2 text-[12.5px] font-medium text-center"
                           >
                             וואטסאפ
                           </a>
@@ -536,7 +536,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   className="w-full flex items-center gap-2.5 py-1.5 text-right">
                   <Avatar s={s} size={8} />
                   <span className="flex-1 text-[13px] truncate">{s.display_name}</span>
-                  <span className="text-[11px] text-[var(--warn-ink)]">
+                  <span className="text-[12px] text-[var(--warn-ink)]">
                     {s.ordersNew > 0 ? `${s.ordersNew} הזמנות מחכות` : "חנות ריקה"}
                   </span>
                 </button>
@@ -566,23 +566,23 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold truncate">{s.display_name}</span>
-                        <span className={`text-[10px] px-2 py-0.5 ${STATUS_PILL[s.status]}`}>
+                        <span className={`text-[11px] px-2 py-0.5 ${STATUS_PILL[s.status]}`}>
                           {STATUS_LABEL[s.status]}
                         </span>
                         {s.claim_token && (
-                          <span className="text-[10px] px-2 py-0.5 bg-[var(--sub)] text-[var(--muted)]">לא נתבעה</span>
+                          <span className="text-[11px] px-2 py-0.5 bg-[var(--sub)] text-[var(--muted)]">לא נתבעה</span>
                         )}
                         {!s.activated_at && (
-                          <span className={`text-[10px] px-2 py-0.5 ${s.payment_claimed_at ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]" : "bg-[var(--sub)] text-[var(--muted)]"}`}>
+                          <span className={`text-[11px] px-2 py-0.5 ${s.payment_claimed_at ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]" : "bg-[var(--sub)] text-[var(--muted)]"}`}>
                             {s.payment_claimed_at ? "ממתינה לאישור" : "טיוטה"}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-[var(--muted)] mt-0.5">
+                      <div className="text-[12px] text-[var(--muted)] mt-0.5">
                         {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{s.revenue}
                         {s.ordersNew > 0 && <b className="text-[var(--warn-ink)]"> · {s.ordersNew} חדשות</b>}
                       </div>
-                      <div className="text-[11px] text-[var(--muted)] mt-0.5">
+                      <div className="text-[12px] text-[var(--muted)] mt-0.5">
                         📈 התקדמות: {reachedCount(milestones({
                           products: s.products, orders: s.ordersTotal, paidOrders: s.ordersPaid,
                           revenue: s.revenue, views: s.viewsTotal,
@@ -620,15 +620,15 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   <Avatar s={s} size={10} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold truncate">{s.display_name}</div>
-                    {s.tagline && <div className="text-[11px] text-[var(--muted)] truncate">{s.tagline}</div>}
+                    {s.tagline && <div className="text-[12px] text-[var(--muted)] truncate">{s.tagline}</div>}
                   </div>
                   <a href={`/s/${s.slug}`} target="_blank"
-                    className="border border-[var(--line)] px-3 py-1.5 text-[11px] whitespace-nowrap">
+                    className="border border-[var(--line)] px-3 py-1.5 text-[12px] whitespace-nowrap">
                     לחנות ←
                   </a>
                 </div>
                 {s.products.length === 0 ? (
-                  <p className="text-[11px] text-[var(--muted)]">עוד אין מוצרים.</p>
+                  <p className="text-[12px] text-[var(--muted)]">עוד אין מוצרים.</p>
                 ) : (
                   <div className="flex gap-1.5 overflow-x-auto pb-1">
                     {s.products.map((p, i) => {
@@ -642,8 +642,8 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                               <span className="absolute bottom-0.5 left-1 text-[8px] bg-black/60 text-white px-1 ">▶</span>
                             )}
                           </div>
-                          <div className="text-[10px] truncate mt-0.5">{p.name}</div>
-                          <div className="text-[10px] font-bold">₪{p.price}</div>
+                          <div className="text-[11px] truncate mt-0.5">{p.name}</div>
+                          <div className="text-[11px] font-bold">₪{p.price}</div>
                         </div>
                       );
                     })}
@@ -681,11 +681,11 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold truncate">{detail.store.display_name}</h2>
-                  <span className={`text-[10px] px-2 py-0.5 ${STATUS_PILL[detail.store.status]}`}>
+                  <span className={`text-[11px] px-2 py-0.5 ${STATUS_PILL[detail.store.status]}`}>
                     {STATUS_LABEL[detail.store.status]}
                   </span>
                 </div>
-                <div className="text-[11px] text-[var(--muted)]" dir="ltr">
+                <div className="text-[12px] text-[var(--muted)]" dir="ltr">
                   /s/{detail.store.slug} · {displayPhone(detail.store.contact_phone)} · {detail.store.parent_email || "אין"}
                 </div>
               </div>
@@ -694,7 +694,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
             <div className="flex gap-1.5 my-3 flex-wrap">
               <a href={waLink(detail.store)} target="_blank"
                 className="bg-[var(--whatsapp)] text-white px-3.5 py-2 text-xs font-medium">
-                💬 וואטסאפ לבעלת החנות
+                💬 וואטסאפ לבעלי הדוכן
               </a>
               <a href={`/s/${detail.store.slug}`} target="_blank"
                 className="border border-[var(--line)] px-3.5 py-2 text-xs font-medium">
@@ -716,7 +716,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   navigator.clipboard.writeText(`${window.location.origin}/claim/${detail.store.claim_token}`);
                   showToast("לינק התביעה הועתק");
                 }}
-                className="w-full text-right text-[11px] text-[var(--ok-ink)] bg-[var(--ok-bg)] border border-[var(--ok-line)] px-3 py-2 mb-3"
+                className="w-full text-right text-[12px] text-[var(--ok-ink)] bg-[var(--ok-bg)] border border-[var(--ok-line)] px-3 py-2 mb-3"
               >
                 🔗 החנות עוד לא נתבעה, לחיצה מעתיקה את לינק התביעה
               </button>
@@ -732,7 +732,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     : "bg-[var(--canvas)] border-[var(--line)]"
               }`}
             >
-              <div className="text-[10.5px] text-[var(--muted)] mb-1.5">
+              <div className="text-[11.5px] text-[var(--muted)] mb-1.5">
                 תשלום הקמה לדוכן, לא קשור לאיך שהיא גובה מקונות
               </div>
               <div className="flex items-center gap-2">
@@ -746,20 +746,20 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                 {detail.store.activated_at ? (
                   <button
                     onClick={() => setActivation(detail.store.id, false)}
-                    className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]"
+                    className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[12px]"
                   >
                     ביטול הפעלה
                   </button>
                 ) : (
                   <button
                     onClick={() => setActivation(detail.store.id, true, ACTIVATION_PRICE)}
-                    className="bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium"
+                    className="bg-[var(--ink)] text-white px-3 py-1.5 text-[12px] font-medium"
                   >
                     אישור והפעלה
                   </button>
                 )}
               </div>
-              <div className="text-[11px] text-[var(--muted)] mt-1.5">
+              <div className="text-[12px] text-[var(--muted)] mt-1.5">
                 {detail.store.payment_claimed_at && (
                   <>
                     הצהרה: {new Date(detail.store.payment_claimed_at).toLocaleDateString("he-IL")}
@@ -790,7 +790,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
             {/* איך היא גובה מקונות — לידיעה בלבד. הכסף הזה לא עובר דרכנו. */}
             <div className="bg-[var(--canvas)] p-3 mb-3">
-              <div className="text-[11px] text-[var(--muted)] mb-1">איך היא גובה מקונות</div>
+              <div className="text-[12px] text-[var(--muted)] mb-1">איך היא גובה מקונות</div>
               <div className="text-[12.5px]">
                 {payoutSummary(detail.store) || "לא הגדירה עדיין"}
                 {detail.store.payout_note && (
@@ -801,7 +801,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
             {/* מסע + פרימיום */}
             <div className="bg-[var(--canvas)] p-3 mb-3">
-              <div className="text-[11px] text-[var(--muted)] mb-2">ההתקדמות שלה</div>
+              <div className="text-[12px] text-[var(--muted)] mb-2">ההתקדמות שלה</div>
               <div className="flex flex-wrap gap-1.5">
                 {milestones({
                   products: detail.store.products, orders: detail.store.ordersTotal,
@@ -809,7 +809,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   views: detail.store.viewsTotal,
                 }).map((ms) => (
                   <span key={ms.key} title={ms.title}
-                    className={`text-[11px] px-2 py-1 border ${ms.reached ? "bg-[var(--ok-bg)] border-[var(--ok-line)]" : "bg-white border-[var(--line)] opacity-50"}`}>
+                    className={`text-[12px] px-2 py-1 border ${ms.reached ? "bg-[var(--ok-bg)] border-[var(--ok-line)]" : "bg-white border-[var(--line)] opacity-50"}`}>
                     <span className={ms.reached ? "" : "grayscale"}>{ms.emoji}</span> {ms.title}
                   </span>
                 ))}
@@ -828,24 +828,24 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                 {detail.store.ai_enabled ? (
                   <>
                     <button onClick={() => setAi(detail.store.id, true, (detail.store.ai_credits ?? 0) + 50)}
-                      className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]">+50</button>
+                      className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[12px]">+50</button>
                     <button onClick={() => setAi(detail.store.id, false)}
-                      className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]">כיבוי</button>
+                      className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[12px]">כיבוי</button>
                   </>
                 ) : (
                   <button
                     onClick={() => setAi(detail.store.id, true, 50)}
                     disabled={!aiConfigured}
-                    className="bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium disabled:opacity-30"
+                    className="bg-[var(--ink)] text-white px-3 py-1.5 text-[12px] font-medium disabled:opacity-30"
                   >
                     הדלקה מחדש · 50
                   </button>
                 )}
               </div>
               {!aiConfigured && (
-                <div className="text-[11px] text-[var(--warn-ink)] mt-2">
+                <div className="text-[12px] text-[var(--warn-ink)] mt-2">
                   <b>אין מפתח Anthropic בשרת.</b> כתיבה אוטומטית דלוקה לכל החנויות,
-                  אז כל ילדה שתלחץ "כתבי לי תיאור" תקבל שגיאה. צריך להגדיר{" "}
+                  אז כל מי שילחץ "לכתוב לי תיאור" יקבל שגיאה. צריך להגדיר{" "}
                   <code>ANTHROPIC_API_KEY</code> ולפרוס מחדש.
                 </div>
               )}
@@ -860,15 +860,15 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   onClick={() => setSmsUnlimited(detail.store.id, !detail.store.sms_unlimited)}
                   aria-label={detail.store.sms_unlimited ? "כיבוי סמס ללא הגבלה" : "הפעלת סמס ללא הגבלה"}
                   className={detail.store.sms_unlimited
-                    ? "border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]"
-                    : "bg-[var(--ink)] text-white px-3 py-1.5 text-[11px] font-medium"}
+                    ? "border border-[var(--line)] bg-white px-2.5 py-1.5 text-[12px]"
+                    : "bg-[var(--ink)] text-white px-3 py-1.5 text-[12px] font-medium"}
                 >
                   {detail.store.sms_unlimited ? "כיבוי" : "הפעלה"}
                 </button>
                 <button
                   onClick={() => resetSmsQuota(detail.store.id)}
                   aria-label="איפוס מכסת סמס עכשיו"
-                  className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[11px]"
+                  className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[12px]"
                 >
                   איפוס עכשיו
                 </button>
@@ -877,7 +877,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 
             {/* כניסות 14 יום */}
             <div className="bg-[var(--canvas)] p-3 mb-3">
-              <div className="text-[11px] text-[var(--muted)] mb-2">כניסות · 14 ימים אחרונים</div>
+              <div className="text-[12px] text-[var(--muted)] mb-2">כניסות · 14 ימים אחרונים</div>
               <div className="flex items-end gap-1 h-14">
                 {buildDays(detail.views).map((d) => (
                   <div key={d.day} className="flex-1 flex flex-col items-center gap-0.5" title={`${d.day}: ${d.views}`}>
@@ -886,7 +886,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                   </div>
                 ))}
               </div>
-              <div className="text-[11px] text-[var(--muted)] mt-1.5">
+              <div className="text-[12px] text-[var(--muted)] mt-1.5">
                 {detail.views.reduce((s, v) => s + v.views, 0)} כניסות בתקופה
               </div>
             </div>
@@ -910,7 +910,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-medium truncate">{p.name}</div>
-                        <div className="text-[10px] text-[var(--muted)]">
+                        <div className="text-[11px] text-[var(--muted)]">
                           ₪{p.price}
                           {p.track_stock ? ` · מלאי ${p.stock}` : " · בלי מעקב"}
                           {p.is_visible === false && " · מוסתר"}
@@ -919,7 +919,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                       </div>
                       {p.deleted_at ? (
                         <button onClick={() => productAction(p.id, detail.store.id, "restore")}
-                          className="text-[11px] border border-[var(--line)] px-2.5 py-1.5 shrink-0">
+                          className="text-[12px] border border-[var(--line)] px-2.5 py-1.5 shrink-0">
                           שחזור
                         </button>
                       ) : (
@@ -933,18 +933,18 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                               )
                             }
                             aria-label="עריכה"
-                            className="text-[11px] border border-[var(--line)] px-2 py-1.5">
+                            className="text-[12px] border border-[var(--line)] px-2 py-1.5">
                             {open ? "סגירה" : "✏️"}
                           </button>
                           <button
                             onClick={() => productAction(p.id, detail.store.id, p.is_visible === false ? "show" : "hide")}
                             aria-label={p.is_visible === false ? "הצגה" : "הסתרה"}
-                            className="text-[11px] border border-[var(--line)] px-2 py-1.5">
+                            className="text-[12px] border border-[var(--line)] px-2 py-1.5">
                             {p.is_visible === false ? "👁️" : "🙈"}
                           </button>
                           <button onClick={() => productAction(p.id, detail.store.id, "delete")}
                             aria-label="הוצאה מהחנות"
-                            className="text-[11px] border border-[var(--danger-line)] text-[var(--danger)] px-2 py-1.5">
+                            className="text-[12px] border border-[var(--danger-line)] text-[var(--danger)] px-2 py-1.5">
                             🗑️
                           </button>
                         </div>
@@ -975,7 +975,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                           className="bg-[var(--ink)] text-white py-2 text-[13px] font-bold">
                           שמירה
                         </button>
-                        <p className="text-[10px] text-[var(--faint)]">
+                        <p className="text-[11px] text-[var(--faint)]">
                           שדות: שם · מחיר · מלאי. השינוי יופיע בחנות מיד.
                         </p>
                       </div>
@@ -996,7 +996,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     {o.items.map((i) => `${i.name}×${i.qty}`).join(", ")}
                   </span>
                   <span className="font-medium">₪{o.total}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 ${
+                  <span className={`text-[11px] px-1.5 py-0.5 ${
                     o.status === "sent" ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]"
                     : o.status === "paid" ? "bg-[#E4F3E9] text-[var(--ok-ink)]"
                     : o.status === "delivered" ? "bg-[var(--sub)] text-[var(--muted)]"
@@ -1027,7 +1027,7 @@ function Stat({ label, value, sub, icon }: { label: string; value: number | stri
     <div className="bg-white border border-[var(--line)] p-3">
       <div className="text-lg">{icon}</div>
       <div className="text-xl font-bold mt-1">{value}</div>
-      <div className="text-[11px] text-[var(--muted)]">{label} · {sub}</div>
+      <div className="text-[12px] text-[var(--muted)]">{label} · {sub}</div>
     </div>
   );
 }
@@ -1086,16 +1086,16 @@ function NetworkTab({
         className="w-full flex items-center gap-2 py-1.5 text-right"
         style={{ paddingRight: depth * 18 }}
       >
-        {depth > 0 && <span className="text-[var(--faint)] text-[11px]">└</span>}
+        {depth > 0 && <span className="text-[var(--faint)] text-[12px]">└</span>}
         <Avatar s={s} size={depth ? 7 : 9} />
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-medium truncate">
             {s.display_name}
             {!s.activated_at && (
-              <span className="text-[10px] text-[var(--warn-ink)] font-normal"> · טיוטה</span>
+              <span className="text-[11px] text-[var(--warn-ink)] font-normal"> · טיוטה</span>
             )}
           </div>
-          <div className="text-[10.5px] text-[var(--muted)]">
+          <div className="text-[11.5px] text-[var(--muted)]">
             {s.brought > 0 ? `הביאה ${s.brought} · ` : ""}
             {s.ref_clicks === 1 ? "לחיצה אחת" : `${s.ref_clicks} לחיצות`} ·{" "}
             {s.products === 1 ? "מוצר אחד" : `${s.products} מוצרים`}
@@ -1115,7 +1115,7 @@ function NetworkTab({
 
       <section className="bg-white border border-[var(--line)] p-3">
         <h2 className="text-sm font-bold">אשכולות</h2>
-        <p className="text-[11px] text-[var(--muted)] mb-2">
+        <p className="text-[12px] text-[var(--muted)] mb-2">
           חנות שהביאה חנויות אחרות. כאן נמצאות הכיתות והשכונות.
         </p>
         {withCluster.length === 0 && (
@@ -1123,7 +1123,7 @@ function NetworkTab({
         )}
         {withCluster.map(({ root, size }) => (
           <div key={root.id} className="border-t border-[var(--line)] pt-2 mt-2 first:border-0 first:mt-0 first:pt-0">
-            <div className="text-[11px] font-bold text-[var(--ok-ink)] mb-1">אשכול של {size} חנויות</div>
+            <div className="text-[12px] font-bold text-[var(--ok-ink)] mb-1">אשכול של {size} חנויות</div>
             {row(root, 0)}
           </div>
         ))}
@@ -1133,7 +1133,7 @@ function NetworkTab({
         <h2 className="text-sm font-bold mb-2">הגיעו לבד · {alone.length}</h2>
         {alone.slice(0, 20).map(({ root }) => row(root, 0))}
         {alone.length > 20 && (
-          <p className="text-[11px] text-[var(--muted)] pt-2">ועוד {alone.length - 20}…</p>
+          <p className="text-[12px] text-[var(--muted)] pt-2">ועוד {alone.length - 20}…</p>
         )}
         {alone.length === 0 && <p className="text-xs text-[var(--muted)] py-2">אין.</p>}
       </section>
@@ -1216,7 +1216,7 @@ function NewsTab({
           placeholder="כותרת, למשל: אפשר להעלות וידאו!"
           className="border border-[var(--line)] px-3 py-2.5 text-sm" />
         <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={500} rows={3}
-          placeholder="מה חדש? כתבי לבנות בשפה שלהן…"
+          placeholder="מה חדש? כתבו בשפה שלהם…"
           className="border border-[var(--line)] px-3 py-2.5 text-sm resize-none" />
         <button onClick={publish} disabled={busy || !title.trim() || !body.trim()}
           className="bg-[var(--ink)] text-white py-2.5 text-sm font-medium disabled:opacity-40">
@@ -1231,11 +1231,11 @@ function NewsTab({
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold">{n.title}</div>
               <p className="text-[13px] text-[var(--muted)] whitespace-pre-line mt-0.5">{n.body}</p>
-              <div className="text-[10px] text-[var(--muted)] mt-1">
+              <div className="text-[11px] text-[var(--muted)] mt-1">
                 {new Date(n.created_at).toLocaleDateString("he-IL")}
               </div>
             </div>
-            <button onClick={() => remove(n.id)} className="text-[11px] text-[var(--danger)] underline">
+            <button onClick={() => remove(n.id)} className="text-[12px] text-[var(--danger)] underline">
               מחיקה
             </button>
           </div>

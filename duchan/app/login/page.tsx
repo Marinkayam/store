@@ -58,7 +58,7 @@ export default function LoginPage() {
       <a href="/" className="text-xs text-[var(--muted)]">
         עוד אין דוכן? <span className="underline">פותחים אחד בדקות</span>
       </a>
-      <p className="text-[11px] text-[var(--muted)]">
+      <p className="text-[12px] text-[var(--muted)]">
         <a href="/terms" className="underline">תנאי שימוש</a>
         {" · "}
         <a href="/privacy" className="underline">פרטיות</a>

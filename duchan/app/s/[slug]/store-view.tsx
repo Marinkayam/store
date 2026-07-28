@@ -248,16 +248,17 @@ export default function StoreView({
           : store.ships
             ? "\nמסירה אישית, בלי משלוח"
             : "";
+      // בלי שורת פתיחה ובלי שורת סיום שהבעלות מנסחת: ההודעה קבועה וברורה,
+      // ומה שמשתנה בה זה רק מה שהקונה באמת בחרה.
       const msg =
-        `${store.order_intro?.trim() || `היי ${firstName}! 👋`}\n` +
-        `ראיתי את הדוכן ואני רוצה להזמין:\n\n${lines}\n\n` +
+        `היי ${firstName}! 👋\n` +
+        `ראיתי את הדוכן שלך ואני רוצה להזמין:\n\n${lines}\n\n` +
         `סה"כ: ₪${data.total}` +
         (note.trim() ? `\nהערה: ${note.trim()}` : "") +
         shipLine +
         (pay ? `\n${pay}` : "") +
         (store.payout_note?.trim() ? `\n${store.payout_note.trim()}` : "") +
-        `\n\nהזמנה #${data.orderNumber}` +
-        (store.order_outro?.trim() ? `\n${store.order_outro.trim()}` : "");
+        `\n\nהזמנה #${data.orderNumber}`;
 
       setCart([]);
       setNote("");
@@ -289,13 +290,13 @@ export default function StoreView({
       {owner && (
         <div className="sticky top-0 z-40 bg-[var(--ink)] text-white" dir="rtl">
           <div className="flex items-center justify-between gap-2 px-3 py-2">
-            <span className="text-[11px] opacity-80 leading-tight">
+            <span className="text-[12px] opacity-80 leading-tight">
               זו החנות שלך
               <br />
               <span className="opacity-70">ככה הקונות רואות אותה</span>
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
-              <a href="/dashboard" className="relative bg-white text-[var(--ink)] px-2.5 py-1.5 text-[11.5px] font-bold">
+              <a href="/dashboard" className="relative bg-white text-[var(--ink)] px-2.5 py-1.5 text-[12.5px] font-bold">
                 הזמנות
                 {owner.newOrders > 0 && (
                   <span className="absolute -top-1.5 -left-1.5 min-w-4 h-4 px-1 bg-[var(--danger)] text-white text-[9.5px] font-bold flex items-center justify-center">
@@ -303,10 +304,10 @@ export default function StoreView({
                   </span>
                 )}
               </a>
-              <a href="/dashboard/products" className="border border-white/30 px-2.5 py-1.5 text-[11.5px]">
+              <a href="/dashboard/products" className="border border-white/30 px-2.5 py-1.5 text-[12.5px]">
                 מוצרים
               </a>
-              <a href="/dashboard/settings" className="border border-white/30 px-2.5 py-1.5 text-[11.5px]">
+              <a href="/dashboard/settings" className="border border-white/30 px-2.5 py-1.5 text-[12.5px]">
                 עיצוב
               </a>
             </div>
@@ -320,20 +321,20 @@ export default function StoreView({
         <div className="bg-[var(--warn-bg)] text-[var(--warn-ink)] border-b border-[var(--warn-line)]" dir="rtl">
           {owner ? (
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
-              <span className="text-[11.5px] leading-tight">
-                תצוגה מקדימה, אפשר כבר לשלוח את הלינק לחברות
+              <span className="text-[12.5px] leading-tight">
+                תצוגה מקדימה, אפשר כבר לשלוח את הלינק לחברים
                 <br />
                 <span className="opacity-75">כדי לקבל הזמנות צריך לפרסם</span>
               </span>
               <a
                 href="/activate"
-                className="shrink-0 bg-[var(--warn-ink)] text-white px-3 py-2 text-[11.5px] font-bold"
+                className="shrink-0 bg-[var(--warn-ink)] text-white px-3 py-2 text-[12.5px] font-bold"
               >
                 פרסמי את הדוכן
               </a>
             </div>
           ) : (
-            <p className="px-3 py-2 text-[11.5px] text-center leading-tight">
+            <p className="px-3 py-2 text-[12.5px] text-center leading-tight">
               👀 תצוגה מקדימה, הדוכן הזה עוד לא נפתח להזמנות
             </p>
           )}
@@ -368,12 +369,18 @@ export default function StoreView({
 
       <div className="text-center pt-10 px-5 pb-4">
         <h1 className="text-2xl font-bold">{store.display_name}</h1>
-        {store.tagline && <p className="text-xs opacity-70 mt-1">{store.tagline}</p>}
+        {/* תיאור אחד ולא שניים. קודם הופיעו כאן גם המשפט הקצר וגם התיאור
+            הארוך, וזה נראה כמו שתי הערות שאומרות את אותו דבר. */}
+        {(store.tagline || store.about) && (
+          <p className="text-[13px] opacity-80 mt-1.5 leading-relaxed max-w-sm mx-auto whitespace-pre-line">
+            {store.tagline || store.about}
+          </p>
+        )}
 
         {/* מה שקונה שואלת לפני שהיא קונה: מאיפה, כמה יש, ויש משלוח?
             כל שאלה כזו שנשארת בלי תשובה בדף היא הודעה בוואטסאפ, ולעיתים
             קרובות מכירה שלא נסגרה. */}
-        <div className="flex items-center justify-center gap-2 mt-2 text-[11.5px] opacity-70 flex-wrap">
+        <div className="flex items-center justify-center gap-2 mt-2 text-[12.5px] opacity-70 flex-wrap">
           {store.city && <span>📍 {store.city}</span>}
           {store.city && <span aria-hidden>·</span>}
           <span>{products.length} מוצרים</span>
@@ -386,12 +393,6 @@ export default function StoreView({
             </>
           )}
         </div>
-
-        {store.about && (
-          <p className="text-[12.5px] opacity-80 mt-3 leading-relaxed max-w-sm mx-auto whitespace-pre-line">
-            {store.about}
-          </p>
-        )}
 
         {store.ships && store.shipping_note && (
           <div
@@ -453,7 +454,7 @@ export default function StoreView({
                       // הרקע לבן והצבע יושב על הטקסט ועל הקו — קריא על כל תמונה.
                       return (
                         <span
-                          className="absolute top-0 right-0 z-10 bg-white text-[10px] font-semibold px-1.5 py-0.5 border-b border-r-0 border-t-0 border-l"
+                          className="absolute top-0 right-0 z-10 bg-white text-[11px] font-semibold px-1.5 py-0.5 border-b border-r-0 border-t-0 border-l"
                           style={{ color: b.bg, borderColor: b.bg }}
                         >
                           <Icon name={b.icon} size={12} tone="none" className="inline-block align-[-1px] ms-0.5" />{" "}
@@ -477,7 +478,7 @@ export default function StoreView({
                   <div className="px-2.5 py-2.5 text-right">
                     <div className="text-[13.5px] font-semibold leading-tight">{p.name}</div>
                     {p.description && (
-                      <div className="text-[11px] opacity-60 truncate">{p.description}</div>
+                      <div className="text-[12px] opacity-60 truncate">{p.description}</div>
                     )}
                     <div className="text-[17px] font-bold mt-1" style={{ color: "var(--s-primary)" }}>
                       ₪{p.price}
@@ -509,7 +510,7 @@ export default function StoreView({
             })}
           </div>
         )}
-        <p className="text-center text-[10px] opacity-45 pt-6 pb-1">
+        <p className="text-center text-[11px] opacity-45 pt-6 pb-1">
           {store.display_name} ·{" "}
           <a href="/" className="underline">
             נבנתה בדוכן
@@ -586,7 +587,7 @@ export default function StoreView({
               ₪{current.price}
             </p>
             {current.track_stock && current.stock <= 3 && (
-              <p className="text-[11px] opacity-60 text-center mt-1">נשארו {current.stock} במלאי</p>
+              <p className="text-[12px] opacity-60 text-center mt-1">נשארו {current.stock} במלאי</p>
             )}
           </div>
 
@@ -715,7 +716,7 @@ export default function StoreView({
                     {l.name}
                     {l.option ? ` (${l.option})` : ""}
                   </div>
-                  <div className="opacity-55 text-[11.5px]">₪{l.price} ליחידה</div>
+                  <div className="opacity-55 text-[12.5px]">₪{l.price} ליחידה</div>
                 </div>
 
                 <div className="flex items-center border-[1.5px] border-black/15">
@@ -791,7 +792,7 @@ export default function StoreView({
                 </button>
               </div>
               {wantsShipping && (
-                <p className="opacity-60 text-[11.5px] mt-1.5">
+                <p className="opacity-60 text-[12.5px] mt-1.5">
                   {store.shipping_note || "בתיאום"}
                   {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
                 </p>
@@ -844,7 +845,7 @@ export default function StoreView({
                       );
                     })}
                   </div>
-                  <p className="opacity-60 text-[11.5px]">
+                  <p className="opacity-60 text-[12.5px]">
                     ההוראות ייכנסו להודעה שתישלח בוואטסאפ.
                   </p>
                 </>
@@ -870,7 +871,7 @@ export default function StoreView({
               )}
             </div>
           )}
-          <p className="text-[11px] opacity-60 text-center mb-3 leading-relaxed">
+          <p className="text-[12px] opacity-60 text-center mb-3 leading-relaxed">
             ההזמנה תיפתח בוואטסאפ.
             <br />
             שם תסכמו תשלום ומסירה.

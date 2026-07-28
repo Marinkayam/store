@@ -94,7 +94,7 @@ export function AnchorTable() {
           <span className="text-[13.5px] font-bold flex-1">{row.what}</span>
           <div className="text-left">
             <div className="text-[14px] font-bold">{row.price}</div>
-            <div className="text-[11px] text-[var(--muted)]">{row.note}</div>
+            <div className="text-[12px] text-[var(--muted)]">{row.note}</div>
           </div>
         </div>
       ))}
@@ -102,7 +102,7 @@ export function AnchorTable() {
         <span className="text-[13.5px] font-bold flex-1">דוכן</span>
         <div className="text-left">
           <div className="text-[14px] font-bold">₪{ACTIVATION_PRICE}</div>
-          <div className="text-[11px] opacity-70">נשאר, ומחזיר את עצמו</div>
+          <div className="text-[12px] opacity-70">נשאר, ומחזיר את עצמו</div>
         </div>
       </div>
     </div>

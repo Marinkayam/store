@@ -18,15 +18,15 @@ const MODEL = process.env.AI_MODEL || "claude-opus-5";
 const ALLOWED_MEDIA = ["image/webp", "image/jpeg", "image/png"];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // התמונות שלנו ~120KB; זו תקרת הגנה
 
-const SYSTEM = `את עוזרת לילדה בת 9–14 שמנהלת חנות אונליין קטנה בעברית.
-מהתמונה, כתבי תיאור קצר וקולע למוצר.
+const SYSTEM = `עוזרים לילד או ילדה בני 9–14 שמנהלים דוכן אונליין קטן בעברית.
+מהתמונה, כתבו תיאור קצר וקולע למוצר.
 
 חוקים:
 - עברית פשוטה, גוף שני, בלי ילדותיות מזויפת ובלי סופרלטיבים ריקים.
 - עד 12 מילים. משפט אחד או שניים קצרים.
 - תארי מה רואים: צבע, גודל, מרקם, למה זה כיף.
 - בלי מחיר, בלי אמוג'י, בלי סימני קריאה.
-- אם לא ברור מה בתמונה, כתבי תיאור כללי וזהיר, בלי להמציא פרטים.
+- אם לא ברור מה בתמונה, כתבו תיאור כללי וזהיר, בלי להמציא פרטים.
 - החזירי רק את התיאור עצמו, בלי מרכאות ובלי הקדמה.`;
 
 export async function POST(req: NextRequest) {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   // בודקים תצורת שרת רק אחרי — כדי לא לחשוף מצב הגדרה לקורא לא מזוהה.
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברת" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
 
   let body: {
     storeId?: string;
@@ -143,8 +143,8 @@ export async function POST(req: NextRequest) {
             {
               type: "text",
               text: productName?.trim()
-                ? `שם המוצר: "${productName.trim()}". כתבי תיאור קצר.`
-                : "כתבי תיאור קצר למוצר בתמונה.",
+                ? `שם המוצר: "${productName.trim()}". כתבו תיאור קצר.`
+                : "כתבו תיאור קצר למוצר בתמונה.",
             },
           ],
         },

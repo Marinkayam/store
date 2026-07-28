@@ -38,13 +38,13 @@ async function handle(req: NextRequest) {
       next:
         (existing?.length ?? 0) === 0
           ? "להוסיף &phone=05XXXXXXXX כדי לרשום את עצמך"
-          : "כבר יש מנהלת רשומה. הוספה נוספת דורשת להיות מחוברת כמנהלת.",
+          : "כבר רשומה הנהלה. הוספה נוספת דורשת להיות מחוברים כמנהלים.",
     });
   }
 
   if ((existing?.length ?? 0) > 0 && !(await requireAdmin())) {
     return NextResponse.json(
-      { error: "כבר יש מנהלת רשומה. להיכנס לחמ\"ל ורק אז להוסיף עוד אחת." },
+      { error: "כבר רשומה הנהלה. להיכנס לחמ\"ל ורק אז להוסיף עוד אחד." },
       { status: 403 }
     );
   }

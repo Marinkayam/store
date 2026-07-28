@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   // וואטסאפ לא יודע לפתור אותם — התצוגה המקדימה יוצאת בלי תמונה.
   metadataBase: new URL(SITE_URL),
   title: "דוכן",
-  description: "חנות קטנה שאת מקימה בעצמך",
+  description: "דוכן קטן שפותחים לבד",
 };
 
 export const viewport: Viewport = {

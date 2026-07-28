@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               key={t.href}
               onClick={() => router.push(t.href)}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-1 text-[10px] ${on ? "text-[var(--ink)] font-medium" : "text-[var(--muted)]"}`}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-1 text-[11px] ${on ? "text-[var(--ink)] font-medium" : "text-[var(--muted)]"}`}
             >
               <Icon
                 name={t.icon}

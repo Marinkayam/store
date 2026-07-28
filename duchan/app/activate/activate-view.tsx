@@ -191,7 +191,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       <div className="text-center">
         <div className="text-5xl mb-3">🎉</div>
         <h1 className="text-[22px] font-bold leading-tight">
-          {store.display_name} מוכנה
+          {store.display_name} מוכן
           <br />
           לצאת לעולם
         </h1>
@@ -308,7 +308,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         <br />
         התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת החנות.
         <br />
-        הכסף שקונות משלמות לך על מוצרים עובר <b>ישירות אלייך</b>, בביט או במזומן, איך
+        הכסף שקונים משלמים לך על מוצרים עובר <b>ישירות אליך</b>, בביט או במזומן, איך
         שנבחר בהגדרות. אנחנו לא נוגעים בו ולא לוקחים ממנו אגורה.
       </div>
       <div className="flex flex-col gap-2">
@@ -378,7 +378,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         <a href="/dashboard" className="text-[13px] text-[var(--muted)] underline">
           לא עכשיו, חזרה לחנות ←
         </a>
-        <p className="text-[11px] text-[var(--faint)] mt-4 leading-relaxed">
+        <p className="text-[12px] text-[var(--faint)] mt-4 leading-relaxed">
           כל מה שבנית נשמר, גם אם לא תפעילי עכשיו.
           <br />
           <a href="/terms" className="underline">תנאי שימוש</a>

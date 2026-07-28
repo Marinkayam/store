@@ -71,7 +71,7 @@ export default function WhatsNew() {
                       <p className="text-[13px] text-[var(--muted)] whitespace-pre-line mt-0.5 leading-relaxed">
                         {n.body}
                       </p>
-                      <div className="text-[10px] text-[var(--muted)] mt-1.5">
+                      <div className="text-[11px] text-[var(--muted)] mt-1.5">
                         {new Date(n.created_at).toLocaleDateString("he-IL")}
                       </div>
                     </div>

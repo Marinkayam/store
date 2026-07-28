@@ -82,7 +82,7 @@ export default function PricePage() {
 
         {/* ── להורים — הבלוק היחיד בגוף שלישי ── */}
         <section className="mt-10 border-[1.5px] border-[var(--line)] bg-white p-5">
-          <div className="inline-block bg-[var(--cream)] text-[#6B3F7A] text-[11.5px] font-bold px-3 py-1.5">
+          <div className="inline-block bg-[var(--cream)] text-[#6B3F7A] text-[12.5px] font-bold px-3 py-1.5">
             לקרוא עם ההורים
           </div>
 
@@ -113,7 +113,7 @@ export default function PricePage() {
             אפשר לראות הכל בלי להתחייב.
           </p>
 
-          <p className="text-[11px] text-[var(--faint)] mt-7">
+          <p className="text-[12px] text-[var(--faint)] mt-7">
             <a href="/terms" className="underline">תנאי שימוש</a>
             {" · "}
             <a href="/privacy" className="underline">מדיניות פרטיות</a>

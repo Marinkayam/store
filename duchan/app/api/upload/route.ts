@@ -20,7 +20,7 @@ const IMAGE_TYPES = ["image/webp", "image/jpeg"];
 export async function POST(req: NextRequest) {
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברת" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
 
   let body: { kind?: string; contentType?: string; bytes?: number; storeId?: string };
   try {

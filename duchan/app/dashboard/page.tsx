@@ -116,7 +116,7 @@ export default function OrdersPage() {
         { done: true, label: "שם" },
         { done: true, label: "ערכת נושא" },
         { done: !!store.cover_key, label: "תמונת קאבר" },
-        { done: !!store.tagline, label: "משפט עלייך" },
+        { done: !!store.tagline, label: "תיאור הדוכן" },
       ]
     : [];
   const doneCount = checklist.filter((c) => c.done).length;
@@ -157,7 +157,7 @@ export default function OrdersPage() {
               <div className="text-[13.5px] font-bold">
                 {store.payment_claimed_at ? "מחכות לאישור התשלום" : "הדוכן שלך בתצוגה מקדימה"}
               </div>
-              <div className="text-[11.5px] opacity-70 leading-relaxed">
+              <div className="text-[12.5px] opacity-70 leading-relaxed">
                 {store.payment_claimed_at
                   ? "קיבלנו את ההודעה. ברגע שנאשר, אפשר יהיה לקבל הזמנות."
                   : "הלינק כבר עובד ואפשר לשלוח אותו. כדי לקבל הזמנות צריך לפרסם →"}
@@ -189,7 +189,7 @@ export default function OrdersPage() {
           <span className="text-2xl">💰</span>
           <div className="flex-1">
             <div className="text-sm font-bold">₪{revenue} בקופה</div>
-            <div className="text-[11px] text-[var(--muted)]">
+            <div className="text-[12px] text-[var(--muted)]">
               {sold.length} הזמנות ששולמו{topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function OrdersPage() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 text-[11px] font-medium whitespace-nowrap border ${
+                className={`px-3 py-1.5 text-[12px] font-medium whitespace-nowrap border ${
                   filter === f.key
                     ? "bg-[var(--ink)] text-white border-[var(--ink)]"
                     : "bg-white text-[var(--muted)] border-[var(--line)]"
@@ -226,7 +226,7 @@ export default function OrdersPage() {
             <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
               עוד לא הגיעו הזמנות.
               <br />
-              לשלוח את הלינק לחברות 👇
+              לשלוח את הלינק לחברים 👇
               <br />
               <button
                 onClick={() => {
@@ -242,13 +242,13 @@ export default function OrdersPage() {
             <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
               הזמנות יגיעו אחרי שהדוכן יפורסם.
               <br />
-              בינתיים אפשר לשלוח את הלינק ולראות מה חברות אומרות ✨
+              בינתיים אפשר לשלוח את הלינק ולראות מה חברים אומרים ✨
               <br />
               <a
                 href="/dashboard/share"
                 className="inline-block mt-2 bg-[var(--ink)] text-white px-4 py-2 text-xs"
               >
-                שליחה לחברות
+                שליחה לחברים
               </a>
             </div>
           ))}
@@ -269,10 +269,10 @@ export default function OrdersPage() {
             }`}
           >
             <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[11px] text-[var(--muted)]">
+              <span className="text-[12px] text-[var(--muted)]">
                 #{o.order_number} · {new Date(o.created_at).toLocaleDateString("he-IL")}
               </span>
-              <span className={`text-[10px] font-medium px-2 py-0.5 ${PILL[o.status].cls}`}>
+              <span className={`text-[11px] font-medium px-2 py-0.5 ${PILL[o.status].cls}`}>
                 {PILL[o.status].label}
               </span>
             </div>
@@ -282,7 +282,7 @@ export default function OrdersPage() {
               </div>
             ))}
             {o.buyer_note && (
-              <div className="text-[11px] text-[var(--muted)] italic mt-1">"{o.buyer_note}"</div>
+              <div className="text-[12px] text-[var(--muted)] italic mt-1">"{o.buyer_note}"</div>
             )}
 
             {/* הערה אישית של בעלת החנות */}
@@ -298,7 +298,7 @@ export default function OrdersPage() {
                 />
                 <button
                   onClick={() => saveOwnerNote(o)}
-                  className="bg-[var(--ink)] text-white px-3 text-[11px] font-medium"
+                  className="bg-[var(--ink)] text-white px-3 text-[12px] font-medium"
                 >
                   שמירה
                 </button>
@@ -309,7 +309,7 @@ export default function OrdersPage() {
                   setNoteEditId(o.id);
                   setNoteText(o.owner_note ?? "");
                 }}
-                className="block text-right text-[11px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full"
+                className="block text-right text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full"
               >
                 📝 {o.owner_note}
               </button>
@@ -320,7 +320,7 @@ export default function OrdersPage() {
                     setNoteEditId(o.id);
                     setNoteText("");
                   }}
-                  className="text-[11px] text-[var(--muted)] underline mt-1.5"
+                  className="text-[12px] text-[var(--muted)] underline mt-1.5"
                 >
                   📝 הוספת הערה לעצמי
                 </button>
@@ -347,12 +347,12 @@ export default function OrdersPage() {
                     rel="noreferrer"
                     className="flex-1 bg-white border border-[var(--line)] py-2 text-xs font-medium text-center"
                   >
-                    וואטסאפ ללקוחה
+                    וואטסאפ לקונה
                   </a>
                 ) : (
                   <span
                     className="flex-1 border border-dashed border-[var(--line)] text-[var(--muted)] py-2 text-xs text-center"
-                    title="הקונה לא השאירה מספר, השיחה כבר קיימת אצלה בוואטסאפ, אפשר לחפש שם לפי מספר ההזמנה"
+                    title="לא הושאר מספר, השיחה כבר קיימת בוואטסאפ, אפשר לחפש שם לפי מספר ההזמנה"
                   >
                     אין מספר
                   </span>

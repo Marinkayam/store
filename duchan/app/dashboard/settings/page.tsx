@@ -7,7 +7,7 @@ import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
-import { isPayoutLink } from "@/lib/payouts";
+import { isPayoutLink, payoutLabels, payInstructions } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
@@ -29,8 +29,6 @@ export default function SettingsPage() {
     ships: false,
     shipping_note: "",
     shipping_price: "" as string,
-    order_intro: "",
-    order_outro: "",
   });
   const [toast, setToast] = useState("");
   const [dirty, setDirty] = useState(false);
@@ -55,7 +53,9 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!store) return;
     setName(store.display_name);
-    setTagline(store.tagline ?? "");
+    // תיאור אחד. חנות שכבר כתבה גם משפט קצר וגם תיאור ארוך רואה את שניהם
+    // מאוחדים לשדה אחד, כדי שכלום ממה שהיא כתבה לא ייעלם מהמסך.
+    setTagline([store.tagline, store.about].filter(Boolean).join(" ").trim().slice(0, 140));
     setEmoji(store.emoji);
     setTheme(store.theme);
     setPhone(displayPhone(store.contact_phone));
@@ -68,8 +68,6 @@ export default function SettingsPage() {
       ships: store.ships ?? false,
       shipping_note: store.shipping_note ?? "",
       shipping_price: store.shipping_price == null ? "" : String(store.shipping_price),
-      order_intro: store.order_intro ?? "",
-      order_outro: store.order_outro ?? "",
     });
     setAvatarPreview(mediaUrl(store.avatar_key));
     setPayout({
@@ -133,14 +131,14 @@ export default function SettingsPage() {
       payout_cash: payout.payout_cash,
       payout_note: payout.payout_note?.trim() || null,
       payout_link: payout.payout_link?.trim() || null,
-      about: info.about.trim() || null,
+      // התיאור כולו יושב ב-tagline. about מתאפס בשמירה כדי שהדוכן לא יציג
+      // את אותו טקסט פעמיים, אחרי שהתוכן שלו כבר אוחד לשדה היחיד.
+      about: null,
       city: info.city.trim() || null,
       age: info.age !== "" && Number(info.age) >= 5 && Number(info.age) <= 18 ? Number(info.age) : null,
       ships: info.ships,
       shipping_note: info.ships ? info.shipping_note.trim() || null : null,
       shipping_price: info.ships && info.shipping_price !== "" ? Math.max(0, Math.min(200, Math.round(Number(info.shipping_price) || 0))) : null,
-      order_intro: info.order_intro.trim() || null,
-      order_outro: info.order_outro.trim() || null,
     };
     /**
      * שמירה שעומדת בפער סכמה.
@@ -284,13 +282,19 @@ export default function SettingsPage() {
 
   const storeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/s/${store.slug}`;
 
+  /* שורת התשלום בהודעה נגזרת ממה שסומן, ולא מקובעת לביט.
+     סימנו יותר מאחד? הקונה בוחרת, והדוגמה מציגה את הראשון. */
+  const payLabels = payoutLabels(payout);
+  const payExampleLine = payout.payout_bit
+    ? payInstructions("bit")
+    : payout.payout_paybox
+      ? payInstructions("paybox")
+      : payInstructions("cash");
+
   return (
     <div>
-      <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)]">
-        <h1 className="text-lg font-bold">החנות שלי</h1>
-      </header>
-
-      {/* ניווט מהיר — הדבר הראשון שרואים, כדי שאין צורך לגלול כדי למצוא משהו */}
+      {/* בלי כותרת "החנות שלי" מעל: היא לא אמרה כלום שהמסך לא אומר בעצמו,
+          ודחפה את הניווט המהיר מטה. הניווט הוא הדבר הראשון שרואים. */}
       <div className="sticky top-0 z-30 flex gap-1.5 px-3 py-2.5 bg-white border-b border-[var(--line)] overflow-x-auto">
         <a
           href="/dashboard/products"
@@ -327,10 +331,12 @@ export default function SettingsPage() {
               <div className="text-[13px] font-medium">
                 {store.status === "active" ? "החנות פתוחה" : "החנות בהפסקה"}
               </div>
-              <div className="text-[11px] text-[var(--muted)]">
+              {/* הטוגל לבדו לא אמר שאפשר לחזור אחורה, וזה מה שגרם להיסוס:
+                  צריך לכתוב במפורש שסגירה היא זמנית ושום דבר לא נמחק. */}
+              <div className="text-[12px] text-[var(--muted)] leading-relaxed">
                 {store.status === "active"
-                  ? "כולן יכולות להיכנס ולהזמין"
-                  : "הלינק מציג 'החנות סגורה כרגע'. הכל נשמר."}
+                  ? "כולם יכולים להיכנס ולהזמין. אפשר לסגור מתי שרוצים בלחיצה כאן, ולפתוח שוב אחר כך."
+                  : "הלינק מציג 'החנות סגורה כרגע'. המוצרים וההזמנות נשמרו, לחיצה כאן פותחת שוב."}
               </div>
             </div>
             <button
@@ -372,7 +378,7 @@ export default function SettingsPage() {
               style={coverPreview ? undefined : { background: coverCss(preset) }}
             >
               {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
-              <span className="absolute bottom-1.5 left-1.5 bg-black/55 text-white text-[10.5px] px-2 py-1">
+              <span className="absolute bottom-1.5 left-1.5 bg-black/55 text-white text-[11.5px] px-2 py-1">
                 ✎ קאבר
               </span>
             </button>
@@ -394,7 +400,7 @@ export default function SettingsPage() {
                     {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
                   </span>
                   <span
-                    className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white z-10"
+                    className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[11px] bg-[var(--ink)] text-white z-10"
                     style={{ borderRadius: "999px", border: "1.5px solid var(--white)" }}
                     aria-hidden
                   >
@@ -415,43 +421,44 @@ export default function SettingsPage() {
                 className="editable block w-full text-center font-bold text-[15px] mt-1.5"
                 style={{ color: t.ink }}
               />
-              <input
-                value={tagline}
-                maxLength={60}
-                aria-label="משפט אחד עלייך"
-                placeholder="משפט אחד עלייך (לא חובה)"
-                onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
-                className="editable block w-full text-center text-[12px] mt-0.5 opacity-80"
-                style={{ color: t.ink }}
-              />
-              <input
-                value={info.city}
-                maxLength={30}
-                aria-label="עיר"
-                placeholder="עיר (לא חובה)"
-                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                className="editable block w-full text-center text-[11px] mt-0.5 opacity-65"
-                style={{ color: t.ink }}
-              />
+              {/* תיאור אחד ולא שניים. קודם היו כאן גם "משפט אחד עלייך" וגם
+                  "כמה מילים על הדוכן", והם נראו כמו שתי הערות שאומרות את אותו
+                  דבר. מה שהיה כתוב בתיאור הארוך עולה לכאן בטעינה ונשמר יחד. */}
               <textarea
-                value={info.about}
-                maxLength={280}
+                value={tagline}
+                maxLength={140}
                 rows={2}
-                aria-label="על הדוכן"
-                placeholder="כמה מילים על הדוכן (לא חובה)"
-                onChange={(e) => { setInfo({ ...info, about: e.target.value }); setDirty(true); }}
-                className="editable block w-full text-center text-[11.5px] mt-0.5 resize-none leading-snug opacity-80"
+                aria-label="תיאור הדוכן"
+                placeholder="מה מוכרים כאן? (לא חובה)"
+                onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
+                className="editable block w-full text-center text-[13px] mt-1 resize-none leading-snug opacity-85"
                 style={{ color: t.ink }}
               />
 
-              {/* משלוחים מופיעים כאן רק אם הם דלוקים, בדיוק כמו בדוכן עצמו.
-                  ההדלקה נמצאת למטה במסך, וזו התשובה ל"אם מפעילים, רואים?" */}
-              {info.ships && (
-                <div className="text-center text-[11px] mt-1.5 opacity-70">
-                  🚚 {info.shipping_note.trim() || "משלוח בתיאום"}
-                  {info.shipping_price !== "" && ` · ₪${info.shipping_price}`}
-                </div>
-              )}
+              {/* עיר ומשלוחים בשורה אחת, בדיוק כמו בדוכן האמיתי.
+                  המשלוחים מופיעים רק כשהם דלוקים, וזו התשובה ל"אם מפעילים,
+                  רואים?" — ההדלקה עצמה נמצאת למטה במסך. */}
+              <div className="flex items-center justify-center gap-1.5 mt-1.5 text-[12px] opacity-75 flex-wrap">
+                <span aria-hidden>📍</span>
+                <input
+                  value={info.city}
+                  maxLength={30}
+                  aria-label="עיר"
+                  placeholder="עיר (לא חובה)"
+                  onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
+                  className="editable text-center w-28"
+                  style={{ color: t.ink }}
+                />
+                {info.ships && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>
+                      🚚 משלוח
+                      {info.shipping_price !== "" ? ` ₪${info.shipping_price}` : " בתיאום"}
+                    </span>
+                  </>
+                )}
+              </div>
 
               {/* המוצרים האמיתיים */}
               <div className="grid grid-cols-2 gap-2 mt-3">
@@ -466,10 +473,10 @@ export default function SettingsPage() {
                         )}
                       </div>
                       <div className="px-2 pb-2">
-                        <div className="text-[11.5px] truncate">{p.name}</div>
+                        <div className="text-[12.5px] truncate">{p.name}</div>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-[12px] font-bold">₪{p.price}</span>
-                          <span className="px-2 py-1 text-[10px] font-bold"
+                          <span className="px-2 py-1 text-[11px] font-bold"
                             style={{ background: t.primary, color: t.onPrimary }}>
                             לסל
                           </span>
@@ -477,7 +484,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   ) : (
-                    <div key={i} className="col-span-2 border border-dashed py-6 text-center text-[11.5px] opacity-60"
+                    <div key={i} className="col-span-2 border border-dashed py-6 text-center text-[12.5px] opacity-60"
                       style={{ borderColor: t.border }}>
                       עוד אין מוצרים בדוכן
                     </div>
@@ -485,20 +492,20 @@ export default function SettingsPage() {
                 )}
               </div>
               <a href="/dashboard/products"
-                className="block text-center text-[11.5px] underline mt-2.5 opacity-70"
+                className="block text-center text-[12.5px] underline mt-2.5 opacity-70"
                 style={{ color: t.ink }}>
                 לעריכת המוצרים
               </a>
             </div>
           </div>
 
-          <p className="text-[11px] text-[var(--muted)] mt-2">
-            הגיל לא מופיע כאן ולא בדוכן. עיר כן, כדי שקונה תדע אם מסירה הגיונית.
+          <p className="text-[12px] text-[var(--muted)] mt-2">
+            הגיל לא מופיע כאן ולא בדוכן. עיר כן, כדי שהקונים ידעו אם המסירה הגיונית.
           </p>
 
           {/* אפשרויות משניות לקאבר ולתמונה — מתחת לדוכן, לא במקומו */}
           <div className="bg-white border border-[var(--line)] p-3 mt-2.5">
-            <div className="text-[11px] text-[var(--muted)] mb-1.5">רקע מוכן לקאבר</div>
+            <div className="text-[12px] text-[var(--muted)] mb-1.5">רקע מוכן לקאבר</div>
             <div className="flex gap-1.5 flex-wrap">
               {COVERS.map((c) => (
                 <button
@@ -512,13 +519,13 @@ export default function SettingsPage() {
                 />
               ))}
               {coverPreview && (
-                <button onClick={removeCover} className="text-[11px] underline text-[var(--muted)] px-2">
+                <button onClick={removeCover} className="text-[12px] underline text-[var(--muted)] px-2">
                   הסרת התמונה
                 </button>
               )}
             </div>
 
-            <div className="text-[11px] text-[var(--muted)] mt-3 mb-1.5">או אמוג׳י במקום תמונת פרופיל</div>
+            <div className="text-[12px] text-[var(--muted)] mt-3 mb-1.5">או אמוג׳י במקום תמונת פרופיל</div>
             <div className="flex gap-1.5 flex-wrap">
               {EMOJIS.map((e) => (
                 <button key={e} onClick={() => { setEmoji(e); setDirty(true); }}
@@ -528,7 +535,7 @@ export default function SettingsPage() {
                 </button>
               ))}
               {avatarPreview && (
-                <button onClick={removeAvatar} className="text-[11px] underline text-[var(--muted)] px-2">
+                <button onClick={removeAvatar} className="text-[12px] underline text-[var(--muted)] px-2">
                   חזרה לאמוג׳י
                 </button>
               )}
@@ -537,8 +544,8 @@ export default function SettingsPage() {
         </div>
 
         <div id="design" className="scroll-mt-14">
-          <span className="text-[11px] text-[var(--muted)]">ערכת נושא</span>
-          <p className="text-[11px] text-[var(--faint)] mt-0.5">כל ערכה משנה את צבעי החנות. לוחצים ורואים למעלה בתצוגה המקדימה.</p>
+          <span className="text-[12px] text-[var(--muted)]">ערכת נושא</span>
+          <p className="text-[12px] text-[var(--faint)] mt-0.5">כל ערכה משנה את צבעי החנות. לוחצים ורואים למעלה בתצוגה המקדימה.</p>
           <div className="grid grid-cols-3 gap-1.5 mt-1.5">
             {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, th]) => (
               /* כל ערכה היא כרטיס מוצר קטן ולא ריבועי צבע מופשטים: ככה רואים
@@ -559,7 +566,7 @@ export default function SettingsPage() {
                     </span>
                   </div>
                 </div>
-                <span className="block text-[11px] font-medium mt-1.5" style={{ color: th.ink }}>
+                <span className="block text-[12px] font-medium mt-1.5" style={{ color: th.ink }}>
                   {th.label}
                 </span>
               </button>
@@ -567,7 +574,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <label className="text-[11px] text-[var(--muted)]">
+        <label className="text-[12px] text-[var(--muted)]">
           הטלפון שלך (וואטסאפ)
           <input value={phone} inputMode="tel" dir="ltr"
             onChange={(e) => { setPhone(e.target.value); setDirty(true); }}
@@ -587,7 +594,7 @@ export default function SettingsPage() {
             כי הוא היחיד שלא מוצג לקונות ולכן אין לו מקום בתצוגה. */}
         <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">גיל</div>
-          <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
+          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             לא מוצג בדוכן ולא בקוד המקור. עוזר לנו להתאים תוכן לפי גיל.
           </p>
           <input
@@ -606,7 +613,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[13px] font-bold">משלוחים</div>
-              <div className="text-[11px] text-[var(--muted)]">
+              <div className="text-[12px] text-[var(--muted)]">
                 {info.ships ? "מוצג בדף החנות ובהודעת ההזמנה" : "כרגע: מסירה ביד בלבד"}
               </div>
             </div>
@@ -625,7 +632,7 @@ export default function SettingsPage() {
           </div>
           {info.ships && (
             <>
-              <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">איך ולאן</label>
+              <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">איך ולאן</label>
               <textarea
                 value={info.shipping_note}
                 onChange={(e) => { setInfo({ ...info, shipping_note: e.target.value }); setDirty(true); }}
@@ -635,7 +642,7 @@ export default function SettingsPage() {
                 aria-label="פרטי משלוח"
                 className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
               />
-              <label className="block text-[11px] text-[var(--muted)] mt-2 mb-1">מחיר משלוח (₪)</label>
+              <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">מחיר משלוח (₪)</label>
               <input
                 value={info.shipping_price}
                 onChange={(e) => { setInfo({ ...info, shipping_price: e.target.value.replace(/\D/g, "") }); setDirty(true); }}
@@ -645,77 +652,54 @@ export default function SettingsPage() {
                 aria-label="מחיר משלוח"
                 className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
               />
-              <p className="text-[11px] text-[var(--muted)] mt-1">
+              <p className="text-[12px] text-[var(--muted)] mt-1">
                 אפשר להשאיר ריק, ואז כתוב רק שיש משלוח והמחיר נסגר בוואטסאפ.
               </p>
             </>
           )}
         </div>
 
-        {/* איך ההזמנה מגיעה אלייך */}
+        {/* איך ההזמנה מגיעה אליך */}
         <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">ההודעה שהקונה שולחת לך</div>
+          <div className="text-[13px] font-bold">ההודעה שהקונים שולחים לך</div>
           {/* השאלה הראשונה כאן היא "מי כותב את זה ומתי", ובלי תשובה לזה
               שתי התיבות למטה נראות כמו טופס בלי הקשר. */}
-          <ol className="text-[11.5px] text-[var(--muted)] leading-relaxed mt-1.5 flex flex-col gap-1">
-            <li>1. הקונה בוחרת מוצרים בדוכן ולוחצת "שליחה בוואטסאפ".</li>
-            <li>2. וואטסאפ נפתח <b>אצלה</b>, וההודעה כבר כתובה בפנים.</li>
-            <li>3. היא לוחצת שלח, וההודעה מגיעה אלייך כהודעה רגילה.</li>
+          <ol className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5 flex flex-col gap-1">
+            <li>1. בוחרים מוצרים בדוכן ולוחצים "שליחה בוואטסאפ".</li>
+            <li>2. וואטסאפ נפתח <b>אצלם</b>, וההודעה כבר כתובה בפנים.</li>
+            <li>3. לוחצים שלח, וההודעה מגיעה אליך כהודעה רגילה.</li>
           </ol>
-          <p className="text-[11.5px] text-[var(--muted)] leading-relaxed mt-2">
-            את רשימת המוצרים והסכום המערכת כותבת לבד. מה שאת קובעת כאן זה רק
-            המשפט שפותח את ההודעה והמשפט שסוגר אותה.
+          <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
+            ההודעה נכתבת לבד, אין מה למלא כאן. ככה היא תיראה:
           </p>
-          <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">שורת פתיחה</label>
-          <input
-            value={info.order_intro}
-            onChange={(e) => { setInfo({ ...info, order_intro: e.target.value }); setDirty(true); }}
-            placeholder={`היי ${store.display_name.split(" ").pop()}! 👋`}
-            maxLength={80}
-            aria-label="שורת פתיחה"
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-          />
-          <label className="block text-[11px] text-[var(--muted)] mt-2 mb-1">שורת סיום</label>
-          <input
-            value={info.order_outro}
-            onChange={(e) => { setInfo({ ...info, order_outro: e.target.value }); setDirty(true); }}
-            placeholder="תודה! אחזור אלייך היום 💛"
-            maxLength={80}
-            aria-label="שורת סיום"
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-          />
-          {/* הצהוב הוא מה שהיא כתבה, האפור הוא מה שנכתב לבד. בלי ההפרדה
-              הזו אי אפשר לדעת על מה משפיעות שתי התיבות שלמעלה. */}
-          <div className="mt-3 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12.5px] leading-relaxed whitespace-pre-line">
-            <mark className="bg-[var(--warn-bg)] text-[var(--ink)] px-1">
-              {info.order_intro.trim() || `היי ${store.display_name.split(" ").pop()}! 👋`}
-            </mark>
-            {`
-ראיתי את הדוכן ואני רוצה להזמין:
+          {/* בלי "שורת פתיחה" ו"שורת סיום": שתי תיבות שביקשו טקסט לפני
+              שבכלל היה ברור מה ההודעה, וההודעה מסתדרת מצוין בלעדיהן. */}
+          <div className="mt-2 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12.5px] leading-relaxed whitespace-pre-line">
+            {`היי ${store.display_name.split(" ").pop()}! 👋
+ראיתי את הדוכן שלך ואני רוצה להזמין:
 
 • סקוויש אבוקדו × 1 · ₪18
+• צמיד קשת × 2 · ₪30
 
-סה"כ: ₪18${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}
-אשלם ב${payout.payout_bit ? "ביט" : payout.payout_paybox ? "פייבוקס" : "מזומן"}
+סה"כ: ₪48${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}${payLabels.length ? `\n${payExampleLine}` : ""}
 
-הזמנה #1
-`}
-            <mark className="bg-[var(--warn-bg)] text-[var(--ink)] px-1">
-              {info.order_outro.trim() || "תודה! אחזור אלייך היום 💛"}
-            </mark>
+הזמנה #1`}
           </div>
-          <p className="text-[11px] text-[var(--muted)] mt-2">
-            <span className="bg-[var(--warn-bg)] px-1">המסומן בצהוב</span> הוא מה שאת
-            כותבת. השאר נכתב לבד לפי מה שהקונה בחרה.
+          <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
+            {payLabels.length > 1
+              ? `סימנת ${payLabels.join(" ו")}, אז הקונים בוחרים באיזו דרך הם משלמים וזה מה שייכתב בשורה הזו.`
+              : payLabels.length === 1
+                ? `סימנת ${payLabels[0]} בלבד, אז זה מה שייכתב בשורת התשלום.`
+                : "עוד לא סימנת איך משלמים לך, אז אין שורת תשלום בהודעה."}
           </p>
         </div>
 
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
         <div id="payment" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">איך משלמים לי</div>
-          <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
-            מה שתסמני יופיע לקונה לפני שהיא שולחת את ההזמנה, וגם בהודעת הוואטסאפ.
-            הכסף עובר ישירות אלייך, דוכן לא נוגע בו ולא לוקח עמלה.
+          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
+            מה שמסומן כאן יופיע לקונים לפני שהם שולחים את ההזמנה, וגם בהודעת
+            הוואטסאפ. הכסף עובר ישירות אליך, דוכן לא נוגע בו ולא לוקח עמלה.
           </p>
           <div className="flex flex-col gap-1.5 mt-2.5">
             {([
@@ -730,19 +714,19 @@ export default function SettingsPage() {
                   payout[key] ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)]"
                 }`}
               >
-                <span className={`w-4 h-4 flex items-center justify-center text-[10px] ${
+                <span className={`w-4 h-4 flex items-center justify-center text-[11px] ${
                   payout[key] ? "bg-[var(--ink)] text-white" : "border border-[#D3D5DC]"
                 }`}>
                   {payout[key] ? "✓" : ""}
                 </span>
                 <span className="text-[13px] font-medium flex-1">{label}</span>
-                <span className="text-[11px] text-[var(--muted)]">{hint}</span>
+                <span className="text-[12px] text-[var(--muted)]">{hint}</span>
               </button>
             ))}
           </div>
           {/* לינק תשלום — הופך "תשלמי לי בפייבוקס" ללחיצה אחת.
               מותרים רק לינקים של ביט ופייבוקס, וזה נאכף גם בדאטהבייס. */}
-          <label className="block text-[11px] text-[var(--muted)] mt-3 mb-1">
+          <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">
             לינק לתשלום (לא חובה)
           </label>
           <input
@@ -750,21 +734,23 @@ export default function SettingsPage() {
             onChange={(e) => { setPayout({ ...payout, payout_link: e.target.value }); setDirty(true); }}
             placeholder="להדביק כאן לינק מביט או מפייבוקס"
             aria-label="לינק לתשלום"
+            /* dir=ltr כדי שהכתובת תיקרא נכון, text-right כדי שהיא תתחיל
+               באותו צד כמו כל שאר השדות במסך ולא תיתקע בשמאל */
             dir="ltr"
             maxLength={200}
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
           />
-          <p className="text-[11px] text-[var(--muted)] mt-1 leading-relaxed">
+          <p className="text-[12px] text-[var(--muted)] mt-1 leading-relaxed">
             בפייבוקס או בביט: פותחים את האפליקציה, "בקשת תשלום" או "הלינק שלי",
-            ומעתיקים. הקונה תראה כפתור שמעביר אותה ישר לשם.
+            ומעתיקים. הקונים יראו כפתור שמעביר אותם ישר לשם.
           </p>
           {!!payout.payout_link?.trim() && !isPayoutLink(payout.payout_link.trim()) && (
-            <p className="text-[11px] text-[var(--danger)] mt-1">
+            <p className="text-[12px] text-[var(--danger)] mt-1">
               זה לא נראה כמו לינק של ביט או פייבוקס. מטעמי בטיחות אפשר רק אותם.
             </p>
           )}
 
-          <label className="block text-[11px] text-[var(--muted)] mt-3 mb-1">
+          <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">
             הערה לקונה (לא חובה)
           </label>
           <input
@@ -776,8 +762,8 @@ export default function SettingsPage() {
             className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
           />
           {!payout.payout_bit && !payout.payout_paybox && !payout.payout_cash && (
-            <p className="text-[11px] text-[var(--warn-ink)] mt-1.5">
-              לא סימנת כלום, הקונה תצטרך לשאול אותך בוואטסאפ איך לשלם.
+            <p className="text-[12px] text-[var(--warn-ink)] mt-1.5">
+              לא סומן כלום, הקונים יצטרכו לשאול אותך בוואטסאפ איך לשלם.
             </p>
           )}
         </div>
@@ -792,18 +778,18 @@ export default function SettingsPage() {
             ולא יכולות להזמין, וזה בדיוק מה שהופך את הפרסום לבחירה ולא לחסם. */}
         <div className="bg-white border border-[var(--line)] p-3 mt-1">
           {!store.activated_at && (
-            <div className="text-[11px] text-[var(--warn-ink)] mb-1.5">
+            <div className="text-[12px] text-[var(--warn-ink)] mb-1.5">
               👀 תצוגה מקדימה. אפשר לשלוח, אבל עדיין אי אפשר להזמין
             </div>
           )}
-          <div className="text-[11px] text-[var(--muted)] font-mono mb-2" dir="ltr">{storeUrl}</div>
+          <div className="text-[12px] text-[var(--muted)] font-mono mb-2" dir="ltr">{storeUrl}</div>
           <div className="flex gap-2">
             <button
               onClick={() => { navigator.clipboard.writeText(storeUrl); showToast("הלינק הועתק"); }}
               className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium">
               העתקה
             </button>
-            <a href={`https://wa.me/?text=${encodeURIComponent(`בואי לראות את החנות שלי! ${storeUrl}`)}`}
+            <a href={`https://wa.me/?text=${encodeURIComponent(`בואו לראות את הדוכן שלי! ${storeUrl}`)}`}
               className="flex-1 bg-[var(--ink)] text-white py-2.5 text-xs font-medium text-center">
               שיתוף בוואטסאפ
             </a>
@@ -815,7 +801,7 @@ export default function SettingsPage() {
             <div className="text-[13px] font-bold">
               {store.payment_claimed_at ? "⏳ מחכות לאישור התשלום" : "🚀 לפרסם את הדוכן"}
             </div>
-            <div className="text-[11px] opacity-70 leading-relaxed mt-0.5">
+            <div className="text-[12px] opacity-70 leading-relaxed mt-0.5">
               {store.payment_claimed_at
                 ? "ברגע שנאשר, אפשר יהיה לקבל הזמנות."
                 : "הכל בנוי ושמור. פרסום פותח את ההזמנות →"}

@@ -119,7 +119,7 @@ export default function UploadDiag() {
             <br />
             למחוק מה שיש ולהדביק בדיוק את זה, ואז Save:
           </p>
-          <pre dir="ltr" className="mt-2 bg-white border border-[var(--line)] p-2 text-[11px] overflow-x-auto">
+          <pre dir="ltr" className="mt-2 bg-white border border-[var(--line)] p-2 text-[12px] overflow-x-auto">
             {cors}
           </pre>
           <button

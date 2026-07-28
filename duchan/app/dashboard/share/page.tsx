@@ -104,7 +104,7 @@ export default function SharePage() {
       {!store.activated_at && (
         <a href="/activate" className="block mx-3 mt-3 bg-[var(--ink)] text-white p-3.5">
           <div className="text-[13.5px] font-bold">הלינק עובד, בתצוגה מקדימה</div>
-          <div className="text-[11.5px] opacity-70 leading-relaxed">
+          <div className="text-[12.5px] opacity-70 leading-relaxed">
             חברות כבר יכולות להיכנס ולראות הכל. כדי שיוכלו גם להזמין, לפרסום הדוכן →
           </div>
         </a>
@@ -123,7 +123,7 @@ export default function SharePage() {
                 <span className="text-xl">{t.icon}</span>
                 <div className="flex-1">
                   <div className="text-[13.5px] font-bold">{t.label}</div>
-                  <div className="text-[11px] text-[var(--muted)]">{t.when}</div>
+                  <div className="text-[12px] text-[var(--muted)]">{t.when}</div>
                 </div>
                 <span className="text-[var(--faint)] text-xs">{open ? "▲" : "▼"}</span>
               </button>
@@ -196,7 +196,7 @@ export default function SharePage() {
           </div>
         </div>
 
-        <div className="text-center text-[11.5px] text-[var(--muted)] leading-relaxed px-4 py-4">
+        <div className="text-center text-[12.5px] text-[var(--muted)] leading-relaxed px-4 py-4">
           טיפ: הודעה אחת לקבוצה עובדת פחות טוב מחמש הודעות אישיות.
           <br />
           אנשים עונים למי שפונה אליהם בשם.

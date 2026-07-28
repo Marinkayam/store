@@ -30,7 +30,6 @@ interface Draft {
   step: Step;
   displayName: string;
   tagline: string;
-  about: string;
   avatarData: string | null;
   cover: string;
   theme: ThemeKey;
@@ -45,7 +44,6 @@ const EMPTY: Draft = {
   step: 1,
   displayName: "",
   tagline: "",
-  about: "",
   avatarData: null,
   cover: DEFAULT_COVER.key,
   theme: "cloud",
@@ -200,15 +198,6 @@ export default function Onboarding() {
         } catch {}
       }
 
-      // התיאור נשמר בנפרד: /api/stores לא מקבל אותו, והעמודה עשויה
-      // עוד לא להיות בדאטהבייס. כישלון כאן לא מפיל את פתיחת הדוכן.
-      if (draft!.about.trim()) {
-        await supabaseBrowser()
-          .from("stores")
-          .update({ about: draft!.about.trim() })
-          .eq("id", data.storeId);
-      }
-
       // המוצרים שנוספו לפני שהיה חשבון. עכשיו יש storeId, אז אפשר להעלות
       // את התמונות וליצור אותם. מוצר שנכשל לא עוצר את השאר.
       for (const pr of draft!.products) {
@@ -315,7 +304,7 @@ export default function Onboarding() {
                       ? <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />
                       : "📷"}
                   </span>
-                  <span className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white z-10"
+                  <span className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[11px] bg-[var(--ink)] text-white z-10"
                     style={{ borderRadius: "999px", border: "1.5px solid var(--white)" }} aria-hidden>✎</span>
                 </button>
               </div>
@@ -329,23 +318,16 @@ export default function Onboarding() {
                 className="editable block w-full text-center font-bold text-[15px] mt-1.5"
                 style={{ color: th.ink }}
               />
-              <input
-                value={draft.tagline}
-                maxLength={60}
-                aria-label="משפט אחד עלייך"
-                placeholder="משפט אחד עלייך (לא חובה)"
-                onChange={(e) => set({ tagline: e.target.value })}
-                className="editable block w-full text-center text-[12px] mt-0.5 opacity-80"
-                style={{ color: th.ink }}
-              />
+              {/* תיאור אחד, בדיוק כמו במסך העריכה. שני שדות תיאור נראו
+                  כמו שתי הערות שאומרות את אותו דבר. */}
               <textarea
-                value={draft.about}
-                maxLength={280}
+                value={draft.tagline}
+                maxLength={140}
                 rows={2}
-                aria-label="על הדוכן"
-                placeholder="כמה מילים על הדוכן (לא חובה)"
-                onChange={(e) => set({ about: e.target.value })}
-                className="editable block w-full text-center text-[11.5px] mt-0.5 resize-none leading-snug opacity-80"
+                aria-label="תיאור הדוכן"
+                placeholder="מה מוכרים כאן? (לא חובה)"
+                onChange={(e) => set({ tagline: e.target.value })}
+                className="editable block w-full text-center text-[13px] mt-1 resize-none leading-snug opacity-85"
                 style={{ color: th.ink }}
               />
 
@@ -356,7 +338,7 @@ export default function Onboarding() {
                     <button
                       onClick={() => set({ products: draft.products.filter((_, j) => j !== i) })}
                       aria-label={`הסרת ${pr.name || "המוצר"}`}
-                      className="absolute top-1 left-1 z-10 w-5 h-5 bg-black/55 text-white text-[11px] leading-none"
+                      className="absolute top-1 left-1 z-10 w-5 h-5 bg-black/55 text-white text-[12px] leading-none"
                       style={{ borderRadius: "999px" }}
                     >
                       ×
@@ -367,10 +349,10 @@ export default function Onboarding() {
                         : "🛍️"}
                     </div>
                     <div className="px-2 pb-2">
-                      <div className="text-[11.5px] truncate">{pr.name || "מוצר"}</div>
+                      <div className="text-[12.5px] truncate">{pr.name || "מוצר"}</div>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-[12px] font-bold">₪{pr.price || 0}</span>
-                        <span className="px-2 py-1 text-[10px] font-bold"
+                        <span className="px-2 py-1 text-[11px] font-bold"
                           style={{ background: th.primary, color: th.onPrimary }}>לסל</span>
                       </div>
                     </div>
@@ -458,7 +440,7 @@ export default function Onboarding() {
                         style={{ background: tv.primary, color: tv.onPrimary }}>לסל</span>
                     </div>
                   </div>
-                  <span className="block text-[10.5px] mt-1" style={{ color: tv.ink }}>{tv.label}</span>
+                  <span className="block text-[11.5px] mt-1" style={{ color: tv.ink }}>{tv.label}</span>
                 </button>
               ))}
             </div>
@@ -624,7 +606,7 @@ export default function Onboarding() {
                     <div className="h-16 flex items-center justify-center text-xl overflow-hidden bg-[var(--canvas)]">
                       {pr.imageData ? <img src={pr.imageData} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                     </div>
-                    <div className="px-2 py-1.5 text-[11.5px] truncate">{pr.name}</div>
+                    <div className="px-2 py-1.5 text-[12.5px] truncate">{pr.name}</div>
                   </div>
                 ))}
               </div>

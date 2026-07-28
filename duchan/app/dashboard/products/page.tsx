@@ -639,7 +639,7 @@ export default function ProductsPage() {
                 <button
                   onClick={() => move(p, -1)}
                   disabled={idx === 0}
-                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[10px] leading-none disabled:opacity-25"
+                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[11px] leading-none disabled:opacity-25"
                   aria-label="להזיז למעלה"
                 >
                   ▲
@@ -647,7 +647,7 @@ export default function ProductsPage() {
                 <button
                   onClick={() => move(p, 1)}
                   disabled={idx === products.length - 1}
-                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[10px] leading-none disabled:opacity-25"
+                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[11px] leading-none disabled:opacity-25"
                   aria-label="להזיז למטה"
                 >
                   ▼
@@ -665,24 +665,24 @@ export default function ProductsPage() {
                 {/* השורה כולה פותחת עריכה, אבל בלי סימן אי אפשר לדעת את זה */}
                 <div className="text-sm font-medium flex items-center gap-1.5">
                   {p.name}
-                  <span className="text-[10px] text-[var(--faint)] font-normal">✎ עריכה</span>
+                  <span className="text-[11px] text-[var(--faint)] font-normal">✎ עריכה</span>
                 </div>
                 {p.description && (
-                  <div className="text-[11px] text-[var(--muted)] truncate">{p.description}</div>
+                  <div className="text-[12px] text-[var(--muted)] truncate">{p.description}</div>
                 )}
                 <div className="flex gap-1.5 items-center mt-1 flex-wrap">
                   <span className="text-[13px] font-medium">₪{p.price}</span>
                   {hidden && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
+                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
                   )}
                   {!p.track_stock ? (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">בלי מעקב</span>
+                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">בלי מעקב</span>
                   ) : out ? (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
+                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
                   ) : p.stock <= 2 ? (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
+                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
                   ) : (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">{p.stock} במלאי</span>
+                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">{p.stock} במלאי</span>
                   )}
                 </div>
               </div>
@@ -741,7 +741,7 @@ export default function ProductsPage() {
             {/* מה מותר למכור — רק במוצר חדש, לפני שמעלים תמונה. בתקנון זה
                 קיים, אבל אף אחת לא קוראת תקנון; כאן זה נראה ברגע הנכון. */}
             {!edit.id && (
-              <p className="text-[11px] text-[var(--muted)] bg-[var(--canvas)] px-3 py-2 mb-3 leading-relaxed">
+              <p className="text-[12px] text-[var(--muted)] bg-[var(--canvas)] px-3 py-2 mb-3 leading-relaxed">
                 דוכן מיועד למוצרים לא שימושיים ופריטי יד שנייה: צעצועים,
                 תכשיטים, פריטי תחביב. בלי אלכוהול, טבק, כלי נשק, תרופות,
                 בעלי חיים או מוצרים מזויפים.{" "}
@@ -788,14 +788,14 @@ export default function ProductsPage() {
               ) : (
                 <>
                   <span>🛍️</span>
-                  <span className="text-[11px] text-[var(--muted)] font-sans mt-1">
+                  <span className="text-[12px] text-[var(--muted)] font-sans mt-1">
                     עוד אין תמונה, לבחור אחת מהכפתורים למטה
                   </span>
                 </>
               )}
             </div>
             {edit.previewUrl && !edit.previewIsVideo && edit.pendingImageRaw && (
-              <p className="text-[11px] text-[var(--muted)] text-center mb-2.5">
+              <p className="text-[12px] text-[var(--muted)] text-center mb-2.5">
                 גוררים בתמונה כדי לבחור מה יופיע בריבוע
               </p>
             )}
@@ -829,16 +829,16 @@ export default function ProductsPage() {
               onChange={(e) => setEdit((s) => s && { ...s, price: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-4" />
 
-            <p className="text-[11px] text-[var(--faint)] mb-2.5">
+            <p className="text-[12px] text-[var(--faint)] mb-2.5">
               מכאן והלאה הכל לא חובה — אפשר לשמור גם בלעדיו.
             </p>
 
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[11px] text-[var(--muted)]">תיאור קצר (לא חובה)</label>
+              <label className="block text-[12px] text-[var(--muted)]">תיאור קצר (לא חובה)</label>
               {store.ai_enabled && (edit.pendingImage || edit.imageKey || edit.posterKey) && (
                 <button onClick={writeDescription} disabled={aiBusy}
-                  className="text-[11px] text-[var(--ink)] border border-[var(--line)] px-2 py-1 disabled:opacity-50">
-                  {aiBusy ? "כותבים…" : "✨ כתבי לי תיאור"}
+                  className="text-[12px] text-[var(--ink)] border border-[var(--line)] px-2 py-1 disabled:opacity-50">
+                  {aiBusy ? "כותבים…" : "✨ לכתוב לי תיאור"}
                 </button>
               )}
             </div>
@@ -883,7 +883,7 @@ export default function ProductsPage() {
 
             {edit.optionKind !== "none" && (
               <>
-                <label className="block text-[10.5px] text-[var(--faint)] mb-1">
+                <label className="block text-[11.5px] text-[var(--faint)] mb-1">
                   {edit.optionKind === "color" ? "אילו צבעים אפשר לבחור?" : "אילו מידות אפשר לבחור?"}
                 </label>
                 <div className="flex flex-col gap-1.5 mb-2">
@@ -931,7 +931,7 @@ export default function ProductsPage() {
 
             {/* תגיות. רק שתיים לבחירה — השאר מחושבות מהמכירות ומהמלאי, וזה
                 בכוונה: "הכי נמכר" שאפשר להדביק הוא מדבקה, לא הישג. */}
-            <label className="block text-[11px] text-[var(--muted)] mb-1">תגית (לא חובה)</label>
+            <label className="block text-[12px] text-[var(--muted)] mb-1">תגית (לא חובה)</label>
             <div className="flex gap-2 mb-1">
               {PICKABLE.map((b) => (
                 <button
@@ -948,7 +948,7 @@ export default function ProductsPage() {
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-[var(--faint)] mb-3 leading-relaxed">
+            <p className="text-[12px] text-[var(--faint)] mb-3 leading-relaxed">
               ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי מופיעות לבד, לפי מה שבאמת קורה בחנות.
             </p>
 
@@ -974,14 +974,14 @@ export default function ProductsPage() {
                   <i className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all ${edit.trackStock ? "right-[19px]" : "right-[3px]"}`} />
                 </button>
               </div>
-              <p className="text-[11px] text-[var(--muted)] mt-1 leading-relaxed">
+              <p className="text-[12px] text-[var(--muted)] mt-1 leading-relaxed">
                 כשזה דלוק, קונים רואים "נשארו X" ו"אזל" בחנות שלך, ולא יוכלו להזמין יותר ממה שיש.
               </p>
             </div>
 
             {edit.trackStock && (
               <>
-                <label className="block text-[11px] text-[var(--muted)] mb-1">כמה יש לי כאלה</label>
+                <label className="block text-[12px] text-[var(--muted)] mb-1">כמה יש לי כאלה</label>
                 <div className="flex items-center gap-3 border border-[var(--line)] px-3 py-2 mb-3">
                   <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
                     className="w-8 h-8 border border-[var(--line)] bg-[var(--canvas)] text-base">−</button>
@@ -1038,7 +1038,7 @@ export default function ProductsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>
-                    <div className="text-[11px] text-[var(--muted)]">
+                    <div className="text-[12px] text-[var(--muted)]">
                       נמחק ב-{new Date(p.deleted_at!).toLocaleDateString("he-IL")} · ₪{p.price}
                     </div>
                   </div>
@@ -1097,7 +1097,7 @@ export default function ProductsPage() {
             href="/dashboard/share"
             className="w-full max-w-xs bg-[var(--ink)] text-white py-4 text-[15px] font-bold"
           >
-            שליחה לחברות
+            שליחה לחברים
           </a>
           {/* להוסיף עוד מוצר זה לא "אחר כך" — זה מה שרוב הבנות יעשו עכשיו,
               ולכן זה כפתור אמיתי ולא שורה אפורה בתחתית */}

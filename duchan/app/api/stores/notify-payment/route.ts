@@ -13,7 +13,7 @@ const METHOD_LABEL: Record<string, string> = { bit: "ביט", paybox: "פייב�
 export async function POST(req: NextRequest) {
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברת" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
 
   let body: { storeId?: string };
   try {
