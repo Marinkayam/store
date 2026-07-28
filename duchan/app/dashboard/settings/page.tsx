@@ -330,24 +330,82 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* תצוגה מקדימה חיה — מתעדכנת תוך כדי */}
-        <div
-          className=" overflow-hidden border border-[var(--line)]"
-          style={{ background: t.bg, color: t.ink, fontFamily: t.font }}
-        >
-          <div className="h-14 overflow-hidden" style={{ background: coverPreview ? undefined : "linear-gradient(135deg,var(--cream),var(--sand))" }}>
-            {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
+        {/* תצוגה מקדימה חיה.
+            לא דוגמית קטנה אלא הדוכן עצמו: אותו קאבר, אותה תמונה, אותו שם,
+            ומוצר אמיתי אחד עם כפתור בצבע הערכה. הכל לחיץ, כך שאפשר לערוך
+            מכאן במקום לחפש למטה איזה שדה שייך למה. */}
+        <div>
+          <div className="flex items-baseline justify-between mb-1.5">
+            <span className="t-label">ככה הדוכן נראה לקונות</span>
+            <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer" className="text-[11px] underline text-[var(--muted)]">
+              לפתוח את הדוכן האמיתי
+            </a>
           </div>
-          <div className="text-center -mt-5 pb-3">
-            <span className="inline-flex w-10 h-10 items-center justify-center text-xl  overflow-hidden" style={{ background: t.surface }}>
-              {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
-            </span>
-            <div className="font-bold text-sm mt-1">{name || "החנות שלך"}</div>
-            {tagline && <div className="text-[11px] opacity-70">{tagline}</div>}
-            <span className="inline-block mt-2 px-3 py-1 text-[11px] font-bold" style={{ background: t.primary, color: t.onPrimary }}>
-              ככה נראה כפתור ההזמנה
-            </span>
+          <div
+            className="overflow-hidden border border-[var(--line)]"
+            style={{ background: t.bg, color: t.ink, fontFamily: t.font }}
+          >
+            <button
+              onClick={() => coverRef.current?.click()}
+              aria-label="החלפת תמונת הקאבר"
+              className="block w-full h-24 overflow-hidden relative group"
+              style={coverPreview ? undefined : { background: coverCss(preset) }}
+            >
+              {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
+              <span className="absolute bottom-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5">
+                החלפת קאבר
+              </span>
+            </button>
+
+            <div className="text-center -mt-7 px-3 pb-3">
+              <button
+                onClick={() => avatarRef.current?.click()}
+                aria-label="החלפת תמונת הפרופיל"
+                className="relative inline-flex w-14 h-14 items-center justify-center text-2xl overflow-hidden"
+                style={{ background: t.surface, border: `2px solid ${t.bg}` }}
+              >
+                {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
+                <span
+                  className="absolute -bottom-0.5 -left-0.5 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white"
+                  style={{ borderRadius: "999px" }}
+                  aria-hidden
+                >
+                  ✎
+                </span>
+              </button>
+
+              <div className="font-bold text-[15px] mt-1.5">{name || "החנות שלך"}</div>
+              {tagline && <div className="text-[12px] opacity-70 mt-0.5">{tagline}</div>}
+              {/* עיר מוצגת לקונות, גיל לעולם לא */}
+              {info.city.trim() && (
+                <div className="text-[11px] opacity-60 mt-0.5">{info.city.trim()}</div>
+              )}
+              {info.about.trim() && (
+                <div className="text-[11.5px] opacity-75 mt-1.5 leading-relaxed">{info.about.trim()}</div>
+              )}
+
+              {/* מוצר לדוגמה: כאן רואים בפועל את צבע הכפתור של הערכה */}
+              <div className="mt-3 text-right" style={{ background: t.surface, border: `1px solid ${t.border}` }}>
+                <div className="h-20 flex items-center justify-center text-3xl opacity-70">🧁</div>
+                <div className="px-2.5 pb-2.5">
+                  <div className="text-[12.5px] font-medium">מוצר לדוגמה</div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-[13px] font-bold">₪15</span>
+                    <span
+                      className="px-3 py-1.5 text-[11.5px] font-bold"
+                      style={{ background: t.primary, color: t.onPrimary }}
+                    >
+                      הוספה לסל
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+          <p className="text-[11px] text-[var(--muted)] mt-1.5">
+            לחיצה על הקאבר או על התמונה העגולה מחליפה אותם. הגיל לא מופיע כאן
+            ולא בדוכן.
+          </p>
         </div>
 
         {/* קאבר: תמונה אמיתית או אחד מהמוכנים. תמונה תמיד גוברת. */}
@@ -441,16 +499,27 @@ export default function SettingsPage() {
           <p className="text-[11px] text-[var(--faint)] mt-0.5">כל ערכה משנה את צבעי החנות. לוחצים ורואים למעלה בתצוגה המקדימה.</p>
           <div className="grid grid-cols-3 gap-1.5 mt-1.5">
             {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, th]) => (
+              /* כל ערכה היא כרטיס מוצר קטן ולא ריבועי צבע מופשטים: ככה רואים
+                 מראש איך כפתור "הוספה לסל" ייראה בפועל, וזה מה שבאמת משתנה */
               <button key={k} onClick={() => { setTheme(k); setDirty(true); }}
-                className={`border-[1.5px] p-1.5 ${theme === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                aria-label={`ערכת ${th.label}`}
+                aria-pressed={theme === k}
+                className={`border-[1.5px] p-1.5 text-right ${theme === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
                 style={{ background: th.bg }}
               >
-                <div className="h-9 mb-1.5 flex items-center justify-center gap-1"
-                  style={{ border: "1px solid rgba(0,0,0,.07)", background: th.surface }}>
-                  <span className="w-4 h-4 block" style={{ background: th.primary }} />
-                  <span className="w-4 h-4 block" style={{ background: th.ink, opacity: 0.5 }} />
+                <div className="p-1" style={{ border: `1px solid ${th.border}`, background: th.surface }}>
+                  <div className="h-6 flex items-center justify-center text-[13px] opacity-70">🧁</div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[8.5px] font-bold" style={{ color: th.ink }}>₪15</span>
+                    <span className="px-1.5 py-[3px] text-[8px] font-bold"
+                      style={{ background: th.primary, color: th.onPrimary }}>
+                      לסל
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[11px] font-medium" style={{ color: th.ink }}>{th.label}</span>
+                <span className="block text-[11px] font-medium mt-1.5" style={{ color: th.ink }}>
+                  {th.label}
+                </span>
               </button>
             ))}
           </div>
@@ -570,9 +639,17 @@ export default function SettingsPage() {
 
         {/* איך ההזמנה מגיעה אלייך */}
         <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">איך ההזמנה מגיעה אלייך</div>
-          <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
-            הרשימה והסכום נכתבים לבד. את קובעת איך ההודעה נפתחת ואיך היא נגמרת.
+          <div className="text-[13px] font-bold">ההודעה שהקונה שולחת לך</div>
+          {/* השאלה הראשונה כאן היא "מי כותב את זה ומתי", ובלי תשובה לזה
+              שתי התיבות למטה נראות כמו טופס בלי הקשר. */}
+          <ol className="text-[11.5px] text-[var(--muted)] leading-relaxed mt-1.5 flex flex-col gap-1">
+            <li>1. הקונה בוחרת מוצרים בדוכן ולוחצת "שליחה בוואטסאפ".</li>
+            <li>2. וואטסאפ נפתח <b>אצלה</b>, וההודעה כבר כתובה בפנים.</li>
+            <li>3. היא לוחצת שלח, וההודעה מגיעה אלייך כהודעה רגילה.</li>
+          </ol>
+          <p className="text-[11.5px] text-[var(--muted)] leading-relaxed mt-2">
+            את רשימת המוצרים והסכום המערכת כותבת לבד. מה שאת קובעת כאן זה רק
+            המשפט שפותח את ההודעה והמשפט שסוגר אותה.
           </p>
           <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">שורת פתיחה</label>
           <input
@@ -592,8 +669,13 @@ export default function SettingsPage() {
             aria-label="שורת סיום"
             className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
           />
-          <div className="mt-2.5 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12px] leading-relaxed whitespace-pre-line">
-            {`${info.order_intro.trim() || `היי ${store.display_name.split(" ").pop()}! 👋`}
+          {/* הצהוב הוא מה שהיא כתבה, האפור הוא מה שנכתב לבד. בלי ההפרדה
+              הזו אי אפשר לדעת על מה משפיעות שתי התיבות שלמעלה. */}
+          <div className="mt-3 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12.5px] leading-relaxed whitespace-pre-line">
+            <mark className="bg-[var(--warn-bg)] text-[var(--ink)] px-1">
+              {info.order_intro.trim() || `היי ${store.display_name.split(" ").pop()}! 👋`}
+            </mark>
+            {`
 ראיתי את הדוכן ואני רוצה להזמין:
 
 • סקוויש אבוקדו × 1 · ₪18
@@ -601,9 +683,16 @@ export default function SettingsPage() {
 סה"כ: ₪18${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}
 אשלם ב${payout.payout_bit ? "ביט" : payout.payout_paybox ? "פייבוקס" : "מזומן"}
 
-הזמנה #1${info.order_outro.trim() ? `\n${info.order_outro.trim()}` : ""}`}
+הזמנה #1
+`}
+            <mark className="bg-[var(--warn-bg)] text-[var(--ink)] px-1">
+              {info.order_outro.trim() || "תודה! אחזור אלייך היום 💛"}
+            </mark>
           </div>
-          <p className="text-[11px] text-[var(--muted)] mt-1.5">כך זה ייראה אצלך בוואטסאפ.</p>
+          <p className="text-[11px] text-[var(--muted)] mt-2">
+            <span className="bg-[var(--warn-bg)] px-1">המסומן בצהוב</span> הוא מה שאת
+            כותבת. השאר נכתב לבד לפי מה שהקונה בחרה.
+          </p>
         </div>
 
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
