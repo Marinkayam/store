@@ -352,12 +352,7 @@ export default function SettingsPage() {
             הוא מופיע, וכך גם המשפט, התיאור, העיר, התמונה והקאבר. מה שרואים
             זה מה שהקונות יראו, ומתחת המוצרים האמיתיים. */}
         <div>
-          <div className="flex items-baseline justify-between mb-1.5">
-            <span className="t-label">הדוכן שלך, לחיצה על כל דבר עורכת אותו</span>
-            <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer" className="text-[11px] underline text-[var(--muted)]">
-              לפתוח את הדוכן האמיתי
-            </a>
-          </div>
+          <div className="t-label mb-1.5">הדוכן שלך, לחיצה על כל דבר עורכת אותו</div>
 
           <input ref={coverRef} type="file" accept="image/*" hidden
             onChange={(e) => e.target.files?.[0] && onCover(e.target.files[0])} />
@@ -383,18 +378,24 @@ export default function SettingsPage() {
             </button>
 
             <div className="px-4 pb-4 -mt-8">
-              {/* תמונת פרופיל */}
+              {/* תמונת פרופיל.
+                  ה-overflow-hidden יושב על העטיפה הפנימית ולא על הכפתור:
+                  כשהוא היה על הכפתור הוא חתך את תג העיפרון שיוצא מהפינה. */}
               <div className="text-center">
                 <button
                   onClick={() => avatarRef.current?.click()}
                   aria-label="החלפת תמונת הפרופיל"
-                  className="relative inline-flex w-16 h-16 items-center justify-center text-3xl overflow-hidden"
-                  style={{ background: t.surface, border: `2px solid ${t.bg}` }}
+                  className="relative inline-block w-16 h-16 align-middle"
                 >
-                  {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
                   <span
-                    className="absolute -bottom-0.5 -left-0.5 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white"
-                    style={{ borderRadius: "999px" }}
+                    className="flex w-full h-full items-center justify-center text-3xl overflow-hidden"
+                    style={{ background: t.surface, border: `2px solid ${t.bg}` }}
+                  >
+                    {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
+                  </span>
+                  <span
+                    className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white z-10"
+                    style={{ borderRadius: "999px", border: "1.5px solid var(--white)" }}
                     aria-hidden
                   >
                     ✎
@@ -411,7 +412,7 @@ export default function SettingsPage() {
                 aria-label="שם החנות"
                 placeholder="שם הדוכן"
                 onChange={(e) => { setName(e.target.value); setDirty(true); }}
-                className="editable block w-full text-center font-bold text-[17px] mt-2"
+                className="editable block w-full text-center font-bold text-[15px] mt-1.5"
                 style={{ color: t.ink }}
               />
               <input
@@ -420,7 +421,7 @@ export default function SettingsPage() {
                 aria-label="משפט אחד עלייך"
                 placeholder="משפט אחד עלייך (לא חובה)"
                 onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
-                className="editable block w-full text-center text-[12.5px] mt-1 opacity-80"
+                className="editable block w-full text-center text-[12px] mt-0.5 opacity-80"
                 style={{ color: t.ink }}
               />
               <input
@@ -429,7 +430,7 @@ export default function SettingsPage() {
                 aria-label="עיר"
                 placeholder="עיר (לא חובה)"
                 onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                className="editable block w-full text-center text-[11.5px] mt-1 opacity-65"
+                className="editable block w-full text-center text-[11px] mt-0.5 opacity-65"
                 style={{ color: t.ink }}
               />
               <textarea
@@ -439,9 +440,18 @@ export default function SettingsPage() {
                 aria-label="על הדוכן"
                 placeholder="כמה מילים על הדוכן (לא חובה)"
                 onChange={(e) => { setInfo({ ...info, about: e.target.value }); setDirty(true); }}
-                className="editable block w-full text-center text-[12px] mt-1.5 resize-none leading-relaxed opacity-80"
+                className="editable block w-full text-center text-[11.5px] mt-0.5 resize-none leading-snug opacity-80"
                 style={{ color: t.ink }}
               />
+
+              {/* משלוחים מופיעים כאן רק אם הם דלוקים, בדיוק כמו בדוכן עצמו.
+                  ההדלקה נמצאת למטה במסך, וזו התשובה ל"אם מפעילים, רואים?" */}
+              {info.ships && (
+                <div className="text-center text-[11px] mt-1.5 opacity-70">
+                  🚚 {info.shipping_note.trim() || "משלוח בתיאום"}
+                  {info.shipping_price !== "" && ` · ₪${info.shipping_price}`}
+                </div>
+              )}
 
               {/* המוצרים האמיתיים */}
               <div className="grid grid-cols-2 gap-2 mt-3">

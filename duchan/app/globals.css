@@ -154,10 +154,10 @@ h3 {
 .editable {
   background: transparent;
   border: 0;
-  border-bottom: 1px dashed color-mix(in srgb, currentColor 28%, transparent);
+  border-bottom: 1px dashed color-mix(in srgb, currentColor 16%, transparent);
   border-radius: 0;
   outline: none;
-  padding: 2px 4px;
+  padding: 1px 4px;
   font: inherit;
   color: inherit;
 }
