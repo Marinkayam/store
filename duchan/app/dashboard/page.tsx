@@ -529,34 +529,6 @@ export default function OrdersPage() {
                 </button>
               </div>
             )}
-            {(o.status === "cancelled" || o.status === "delivered") && (
-              confirmHide === o.id ? (
-                <div className="flex items-center gap-1.5 mt-2">
-                  <span className="flex-1 text-[12px] text-[var(--muted)]">
-                    להוריד את ההזמנה מהרשימה?
-                  </span>
-                  <button
-                    onClick={() => hideOrder(o)}
-                    className="bg-[var(--ink)] text-white py-2 px-3 text-xs font-medium"
-                  >
-                    כן, להוריד
-                  </button>
-                  <button
-                    onClick={() => setConfirmHide(null)}
-                    className="bg-white border border-[var(--line)] py-2 px-3 text-xs"
-                  >
-                    לא
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmHide(o.id)}
-                  className="text-[12px] text-[var(--muted)] underline mt-2"
-                >
-                  להוריד מהרשימה
-                </button>
-              )
-            )}
             {o.status === "paid" && (
               <div className="flex gap-1.5 mt-2">
                 <button
@@ -582,6 +554,39 @@ export default function OrdersPage() {
                   ביטול והחזרת מלאי
                 </button>
               </div>
+            )}
+
+            {/* להוריד מהרשימה — על כל הזמנה, בכל סטטוס.
+                הקונה יכולה ללחוץ "שליחה בוואטסאפ" ואז לא לשלוח כלום, וההזמנה
+                כבר נרשמה. אין שום דרך לדעת את זה מהצד שלנו — וואטסאפ לא
+                מדווח — ולכן היחידה שיודעת שההזמנה לא אמיתית היא היא.
+                קודם הכפתור הופיע רק על מבוטלות ונמסרו, אז כדי להיפטר
+                מהזמנה שלא קרתה היא הייתה צריכה קודם "לבטל" אותה. */}
+            {confirmHide === o.id ? (
+              <div className="flex items-center gap-1.5 mt-2">
+                <span className="flex-1 text-[12px] text-[var(--muted)]">
+                  להוריד את ההזמנה מהרשימה?
+                </span>
+                <button
+                  onClick={() => hideOrder(o)}
+                  className="bg-[var(--ink)] text-white py-2 px-3 text-xs font-medium"
+                >
+                  כן, להוריד
+                </button>
+                <button
+                  onClick={() => setConfirmHide(null)}
+                  className="bg-white border border-[var(--line)] py-2 px-3 text-xs"
+                >
+                  לא
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmHide(o.id)}
+                className="text-[12px] text-[var(--muted)] underline mt-2"
+              >
+                {o.status === "sent" ? "ההזמנה לא אמיתית, להוריד" : "להוריד מהרשימה"}
+              </button>
             )}
           </div>
         ))}
