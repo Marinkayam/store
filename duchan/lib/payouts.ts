@@ -32,10 +32,20 @@ export function isPayoutLink(url: string): boolean {
  * הבדיקה חוזרת גם כאן ולא רק בשמירה: שורה שנכתבה לפני הטריגר, או ידנית
  * מהדאטהבייס, לא תהפוך לקישור יוצא בדף פומבי.
  */
-export function payoutLink(p: PayoutPrefs): { url: string; label: string } | null {
+export function payoutLink(
+  p: PayoutPrefs
+): { url: string; label: string; method: PayMethod } | null {
   const url = p.payout_link?.trim();
   if (!url || !isPayoutLink(url)) return null;
-  return { url, label: /bitpay/i.test(url) ? "תשלום בביט" : "תשלום בפייבוקס" };
+  // האמצעי נגזר מהכתובת, כדי שאפשר יהיה להציג את הלינק רק למי שבחרה
+  // באמצעי שלו. קודם התנאי במסך היה מקובע ל-paybox, ולכן לינק של ביט
+  // נשמר יפה בהגדרות ולא הוצג לקונה אף פעם.
+  const isBit = /bitpay/i.test(url);
+  return {
+    url,
+    label: isBit ? "תשלום בביט" : "תשלום בפייבוקס",
+    method: isBit ? "bit" : "paybox",
+  };
 }
 
 /** אמצעי התשלום שהחנות מקבלת, כרשימה שאפשר לבחור ממנה. */
@@ -45,19 +55,6 @@ export function payMethods(p: PayoutPrefs): { key: PayMethod; label: string }[] 
   if (p.payout_paybox) out.push({ key: "paybox", label: "פייבוקס" });
   if (p.payout_cash) out.push({ key: "cash", label: "מזומן" });
   return out;
-}
-
-/**
- * ההוראות לאמצעי שהקונה בחרה, כפי שהן נכנסות להודעת הוואטסאפ.
- *
- * בכוונה בלי מספר ובלי לינק: את הפרטים המדויקים למי ולאן לשלם, בעלת/בעל
- * הדוכן משלימה בעצמה בשיחה, לא המערכת.
- */
-export function payInstructions(method: PayMethod | null): string {
-  if (method === "bit") return "אשלם בביט";
-  if (method === "paybox") return "אשלם בפייבוקס";
-  if (method === "cash") return "אשלם במזומן במסירה";
-  return "";
 }
 
 /** שמות אמצעי התשלום שהחנות מקבלת. בטוח להצגה ב-HTML — אין כאן מספרים. */
@@ -109,18 +106,4 @@ export function deliveryLine(
     .filter(Boolean)
     .join(" · ");
   return `בחרתי בשיטת מסירה: משלוח · ${extra}`;
-}
-
-/**
- * השורה שנכנסת להודעת הוואטסאפ של ההזמנה.
- * נבנית בלקוח רק אחרי שהשרת אישר את ההזמנה, יחד עם שאר ההודעה.
- */
-export function payoutOrderLine(p: PayoutPrefs): string {
-  const labels = payoutLabels(p);
-  const note = p.payout_note?.trim();
-  const link = payoutLink(p);
-  if (!labels.length && !note && !link) return "";
-  const head = labels.length ? `אפשר לשלם ב: ${labels.join(" / ")}` : "";
-  // הלינק נכנס גם להודעת הוואטסאפ: שם ההזמנה נסגרת בפועל, ושם נוח לשלם
-  return [head, link ? `${link.label}: ${link.url}` : "", note].filter(Boolean).join("\n");
 }

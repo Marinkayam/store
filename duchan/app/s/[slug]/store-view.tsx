@@ -886,7 +886,7 @@ export default function StoreView({
               {store.payout_note && <div className="opacity-70 mt-0.5">{store.payout_note}</div>}
               {/* לינק התשלום נפתח בלשונית חדשה: הסל והטופס נשארים כאן,
                   והקונה חוזרת לשלוח את ההזמנה אחרי ששילמה. */}
-              {payLink && chosenPay === "paybox" && (
+              {payLink && chosenPay === payLink.method && (
                 <a
                   href={payLink.url}
                   target="_blank"
