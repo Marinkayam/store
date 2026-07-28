@@ -34,3 +34,20 @@ export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@duc
 export const CONTACT_WHATSAPP = (process.env.NEXT_PUBLIC_SALES_WHATSAPP || "972545888471").replace(/\D/g, "");
 export const contactWhatsappUrl = (msg: string) =>
   `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+
+/**
+ * התת-דומיין של Squish Club.
+ *
+ * אותה אפליקציה ואותו דיפלוי — ה-middleware מזהה את המארח ומפנה פנימה
+ * ל-/squish. אותם מסכים נגישים גם ב-duchan.app/squish, וזה מה שמאפשר
+ * לפתח ולבדוק לפני שה-DNS בכלל מכוון.
+ */
+export const SQUISH_HOST = process.env.NEXT_PUBLIC_SQUISH_HOST || "squish.duchan.app";
+
+/**
+ * הכתובת הפומבית של Squish. כל עוד התת-דומיין לא מחובר, הקישורים
+ * שנשלחות ממשיכים לעבוד דרך הדומיין הראשי.
+ */
+export const SQUISH_URL = process.env.NEXT_PUBLIC_SQUISH_URL || `${SITE_URL}/squish`;
+export const squishAbsolute = (path: string) =>
+  `${SQUISH_URL}${path.startsWith("/") ? path : `/${path}`}`;

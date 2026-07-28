@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Squish Club: שני סקווישים ומדף. אותה פלטה כמו דוכן, מטאפורה של מדף אוסף. -->
+  <rect width="100" height="100" fill="#f6f0e8"/>
+  <g stroke="#9b6d3e" stroke-width="3.4" stroke-linejoin="round">
+    <path d="M20 56 c0 -13 7 -22 17 -22 s17 9 17 22 c0 11 -8 18 -17 18 s-17 -7 -17 -18 z" fill="#b89ac8"/>
+    <path d="M54 58 c0 -11 6 -19 15 -19 s15 8 15 19 c0 10 -7 16 -15 16 s-15 -6 -15 -16 z" fill="#a8a46d"/>
+    <rect x="14" y="74" width="72" height="8" fill="#ece6de"/>
+  </g>
+  <g fill="#262626">
+    <circle cx="32" cy="52" r="1.9"/><circle cx="42" cy="52" r="1.9"/>
+  </g>
+  <path d="M33 58 a4.2 4.2 0 0 0 8.4 0" fill="none" stroke="#262626" stroke-width="1.5" stroke-linecap="round"/>
+  <g stroke="#b89ac8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M36 22 h16 l-4.5 -4.5"/>
+    <path d="M64 30 h-16 l4.5 4.5"/>
+  </g>
+</svg>

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const { kind, contentType, bytes, storeId } = body;
   if (
-    !kind || !["image", "video", "poster", "cover", "avatar"].includes(kind) ||
+    !kind || !["image", "video", "poster", "cover", "avatar", "squish", "squish-video", "squish-poster"].includes(kind) ||
     !contentType || !(contentType in EXT) ||
     !bytes || bytes <= 0 || bytes > QUOTAS.maxUploadBytes
   ) {
@@ -46,9 +46,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });
   }
 
+  const db = supabaseAdmin();
+
+  /**
+   * Squish Club מעלה מול פרופיל האוסף ולא מול חנות.
+   *
+   * עד כאן המסלול היחיד היה "מצא חנות של המשתמשת", ולכן אספנית שאין לה
+   * דוכן לא יכלה להעלות כלום. המכסה נספרת בנפרד על squish_profiles, כדי
+   * שאוסף לא יאכל את המקום של החנות ולהפך.
+   */
+  if (kind.startsWith("squish")) {
+    const { data: profiles, error } = await db
+      .from("squish_profiles")
+      .select("id, media_bytes")
+      .eq("user_id", user.id)
+      .limit(1);
+    if (error) {
+      console.error("[upload] squish profile lookup failed:", error.message);
+      return NextResponse.json({ error: "לא הצלחנו לאמת את האוסף" }, { status: 500 });
+    }
+    const profile = profiles?.[0];
+    if (!profile) return NextResponse.json({ error: "עוד אין לך אוסף" }, { status: 404 });
+    if (profile.media_bytes + bytes > QUOTAS.mediaBytesPerStore) {
+      return NextResponse.json(
+        { error: "נגמר המקום באוסף, אפשר למחוק סרטון ישן כדי לפנות" },
+        { status: 413 }
+      );
+    }
+    const squishKey = `squish/items/${profile.id}/${randomUUID()}.${EXT[contentType]}`;
+    const squishUrl = await presignedUpload(squishKey, contentType, bytes);
+    await db
+      .from("squish_profiles")
+      .update({ media_bytes: profile.media_bytes + bytes })
+      .eq("id", profile.id);
+    return NextResponse.json({ url: squishUrl, key: squishKey });
+  }
+
   // storeId מפורש כשיש יותר מחנות אחת לחשבון — אחרת ההעלאה נוחתת בחנות הלא נכונה.
   // הבעלות נאכפת כאן בכל מקרה.
-  const db = supabaseAdmin();
   let query = db.from("stores").select("id, media_bytes").eq("owner_id", user.id);
   query = storeId ? query.eq("id", storeId) : query.order("created_at", { ascending: true });
   const { data: stores } = await query.limit(1);

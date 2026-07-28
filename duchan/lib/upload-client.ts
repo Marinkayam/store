@@ -20,7 +20,7 @@ function normalizeType(raw: string): string {
 }
 
 export async function uploadBlob(
-  kind: "image" | "video" | "poster" | "cover" | "avatar",
+  kind: "image" | "video" | "poster" | "cover" | "avatar" | "squish" | "squish-video" | "squish-poster",
   blob: Blob,
   storeId?: string
 ): Promise<{ key: string } | { error: string }> {

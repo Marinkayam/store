@@ -1,0 +1,19 @@
+{
+  "name": "Squish Club",
+  "short_name": "Squish",
+  "description": "מועדון הסקווישים. אוסף אישי, וטריידים עם חברות.",
+  "start_url": "/squish/collection",
+  "scope": "/squish",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbf8f3",
+  "theme_color": "#fbf8f3",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    { "src": "/squish-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/squish-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/squish-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/squish-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
