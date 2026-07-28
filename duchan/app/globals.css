@@ -155,10 +155,14 @@ h3 {
    בלי קו מקווקו במצב רגיל. הקווים האלה הפכו את הכרטיס לרועש ומשורטט,
    והכותרת מעל הכרטיס ממילא אומרת שאפשר ללחוץ על הכל. הקו מופיע רק
    כשעוברים מעל או כשעומדים בשדה. */
+/* שדה שנערך במקום שבו הוא מוצג.
+   הקו התחתון קיים *במנוחה* ולא רק ב-hover: בטלפון אין hover, ובלעדיו
+   השם של הדוכן נראה בדיוק כמו כותרת — וזו הייתה הסיבה שבעלות דוכן
+   דיווחו שאי אפשר לשנות את שם החנות. אפשר היה, פשוט לא היה סימן. */
 .editable {
   background: transparent;
   border: 0;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 22%, transparent);
   border-radius: 0;
   outline: none;
   padding: 0 4px;
@@ -170,7 +174,7 @@ h3 {
   opacity: 0.45;
 }
 .editable:hover {
-  border-bottom-color: color-mix(in srgb, currentColor 30%, transparent);
+  border-bottom-color: color-mix(in srgb, currentColor 45%, transparent);
 }
 .editable:focus {
   border-bottom-color: currentColor;

@@ -355,7 +355,7 @@ export default function SettingsPage() {
             הוא מופיע, וכך גם המשפט, התיאור, העיר, התמונה והקאבר. מה שרואים
             זה מה שהקונות יראו, ומתחת המוצרים האמיתיים. */}
         <div>
-          <div className="t-label mb-1.5">הדוכן שלך, לחיצה על כל דבר עורכת אותו</div>
+          <div className="t-label mb-1.5">הדוכן שלך — לחיצה על השם, התיאור או התמונה עורכת אותם</div>
 
           <input ref={coverRef} type="file" accept="image/*" hidden
             onChange={(e) => e.target.files?.[0] && onCover(e.target.files[0])} />
@@ -409,15 +409,27 @@ export default function SettingsPage() {
               {/* שם, תיאור ועיר נערכים בדיוק במקום שבו הם מוצגים.
                   בלי קווים מקווקווים ובלי רווחים מיותרים: הכותרת מעל הכרטיס
                   כבר אומרת שאפשר ללחוץ על הכל, והקווים רק הרעישו. */}
-              <input
-                value={name}
-                maxLength={40}
-                aria-label="שם החנות"
-                placeholder="שם הדוכן שלך"
-                onChange={(e) => { setName(e.target.value); setDirty(true); }}
-                className="editable block w-full text-center font-bold text-[15px]"
-                style={{ color: t.ink }}
-              />
+              {/* שם הדוכן מקבל עיפרון משלו ולא רק קו תחתון.
+                  זה השדה שמחפשים בפועל כשרוצים לשנות משהו, והוא היחיד
+                  שנראה בדיוק כמו כותרת של הדוכן — אז הוא צריך לומר
+                  במפורש שהוא שדה, כמו הקאבר והתמונה שכבר עושים את זה. */}
+              <div className="relative">
+                <input
+                  value={name}
+                  maxLength={40}
+                  aria-label="שם החנות"
+                  placeholder="שם הדוכן שלך"
+                  onChange={(e) => { setName(e.target.value); setDirty(true); }}
+                  className="editable block w-full text-center font-bold text-[15px] pe-6"
+                  style={{ color: t.ink }}
+                />
+                <span
+                  className="absolute end-0 top-1/2 -translate-y-1/2 text-[12px] opacity-55 pointer-events-none"
+                  aria-hidden
+                >
+                  ✎
+                </span>
+              </div>
               {/* תיאור אחד ולא שניים. קודם היו כאן גם "משפט אחד עלייך" וגם
                   "כמה מילים על הדוכן", והם נראו כמו שתי הערות שאומרות את אותו
                   דבר. מה שהיה כתוב בתיאור הארוך עולה לכאן בטעינה ונשמר יחד. */}
@@ -689,20 +701,19 @@ export default function SettingsPage() {
             <li>3. לוחצים שלח, וההודעה נוחתת אצלך כהודעת וואטסאפ רגילה.</li>
           </ol>
           <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
-            ההודעה נכתבת לבד, אין מה למלא כאן:
+            ההודעה נכתבת לבד, אין מה למלא כאן. השם ומספר ההזמנה בשורה הראשונה,
+            כדי שתדעי איזו הודעה שייכת לאיזו הזמנה כבר מרשימת השיחות:
           </p>
           {/* בלי "שורת פתיחה" ו"שורת סיום": שתי תיבות שביקשו טקסט לפני
               שבכלל היה ברור מה ההודעה, וההודעה מסתדרת מצוין בלעדיהן. */}
           <div className="mt-2 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12.5px] leading-relaxed whitespace-pre-line">
-            {`היי ${store.display_name.split(" ").pop()}! 👋
+            {`היי! 👋 אני נועה · הזמנה #7
 ראיתי את הדוכן שלך ואני רוצה להזמין:
 
 • סקוויש אבוקדו × 1 · ₪18
 • צמיד קשת × 2 · ₪30
 
-סה"כ: ₪48${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}${payLabels.length ? `\n${payExampleLine}` : ""}
-
-הזמנה #1`}
+סה"כ: ₪48${info.ships ? `\nמשלוח: ${info.shipping_note.trim() || "בתיאום"}${info.shipping_price ? ` · ₪${info.shipping_price}` : ""}` : ""}${payLabels.length ? `\n${payExampleLine}` : ""}`}
           </div>
           <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
             {payLabels.length
