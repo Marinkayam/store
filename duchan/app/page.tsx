@@ -90,24 +90,13 @@ export default function Landing() {
         <StallArt className="w-64 h-auto stall-sway" />
         <h1 className="text-[1.5rem] leading-none font-semibold tracking-[-0.02em] mt-3">דוכן</h1>
         <p className="text-[15px] leading-relaxed mt-3 max-w-[19rem] text-[var(--ink)]">
+          יש לך אוסף ענקי של סקוושי?
+          <br />
           צעצועים, בגדים וספרים שכבר לא צריך?
           <br />
           <span className="font-medium">פותחים דוכן ומוכרים לחברים.</span>
         </p>
       </div>
-
-      {/* מי שכבר פתחה דוכן וחזרה בלי להיות מחוברת רואה את זה *לפני* טופס
-          הפתיחה, לא אחריו: אחרת יש סיכוי שהיא תתחיל למלא "דוכן חדש" מתוך
-          בלבול, בזמן שכל מה שהיא רצתה זה לחזור ולערוך את הדוכן הקיים. */}
-      {!mine && (
-        <a
-          href="/login"
-          className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
-        >
-          <span>כבר פתחת דוכן?</span>
-          <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
-        </a>
-      )}
 
       {/* בלי שדה שם כאן: השם נשאל ממילא במסך הראשון של ההקמה, ושתי
           שאלות לאותו דבר גרמו לתחושה של טופס כפול. */}
@@ -121,6 +110,18 @@ export default function Landing() {
           <a href="/price" className="underline font-medium">איך זה עובד?</a>
         </p>
       </form>
+
+      {/* הכניסה לדוכן קיים יושבת בתחתית: היא נועדה למי שכבר מכירה את
+          המקום ויודעת לחפש אותה, ולמעלה היא רק גנבה מקום מהפעולה הראשית. */}
+      {!mine && (
+        <a
+          href="/login"
+          className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
+        >
+          <span>כבר פתחת דוכן?</span>
+          <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
+        </a>
+      )}
 
       <p className="t-small text-[var(--muted)]">
         <a href="/terms" className="underline">תנאי שימוש</a>
