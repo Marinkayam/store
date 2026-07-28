@@ -1,4 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="22" fill="#15161B"/>
-  <text x="50" y="66" font-size="48" text-anchor="middle">🛍️</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- אייקון האפליקציה. בלי אימוג'י בתוך text: האימוג'י תלוי בפונט של המערכת
+       שמרנדרת אותו, ובראסטור של אייפון הוא יוצא ריק. הדוכן מצויר בצורות.
+       בלי פינות מעוגלות כאן — מערכת ההפעלה חותכת את הפינות בעצמה. -->
+  <rect width="100" height="100" fill="#f6f0e8"/>
+  <!-- פנים הדוכן בלבן, אחרת הוא באותו גוון כמו הרקע ונראה חלול -->
+  <rect x="20" y="28" width="60" height="46" fill="#ffffff"/>
+  <g stroke="#9b6d3e" stroke-width="3.2" stroke-linejoin="round">
+    <rect x="16" y="22" width="68" height="6" fill="#9b6d3e"/>
+    <path d="M16 28 h17 v9 a8.5 7.5 0 0 1 -17 0 z" fill="#b89ac8"/>
+    <path d="M33 28 h17 v9 a8.5 7.5 0 0 1 -17 0 z" fill="#f6f0e8"/>
+    <path d="M50 28 h17 v9 a8.5 7.5 0 0 1 -17 0 z" fill="#b89ac8"/>
+    <path d="M67 28 h17 v9 a8.5 7.5 0 0 1 -17 0 z" fill="#f6f0e8"/>
+    <rect x="20" y="44" width="6" height="30" fill="#9b6d3e"/>
+    <rect x="74" y="44" width="6" height="30" fill="#9b6d3e"/>
+    <rect x="12" y="74" width="76" height="8" fill="#9b6d3e"/>
+    <path d="M50 47 L53 55 L61.5 55.3 L54.8 60.5 L57.2 68.7 L50 64 L42.8 68.7 L45.2 60.5 L38.5 55.3 L47 55 Z" fill="#b89ac8"/>
+  </g>
+  <g fill="#262626">
+    <circle cx="46.9" cy="57.9" r="0.95"/>
+    <circle cx="53.1" cy="57.9" r="0.95"/>
+  </g>
+  <path d="M47.4 61 a2.6 2.6 0 0 0 5.2 0" fill="none" stroke="#262626" stroke-width="0.9" stroke-linecap="round"/>
 </svg>

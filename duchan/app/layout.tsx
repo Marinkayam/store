@@ -28,6 +28,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
         <link rel="manifest" href="/manifest.json" />
+        {/* אייפון מתעלם מ-manifest ומ-SVG כשמוסיפים למסך הבית. בלי
+            apple-touch-icon הוא שם צילום מסך מוקטן של הדף במקום אייקון,
+            ובלי apple-mobile-web-app-capable הוא פותח בספארי עם הכתובת
+            למעלה במקום כאפליקציה. */}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="דוכן" />
       </head>
       <body>{children}</body>
     </html>

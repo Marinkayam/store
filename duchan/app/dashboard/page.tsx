@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore, confettiBurst } from "./use-store";
 import WhatsNew from "./whats-new";
+import InstallCard from "../install-card";
 import type { Order } from "@/lib/types";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
@@ -33,16 +34,32 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [noteEditId, setNoteEditId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+  // הסתרת הזמנה היא פעולה חד-כיוונית במסך, אז שואלים פעם אחת לפני
+  const [confirmHide, setConfirmHide] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!store) return;
     const supa = supabaseBrowser();
-    const { data } = await supa
+    /* הסינון על deleted_at רץ רק אם העמודה קיימת. בלי הנפילה הזו, דאטהבייס
+       שעוד לא קיבל את מיגרציה 0024 מחזיר 400 וכל רשימת ההזמנות נעלמת —
+       בדיוק סוג התקלה שכבר הפיל פעם את רשימת החנויות בחמ"ל. */
+    const { data, error } = await supa
+      .from("orders")
+      .select("*")
+      .eq("store_id", store.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    if (!error) {
+      setOrders((data as Order[]) ?? []);
+      return;
+    }
+    console.error("[orders] deleted_at unavailable, showing everything:", error.message);
+    const { data: all } = await supa
       .from("orders")
       .select("*")
       .eq("store_id", store.id)
       .order("created_at", { ascending: false });
-    setOrders((data as Order[]) ?? []);
+    setOrders((all as Order[]) ?? []);
   }, [store]);
 
   useEffect(() => {
@@ -81,6 +98,25 @@ export default function OrdersPage() {
       return;
     }
     showToast(o.status === "sent" ? "ההזמנה בוטלה" : "ההזמנה בוטלה והמלאי חזר");
+    refresh();
+  }
+
+  /* הסתרה, לא מחיקה: השורה נשארת בדאטהבייס ובגיבוי, והיא רק יורדת מהמסך.
+     מוצע רק על הזמנות שכבר נגמרו — מבוטלת או נמסרה — כדי שלא תיעלם הזמנה
+     שעוד מחכה לטיפול. */
+  async function hideOrder(o: Order) {
+    const supa = supabaseBrowser();
+    const { error } = await supa
+      .from("orders")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", o.id);
+    if (error) {
+      console.error("[orders] hide failed:", error.message);
+      showToast("ההסתרה נכשלה, צריך עדכון דאטהבייס");
+      return;
+    }
+    setConfirmHide(null);
+    showToast("ההזמנה ירדה מהרשימה");
     refresh();
   }
 
@@ -221,6 +257,10 @@ export default function OrdersPage() {
       )}
 
       <div className="p-3 flex flex-col gap-2">
+        {/* "להוסיף למסך הבית" יושב כאן ולא בהגדרות: זה המסך שהיא פותחת
+            הכי הרבה, וזה הרגע שבו כדאי לה שיהיה לזה קיצור. הכרטיס נעלם
+            לבד כשהאפליקציה כבר במסך הבית, או כשסוגרים אותו. */}
+        <InstallCard />
         {orders.length === 0 &&
           (store.activated_at ? (
             <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
@@ -364,6 +404,34 @@ export default function OrdersPage() {
                   ביטול
                 </button>
               </div>
+            )}
+            {(o.status === "cancelled" || o.status === "delivered") && (
+              confirmHide === o.id ? (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <span className="flex-1 text-[12px] text-[var(--muted)]">
+                    להוריד את ההזמנה מהרשימה?
+                  </span>
+                  <button
+                    onClick={() => hideOrder(o)}
+                    className="bg-[var(--ink)] text-white py-2 px-3 text-xs font-medium"
+                  >
+                    כן, להוריד
+                  </button>
+                  <button
+                    onClick={() => setConfirmHide(null)}
+                    className="bg-white border border-[var(--line)] py-2 px-3 text-xs"
+                  >
+                    לא
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmHide(o.id)}
+                  className="text-[12px] text-[var(--muted)] underline mt-2"
+                >
+                  להוריד מהרשימה
+                </button>
+              )
             )}
             {o.status === "paid" && (
               <div className="flex gap-1.5 mt-2">
