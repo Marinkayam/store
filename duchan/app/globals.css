@@ -149,28 +149,30 @@ h3 {
 }
 
 /* שדה שנראה כמו הטקסט שהוא עורך.
-   משמש במסך "החנות שלי", שבו העריכה קורית על הדוכן עצמו ולא בטופס נפרד:
-   השם נערך במקום שבו השם מופיע. קו מקווקו עדין מסמן "אפשר להקליד כאן"
-   בלי להפוך את התצוגה לטופס, והמסגרת המלאה מופיעה רק במיקוד. */
+   משמש במסך "הדוכן שלי", שבו העריכה קורית על הדוכן עצמו ולא בטופס נפרד:
+   השם נערך במקום שבו השם מופיע.
+
+   בלי קו מקווקו במצב רגיל. הקווים האלה הפכו את הכרטיס לרועש ומשורטט,
+   והכותרת מעל הכרטיס ממילא אומרת שאפשר ללחוץ על הכל. הקו מופיע רק
+   כשעוברים מעל או כשעומדים בשדה. */
 .editable {
   background: transparent;
   border: 0;
-  border-bottom: 1px dashed color-mix(in srgb, currentColor 16%, transparent);
+  border-bottom: 1px solid transparent;
   border-radius: 0;
   outline: none;
-  padding: 1px 4px;
+  padding: 0 4px;
   font: inherit;
   color: inherit;
 }
 .editable::placeholder {
   color: currentColor;
-  opacity: 0.4;
+  opacity: 0.45;
 }
 .editable:hover {
-  border-bottom-color: color-mix(in srgb, currentColor 55%, transparent);
+  border-bottom-color: color-mix(in srgb, currentColor 30%, transparent);
 }
 .editable:focus {
-  border-bottom-style: solid;
   border-bottom-color: currentColor;
   background: color-mix(in srgb, currentColor 6%, transparent);
 }

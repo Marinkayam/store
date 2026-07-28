@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   // חנות שלא הופעלה לא מקבלת הזמנות, גם אם מישהו הגיע ללינק
   if (!store || !store.activated_at || store.status !== "active") {
-    return NextResponse.json({ error: "החנות סגורה כרגע" }, { status: 404 });
+    return NextResponse.json({ error: "הדוכן סגור כרגע" }, { status: 404 });
   }
 
   // נשמר על ההזמנה עצמה (p_ip_hash) לצורך מעקב, לא לשם הגבלת קצב —

@@ -7,8 +7,9 @@ import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
-import { isPayoutLink, payoutLabels, payInstructions } from "@/lib/payouts";
+import { isPayoutLink, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
+import { ACTIVATION_PRICE } from "@/lib/pricing";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -274,7 +275,7 @@ export default function SettingsPage() {
     }
     setStore({ ...store, status: next });
     await refreshStorePage(store.slug);
-    showToast(next === "paused" ? "החנות בהפסקה. הלינק מציג 'החנות סגורה'" : "החנות פתוחה שוב 🎉");
+    showToast(next === "paused" ? "הדוכן בהפסקה. הלינק מציג 'הדוכן סגור'" : "הדוכן פתוח שוב 🎉");
   }
 
   if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
@@ -282,14 +283,10 @@ export default function SettingsPage() {
 
   const storeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/s/${store.slug}`;
 
-  /* שורת התשלום בהודעה נגזרת ממה שסומן, ולא מקובעת לביט.
-     סימנו יותר מאחד? הקונה בוחרת, והדוגמה מציגה את הראשון. */
+  /* שורת התשלום בהודעה מונה את כל מה שסומן, ולא את מה שהקונה בחרה:
+     בשלב ההודעה עוד לא שילמו, אז מה שמועיל זה מה שהדוכן מקבל. */
   const payLabels = payoutLabels(payout);
-  const payExampleLine = payout.payout_bit
-    ? payInstructions("bit")
-    : payout.payout_paybox
-      ? payInstructions("paybox")
-      : payInstructions("cash");
+  const payExampleLine = payoutLine(payout);
 
   return (
     <div>
@@ -329,21 +326,21 @@ export default function SettingsPage() {
           <div className="bg-white border border-[var(--line)] p-3 flex items-center justify-between">
             <div>
               <div className="text-[13px] font-medium">
-                {store.status === "active" ? "החנות פתוחה" : "החנות בהפסקה"}
+                {store.status === "active" ? "הדוכן פתוח" : "הדוכן בהפסקה"}
               </div>
               {/* הטוגל לבדו לא אמר שאפשר לחזור אחורה, וזה מה שגרם להיסוס:
                   צריך לכתוב במפורש שסגירה היא זמנית ושום דבר לא נמחק. */}
               <div className="text-[12px] text-[var(--muted)] leading-relaxed">
                 {store.status === "active"
-                  ? "כולם יכולים להיכנס ולהזמין. אפשר לסגור מתי שרוצים בלחיצה כאן, ולפתוח שוב אחר כך."
-                  : "הלינק מציג 'החנות סגורה כרגע'. המוצרים וההזמנות נשמרו, לחיצה כאן פותחת שוב."}
+                  ? "כולם יכולים להיכנס ולהזמין. אפשר לסגור את הדוכן מתי שרוצים בלחיצה כאן, ולפתוח שוב אחר כך."
+                  : "הלינק מציג 'הדוכן סגור כרגע'. המוצרים וההזמנות נשמרו, לחיצה כאן פותחת שוב."}
               </div>
             </div>
             <button
               onClick={togglePause}
               className={`w-11 h-6.5 relative transition ${store.status === "active" ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
               style={{ width: 44, height: 26 }}
-              aria-label="פתיחה או הפסקה של החנות"
+              aria-label="פתיחה או סגירה של הדוכן"
             >
               <i
                 className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all"
@@ -409,16 +406,16 @@ export default function SettingsPage() {
                 </button>
               </div>
 
-              {/* שם, משפט, עיר, תיאור — נערכים בדיוק במקום שבו הם מוצגים.
-                  editable מוסיף קו מקווקו עדין, כדי שיהיה ברור שאפשר להקליד
-                  בלי להפוך את זה לטופס. */}
+              {/* שם, תיאור ועיר נערכים בדיוק במקום שבו הם מוצגים.
+                  בלי קווים מקווקווים ובלי רווחים מיותרים: הכותרת מעל הכרטיס
+                  כבר אומרת שאפשר ללחוץ על הכל, והקווים רק הרעישו. */}
               <input
                 value={name}
                 maxLength={40}
                 aria-label="שם החנות"
-                placeholder="שם הדוכן"
+                placeholder="שם הדוכן שלך"
                 onChange={(e) => { setName(e.target.value); setDirty(true); }}
-                className="editable block w-full text-center font-bold text-[15px] mt-1.5"
+                className="editable block w-full text-center font-bold text-[15px]"
                 style={{ color: t.ink }}
               />
               {/* תיאור אחד ולא שניים. קודם היו כאן גם "משפט אחד עלייך" וגם
@@ -429,16 +426,16 @@ export default function SettingsPage() {
                 maxLength={140}
                 rows={2}
                 aria-label="תיאור הדוכן"
-                placeholder="מה מוכרים כאן? (לא חובה)"
+                placeholder="פה כותבים את מה שאתם מוכרים בדוכן"
                 onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
-                className="editable block w-full text-center text-[13px] mt-1 resize-none leading-snug opacity-85"
+                className="editable block w-full text-center text-[12px] resize-none leading-snug opacity-85"
                 style={{ color: t.ink }}
               />
 
               {/* עיר ומשלוחים בשורה אחת, בדיוק כמו בדוכן האמיתי.
                   המשלוחים מופיעים רק כשהם דלוקים, וזו התשובה ל"אם מפעילים,
                   רואים?" — ההדלקה עצמה נמצאת למטה במסך. */}
-              <div className="flex items-center justify-center gap-1.5 mt-1.5 text-[12px] opacity-75 flex-wrap">
+              <div className="flex items-center justify-center gap-1.5 text-[12px] opacity-75 flex-wrap">
                 <span aria-hidden>📍</span>
                 <input
                   value={info.city}
@@ -498,10 +495,6 @@ export default function SettingsPage() {
               </a>
             </div>
           </div>
-
-          <p className="text-[12px] text-[var(--muted)] mt-2">
-            הגיל לא מופיע כאן ולא בדוכן. עיר כן, כדי שהקונים ידעו אם המסירה הגיונית.
-          </p>
 
           {/* אפשרויות משניות לקאבר ולתמונה — מתחת לדוכן, לא במקומו */}
           <div className="bg-white border border-[var(--line)] p-3 mt-2.5">
@@ -574,38 +567,64 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <label className="text-[12px] text-[var(--muted)]">
-          הטלפון שלך (וואטסאפ)
-          <input value={phone} inputMode="tel" dir="ltr"
-            onChange={(e) => { setPhone(e.target.value); setDirty(true); }}
-            className="mt-1 w-full border border-[var(--line)] bg-white px-3 py-2.5 text-sm text-left text-[var(--ink)]" />
-        </label>
-        {/* תצוגה מקדימה של הכפתור — כדי לראות שהמספר באמת עובד */}
-        {normalizePhone(phone) && (
-          <a href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה, זו אני 🙂")}`}
-            target="_blank" rel="noreferrer"
-            className="text-xs text-center text-[var(--ok-ink)] underline -mt-1">
-            בדיקה: פתיחת וואטסאפ למספר {displayPhone(normalizePhone(phone)!)}
-          </a>
-        )}
-
-        {/* על הדוכן: מה שקונה שואלת לפני שהיא קונה */}
-        {/* התיאור והעיר נערכים למעלה, על הדוכן עצמו. כאן נשאר רק הגיל,
-            כי הוא היחיד שלא מוצג לקונות ולכן אין לו מקום בתצוגה. */}
+        {/* שלושת הפרטים שאינם חלק מהתצוגה של הדוכן, בכרטיס אחד.
+            הטלפון ישב קודם לבדו באמצע המסך עם רווחים גדולים סביבו ובלי
+            להסביר למה הוא שם. העיר מופיעה כאן וגם על הדוכן למעלה, ושתי
+            התיבות קשורות לאותו ערך — מה שמקלידים בזו מתעדכן בזו. */}
         <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">גיל</div>
-          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-            לא מוצג בדוכן ולא בקוד המקור. עוזר לנו להתאים תוכן לפי גיל.
-          </p>
+          <div className="text-[13px] font-bold">פרטים שלך</div>
+
+          <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">
+            הטלפון שלך בוואטסאפ, לשם מגיעות ההזמנות
+          </label>
           <input
-            value={info.age}
-            onChange={(e) => { setInfo({ ...info, age: e.target.value.replace(/\D/g, "").slice(0, 2) }); setDirty(true); }}
-            placeholder="11"
-            inputMode="numeric"
-            maxLength={2}
-            aria-label="גיל"
-            className="w-20 mt-2 border border-[var(--line)] px-3 py-2.5 text-[13px]"
+            value={phone}
+            inputMode="tel"
+            dir="ltr"
+            aria-label="טלפון וואטסאפ"
+            onChange={(e) => { setPhone(e.target.value); setDirty(true); }}
+            className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-[13px] text-right text-[var(--ink)]"
           />
+          {normalizePhone(phone) && (
+            <a
+              href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה, זו אני 🙂")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="block text-[12px] text-[var(--ok-ink)] underline mt-1"
+            >
+              בדיקה: פתיחת וואטסאפ למספר {displayPhone(normalizePhone(phone)!)}
+            </a>
+          )}
+
+          <div className="flex gap-2 mt-3">
+            <div className="w-24">
+              <label className="block text-[12px] text-[var(--muted)] mb-1">גיל</label>
+              <input
+                value={info.age}
+                onChange={(e) => { setInfo({ ...info, age: e.target.value.replace(/\D/g, "").slice(0, 2) }); setDirty(true); }}
+                placeholder="11"
+                inputMode="numeric"
+                maxLength={2}
+                aria-label="גיל"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-[12px] text-[var(--muted)] mb-1">עיר בארץ</label>
+              <input
+                value={info.city}
+                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
+                placeholder="למשל: רמת גן"
+                maxLength={30}
+                aria-label="עיר בארץ"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
+            </div>
+          </div>
+          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
+            הגיל לא מופיע בדוכן ולא בקוד המקור. העיר כן מופיעה, למעלה מתחת
+            לשם, כדי שהקונים ידעו אם המסירה הגיונית. אף פעם לא כתובת.
+          </p>
         </div>
 
         {/* משלוחים */}
@@ -661,16 +680,16 @@ export default function SettingsPage() {
 
         {/* איך ההזמנה מגיעה אליך */}
         <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">ההודעה שהקונים שולחים לך</div>
-          {/* השאלה הראשונה כאן היא "מי כותב את זה ומתי", ובלי תשובה לזה
-              שתי התיבות למטה נראות כמו טופס בלי הקשר. */}
+          <div className="text-[13px] font-bold">
+            זה מה שיגיע לך בוואטסאפ כשמישהו רוצה להזמין
+          </div>
           <ol className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5 flex flex-col gap-1">
             <li>1. בוחרים מוצרים בדוכן ולוחצים "שליחה בוואטסאפ".</li>
             <li>2. וואטסאפ נפתח <b>אצלם</b>, וההודעה כבר כתובה בפנים.</li>
-            <li>3. לוחצים שלח, וההודעה מגיעה אליך כהודעה רגילה.</li>
+            <li>3. לוחצים שלח, וההודעה נוחתת אצלך כהודעת וואטסאפ רגילה.</li>
           </ol>
           <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
-            ההודעה נכתבת לבד, אין מה למלא כאן. ככה היא תיראה:
+            ההודעה נכתבת לבד, אין מה למלא כאן:
           </p>
           {/* בלי "שורת פתיחה" ו"שורת סיום": שתי תיבות שביקשו טקסט לפני
               שבכלל היה ברור מה ההודעה, וההודעה מסתדרת מצוין בלעדיהן. */}
@@ -686,11 +705,9 @@ export default function SettingsPage() {
 הזמנה #1`}
           </div>
           <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
-            {payLabels.length > 1
-              ? `סימנת ${payLabels.join(" ו")}, אז הקונים בוחרים באיזו דרך הם משלמים וזה מה שייכתב בשורה הזו.`
-              : payLabels.length === 1
-                ? `סימנת ${payLabels[0]} בלבד, אז זה מה שייכתב בשורת התשלום.`
-                : "עוד לא סימנת איך משלמים לך, אז אין שורת תשלום בהודעה."}
+            {payLabels.length
+              ? `שורת התשלום מציגה את מה שסימנת למטה: ${payLabels.join(" / ")}.`
+              : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
           </p>
         </div>
 
@@ -727,7 +744,7 @@ export default function SettingsPage() {
           {/* לינק תשלום — הופך "תשלמי לי בפייבוקס" ללחיצה אחת.
               מותרים רק לינקים של ביט ופייבוקס, וזה נאכף גם בדאטהבייס. */}
           <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">
-            לינק לתשלום (לא חובה)
+            לינק לתשלום אם יש (לא חובה)
           </label>
           <input
             value={payout.payout_link ?? ""}
@@ -750,17 +767,9 @@ export default function SettingsPage() {
             </p>
           )}
 
-          <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">
-            הערה לקונה (לא חובה)
-          </label>
-          <input
-            value={payout.payout_note ?? ""}
-            onChange={(e) => { setPayout({ ...payout, payout_note: e.target.value }); setDirty(true); }}
-            placeholder='למשל: "ביט לאמא: 052-1234567"'
-            aria-label="הערה לקונה"
-            maxLength={80}
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-          />
+          {/* "הערה לקונה" ירדה: היא נדחפה לתוך הודעת הוואטסאפ בלי שהיה
+              ברור איפה היא מופיעה, ורוב מה שנכתב בה היה מספר טלפון —
+              בדיוק מה שאסור שיישב בהודעה. */}
           {!payout.payout_bit && !payout.payout_paybox && !payout.payout_cash && (
             <p className="text-[12px] text-[var(--warn-ink)] mt-1.5">
               לא סומן כלום, הקונים יצטרכו לשאול אותך בוואטסאפ איך לשלם.
@@ -774,38 +783,56 @@ export default function SettingsPage() {
           </button>
         )}
 
-        {/* הלינק עובד תמיד. לפני הפרסום הוא תצוגה מקדימה: חברות רואות הכל
-            ולא יכולות להזמין, וזה בדיוק מה שהופך את הפרסום לבחירה ולא לחסם. */}
+        {/* הקופסה הזו הייתה כתובת אינטרנט ערומה ושני כפתורים, ולילד זה לא
+            אמר כלום. עכשיו היא אומרת קודם *מתי* משתמשים בה, ורק אחר כך
+            מראה את הקישור. */}
         <div className="bg-white border border-[var(--line)] p-3 mt-1">
+          <div className="text-[13px] font-bold leading-relaxed">
+            {products.length
+              ? "יש כבר מוצרים בדוכן, ואתם מוכנים לשתף את החברים? לחצו כאן"
+              : "אחרי שתכניסו כמה מוצרים לדוכן, פה משתפים אותו עם החברים"}
+          </div>
+          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1">
+            זה הקישור לדוכן שלך. כל מי שלוחץ עליו רואה את המוצרים ויכול להזמין.
+          </p>
           {!store.activated_at && (
-            <div className="text-[12px] text-[var(--warn-ink)] mb-1.5">
-              👀 תצוגה מקדימה. אפשר לשלוח, אבל עדיין אי אפשר להזמין
+            <div className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-1.5">
+              👀 כרגע זו תצוגה מקדימה: אפשר לשלוח והחברים יראו הכל, אבל עדיין
+              אי אפשר להזמין. הפרסום למטה פותח את ההזמנות.
             </div>
           )}
-          <div className="text-[12px] text-[var(--muted)] font-mono mb-2" dir="ltr">{storeUrl}</div>
+          <div className="text-[12px] text-[var(--muted)] font-mono my-2" dir="ltr">{storeUrl}</div>
           <div className="flex gap-2">
             <button
               onClick={() => { navigator.clipboard.writeText(storeUrl); showToast("הלינק הועתק"); }}
-              className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium">
-              העתקה
+              className="flex-1 border border-[var(--line)] py-2.5 text-[12px] font-medium">
+              העתקת הקישור
             </button>
             <a href={`https://wa.me/?text=${encodeURIComponent(`בואו לראות את הדוכן שלי! ${storeUrl}`)}`}
-              className="flex-1 bg-[var(--ink)] text-white py-2.5 text-xs font-medium text-center">
-              שיתוף בוואטסאפ
+              className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12px] font-medium text-center">
+              שליחה לחברים
             </a>
           </div>
         </div>
 
+        {/* התשלום היה מוסתר מאחורי "לפרסם את הדוכן", ולא היה ברור שיש כאן
+            שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */}
         {!store.activated_at && (
           <a href="/activate" className="bg-[var(--ink)] text-white p-3.5 mt-1 block">
             <div className="text-[13px] font-bold">
-              {store.payment_claimed_at ? "⏳ מחכות לאישור התשלום" : "🚀 לפרסם את הדוכן"}
+              {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
             </div>
-            <div className="text-[12px] opacity-70 leading-relaxed mt-0.5">
-              {store.payment_claimed_at
-                ? "ברגע שנאשר, אפשר יהיה לקבל הזמנות."
-                : "הכל בנוי ושמור. פרסום פותח את ההזמנות →"}
-            </div>
+            {store.payment_claimed_at ? (
+              <div className="text-[12px] opacity-80 leading-relaxed mt-1">
+                סימנתם ששילמתם. ברגע שמרינה תאשר, הדוכן יתחיל לקבל הזמנות.
+              </div>
+            ) : (
+              <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
+                <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בביט או בפייבוקס למרינה</li>
+                <li>2. מרינה מאשרת שהתשלום הגיע</li>
+                <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
+              </ol>
+            )}
           </a>
         )}
 

@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getPublicStore(slug);
 
   if (data.state === "closed") {
-    return { title: "החנות סגורה", robots: { index: false, follow: false } };
+    return { title: "הדוכן סגור", robots: { index: false, follow: false } };
   }
 
   const title = data.store.display_name;
@@ -69,7 +69,7 @@ export default async function StorePage({ params }: Props) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--canvas)] text-center px-8">
         <Icon name="moon" size={58} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
-        <h1 className="text-xl font-bold">החנות סגורה כרגע</h1>
+        <h1 className="text-xl font-bold">הדוכן סגור כרגע</h1>
         <p className="text-sm text-[var(--muted)]">אולי הלינק השתנה, ואולי היא פשוט נחה.</p>
       </div>
     );
