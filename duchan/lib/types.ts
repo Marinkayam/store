@@ -90,6 +90,7 @@ export interface Order {
   buyer_note: string | null;
   owner_note: string | null;
   buyer_phone: string | null; // אופציונלי, הקונה בחרה אם להשאיר אותו
+  buyer_name: string | null;  // שם פרטי. מה שמקשר בין ההזמנה לשיחה בוואטסאפ
   status: OrderStatus;
   created_at: string;
 }

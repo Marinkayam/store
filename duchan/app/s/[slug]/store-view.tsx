@@ -43,6 +43,7 @@ export default function StoreView({
   const [orderOpen, setOrderOpen] = useState(false);
   const [note, setNote] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
+  const [buyerName, setBuyerName] = useState("");
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState("");
   // null = לא בעלת החנות (או שעוד לא נבדק). קונה לא רואה מזה כלום.
@@ -213,6 +214,10 @@ export default function StoreView({
 
   async function sendOrder() {
     if (!cart.length || sending || preview) return;
+    if (buyerName.trim().length < 2) {
+      showToast("רק צריך את השם שלך, כדי שהיא תדע מי הזמינה");
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch("/api/orders", {
@@ -223,6 +228,7 @@ export default function StoreView({
           items: cart.map((l) => ({ productId: l.id, qty: l.qty, option: l.option })),
           note: note.trim() || undefined,
           buyerPhone: buyerPhone.trim() || undefined,
+          buyerName: buyerName.trim(),
         }),
       });
       const data = await res.json();
@@ -251,18 +257,22 @@ export default function StoreView({
             : "";
       // בלי שורת פתיחה ובלי שורת סיום שהבעלות מנסחת: ההודעה קבועה וברורה,
       // ומה שמשתנה בה זה רק מה שהקונה באמת בחרה.
+      // השם ומספר ההזמנה יושבים בשורה *הראשונה* ולא בסוף.
+      // ברשימת הצ'אטים בוואטסאפ נראית רק תחילת ההודעה: כשכולן פתחו ב"היי
+      // תמר! 👋" כל השיחות נראו זהות, והיא הייתה צריכה לפתוח כל אחת כדי
+      // לדעת של מי היא. עכשיו רשימת הוואטסאפ עצמה היא האינדקס.
       const msg =
-        `היי ${firstName}! 👋\n` +
+        `היי ${firstName}! 👋 אני ${data.buyerName} · הזמנה #${data.orderNumber}\n` +
         `ראיתי את הדוכן שלך ואני רוצה להזמין:\n\n${lines}\n\n` +
         `סה"כ: ₪${data.total}` +
         (note.trim() ? `\nהערה: ${note.trim()}` : "") +
         shipLine +
-        (pay ? `\n${pay}` : "") +
-        `\n\nהזמנה #${data.orderNumber}`;
+        (pay ? `\n${pay}` : "");
 
       setCart([]);
       setNote("");
       setBuyerPhone("");
+      setBuyerName("");
       setWantsShipping(true);
       setOrderOpen(false);
       window.location.href = `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`;
@@ -800,18 +810,33 @@ export default function StoreView({
             </div>
           )}
 
+          {/* השדה היחיד שהוא חובה בקופה.
+              בלעדיו כל ההזמנות אצלה נראות אותו דבר — מספר, מוצרים וסכום —
+              והיא צריכה לפתוח צ'אט אחרי צ'אט בוואטסאפ כדי לדעת מי הזמינה
+              מה. שם פרטי בלבד; אין כאן שם משפחה, כתובת או גיל. */}
+          <input
+            value={buyerName}
+            onChange={(e) => setBuyerName(e.target.value)}
+            placeholder="איך קוראים לך?"
+            aria-label="השם שלך"
+            maxLength={24}
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mt-3"
+          />
+          <p className="opacity-60 text-[12px] mb-2 mt-1">
+            כדי שהיא תדע איזו הזמנה שלך. רק שם פרטי.
+          </p>
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="הערה (לא חובה): אפשר בורוד?"
             maxLength={200}
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mt-3 mb-2"
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mb-2"
           />
-          {/* לא חובה: אם יש למי שמוכרת שאלה על ההזמנה, יהיה למי לפנות בוואטסאפ */}
+          {/* לא חובה, אבל שווה: איתו היא פותחת איתך שיחה בלחיצה אחת */}
           <input
             value={buyerPhone}
             onChange={(e) => setBuyerPhone(e.target.value)}
-            placeholder="מספר טלפון שלך (לא חובה, למקרה שיש שאלה)"
+            placeholder="מספר טלפון שלך (לא חובה, כדי שתדע לחזור אלייך)"
             inputMode="tel"
             maxLength={20}
             aria-label="מספר טלפון (לא חובה)"

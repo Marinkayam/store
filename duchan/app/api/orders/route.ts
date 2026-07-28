@@ -14,6 +14,7 @@ interface Body {
   items?: { productId: string; qty: number; option?: string }[];
   note?: string;
   buyerPhone?: string;
+  buyerName?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -24,10 +25,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { slug, items, note, buyerPhone } = body;
+  const { slug, items, note, buyerPhone, buyerName } = body;
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
+  const name = buyerName?.trim().replace(/\s+/g, " ").slice(0, 24) ?? "";
 
   const db = supabaseAdmin();
 
@@ -93,32 +95,47 @@ export async function POST(req: NextRequest) {
     total += p.price * qty;
   }
 
+  // השם הוא מה שמאפשר לה לדעת מי הזמינה, ולכן הוא נדרש גם כאן ולא רק
+  // בטופס — טופס אפשר לעקוף, את זה לא. הבדיקה יושבת אחרי אימות החנות
+  // והמוצרים, כדי שדוכן סגור ימשיך לומר "סגור" ובחירה חסרה תמשיך לומר
+  // מה חסר, במקום שהשם יבלע כל הודעה אחרת.
+  if (name.length < 2) {
+    return NextResponse.json(
+      { error: "רק צריך את השם שלך, כדי שהיא תדע מי הזמינה" },
+      { status: 400 }
+    );
+  }
+
   // מספור + כתיבה בטרנזקציה אחת — שתי קונות בו-זמניות מקבלות מספרים שונים.
   //
-  // p_buyer_phone נוסף במיגרציה 0020. אם הקוד עולה לפני שהמיגרציה רצה על
-  // הדאטהבייס, ל-place_order אין פרמטר כזה ו-PostgREST מחזיר "function not
-  // found" — וזה היה מפיל *כל* הזמנה בכל חנות, בדיוק כמו התקלה עם
-  // payout_link. נופלים לחתימה הישנה בלי מספר הקונה, ומזמינים ממשיכות
-  // לעבוד עד שהמיגרציה מתעדכנת.
-  let orderNumber: number | null = null;
-  let orderErr;
-  ({ data: orderNumber, error: orderErr } = await db.rpc("place_order", {
+  // p_buyer_phone נוסף במיגרציה 0020 ו-p_buyer_name ב-0029. אם הקוד עולה
+  // לפני שהמיגרציה רצה על הדאטהבייס, ל-place_order אין פרמטר כזה
+  // ו-PostgREST מחזיר "function not found" — וזה היה מפיל *כל* הזמנה בכל
+  // חנות, בדיוק כמו התקלה עם payout_link. יורדים חתימה-חתימה עד שאחת
+  // עוברת: עדיף הזמנה בלי שם הקונה מאשר בלי הזמנה.
+  const base = {
     p_store: store.id,
     p_items: snapshot,
     p_total: total,
     p_note: note?.slice(0, 200) || null,
     p_ip_hash: ipHash,
-    p_buyer_phone: buyerPhone ? normalizePhone(buyerPhone) : null,
-  }));
-  if (orderErr) {
-    console.error("[orders] place_order with buyer_phone failed, falling back:", orderErr.message);
-    ({ data: orderNumber, error: orderErr } = await db.rpc("place_order", {
-      p_store: store.id,
-      p_items: snapshot,
-      p_total: total,
-      p_note: note?.slice(0, 200) || null,
-      p_ip_hash: ipHash,
-    }));
+  };
+  const phone = buyerPhone ? normalizePhone(buyerPhone) : null;
+  const attempts: Record<string, unknown>[] = [
+    { ...base, p_buyer_phone: phone, p_buyer_name: name },
+    { ...base, p_buyer_phone: phone },
+    base,
+  ];
+
+  let orderNumber: number | null = null;
+  let orderErr;
+  for (const args of attempts) {
+    ({ data: orderNumber, error: orderErr } = await db.rpc("place_order", args));
+    if (!orderErr) break;
+    console.error(
+      `[orders] place_order(${Object.keys(args).length} args) failed, falling back:`,
+      orderErr.message
+    );
   }
   if (orderErr || typeof orderNumber !== "number") {
     return NextResponse.json({ error: "משהו השתבש, לנסות שוב" }, { status: 500 });
@@ -128,6 +145,7 @@ export async function POST(req: NextRequest) {
     orderNumber,
     phone: store.contact_phone,
     storeName: store.display_name,
+    buyerName: name,
     items: snapshot,
     total,
   });

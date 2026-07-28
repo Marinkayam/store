@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { normalizePhone } from "@/lib/phone";
 import { useStore, confettiBurst } from "./use-store";
 import WhatsNew from "./whats-new";
 import InstallCard from "../install-card";
@@ -34,6 +35,11 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [noteEditId, setNoteEditId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [search, setSearch] = useState("");
+  // תיוג "מי הזמינה" להזמנות שנוצרו לפני שהשם היה שדה בקופה
+  const [whoEditId, setWhoEditId] = useState<string | null>(null);
+  const [whoName, setWhoName] = useState("");
+  const [whoPhone, setWhoPhone] = useState("");
   // הסתרת הזמנה היא פעולה חד-כיוונית במסך, אז שואלים פעם אחת לפני
   const [confirmHide, setConfirmHide] = useState<string | null>(null);
 
@@ -127,8 +133,55 @@ export default function OrdersPage() {
     refresh();
   }
 
+  /**
+   * "מי הזמינה" — גם להזמנות ישנות.
+   *
+   * השם נוסף לקופה במיגרציה 0029, אבל כל ההזמנות שכבר בדאטהבייס נשארו
+   * בלי שם. בלי הדרך הזו כל מה שבנינו עוזר רק להזמנות הבאות, ולערימה
+   * שיש לה עכשיו — לא.
+   */
+  async function saveWho(o: Order) {
+    const name = whoName.trim().replace(/\s+/g, " ").slice(0, 24);
+    const phone = whoPhone.trim() ? normalizePhone(whoPhone.trim()) : null;
+    const supa = supabaseBrowser();
+    const { error } = await supa
+      .from("orders")
+      .update({ buyer_name: name || null, buyer_phone: phone })
+      .eq("id", o.id);
+    if (error) {
+      // דאטהבייס שעוד לא קיבל את 0029 — לפחות המספר יישמר
+      console.error("[orders] buyer_name unavailable:", error.message);
+      await supa.from("orders").update({ buyer_phone: phone }).eq("id", o.id);
+    }
+    setWhoEditId(null);
+    refresh();
+  }
+
+  function openWho(o: Order) {
+    setWhoEditId(o.id);
+    setWhoName(o.buyer_name ?? "");
+    setWhoPhone(o.buyer_phone ?? "");
+  }
+
   const newCount = orders.filter((o) => o.status === "sent").length;
-  const filtered = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  const byStatus = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  /* חיפוש על שם, מספר הזמנה, מוצר והערות. עם הרבה הזמנות זה מה שמחליף
+     גלילה ארוכה — והוא סובל גם "7" וגם "#7". */
+  const q = search.trim().toLowerCase().replace(/^#/, "");
+  const filtered = !q
+    ? byStatus
+    : byStatus.filter((o) =>
+        [
+          o.buyer_name ?? "",
+          String(o.order_number),
+          o.buyer_note ?? "",
+          o.owner_note ?? "",
+          ...o.items.map((it) => it.name),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      );
 
   // "הקופה שלי" — בתוך גבולות האפיון: ספירת הזמנות וסכומים, לא אנליטיקס
   const sold = orders.filter((o) => o.status === "paid" || o.status === "delivered");
@@ -232,6 +285,19 @@ export default function OrdersPage() {
         </div>
       )}
 
+      {/* חיפוש — מופיע רק כשיש מספיק הזמנות בשביל שיהיה בו טעם */}
+      {orders.length >= 5 && (
+        <div className="px-3 pt-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="חיפוש לפי שם, מספר הזמנה או מוצר"
+            aria-label="חיפוש בהזמנות"
+            className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-[13px]"
+          />
+        </div>
+      )}
+
       {/* סינון */}
       {orders.length > 0 && (
         <div className="flex gap-1.5 px-3 pt-3 overflow-x-auto">
@@ -309,8 +375,18 @@ export default function OrdersPage() {
             }`}
           >
             <div className="flex justify-between items-center mb-1.5">
+              {/* השם צמוד למספר ההזמנה ובולט: זה מה שהעין מחפשת כשמנסים
+                  להצליב בין הרשימה הזו לשיחות בוואטסאפ. */}
               <span className="text-[12px] text-[var(--muted)]">
-                #{o.order_number} · {new Date(o.created_at).toLocaleDateString("he-IL")}
+                #{o.order_number}
+                {o.buyer_name && (
+                  <>
+                    {" · "}
+                    <b className="text-[13px] text-[var(--ink)]">{o.buyer_name}</b>
+                  </>
+                )}
+                {" · "}
+                {new Date(o.created_at).toLocaleDateString("he-IL")}
               </span>
               <span className={`text-[11px] font-medium px-2 py-0.5 ${PILL[o.status].cls}`}>
                 {PILL[o.status].label}
@@ -324,6 +400,52 @@ export default function OrdersPage() {
             {o.buyer_note && (
               <div className="text-[12px] text-[var(--muted)] italic mt-1">"{o.buyer_note}"</div>
             )}
+
+            {/* מי הזמינה — פתוח לעריכה תמיד, כי לפעמים הקונה כותבת כינוי
+                ולפעמים ההזמנה ישנה ואין בה שם בכלל. */}
+            {whoEditId === o.id ? (
+              <div className="border border-[var(--line)] p-2 mt-1.5 flex flex-col gap-1.5">
+                <input
+                  value={whoName}
+                  onChange={(e) => setWhoName(e.target.value)}
+                  placeholder="השם של מי שהזמינה"
+                  aria-label="שם הקונה"
+                  maxLength={24}
+                  autoFocus
+                  className="border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
+                />
+                <input
+                  value={whoPhone}
+                  onChange={(e) => setWhoPhone(e.target.value)}
+                  placeholder="מספר וואטסאפ (לא חובה)"
+                  aria-label="טלפון הקונה"
+                  inputMode="tel"
+                  maxLength={20}
+                  className="border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
+                />
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => saveWho(o)}
+                    className="flex-1 bg-[var(--ink)] text-white py-1.5 text-[12px] font-medium"
+                  >
+                    שמירה
+                  </button>
+                  <button
+                    onClick={() => setWhoEditId(null)}
+                    className="border border-[var(--line)] px-3 text-[12px]"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            ) : !o.buyer_name ? (
+              <button
+                onClick={() => openWho(o)}
+                className="text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full text-right"
+              >
+                מי הזמינה? להוסיף שם
+              </button>
+            ) : null}
 
             {/* הערה אישית של בעלת החנות */}
             {noteEditId === o.id ? (
@@ -379,7 +501,9 @@ export default function OrdersPage() {
                 >
                   שולם
                 </button>
-                {/* מספר הקונה נאסף רק אם היא בחרה להשאיר אותו בטופס ההזמנה */}
+                {/* מספר הקונה נאסף רק אם היא בחרה להשאיר אותו בטופס ההזמנה.
+                    כשאין — כפתור שעושה משהו, במקום שבב מת שכתוב עליו
+                    "אין מספר" ואי אפשר ללחוץ עליו. */}
                 {o.buyer_phone ? (
                   <a
                     href={`https://wa.me/${o.buyer_phone}`}
@@ -387,15 +511,15 @@ export default function OrdersPage() {
                     rel="noreferrer"
                     className="flex-1 bg-white border border-[var(--line)] py-2 text-xs font-medium text-center"
                   >
-                    וואטסאפ לקונה
+                    וואטסאפ ל{o.buyer_name ?? "קונה"}
                   </a>
                 ) : (
-                  <span
-                    className="flex-1 border border-dashed border-[var(--line)] text-[var(--muted)] py-2 text-xs text-center"
-                    title="לא הושאר מספר, השיחה כבר קיימת בוואטסאפ, אפשר לחפש שם לפי מספר ההזמנה"
+                  <button
+                    onClick={() => openWho(o)}
+                    className="flex-1 bg-white border border-dashed border-[var(--line)] text-[var(--muted)] py-2 text-xs text-center"
                   >
-                    אין מספר
-                  </span>
+                    להוסיף מספר
+                  </button>
                 )}
                 <button
                   onClick={() => cancelOrder(o)}
@@ -448,7 +572,7 @@ export default function OrdersPage() {
                     rel="noreferrer"
                     className="bg-white border border-[var(--line)] py-2 px-3 text-xs font-medium text-center"
                   >
-                    וואטסאפ
+                    וואטסאפ ל{o.buyer_name ?? "קונה"}
                   </a>
                 )}
                 <button
