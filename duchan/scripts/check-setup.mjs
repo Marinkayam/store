@@ -116,7 +116,28 @@ if (SUPA && SERVICE) {
     bad("בדיקת עמודות נכשלה", e.message);
   }
 
-  for (const table of ["products", "orders", "store_views", "announcements"]) {
+  // עמודות ההזמנה שנוספו אחרי 0019 — buyer_name הוא מה שמקשר בין
+  // ההזמנה לשיחה בוואטסאפ, ו-deleted_at הוא מה שמאפשר להוריד מהרשימה
+  try {
+    const r = await rest("orders?select=id,buyer_note,buyer_phone,buyer_name,owner_note,deleted_at&limit=1");
+    r.ok
+      ? ok("כל עמודות orders קיימות")
+      : bad("עמודות חסרות ב-orders", `${(await r.text()).slice(0, 200)} → הריצי scripts/migrate.mjs`);
+  } catch (e) {
+    bad("בדיקת עמודות orders נכשלה", e.message);
+  }
+
+  /* כל טבלה שהקוד קורא ממנה, כולל סקוויש קלאב. הרשימה הזו והרשימה
+     ב-app/api/cron/route.ts צריכות להישאר זהות: מה שלא נבדק כאן גם לא
+     מגובה שם. */
+  const TABLES = [
+    "products", "orders", "store_views", "announcements", "phone_accounts", "admin_phones",
+    "squish_profiles", "squish_items", "squish_connections", "squish_invites",
+    "squish_interests", "squish_wishlist",
+    "squish_trade_proposals", "squish_trade_versions", "squish_trade_version_items",
+    "squish_trade_reports",
+  ];
+  for (const table of TABLES) {
     try {
       const r = await rest(`${table}?select=*&limit=1`);
       r.ok ? ok(`טבלה ${table}`) : bad(`טבלה ${table}`, `${r.status}`);
@@ -126,16 +147,48 @@ if (SUPA && SERVICE) {
   }
 
   // פונקציות ה-DB שהאפליקציה קוראת להן
-  for (const fn of ["place_order", "mark_order_paid", "cancel_order", "bump_store_view", "bump_ref_click", "use_ai_credit", "claim_store_payment"]) {
-    try {
-      const r = await rest(`rpc/${fn}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      // 404 = הפונקציה לא קיימת. כל קוד אחר (400 על ארגומנטים חסרים) אומר שהיא שם.
-      r.status === 404
-        ? bad(`פונקציה ${fn}`, "לא קיימת — מיגרציה חסרה")
-        : ok(`פונקציה ${fn}`);
-    } catch (e) {
-      bad(`פונקציה ${fn}`, e.message);
+  const FUNCTIONS = [
+    "place_order", "mark_order_paid", "cancel_order", "bump_store_view", "bump_ref_click",
+    "use_ai_credit", "claim_store_payment",
+    "squish_join", "squish_send_proposal", "squish_counter_proposal", "squish_approve_version",
+    "squish_accept_and_reserve_trade", "squish_cancel_trade", "squish_confirm_completion",
+    "squish_report_trade", "squish_ack_parent",
+  ];
+  /* קוראים את מפרט ה-OpenAPI של PostgREST במקום לנסות לקרוא לכל פונקציה.
+     ניסיון קריאה עם גוף ריק מחזיר 404 גם לפונקציה *שקיימת*, רק בגלל
+     שהארגומנטים לא תואמים לאף חתימה — כלומר הבדיקה הקודמת דיווחה על
+     "מיגרציה חסרה" בכל פעם, ולכן אי אפשר היה להאמין לה. */
+  try {
+    const spec = await (await rest("")).json();
+    const paths = Object.keys(spec?.paths ?? {});
+    if (!paths.length) throw new Error("מפרט ריק");
+    for (const fn of FUNCTIONS) {
+      paths.includes(`/rpc/${fn}`)
+        ? ok(`פונקציה ${fn}`)
+        : bad(`פונקציה ${fn}`, "לא קיימת — מיגרציה חסרה");
     }
+  } catch (e) {
+    bad("בדיקת הפונקציות נכשלה", e.message);
+  }
+
+  /* החתימה עם שם הקונה, במפורש.
+     ה-API נופל לחתימה ישנה יותר אם החדשה חסרה, וזה מכוון — עדיף הזמנה
+     בלי שם מאשר בלי הזמנה. אבל זה גם אומר שמיגרציה 0029 שלא רצה לא
+     תשבור כלום, רק תשתיק את השם. פה תופסים את זה לפני הדיפלוי. */
+  try {
+    const r = await rest("rpc/place_order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        p_store: null, p_items: null, p_total: null, p_note: null,
+        p_ip_hash: null, p_buyer_phone: null, p_buyer_name: null,
+      }),
+    });
+    r.status === 404
+      ? bad("place_order עם שם הקונה", "מיגרציה 0029 לא רצה — הזמנות יישמרו בלי שם")
+      : ok("place_order עם שם הקונה (0029)");
+  } catch (e) {
+    bad("בדיקת place_order עם שם נכשלה", e.message);
   }
 
   // RLS: anon לא אמור לראות כלום
