@@ -125,15 +125,44 @@ export default function SettingsPage() {
       order_intro: info.order_intro.trim() || null,
       order_outro: info.order_outro.trim() || null,
     };
-    const { error } = await supa.from("stores").update(patch).eq("id", store.id);
-    if (error) {
-      showToast("השמירה נכשלה, לנסות שוב");
-      return;
+    /**
+     * שמירה שעומדת בפער סכמה.
+     *
+     * העדכון נוגע בעמודות שנוספו במיגרציות מאוחרות (payout_link, about,
+     * city, age, ships, order_intro…). מספיק שאחת מהן חסרה בדאטהבייס כדי
+     * ש-PostgREST יחזיר 400 על *כל* הבקשה, וגם שינוי שם החנות לא נשמר.
+     * זה בדיוק מה שנראה מבחוץ כמו "לא נשמרים לי שינויים".
+     *
+     * PostgREST אומר בשגיאה איזו עמודה חסרה, אז מורידים אותה ומנסים שוב.
+     * מה שאפשר לשמור נשמר, ומה שלא נאמר במפורש במקום להיבלע.
+     */
+    const attempt: Record<string, unknown> = { ...patch };
+    const dropped: string[] = [];
+    let lastError = "";
+
+    for (let i = 0; i <= 8; i++) {
+      const { error } = await supa.from("stores").update(attempt).eq("id", store.id);
+      if (!error) break;
+      lastError = error.message;
+      const missing = /'([a-z_]+)' column/.exec(error.message)?.[1];
+      if (!missing || !(missing in attempt) || i === 8) {
+        console.error("[settings] save failed:", error.message);
+        showToast("השמירה נכשלה, לנסות שוב");
+        return;
+      }
+      delete attempt[missing];
+      dropped.push(missing);
     }
-    setStore({ ...store, ...patch });
+
+    setStore({ ...store, ...(attempt as Partial<typeof store>) });
     refreshStorePage(store.slug);
     setDirty(false);
-    showToast("נשמר ✨");
+    if (dropped.length) {
+      console.error("[settings] saved without missing columns:", dropped.join(", "), lastError);
+      showToast(`נשמר, חוץ מ-${dropped.length} שדות שצריך עדכון דאטהבייס`);
+    } else {
+      showToast("נשמר ✨");
+    }
   }
 
   async function onCover(file: File) {
@@ -363,7 +392,7 @@ export default function SettingsPage() {
 
         <label className="text-[11px] text-[var(--muted)]">
           שם החנות
-          <input value={name} maxLength={40}
+          <input value={name} maxLength={40} aria-label="שם החנות"
             onChange={(e) => { setName(e.target.value); setDirty(true); }}
             className="mt-1 w-full border border-[var(--line)] bg-white px-3 py-2.5 text-sm text-[var(--ink)]" />
         </label>
