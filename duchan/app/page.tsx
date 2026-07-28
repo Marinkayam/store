@@ -59,7 +59,9 @@ export default function Landing() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-8 bg-[var(--canvas)]">
+    // ריפוד תחתון גדול מהעליון: התוכן ממורכז, אז זה מה שמרים את הדוכן
+    // מעט מעל אמצע המסך במקום להשאיר אותו בדיוק במרכז.
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 pt-6 pb-24 gap-7 bg-[var(--canvas)]">
       <HelpButton context="פתיחת דוכן" />
       {mine && (
         // כרטיס בתוך זרימת הדף, לא רצועה שחורה שנתלשת ממנה. הרצועה השחורה
@@ -87,7 +89,7 @@ export default function Landing() {
       {/* האיור נושא את המסך, לא הטקסט. השם קטן כי הוא כבר כתוב על האיור,
           והמשפט קצר ובצבע מלא — הגרסה הקודמת הייתה ארוכה ואפורה. */}
       <div className="text-center flex flex-col items-center">
-        <StallArt className="w-64 h-auto stall-sway" />
+        <StallArt className="w-64 h-auto" />
         <h1 className="text-[1.5rem] leading-none font-semibold tracking-[-0.02em] mt-3">דוכן</h1>
         <p className="text-[15px] leading-relaxed mt-3 max-w-[19rem] text-[var(--ink)]">
           יש לך אוסף ענקי של סקוושי?

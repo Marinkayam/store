@@ -26,11 +26,13 @@ export default function StallArt({ className = "" }: { className?: string }) {
       role="img"
       aria-label="דוכן קטן עם סוכך, צמח, סלסלה עם כוכב מחייך, שקית וצנצנת"
     >
-      {/* הכרטיס שמאחורי הכל — מה שנותן לאיור את המראה של אייקון אפליקציה */}
+      {/* הכרטיס שמאחורי הכל — מה שנותן לאיור את המראה של אייקון אפליקציה.
+          הוא נשאר מחוץ לקבוצה שזזה, אחרת כל התמונה רועדת במקום הדוכן. */}
       <rect x="6" y="6" width="308" height="308" rx="74" fill="var(--cream)" />
 
+      <g className="stall-rock">
       {/* סוכך: חמש קשתות לסירוגין, סגול בקצוות */}
-      <g {...line}>
+      <g {...line} className="awning-flap">
         <rect x="44" y="58" width="232" height="12" fill="var(--wood)" />
         {[0, 1, 2, 3, 4].map((i) => (
           <path
@@ -93,21 +95,23 @@ export default function StallArt({ className = "" }: { className?: string }) {
         <path d="M161 184 v-9" fill="none" strokeWidth="1.5" />
 
         {/* כוכב מחייך */}
-        <path
-          d="M134 159 L139.6 174.3 L155.9 174.9 L143 184.9 L147.5 200.6 L134 191.5 L120.5 200.6 L125 184.9 L112.1 174.9 L128.4 174.3 Z"
-          fill="var(--lavender)"
-        />
-        <g fill="var(--ink)" stroke="none">
-          <circle cx="128" cy="180" r="1.7" />
-          <circle cx="140" cy="180" r="1.7" />
+        <g className="star-bob">
+          <path
+            d="M134 159 L139.6 174.3 L155.9 174.9 L143 184.9 L147.5 200.6 L134 191.5 L120.5 200.6 L125 184.9 L112.1 174.9 L128.4 174.3 Z"
+            fill="var(--lavender)"
+          />
+          <g fill="var(--ink)" stroke="none">
+            <circle cx="128" cy="180" r="1.7" />
+            <circle cx="140" cy="180" r="1.7" />
+          </g>
+          <path
+            d="M129 186 a5 5 0 0 0 10 0"
+            fill="none"
+            stroke="var(--ink)"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
         </g>
-        <path
-          d="M129 186 a5 5 0 0 0 10 0"
-          fill="none"
-          stroke="var(--ink)"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-        />
       </g>
 
       {/* סלסלת קש */}
@@ -144,8 +148,9 @@ export default function StallArt({ className = "" }: { className?: string }) {
           <rect x="266" y="215" width="12" height="9" rx="3" fill="var(--blush)" />
         </g>
       </g>
+      </g>
 
-      {/* צל רך על הקרקע */}
+      {/* צל רך על הקרקע — קבוע, כדי שהדוכן ייראה מתנדנד עליו ולא איתו */}
       <ellipse cx="160" cy="264" rx="110" ry="6" fill="var(--sand)" opacity="0.7" />
     </svg>
   );

@@ -186,20 +186,47 @@ h3 {
   box-shadow: 0 0 0 3px rgba(168, 164, 109, 0.16);
 }
 
-/* איור הדוכן בדף הבית: נדנוד עדין, כמו דוכן שוק ברוח.
-   איטי ובאמפליטודה קטנה בכוונה — התנועה אמורה למשוך את העין לרגע,
-   לא להתחרות בטופס שמתחתיה. */
-@keyframes stall-sway {
-  0%, 100% { transform: rotate(-1.1deg) translateY(0); }
-  50%      { transform: rotate(1.1deg) translateY(-5px); }
+/* איור הדוכן בדף הבית.
+   הכרטיס עצמו עומד במקום ומה שבתוכו זז: כשהכרטיס כולו הסתובב, העין קראה
+   את זה כרעידה של התמונה ולא כתנועה של הדוכן, וזה נראה כמעט כלום.
+   שלוש תנועות באורכים שונים כדי שהן לא ייפגשו וייראו מכניות. */
+@keyframes stall-rock {
+  0%, 100% { transform: rotate(-1.4deg); }
+  50%      { transform: rotate(1.4deg); }
 }
-.stall-sway {
-  transform-origin: 50% 100%; /* מסתובב סביב הבסיס, כמו שלט תלוי */
-  animation: stall-sway 4.5s ease-in-out infinite;
+.stall-rock {
+  transform-box: fill-box;
+  transform-origin: 50% 100%; /* מסתובב סביב הבסיס, כמו דוכן שוק ברוח */
+  animation: stall-rock 4.5s ease-in-out infinite;
 }
+
+/* הכוכב מקפץ קלות — זו התנועה שגורמת לאיור להיקרא כחי ולא כתמונה */
+@keyframes star-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-4px) rotate(-5deg); }
+}
+.star-bob {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: star-bob 2.6s ease-in-out infinite;
+}
+
+/* הסוכך מתנפנף מעט אחרי הדוכן, בקצב שונה */
+@keyframes awning-flap {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(1.045); }
+}
+.awning-flap {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: awning-flap 3.4s ease-in-out infinite;
+}
+
 /* מי שביקש/ה פחות תנועה במערכת ההפעלה לא אמור/ה לקבל אנימציה בכלל */
 @media (prefers-reduced-motion: reduce) {
-  .stall-sway { animation: none; }
+  .stall-rock,
+  .star-bob,
+  .awning-flap { animation: none; }
 }
 
 /* אנימציית סקוויש לאימוג'י בחנות */
