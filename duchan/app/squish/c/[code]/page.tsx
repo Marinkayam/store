@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import { mediaUrl } from "@/lib/media";
-import { BRAND, typeLabel, sizeLabel, conditionLabel, type SquishItem } from "@/lib/squish";
+import { BRAND, typeLabel, sizeLabel, conditionLabel, type SquishItem, type Wish } from "@/lib/squish";
+import { WishlistRow } from "../../collection-parts";
 import { SquishOutline, TradeBadge, SwapGlyph } from "../../components";
 
 /**
@@ -31,7 +32,7 @@ export default async function SharedCollection({
 
   const { data: profile } = await db
     .from("squish_profiles")
-    .select("id, user_id, nickname, collection_title, collection_visibility, general_city, completed_trades")
+    .select("id, user_id, nickname, collection_title, collection_visibility, general_city, completed_trades, favorite_item_id")
     .eq("collection_code", code)
     .maybeSingle();
 
@@ -135,21 +136,39 @@ export default async function SharedCollection({
     .order("sort_order", { ascending: true });
 
   const list = (items ?? []) as Partial<SquishItem>[];
+  const favorite = list.find((i) => i.id === profile.favorite_item_id) ?? null;
+  const rest = favorite ? list.filter((i) => i.id !== favorite.id) : list;
+
+  // המבוקשים נראים רק למי שרשאית לראות את האוסף — אותו כלל בדיוק
+  const { data: wishRows } = await db
+    .from("squish_wishlist")
+    .select("id, profile_id, squishy_type, color, description, sort_order")
+    .eq("profile_id", profile.id)
+    .order("sort_order", { ascending: true });
+  const wishes = (wishRows ?? []) as Wish[];
+
+  const types = new Set(list.map((i) => i.squishy_type)).size;
 
   return (
     <Shell>
       <header className="text-center pt-8 pb-4 px-4">
         <h1 className="t-title">{title}</h1>
+        <p className="t-small text-[var(--muted)] mt-1">האוסף של {profile.nickname}</p>
         <p className="t-small text-[var(--muted)] mt-1.5 flex items-center justify-center gap-2 flex-wrap">
-          <span>{profile.nickname}</span>
+          <span>{total ?? 0} סקווישים</span>
+          <span aria-hidden>·</span>
+          <span className="inline-flex items-center gap-1">
+            <SwapGlyph />
+            {openCount ?? 0} פתוחים לטרייד
+          </span>
+          <span aria-hidden>·</span>
+          <span>{types} סוגים</span>
           {profile.general_city && (
             <>
               <span aria-hidden>·</span>
               <span>📍 {profile.general_city}</span>
             </>
           )}
-          <span aria-hidden>·</span>
-          <span>{total ?? 0} סקווישים</span>
         </p>
         {profile.completed_trades > 0 && (
           <p className="t-small text-[var(--muted)] mt-1">
@@ -158,8 +177,15 @@ export default async function SharedCollection({
         )}
       </header>
 
+      <div className="px-4 pb-4 flex flex-col gap-5">
+        {favorite && (
+          <FriendFavorite item={favorite} />
+        )}
+        {!!wishes.length && <WishlistRow wishes={wishes} />}
+      </div>
+
       <div className="px-3 pb-10 grid grid-cols-2 gap-2.5">
-        {list.map((it) => {
+        {rest.map((it) => {
           const poster = mediaUrl(it.poster_key) ?? mediaUrl(it.image_key);
           const open = it.trade_status === "open_for_trade";
           return (
@@ -207,6 +233,42 @@ export default async function SharedCollection({
         </p>
       )}
     </Shell>
+  );
+}
+
+/** האהוב, ככרטיס גדול בראש הגלריה שחברה רואה. */
+function FriendFavorite({ item }: { item: Partial<SquishItem> }) {
+  const poster = mediaUrl(item.poster_key) ?? mediaUrl(item.image_key);
+  const video = mediaUrl(item.video_key);
+  return (
+    <section>
+      <div className="t-label mb-1.5">הסקווישי האהוב עליה</div>
+      <div className="squish-card">
+        <div className="relative aspect-[4/3] bg-[var(--cream)] flex items-center justify-center overflow-hidden">
+          {video ? (
+            <video src={video} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
+          ) : poster ? (
+            <img src={poster} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <SquishOutline size={72} />
+          )}
+          <span className="absolute top-2 start-2 flex items-center gap-1.5">
+            <span className="w-7 h-7 bg-white text-[15px] flex items-center justify-center" style={{ borderRadius: "999px" }} aria-hidden>
+              ⭐
+            </span>
+            <TradeBadge status={item.trade_status!} />
+          </span>
+        </div>
+        <div className="pt-2 px-0.5">
+          <div className="t-heading">{item.name}</div>
+          {item.wanted_description && (
+            <div className="t-small text-[var(--muted)] mt-0.5">
+              מחפשת בתמורה: {item.wanted_description}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 

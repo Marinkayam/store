@@ -296,3 +296,12 @@ h3 {
   .squish-breathe { animation: none; }
   .squish-card { transition: none; }
 }
+
+/* כרטיס בלגלות נחשף, לא מופיע: תנועה קצרה שגורמת לזה להרגיש כמו
+   הפיכת קלף אוסף ולא כמו רענון רשימה. */
+@keyframes squish-reveal {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.squish-reveal { animation: squish-reveal 0.26s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .squish-reveal { animation: none; } }

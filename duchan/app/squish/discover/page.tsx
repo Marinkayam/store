@@ -127,7 +127,8 @@ export default function Discover() {
       </div>
 
       <div
-        className="bg-white border border-[var(--line)] overflow-hidden select-none touch-pan-y"
+        key={current.item.id}
+        className="squish-reveal bg-white border border-[var(--line)] overflow-hidden select-none touch-pan-y"
         style={{
           transform: `translateX(${drag}px) rotate(${drag / 40}deg)`,
           transition: start === null ? "transform 0.2s ease" : "none",
@@ -137,7 +138,7 @@ export default function Discover() {
         onPointerUp={onUp}
         onPointerCancel={onUp}
       >
-        <div className="relative aspect-square bg-[var(--cream)] flex items-center justify-center overflow-hidden">
+        <div className="relative aspect-[3/4] bg-[var(--cream)] flex items-center justify-center overflow-hidden">
           {video ? (
             <video src={video} poster={poster ?? undefined} muted loop playsInline autoPlay className="w-full h-full object-cover" />
           ) : poster ? (

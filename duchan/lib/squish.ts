@@ -91,6 +91,29 @@ export const BRAND = "סקוויש קלאב";
 /** אמוג'י לתמונת הפרופיל, כשעוד לא הועלתה תמונה. כמו בדוכן. */
 export const SQUISH_EMOJIS = ["🧸", "🐸", "🦄", "🍡", "🐙", "☁️", "🍓", "🐥", "🌈", "🧁"];
 
+/** רשימת המבוקשים ברמת האוסף: סוג, צבע, ותיאור חופשי. */
+export interface Wish {
+  id: string;
+  profile_id: string;
+  squishy_type: SquishyType | null;
+  color: string | null;
+  description: string | null;
+  sort_order: number;
+}
+export const MAX_WISHES = 8;
+export const WISH_COLORS = [
+  "ורוד", "סגול", "ירוק", "כחול", "צהוב", "לבן", "שחור", "פסטל", "שקוף", "צבעוני",
+];
+
+/** שמות לדוגמה לגלריה. שם אמיתי, לא "האוסף של X". */
+export const GALLERY_NAME_HINTS = [
+  "המדף הוורוד",
+  "אוסף הקסמים",
+  "פינת הסקווישים",
+  "המדף הרך",
+  "אוסף הנדירים",
+];
+
 /** קוד אקראי לקישור. לא כינוי ולא שם — כמו slug של חנות. */
 export function squishCode(len = 6): string {
   const abc = "abcdefghjkmnpqrstuvwxyz23456789"; // בלי תווים שמתבלבלים
@@ -121,6 +144,7 @@ export interface SquishItem {
   image_key: string | null;
   video_key: string | null;
   poster_key: string | null;
+  series: string | null;
   sort_order: number;
   duchan_product_id: string | null;
   created_at: string;
@@ -140,6 +164,7 @@ export interface SquishProfile {
   avatar_key: string | null;
   cover_key: string | null;
   cover_preset: string | null;
+  favorite_item_id: string | null;
   parent_awareness_at: string | null;
   completed_trades: number;
 }

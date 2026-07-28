@@ -6,7 +6,24 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { mediaUrl, squareImage, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { COVERS, coverCss } from "@/lib/covers";
-import { MIN_ITEMS, SQUISH_EMOJIS, type SquishItem, type SquishProfile } from "@/lib/squish";
+import {
+  MIN_ITEMS,
+  SQUISH_EMOJIS,
+  type SquishItem,
+  type SquishProfile,
+  type SquishyType,
+  type Wish,
+} from "@/lib/squish";
+import { byType, bySeries, collectionBadges, summary } from "@/lib/squish-badges";
+import {
+  Badges,
+  Breakdown,
+  CollectionSummary,
+  FavoriteCard,
+  SeriesRow,
+  WishlistRow,
+} from "../collection-parts";
+import WishEditor from "../wish-editor";
 import { EmptyCollection, SquishyCard, SwapGlyph } from "../components";
 
 /**
@@ -37,6 +54,19 @@ export default function MyCollection() {
   const [toast, setToast] = useState("");
   const [dirty, setDirty] = useState(false);
   const [style, setStyle] = useState(false);
+  const [wishes, setWishes] = useState<Wish[]>([]);
+  const [joined, setJoined] = useState(0);
+  const [typeFilter, setTypeFilter] = useState<SquishyType | null>(null);
+  // "מדף" או "אלבום". נשמר מקומית — זו העדפת תצוגה, לא נתון של האוסף.
+  const [view, setView] = useState<"shelf" | "album">("shelf");
+  useEffect(() => {
+    const v = localStorage.getItem("squish-view");
+    if (v === "album" || v === "shelf") setView(v);
+  }, []);
+  const pickView = (v: "shelf" | "album") => {
+    setView(v);
+    localStorage.setItem("squish-view", v);
+  };
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
 
@@ -61,6 +91,18 @@ export default function MyCollection() {
         .is("deleted_at", null)
         .order("sort_order", { ascending: true });
       setItems((data as SquishItem[]) ?? []);
+      const { data: w } = await supa
+        .from("squish_wishlist")
+        .select("*")
+        .eq("owner_user_id", auth.user.id)
+        .order("sort_order", { ascending: true });
+      setWishes((w as Wish[]) ?? []);
+      const { count: joined } = await supa
+        .from("squish_invites")
+        .select("id", { count: "exact", head: true })
+        .eq("inviter_user_id", auth.user.id)
+        .not("joined_user_id", "is", null);
+      setJoined(joined ?? 0);
     }
     setLoading(false);
   }, []);
@@ -137,7 +179,12 @@ export default function MyCollection() {
       : filter === "traded"
         ? items.filter((i) => i.trade_status === "traded" || i.trade_status === "moved_to_duchan")
         : items.filter((i) => i.trade_status === filter);
-  const title = profile.collection_title || `האוסף של ${profile.nickname}`;
+  const visible = typeFilter ? shown.filter((i) => i.squishy_type === typeFilter) : shown;
+  const stats = summary(items);
+  const types = byType(items);
+  const series = bySeries(items);
+  const badges = collectionBadges({ items, joinedViaInvite: joined });
+  const favorite = items.find((i) => i.id === profile.favorite_item_id) ?? null;
   const avatar = mediaUrl(profile.avatar_key);
   const cover = mediaUrl(profile.cover_key);
 
@@ -182,38 +229,17 @@ export default function MyCollection() {
           </span>
         </button>
 
+        {/* שם האוסף ראשי, הכינוי משני. הכינוי שייך לילדה, השם שייך
+            לאוסף — וזה האוסף שמוצג לחברות. */}
         <input
           value={profile.collection_title ?? ""}
           maxLength={40}
-          aria-label="שם הגלריה"
+          aria-label="שם האוסף"
           placeholder={`האוסף של ${profile.nickname}`}
           onChange={(e) => patch({ collection_title: e.target.value })}
-          className="editable block w-full text-center font-bold text-[17px] mt-1.5"
+          className="editable block w-full text-center font-bold text-[19px] mt-1.5"
         />
-        <textarea
-          value={profile.about ?? ""}
-          maxLength={140}
-          rows={2}
-          aria-label="על האוסף"
-          placeholder="כמה מילים על האוסף שלך"
-          onChange={(e) => patch({ about: e.target.value })}
-          className="editable block w-full text-center text-[13px] resize-none leading-snug opacity-85"
-        />
-
-        <p className="t-small text-[var(--muted)] mt-1 flex items-center justify-center gap-2 flex-wrap">
-          <span>{items.length} סקווישים</span>
-          <span aria-hidden>·</span>
-          <span className="inline-flex items-center gap-1 text-[var(--ink)]">
-            <SwapGlyph />
-            {openCount} פתוחים לטרייד
-          </span>
-          {profile.general_city && (
-            <>
-              <span aria-hidden>·</span>
-              <span>📍 {profile.general_city}</span>
-            </>
-          )}
-        </p>
+        <p className="t-small text-[var(--muted)] mt-0.5">האוסף של {profile.nickname}</p>
 
         {/* שיתוף וצפייה כחברה — שתי הפעולות הראשיות של המסך */}
         <div className="flex gap-2 mt-3">
@@ -236,7 +262,14 @@ export default function MyCollection() {
         </div>
       </div>
 
-      <div className="p-4 pt-4 flex flex-col gap-3">
+      <div className="p-4 pt-4 flex flex-col gap-5">
+        <CollectionSummary s={stats} />
+        {favorite && (
+          <FavoriteCard item={favorite} onOpen={() => router.push(`/squish/item/${favorite.id}`)} />
+        )}
+        <WishlistRow wishes={wishes} />
+        <WishEditor wishes={wishes} profileId={profile.id} onChange={setWishes} onToast={showToast} />
+
         {!ready && (
           <div className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3 text-[12.5px] leading-relaxed">
             <b>
@@ -248,6 +281,24 @@ export default function MyCollection() {
             עד אז אי אפשר לשתף את הקישור, להיכנס ל&quot;לגלות&quot; או להציע טרייד.
           </div>
         )}
+
+        <div className="flex items-center justify-between gap-2">
+          <div className="t-label">המדף שלי</div>
+          <div className="flex border border-[var(--line)]">
+            {(["shelf", "album"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => pickView(v)}
+                aria-pressed={view === v}
+                className={`px-3 py-1.5 text-[12px] ${
+                  view === v ? "bg-[var(--ink)] text-white font-medium" : "bg-white text-[var(--muted)]"
+                }`}
+              >
+                {v === "shelf" ? "מדף" : "אלבום"}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1">
           {FILTERS.map((f) => {
@@ -276,14 +327,14 @@ export default function MyCollection() {
           })}
         </div>
 
-        {shown.length ? (
+        {visible.length ? (
           /* שורות של שניים, וקו מדף מתחת לכל שורה. חלוקה לשורות ולא
              מחלקה על כל פריט זוגי: אחרת שורה אחרונה עם פריט בודד מקבלת
              חצי קו והמדף נראה שבור. */
           <div className="flex flex-col gap-7">
-            {Array.from({ length: Math.ceil(shown.length / 2) }, (_, row) => (
-              <div key={row} className="squish-shelf grid grid-cols-2 gap-x-3">
-                {shown.slice(row * 2, row * 2 + 2).map((it) => (
+            {Array.from({ length: Math.ceil(visible.length / 2) }, (_, row) => (
+              <div key={row} className={`grid grid-cols-2 gap-x-3 ${view === "shelf" ? "squish-shelf" : ""}`}>
+                {visible.slice(row * 2, row * 2 + 2).map((it) => (
                   <SquishyCard
                     key={it.id}
                     item={it}
@@ -299,9 +350,13 @@ export default function MyCollection() {
           </p>
         )}
 
-        <a href="/squish/new" className="btn btn-primary mt-2">
+        <a href="/squish/new" className="btn btn-primary mt-1">
           + להוסיף סקווישי
         </a>
+
+        <Breakdown types={types} active={typeFilter} onPick={setTypeFilter} />
+        <SeriesRow series={series} />
+        <Badges badges={badges} />
 
         {/* עיצוב הגלריה — משני, נפתח בלחיצה */}
         <button

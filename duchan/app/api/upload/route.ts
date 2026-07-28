@@ -42,7 +42,10 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  if (kind !== "video" && !IMAGE_TYPES.includes(contentType)) {
+  // "squish-video" הוא וידאו לכל דבר. בלי החרגה מפורשת הוא נופל כאן
+  // על כך שהוא לא תמונה, והסרטון נשמט בשקט מהפריט.
+  const isVideoKind = kind === "video" || kind === "squish-video";
+  if (!isVideoKind && !IMAGE_TYPES.includes(contentType)) {
     return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });
   }
 
@@ -56,6 +59,28 @@ export async function POST(req: NextRequest) {
    * שאוסף לא יאכל את המקום של החנות ולהפך.
    */
   if (kind.startsWith("squish")) {
+    /**
+     * ולידציה בשרת, לא רק בדפדפן.
+     *
+     * הבדיקה בקליינט (validateGalleryVideo) קיימת כדי לתת הודעה מיידית,
+     * אבל היא רצה בקוד שאפשר לעקוף. החתימה נותנת הרשאת כתיבה לאחסון,
+     * ולכן התנאים נאכפים כאן: רק סוגי וידאו מוכרים, ותקרת גודל נפרדת
+     * שמתאימה לחמש שניות ב-1.5Mbps ולא ל-25MB של גלריה.
+     *
+     * משך הסרטון עצמו לא נקרא כאן — השרת חותם לפני שהקובץ קיים. התקרה
+     * הזו היא הפרוקסי המעשי לאורך, והפוסטר נוצר בקליינט מהפריים הראשון.
+     */
+    if (kind === "squish-video") {
+      if (!["video/mp4", "video/webm"].includes(contentType)) {
+        return NextResponse.json({ error: "אפשר להעלות רק סרטון mp4 או webm" }, { status: 400 });
+      }
+      if (bytes > 12 * 1024 * 1024) {
+        return NextResponse.json({ error: "הסרטון ארוך או כבד מדי, עד 5 שניות" }, { status: 413 });
+      }
+    } else if (!IMAGE_TYPES.includes(contentType)) {
+      return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });
+    }
+
     const { data: profiles, error } = await db
       .from("squish_profiles")
       .select("id, media_bytes")

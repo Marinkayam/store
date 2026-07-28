@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { squareImage, MediaError } from "@/lib/media";
+import { squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import PhoneVerify from "@/app/phone-verify";
 import {
+  GALLERY_NAME_HINTS,
   MIN_ITEMS,
   PARENT_AWARENESS_COPY,
   PARENT_AWARENESS_VERSION,
@@ -39,8 +40,11 @@ interface DraftItem {
   condition: SquishCondition;
   condition_note: string;
   wanted_description: string;
+  series: string;
   open_for_trade: boolean;
   imageData: string | null;
+  /** מפתח לסרטון שיושב ב-draftVideos */
+  videoId: string | null;
 }
 
 type Step = 1 | 2 | 3 | 4;
@@ -48,12 +52,21 @@ type Step = 1 | 2 | 3 | 4;
 interface Draft {
   step: Step;
   items: DraftItem[];
+  collectionTitle: string;
   nickname: string;
   city: string;
   parentAware: boolean;
 }
 
 const KEY = "squish-draft";
+
+/**
+ * סרטוני הטיוטה חיים בזיכרון ולא ב-sessionStorage — שם נכנס רק טקסט
+ * ותמונות קטנות, וסרטון של חמש שניות מפוצץ אותו מיד. המשמעות: רענון
+ * דף לפני השמירה מאבד את הסרטון, וזה כתוב במסך.
+ */
+const draftVideos = new Map<string, Blob>();
+let videoSeq = 0;
 const blank = (): DraftItem => ({
   name: "",
   squishy_type: "other",
@@ -62,8 +75,10 @@ const blank = (): DraftItem => ({
   condition: "good",
   condition_note: "",
   wanted_description: "",
+  series: "",
   open_for_trade: true,
   imageData: null,
+  videoId: null,
 });
 
 export default function NewCollection() {
@@ -78,12 +93,14 @@ export default function NewCollection() {
   const [err, setErr] = useState("");
   const [photoErr, setPhotoErr] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(KEY);
     const d: Draft = raw
       ? JSON.parse(raw)
-      : { step: 1, items: [], nickname: "", city: "", parentAware: false };
+      : { step: 1, items: [], collectionTitle: "", nickname: "", city: "", parentAware: false };
     setDraft(d);
   }, []);
 
@@ -95,13 +112,31 @@ export default function NewCollection() {
       return next;
     });
 
+  async function pickVideo(file: File) {
+    setPhotoErr("");
+    const ok = await validateGalleryVideo(file);
+    if (!ok.ok) {
+      setPhotoErr(ok.reason);
+      return;
+    }
+    const id = `v${++videoSeq}`;
+    draftVideos.set(id, file);
+    // פוסטר מיידי, כדי שהכרטיס לא יהיה ריבוע שחור בזמן הבנייה
+    const poster = await posterFrom(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onload = () =>
+      setEditing((e) => (e ? { ...e, videoId: id, imageData: reader.result as string } : e));
+    if (poster) reader.readAsDataURL(poster);
+    else setEditing((e) => (e ? { ...e, videoId: id } : e));
+  }
+
   async function pickPhoto(file: File) {
     setPhotoErr("");
     try {
       const blob = await squareImage(file, 600);
       const reader = new FileReader();
       reader.onload = () =>
-        setEditing((e) => (e ? { ...e, imageData: reader.result as string } : e));
+        setEditing((e) => (e ? { ...e, imageData: reader.result as string, videoId: null } : e));
       reader.readAsDataURL(blob);
     } catch (e) {
       setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
@@ -110,8 +145,8 @@ export default function NewCollection() {
 
   function saveItem() {
     if (!editing || !draft) return;
-    if (!editing.imageData) {
-      setPhotoErr("צריך תמונה אחת לפחות");
+    if (!editing.imageData && !editing.videoId) {
+      setPhotoErr("צריך סרטון או תמונה");
       return;
     }
     const items = [...draft.items];
@@ -144,6 +179,7 @@ export default function NewCollection() {
           user_id: auth.user.id,
           nickname: draft.nickname.trim().slice(0, 24) || "אספנית",
           general_city: draft.city.trim() || null,
+          collection_title: draft.collectionTitle.trim().slice(0, 40) || null,
           collection_code: squishCode(),
           parent_awareness_at: draft.parentAware ? new Date().toISOString() : null,
           parent_awareness_version: draft.parentAware ? PARENT_AWARENESS_VERSION : null,
@@ -173,10 +209,23 @@ export default function NewCollection() {
     for (const [i, it] of draft.items.entries()) {
       try {
         let imageKey: string | null = null;
+        let videoKey: string | null = null;
+        let posterKey: string | null = null;
+        // התמונה שנשמרה בטיוטה משמשת כפוסטר כשיש סרטון, ואחרת כתמונה
         if (it.imageData) {
           const blob = await (await fetch(it.imageData)).blob();
-          const up = await uploadBlob("squish", blob);
-          if (!("error" in up)) imageKey = up.key;
+          const up = await uploadBlob(it.videoId ? "squish-poster" : "squish", blob);
+          if (!("error" in up)) {
+            if (it.videoId) posterKey = up.key;
+            else imageKey = up.key;
+          }
+        }
+        if (it.videoId) {
+          const vid = draftVideos.get(it.videoId);
+          if (vid) {
+            const up = await uploadBlob("squish-video", vid);
+            if (!("error" in up)) videoKey = up.key;
+          }
         }
         await supa.from("squish_items").insert({
           owner_user_id: auth.user.id,
@@ -190,6 +239,9 @@ export default function NewCollection() {
           trade_status: it.open_for_trade ? "open_for_trade" : "keep",
           wanted_description: it.wanted_description.trim() || null,
           image_key: imageKey,
+          video_key: videoKey,
+          poster_key: posterKey,
+          series: it.series.trim() || null,
           sort_order: i,
         });
       } catch (e) {
@@ -215,6 +267,22 @@ export default function NewCollection() {
           hidden
           onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])}
         />
+        <input
+          ref={videoRef}
+          type="file"
+          accept="video/*"
+          capture="environment"
+          hidden
+          onChange={(e) => e.target.files?.[0] && pickVideo(e.target.files[0])}
+        />
+        <input
+          ref={photoRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])}
+        />
         <div className="flex items-center justify-between">
           <h1 className="t-title">{editIndex === null ? "סקווישי חדש" : "עריכה"}</h1>
           <span className="t-label">{editStep} מתוך 2</span>
@@ -222,19 +290,42 @@ export default function NewCollection() {
 
         {editStep === 1 && (
         <>
-        <button
-          onClick={() => fileRef.current?.click()}
-          className="h-52 border-[1.5px] border-dashed border-[var(--line)] bg-white flex items-center justify-center overflow-hidden"
-        >
+        <div className="h-52 border-[1.5px] border-dashed border-[var(--line)] bg-white flex items-center justify-center overflow-hidden relative">
           {editing.imageData ? (
             <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
           ) : (
             <span className="flex flex-col items-center gap-2 text-[var(--muted)]">
               <SquishOutline />
-              <span className="t-small">לצלם או לבחור תמונה</span>
+              <span className="t-small">סרטון או תמונה</span>
             </span>
           )}
+          {editing.videoId && (
+            <span className="absolute bottom-2 start-2 bg-black/60 text-white text-[11px] px-2 py-1">
+              סרטון ✓
+            </span>
+          )}
+        </div>
+        {/* הסרטון מומלץ ויזואלית אבל לא חובה: יש ילדות שלא ירצו לצלם
+            וידאו, ויש מכשירים שבהם ההעלאה כבדה. תמונה היא אפשרות שווה. */}
+        <div className="t-small">איך תרצי להראות את הסקווישי?</div>
+        <button onClick={() => videoRef.current?.click()} className="btn btn-primary">
+          🎥 לצלם סרטון
         </button>
+        <p className="text-[12px] text-[var(--muted)] text-center -mt-1">
+          סרטון קצר הכי טוב כדי לראות איך הוא נמעך
+        </p>
+        <div className="flex gap-2">
+          <button onClick={() => photoRef.current?.click()} className="btn btn-secondary flex-1 t-small">
+            לצלם תמונה
+          </button>
+          <button onClick={() => fileRef.current?.click()} className="btn btn-secondary flex-1 t-small">
+            לבחור מהגלריה
+          </button>
+        </div>
+        <p className="text-[12px] text-[var(--muted)] leading-relaxed">
+          סרטון עד 5 שניות, בלי קול. אם תצאי מהמסך לפני שנשמור את האוסף,
+          יהיה צריך לבחור את הסרטון שוב — התמונות כן נשמרות.
+        </p>
         {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
 
         <label className="t-small">
@@ -277,7 +368,7 @@ export default function NewCollection() {
           <div className="flex gap-2 mt-1">
             <button
               onClick={() => {
-                if (!editing.imageData) { setPhotoErr("צריך תמונה אחת לפחות"); return; }
+                if (!editing.imageData && !editing.videoId) { setPhotoErr("צריך סרטון או תמונה"); return; }
                 setPhotoErr("");
                 setEditStep(2);
               }}
@@ -320,6 +411,21 @@ export default function NewCollection() {
             className="field w-full px-3 py-3 t-small"
           />
         )}
+
+        <label className="t-small">
+          סדרה (לא חובה)
+          <input
+            value={editing.series}
+            maxLength={30}
+            aria-label="סדרה"
+            placeholder='למשל: "סדרת הממתקים"'
+            onChange={(e) => setEditing({ ...editing, series: e.target.value })}
+            className="field w-full px-3 py-3 mt-1 t-small"
+          />
+          <span className="block text-[12px] text-[var(--muted)] mt-1">
+            סקווישים מאותה סדרה נספרים יחד בגלריה.
+          </span>
+        </label>
 
         <label className="t-small">
           מה תרצי לקבל בתמורה?
@@ -467,6 +573,25 @@ export default function NewCollection() {
               : `עוד ${MIN_ITEMS - count} והגלריה שלך מוכנה.`}
         </p>
       </div>
+
+      {ready && (
+        /* השם נשאל כאן ולא בהתחלה: עכשיו יש מה לקרוא לו בשם, והילדה
+           כבר רואה את האוסף מולה. הכינוי שייך לה, השם שייך לאוסף. */
+        <label className="t-small">
+          איך יקראו לאוסף שלך?
+          <input
+            value={draft.collectionTitle}
+            maxLength={40}
+            aria-label="שם האוסף"
+            placeholder={GALLERY_NAME_HINTS[0]}
+            onChange={(e) => set({ collectionTitle: e.target.value })}
+            className="field w-full px-3 py-3 mt-1 t-body font-medium"
+          />
+          <span className="block text-[12px] text-[var(--muted)] mt-1 leading-relaxed">
+            למשל: {GALLERY_NAME_HINTS.slice(1, 4).join(" · ")}
+          </span>
+        </label>
+      )}
 
       <div className="grid grid-cols-2 gap-2.5">
         {draft.items.map((it, i) => (

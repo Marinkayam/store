@@ -32,6 +32,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
   const [mediaBusy, setMediaBusy] = useState("");
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const imgRef = useRef<HTMLInputElement>(null);
   const vidRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +40,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     const supa = supabaseBrowser();
     const { data } = await supa.from("squish_items").select("*").eq("id", id).maybeSingle();
     setItem((data as SquishItem) ?? null);
+    const { data: auth } = await supa.auth.getUser();
+    if (auth.user) {
+      const { data: prof } = await supa
+        .from("squish_profiles")
+        .select("favorite_item_id")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+      setFavoriteId(prof?.favorite_item_id ?? null);
+    }
     setLoading(false);
   }, [id]);
 
@@ -70,6 +80,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         condition_note: item.condition === "flawed" ? item.condition_note?.trim() || null : null,
         trade_status: item.trade_status,
         wanted_description: item.wanted_description?.trim() || null,
+        series: item.series?.trim() || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", item.id);
@@ -142,6 +153,25 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     setMediaBusy("");
   }
 
+  /** אחד בלבד לאוסף — הסימון יושב על הפרופיל ולא על הפריט. */
+  async function toggleFavorite() {
+    if (!item) return;
+    const supa = supabaseBrowser();
+    const { data: auth } = await supa.auth.getUser();
+    if (!auth.user) return;
+    const next = favoriteId === item.id ? null : item.id;
+    const { error } = await supa
+      .from("squish_profiles")
+      .update({ favorite_item_id: next })
+      .eq("user_id", auth.user.id);
+    if (error) {
+      showToast("לא הצלחנו לשמור, לנסות שוב");
+      return;
+    }
+    setFavoriteId(next);
+    showToast(next ? "הוגדר כאהוב עלייך ⭐" : "הוסר מהאהובים");
+  }
+
   async function remove() {
     if (!item) return;
     const supa = supabaseBrowser();
@@ -188,6 +218,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           <TradeBadge status={item.trade_status} />
         </span>
       </div>
+
+      <button
+        onClick={toggleFavorite}
+        aria-pressed={favoriteId === item.id}
+        className={`btn t-small ${favoriteId === item.id ? "btn-primary" : "btn-secondary"}`}
+      >
+        {favoriteId === item.id ? "⭐ הסקווישי האהוב עליי" : "☆ להגדיר כאהוב עליי"}
+      </button>
 
       <div className="flex gap-2">
         <button onClick={() => imgRef.current?.click()} className="btn btn-secondary flex-1 t-small">
@@ -248,6 +286,18 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           className="field w-full px-3 py-3 t-small"
         />
       )}
+
+      <label className="t-small">
+        סדרה (לא חובה)
+        <input
+          value={item.series ?? ""}
+          maxLength={30}
+          aria-label="סדרה"
+          placeholder='למשל: "סדרת הממתקים"'
+          onChange={(e) => patch({ series: e.target.value })}
+          className="field w-full px-3 py-3 mt-1 t-small"
+        />
+      </label>
 
       <label className="t-small">
         מה תרצי לקבל בתמורה?
