@@ -183,7 +183,13 @@ export default function MyCollection() {
   const stats = summary(items);
   const types = byType(items);
   const series = bySeries(items);
-  const badges = collectionBadges({ items, joinedViaInvite: joined });
+  // בלי completedTrades התג "טרייד ראשון" היה נשאר נעול לנצח, גם אחרי
+  // שהטרייד באמת הושלם.
+  const badges = collectionBadges({
+    items,
+    joinedViaInvite: joined,
+    completedTrades: profile.completed_trades,
+  });
   const favorite = items.find((i) => i.id === profile.favorite_item_id) ?? null;
   const avatar = mediaUrl(profile.avatar_key);
   const cover = mediaUrl(profile.cover_key);

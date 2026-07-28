@@ -76,7 +76,6 @@ export default function Discover() {
     }
     setCards((c) => c.map((x, ix) => (ix === i ? { ...x, interested: true } : x)));
     showToast(`${current.owner.nickname} תראה שזה מעניין אותך`);
-    setTimeout(next, 600);
   }
 
   const onUp = () => {
@@ -198,12 +197,24 @@ export default function Discover() {
           {current.interested ? "סימנת ✓" : "מעניין אותי"}
         </button>
       </div>
-      <a
-        href={`/squish/c/${current.owner.code}`}
-        className="block text-center t-small underline text-[var(--muted)] mt-2.5"
-      >
-        לצפייה בכל האוסף שלה ←
-      </a>
+      {current.interested ? (
+        <div className="bg-white border-[1.5px] border-[var(--lavender)] p-3 mt-2.5 text-center">
+          <div className="t-small font-medium">רוצה להציע טרייד?</div>
+          <a href={`/squish/trades/new?item=${current.item.id}`} className="btn btn-primary mt-2 t-small">
+            לבחור מה להציע
+          </a>
+          <button onClick={next} className="block w-full t-small underline text-[var(--muted)] mt-2">
+            אחר כך, לסקווישי הבא ←
+          </button>
+        </div>
+      ) : (
+        <a
+          href={`/squish/c/${current.owner.code}`}
+          className="block text-center t-small underline text-[var(--muted)] mt-2.5"
+        >
+          לצפייה בכל האוסף שלה ←
+        </a>
+      )}
 
       {toast && (
         <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">

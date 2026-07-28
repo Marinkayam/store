@@ -217,9 +217,12 @@ export default async function SharedCollection({
                   </div>
                 )}
                 {open && !isOwner && (
-                  <div className="mt-2 border border-dashed border-[var(--line)] py-2 text-center text-[12px] text-[var(--muted)]">
-                    להציע טרייד — בקרוב
-                  </div>
+                  <a
+                    href={`/squish/trades/new?item=${it.id}`}
+                    className="mt-2 bg-[var(--lavender)] text-white py-2 text-center text-[12.5px] font-medium"
+                  >
+                    להציע טרייד
+                  </a>
                 )}
               </div>
             </div>

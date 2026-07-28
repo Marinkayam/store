@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 /**
@@ -22,6 +23,24 @@ const HIDE_ON = ["/squish", "/squish/new", "/squish/c", "/squish/join"];
 export default function SquishNav() {
   const path = usePathname();
   const router = useRouter();
+  /* נקודה על "טריידים" כשמשהו מחכה לי: הצעה חדשה, הצעה ששונתה,
+     משהו שממתין לאישור שלי, או טרייד מוכן לתיאום. */
+  const [waiting, setWaiting] = useState(0);
+  useEffect(() => {
+    fetch("/api/squish/trades")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const t = d?.trades ?? [];
+        setWaiting(
+          t.filter(
+            (x: { status: string; iApproved: boolean; iConfirmedDone: boolean }) =>
+              (["sent", "viewed", "countered", "accepted"].includes(x.status) && !x.iApproved) ||
+              (x.status === "ready_for_whatsapp" && !x.iConfirmedDone)
+          ).length
+        );
+      })
+      .catch(() => {});
+  }, [path]);
 
   const hidden =
     path === "/squish" ||
@@ -42,7 +61,18 @@ export default function SquishNav() {
               on ? "text-[var(--ink)] font-medium" : "text-[var(--muted)]"
             }`}
           >
-            <Icon on={on} />
+            <span className="relative">
+              <Icon on={on} />
+              {t.href === "/squish/trades" && waiting > 0 && (
+                <span
+                  className="absolute -top-1 -end-1.5 min-w-4 h-4 px-1 bg-[var(--danger)] text-white text-[10px] font-bold flex items-center justify-center"
+                  style={{ borderRadius: "999px" }}
+                  aria-label={`${waiting} טריידים מחכים לך`}
+                >
+                  {waiting}
+                </span>
+              )}
+            </span>
             {t.label}
           </button>
         );
