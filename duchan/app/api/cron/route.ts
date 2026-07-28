@@ -39,6 +39,11 @@ const TABLES = [
   "squish_trade_versions",
   "squish_trade_version_items",
   "squish_trade_reports",
+  "squish_blocks",
+  "squish_item_reports",
+  "squish_feedback",
+  "squish_parent_approvals",
+  "squish_admin_actions",
 ] as const;
 
 /** PostgREST מגביל תשובה בודדת. בלי הדפדוף הזה הגיבוי נקטע בשקט. */

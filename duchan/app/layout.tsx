@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -38,7 +39,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="דוכן" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Vercel Web Analytics — אותו אירוח, בלי עוגייה ובלי סקריפט
+            מדומיין זר. האירועים נשלחים דרך lib/squish-analytics.ts, שמסנן
+            כל מה שאינו ברשימה לבנה. */}
+        <Analytics />
+      </body>
     </html>
   );
 }

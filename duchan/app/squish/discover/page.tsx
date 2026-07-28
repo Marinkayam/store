@@ -10,6 +10,9 @@ import {
   typeLabel,
   type SquishItem,
 } from "@/lib/squish";
+import { track } from "@/lib/squish-analytics";
+import { ReportItem } from "../safety";
+import Feedback from "../feedback";
 import { ConnectionContext, EmptyCollection, SquishOutline, SwapGlyph } from "../components";
 
 /**
@@ -44,6 +47,7 @@ export default function Discover() {
     if (d.reason === "no-collection") return setState("no-collection");
     setCards(d.cards ?? []);
     setState(d.circle ? "ready" : "no-circle");
+    if (d.circle) track("squish_discover_viewed", { count: (d.cards ?? []).length });
   }, []);
 
   useEffect(() => {
@@ -214,6 +218,20 @@ export default function Discover() {
         >
           לצפייה בכל האוסף שלה ←
         </a>
+      )}
+
+      {/* דיווח על מדיה יושב כאן ולא בגלריה: זה המסך שבו ילדה רואה
+          תמונות של מי שהיא לא בהכרח מכירה, אחת-אחת. המפתח מכריח
+          רכיב חדש לכל פריט, כדי שמצב "נשלח" לא ידבק לפריט הבא. */}
+      <div className="flex flex-col mt-4 items-center">
+        <ReportItem key={current.item.id} itemId={current.item.id!} />
+      </div>
+
+      {/* אחרי שכבר ראתה כמה כרטיסים, לא על הראשון */}
+      {i >= 2 && (
+        <div className="mt-4">
+          <Feedback moment="first_discover" />
+        </div>
       )}
 
       {toast && (

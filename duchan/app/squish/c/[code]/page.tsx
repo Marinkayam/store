@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { mediaUrl } from "@/lib/media";
 import { BRAND, typeLabel, sizeLabel, conditionLabel, type SquishItem, type Wish } from "@/lib/squish";
 import { WishlistRow } from "../../collection-parts";
+import { FriendSafety } from "../../safety";
 import { SquishOutline, TradeBadge, SwapGlyph } from "../../components";
 
 /**
@@ -234,6 +235,14 @@ export default async function SharedCollection({
         <p className="text-center t-small text-[var(--muted)] py-14">
           המדף הזה עדיין ריק.
         </p>
+      )}
+
+      {/* כלי הבטיחות בתחתית, ושקטים. מי שצריכה אותם תמצא אותם, ומי
+          שלא — לא תלמד מהמסך הזה שיש ממה לחשוש. */}
+      {!isOwner && viewer && (
+        <div className="px-4 pt-8 pb-2 flex flex-col">
+          <FriendSafety code={code} nickname={profile.nickname} />
+        </div>
       )}
     </Shell>
   );

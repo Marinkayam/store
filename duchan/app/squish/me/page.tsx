@@ -9,7 +9,9 @@ import {
   type SquishProfile,
   type SquishVisibility,
 } from "@/lib/squish";
+import { track } from "@/lib/squish-analytics";
 import { ConnectionContext, SwapGlyph } from "../components";
+import { DeleteCollection } from "../safety";
 
 /**
  * "שלי" — אזור אחד שמחזיק את הגלריה, החברות, הקבוצות, הקישורים וההגדרות.
@@ -88,6 +90,7 @@ export default function MyArea() {
       showToast("לא הצלחנו ליצור קישור, לנסות שוב");
       return;
     }
+    track("squish_invite_created");
     setInvite(code);
   }
 
@@ -303,6 +306,12 @@ export default function MyArea() {
         <a href="/dashboard" className="block text-center t-small underline mt-3">
           לדוכן שלי ←
         </a>
+      </section>
+
+      {/* מחיקה יושבת אחרונה, שקטה, ולא בתוך כרטיס עם כותרת גדולה.
+          היא צריכה להיות אפשרית, לא מזמינה. */}
+      <section className="px-4 pb-2 flex flex-col">
+        <DeleteCollection />
       </section>
 
       {toast && (

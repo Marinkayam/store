@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "@/app/phone-verify";
+import { track } from "@/lib/squish-analytics";
 import { BRAND } from "@/lib/squish";
 import { SquishOutline, SwapGlyph } from "../../components";
 
@@ -52,6 +53,7 @@ export default function JoinCircle({ params }: { params: Promise<{ code: string 
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.already) track("squish_friend_joined");
     setDone({ nickname: row?.nickname ?? "החברה שלך", already: !!row?.already });
   }, [code]);
 

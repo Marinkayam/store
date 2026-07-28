@@ -25,6 +25,8 @@ import {
 } from "../collection-parts";
 import WishEditor from "../wish-editor";
 import { EmptyCollection, SquishyCard, SwapGlyph } from "../components";
+import Feedback from "../feedback";
+import { track } from "@/lib/squish-analytics";
 
 /**
  * האוסף שלי — חדר האוסף.
@@ -110,6 +112,14 @@ export default function MyCollection() {
   useEffect(() => {
     load();
   }, [load]);
+
+  /* "האוסף פעיל" — שלושה פריטים ואחד פתוח לטרייד. זה השלב שממנו הילדה
+     יכולה גם להציע וגם לקבל, ולכן זה השלב שנמדד ולא "נרשמה". */
+  const activated = items.length >= MIN_ITEMS
+    && items.some((i) => i.trade_status === "open_for_trade");
+  useEffect(() => {
+    if (activated) track("squish_collection_activated", { items: items.length });
+  }, [activated, items.length]);
 
   const showToast = (m: string) => {
     setToast(m);
@@ -410,6 +420,10 @@ export default function MyCollection() {
             שמירת שינויים
           </button>
         )}
+
+        {/* שאלה אחת אחרי שהאוסף כבר קיים באמת. מוצגת פעם אחת בלבד,
+            ורק כשדגל הפיילוט דלוק. */}
+        {activated && <Feedback moment="collection_activated" />}
       </div>
 
       {toast && (

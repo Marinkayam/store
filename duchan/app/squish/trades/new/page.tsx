@@ -6,6 +6,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { mediaUrl } from "@/lib/media";
 import { conditionLabel, sizeLabel, typeLabel, type SquishItem, type Wish } from "@/lib/squish";
 import { compareOffer, track } from "@/lib/squish-trade";
+import { squishError } from "@/lib/squish-errors";
 import { SquishOutline } from "../../components";
 import { Media, TwoSides } from "../../trade-parts";
 
@@ -61,13 +62,7 @@ function NewTrade() {
     setBusy(false);
     if (error) {
       console.error("[squish] send proposal failed:", error.message);
-      setErr(
-        /not open for trade/.test(error.message)
-          ? "הסקווישי כבר לא פתוח לטרייד"
-          : /need three/.test(error.message)
-            ? "צריך שלושה סקווישים באוסף שלך"
-            : "לא הצלחנו לשלוח, לנסות שוב"
-      );
+      setErr(squishError(error.message));
       return;
     }
     track("squish_trade_sent", { items: picked.length });

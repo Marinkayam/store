@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { track } from "@/lib/squish-analytics";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
@@ -250,6 +251,7 @@ export default function NewCollection() {
     }
 
     sessionStorage.removeItem(KEY);
+    track("squish_collection_created");
     router.push("/squish/collection");
   }
 

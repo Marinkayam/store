@@ -99,18 +99,5 @@ export const itemLine = (i: TradeItem) =>
     .filter(Boolean)
     .join(", ")})`;
 
-/**
- * אירועי אנליטיקס — ממשק מוקלד בלבד, בלי ספק חיצוני.
- * היום זה no-op; כשתהיה תשתית, מחברים כאן מקום אחד.
- */
-export type SquishEvent =
-  | "squish_trade_started" | "squish_trade_offer_selected" | "squish_trade_sent"
-  | "squish_trade_viewed" | "squish_trade_countered" | "squish_trade_approved"
-  | "squish_trade_reserved" | "squish_whatsapp_opened" | "squish_trade_cancelled"
-  | "squish_trade_reported" | "squish_trade_completed";
-
-export function track(event: SquishEvent, props: Record<string, string | number> = {}) {
-  if (process.env.NODE_ENV !== "production") {
-    console.debug("[squish:event]", event, props);
-  }
-}
+export type { SquishEvent } from "./squish-analytics";
+export { track } from "./squish-analytics";

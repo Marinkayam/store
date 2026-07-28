@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { CANCEL_REASONS, REPORT_REASONS, track, type Trade } from "@/lib/squish-trade";
+import { squishError } from "@/lib/squish-errors";
 import { EmptyCollection } from "../components";
 import { Media, TwoSides } from "../trade-parts";
+import Feedback from "../feedback";
 
 /**
  * טריידים — קיבלתי · שלחתי · סגורים.
@@ -69,13 +71,7 @@ function Trades() {
     setBusy(null);
     if (error) {
       console.error(`[squish] ${fn} failed:`, error.message);
-      showToast(
-        /item unavailable/.test(error.message)
-          ? "אחד הסקווישים כבר לא זמין לטרייד. אפשר לעדכן את ההצעה."
-          : /version changed/.test(error.message)
-            ? "ההצעה השתנתה בינתיים, כדאי להסתכל שוב"
-            : "לא הצלחנו, לנסות שוב"
-      );
+      showToast(squishError(error.message));
       await load();
       return null;
     }
@@ -123,6 +119,13 @@ function Trades() {
           <TradeCard key={t.id} t={t} busy={busy === t.id} call={call} onToast={showToast} reload={load} />
         ))
       )}
+
+      {/* שאלה אחת, על הרגע שהכי טרי. טרייד שנסגר קודם להצעה ראשונה. */}
+      {trades.some((t) => t.status === "completed" || t.status === "cancelled") ? (
+        <Feedback moment="trade_closed" />
+      ) : trades.some((t) => t.role === "sender") ? (
+        <Feedback moment="first_proposal" />
+      ) : null}
 
       {toast && (
         <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90] max-w-[20rem] text-center leading-relaxed">

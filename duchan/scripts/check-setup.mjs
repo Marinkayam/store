@@ -136,6 +136,8 @@ if (SUPA && SERVICE) {
     "squish_interests", "squish_wishlist",
     "squish_trade_proposals", "squish_trade_versions", "squish_trade_version_items",
     "squish_trade_reports",
+    "squish_blocks", "squish_item_reports", "squish_feedback", "squish_parent_approvals",
+    "squish_admin_actions",
   ];
   for (const table of TABLES) {
     try {
@@ -153,6 +155,8 @@ if (SUPA && SERVICE) {
     "squish_join", "squish_send_proposal", "squish_counter_proposal", "squish_approve_version",
     "squish_accept_and_reserve_trade", "squish_cancel_trade", "squish_confirm_completion",
     "squish_report_trade", "squish_ack_parent",
+    "squish_block_user", "squish_unblock_user", "squish_remove_connection",
+    "squish_delete_profile", "squish_is_blocked", "squish_rate_ok",
   ];
   /* קוראים את מפרט ה-OpenAPI של PostgREST במקום לנסות לקרוא לכל פונקציה.
      ניסיון קריאה עם גוף ריק מחזיר 404 גם לפונקציה *שקיימת*, רק בגלל
