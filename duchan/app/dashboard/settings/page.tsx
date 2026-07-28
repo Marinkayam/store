@@ -47,6 +47,10 @@ export default function SettingsPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [preset, setPreset] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  // המוצרים האמיתיים, כדי שהעריכה תיראה על הדוכן עצמו ולא על דוגמה
+  const [products, setProducts] = useState<
+    { id: string; name: string; price: number; image_key: string | null; poster_key: string | null }[]
+  >([]);
 
   useEffect(() => {
     if (!store) return;
@@ -75,6 +79,19 @@ export default function SettingsPage() {
       payout_note: store.payout_note ?? "",
       payout_link: store.payout_link ?? "",
     });
+  }, [store]);
+
+  // המוצרים האמיתיים של הדוכן, להצגה מתחת לעריכה
+  useEffect(() => {
+    if (!store) return;
+    supabaseBrowser()
+      .from("products")
+      .select("id, name, price, image_key, poster_key")
+      .eq("store_id", store.id)
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true })
+      .limit(6)
+      .then(({ data }) => setProducts(data ?? []));
   }, [store]);
 
   const showToast = (m: string) => {
@@ -330,167 +347,182 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* תצוגה מקדימה חיה.
-            לא דוגמית קטנה אלא הדוכן עצמו: אותו קאבר, אותה תמונה, אותו שם,
-            ומוצר אמיתי אחד עם כפתור בצבע הערכה. הכל לחיץ, כך שאפשר לערוך
-            מכאן במקום לחפש למטה איזה שדה שייך למה. */}
+        {/* הדוכן עצמו, ניתן לעריכה במקום.
+            אין כאן "תצוגה מקדימה" למעלה ו"שדות" למטה: השם נערך במקום שבו
+            הוא מופיע, וכך גם המשפט, התיאור, העיר, התמונה והקאבר. מה שרואים
+            זה מה שהקונות יראו, ומתחת המוצרים האמיתיים. */}
         <div>
           <div className="flex items-baseline justify-between mb-1.5">
-            <span className="t-label">ככה הדוכן נראה לקונות</span>
+            <span className="t-label">הדוכן שלך, לחיצה על כל דבר עורכת אותו</span>
             <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer" className="text-[11px] underline text-[var(--muted)]">
               לפתוח את הדוכן האמיתי
             </a>
           </div>
+
+          <input ref={coverRef} type="file" accept="image/*" hidden
+            onChange={(e) => e.target.files?.[0] && onCover(e.target.files[0])} />
+          <input ref={avatarRef} type="file" accept="image/*" hidden
+            onChange={(e) => e.target.files?.[0] && onAvatar(e.target.files[0])} />
+
           <div
-            className="overflow-hidden border border-[var(--line)]"
+            id="identity"
+            className="scroll-mt-14 overflow-hidden border border-[var(--line)]"
             style={{ background: t.bg, color: t.ink, fontFamily: t.font }}
           >
+            {/* קאבר */}
             <button
               onClick={() => coverRef.current?.click()}
               aria-label="החלפת תמונת הקאבר"
-              className="block w-full h-24 overflow-hidden relative group"
+              className="block w-full h-28 overflow-hidden relative"
               style={coverPreview ? undefined : { background: coverCss(preset) }}
             >
               {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
-              <span className="absolute bottom-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5">
-                החלפת קאבר
+              <span className="absolute bottom-1.5 left-1.5 bg-black/55 text-white text-[10.5px] px-2 py-1">
+                ✎ קאבר
               </span>
             </button>
 
-            <div className="text-center -mt-7 px-3 pb-3">
-              <button
-                onClick={() => avatarRef.current?.click()}
-                aria-label="החלפת תמונת הפרופיל"
-                className="relative inline-flex w-14 h-14 items-center justify-center text-2xl overflow-hidden"
-                style={{ background: t.surface, border: `2px solid ${t.bg}` }}
-              >
-                {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
-                <span
-                  className="absolute -bottom-0.5 -left-0.5 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white"
-                  style={{ borderRadius: "999px" }}
-                  aria-hidden
+            <div className="px-4 pb-4 -mt-8">
+              {/* תמונת פרופיל */}
+              <div className="text-center">
+                <button
+                  onClick={() => avatarRef.current?.click()}
+                  aria-label="החלפת תמונת הפרופיל"
+                  className="relative inline-flex w-16 h-16 items-center justify-center text-3xl overflow-hidden"
+                  style={{ background: t.surface, border: `2px solid ${t.bg}` }}
                 >
-                  ✎
-                </span>
-              </button>
-
-              <div className="font-bold text-[15px] mt-1.5">{name || "החנות שלך"}</div>
-              {tagline && <div className="text-[12px] opacity-70 mt-0.5">{tagline}</div>}
-              {/* עיר מוצגת לקונות, גיל לעולם לא */}
-              {info.city.trim() && (
-                <div className="text-[11px] opacity-60 mt-0.5">{info.city.trim()}</div>
-              )}
-              {info.about.trim() && (
-                <div className="text-[11.5px] opacity-75 mt-1.5 leading-relaxed">{info.about.trim()}</div>
-              )}
-
-              {/* מוצר לדוגמה: כאן רואים בפועל את צבע הכפתור של הערכה */}
-              <div className="mt-3 text-right" style={{ background: t.surface, border: `1px solid ${t.border}` }}>
-                <div className="h-20 flex items-center justify-center text-3xl opacity-70">🧁</div>
-                <div className="px-2.5 pb-2.5">
-                  <div className="text-[12.5px] font-medium">מוצר לדוגמה</div>
-                  <div className="flex items-center justify-between mt-1.5">
-                    <span className="text-[13px] font-bold">₪15</span>
-                    <span
-                      className="px-3 py-1.5 text-[11.5px] font-bold"
-                      style={{ background: t.primary, color: t.onPrimary }}
-                    >
-                      הוספה לסל
-                    </span>
-                  </div>
-                </div>
+                  {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
+                  <span
+                    className="absolute -bottom-0.5 -left-0.5 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white"
+                    style={{ borderRadius: "999px" }}
+                    aria-hidden
+                  >
+                    ✎
+                  </span>
+                </button>
               </div>
-            </div>
-          </div>
-          <p className="text-[11px] text-[var(--muted)] mt-1.5">
-            לחיצה על הקאבר או על התמונה העגולה מחליפה אותם. הגיל לא מופיע כאן
-            ולא בדוכן.
-          </p>
-        </div>
 
-        {/* קאבר: תמונה אמיתית או אחד מהמוכנים. תמונה תמיד גוברת. */}
-        <input ref={coverRef} type="file" accept="image/*" hidden
-          onChange={(e) => e.target.files?.[0] && onCover(e.target.files[0])} />
-        <div id="identity" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">הקאבר של הדוכן</div>
-          <div
-            className="h-24 mt-2 overflow-hidden relative border border-[var(--line)]"
-            style={coverPreview ? undefined : { background: coverCss(preset) }}
-          >
-            {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <button
-              onClick={() => coverRef.current?.click()}
-              className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
-            >
-              העלאת תמונה
-            </button>
-            {coverPreview && (
-              <button onClick={removeCover} className="border border-[var(--line)] px-3 text-[12.5px]">
-                הסרה
-              </button>
-            )}
-          </div>
-          <div className="text-[11px] text-[var(--muted)] mt-2.5 mb-1">או רקע מוכן:</div>
-          <div className="flex gap-1.5 flex-wrap">
-            {COVERS.map((c) => (
-              <button
-                key={c.key}
-                onClick={() => pickPreset(c.key)}
-                aria-label={`רקע ${c.label}`}
-                className={`w-11 h-8 border-2 ${
-                  !coverPreview && preset === c.key ? "border-[var(--ink)]" : "border-[var(--line)]"
-                }`}
-                style={{ background: c.css }}
+              {/* שם, משפט, עיר, תיאור — נערכים בדיוק במקום שבו הם מוצגים.
+                  editable מוסיף קו מקווקו עדין, כדי שיהיה ברור שאפשר להקליד
+                  בלי להפוך את זה לטופס. */}
+              <input
+                value={name}
+                maxLength={40}
+                aria-label="שם החנות"
+                placeholder="שם הדוכן"
+                onChange={(e) => { setName(e.target.value); setDirty(true); }}
+                className="editable block w-full text-center font-bold text-[17px] mt-2"
+                style={{ color: t.ink }}
               />
-            ))}
-          </div>
-        </div>
+              <input
+                value={tagline}
+                maxLength={60}
+                aria-label="משפט אחד עלייך"
+                placeholder="משפט אחד עלייך (לא חובה)"
+                onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
+                className="editable block w-full text-center text-[12.5px] mt-1 opacity-80"
+                style={{ color: t.ink }}
+              />
+              <input
+                value={info.city}
+                maxLength={30}
+                aria-label="עיר"
+                placeholder="עיר (לא חובה)"
+                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
+                className="editable block w-full text-center text-[11.5px] mt-1 opacity-65"
+                style={{ color: t.ink }}
+              />
+              <textarea
+                value={info.about}
+                maxLength={280}
+                rows={2}
+                aria-label="על הדוכן"
+                placeholder="כמה מילים על הדוכן (לא חובה)"
+                onChange={(e) => { setInfo({ ...info, about: e.target.value }); setDirty(true); }}
+                className="editable block w-full text-center text-[12px] mt-1.5 resize-none leading-relaxed opacity-80"
+                style={{ color: t.ink }}
+              />
 
-        <label className="text-[11px] text-[var(--muted)]">
-          שם החנות
-          <input value={name} maxLength={40} aria-label="שם החנות"
-            onChange={(e) => { setName(e.target.value); setDirty(true); }}
-            className="mt-1 w-full border border-[var(--line)] bg-white px-3 py-2.5 text-sm text-[var(--ink)]" />
-        </label>
-
-        <label className="text-[11px] text-[var(--muted)]">
-          משפט אחד עלייך
-          <input value={tagline} maxLength={60}
-            onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
-            className="mt-1 w-full border border-[var(--line)] bg-white px-3 py-2.5 text-sm text-[var(--ink)]" />
-        </label>
-
-        <div>
-          <span className="text-[11px] text-[var(--muted)]">תמונת פרופיל</span>
-          <input ref={avatarRef} type="file" accept="image/*" hidden
-            onChange={(e) => e.target.files?.[0] && onAvatar(e.target.files[0])} />
-          <div className="flex items-center gap-3 mt-1 bg-white border border-[var(--line)] p-2.5">
-            <div className="w-12 h-12 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden">
-              {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
+              {/* המוצרים האמיתיים */}
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {(products.length ? products : [null]).map((p, i) =>
+                  p ? (
+                    <div key={p.id} style={{ background: t.surface, border: `1px solid ${t.border}` }}>
+                      <div className="h-20 flex items-center justify-center text-2xl overflow-hidden opacity-90">
+                        {mediaUrl(p.poster_key) ?? mediaUrl(p.image_key) ? (
+                          <img src={(mediaUrl(p.poster_key) ?? mediaUrl(p.image_key))!} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          "🛍️"
+                        )}
+                      </div>
+                      <div className="px-2 pb-2">
+                        <div className="text-[11.5px] truncate">{p.name}</div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-[12px] font-bold">₪{p.price}</span>
+                          <span className="px-2 py-1 text-[10px] font-bold"
+                            style={{ background: t.primary, color: t.onPrimary }}>
+                            לסל
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={i} className="col-span-2 border border-dashed py-6 text-center text-[11.5px] opacity-60"
+                      style={{ borderColor: t.border }}>
+                      עוד אין מוצרים בדוכן
+                    </div>
+                  )
+                )}
+              </div>
+              <a href="/dashboard/products"
+                className="block text-center text-[11.5px] underline mt-2.5 opacity-70"
+                style={{ color: t.ink }}>
+                לעריכת המוצרים
+              </a>
             </div>
-            <button onClick={() => avatarRef.current?.click()}
-              className="border border-[var(--line)] px-3 py-2 text-xs font-medium">
-              📷 העלאת תמונה
-            </button>
-            {avatarPreview && (
-              <button onClick={removeAvatar} className="text-xs text-[var(--muted)] underline">
-                חזרה לאמוג'י
-              </button>
-            )}
           </div>
-        </div>
 
-        <div>
-          <span className="text-[11px] text-[var(--muted)]">או אמוג'י</span>
-          <div className="flex gap-1.5 flex-wrap mt-1">
-            {EMOJIS.map((e) => (
-              <button key={e} onClick={() => { setEmoji(e); setDirty(true); }}
-                className={`w-9 h-9 border-[1.5px] bg-white text-lg ${emoji === e && !avatarPreview ? "border-[var(--ink)]" : "border-[var(--line)]"}`}>
-                {e}
-              </button>
-            ))}
+          <p className="text-[11px] text-[var(--muted)] mt-2">
+            הגיל לא מופיע כאן ולא בדוכן. עיר כן, כדי שקונה תדע אם מסירה הגיונית.
+          </p>
+
+          {/* אפשרויות משניות לקאבר ולתמונה — מתחת לדוכן, לא במקומו */}
+          <div className="bg-white border border-[var(--line)] p-3 mt-2.5">
+            <div className="text-[11px] text-[var(--muted)] mb-1.5">רקע מוכן לקאבר</div>
+            <div className="flex gap-1.5 flex-wrap">
+              {COVERS.map((c) => (
+                <button
+                  key={c.key}
+                  onClick={() => pickPreset(c.key)}
+                  aria-label={`רקע ${c.label}`}
+                  className={`w-11 h-8 border-2 ${
+                    !coverPreview && preset === c.key ? "border-[var(--ink)]" : "border-[var(--line)]"
+                  }`}
+                  style={{ background: c.css }}
+                />
+              ))}
+              {coverPreview && (
+                <button onClick={removeCover} className="text-[11px] underline text-[var(--muted)] px-2">
+                  הסרת התמונה
+                </button>
+              )}
+            </div>
+
+            <div className="text-[11px] text-[var(--muted)] mt-3 mb-1.5">או אמוג׳י במקום תמונת פרופיל</div>
+            <div className="flex gap-1.5 flex-wrap">
+              {EMOJIS.map((e) => (
+                <button key={e} onClick={() => { setEmoji(e); setDirty(true); }}
+                  aria-label={`אמוג׳י ${e}`}
+                  className={`w-9 h-9 border-[1.5px] bg-white text-lg ${emoji === e && !avatarPreview ? "border-[var(--ink)]" : "border-[var(--line)]"}`}>
+                  {e}
+                </button>
+              ))}
+              {avatarPreview && (
+                <button onClick={removeAvatar} className="text-[11px] underline text-[var(--muted)] px-2">
+                  חזרה לאמוג׳י
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -541,49 +573,22 @@ export default function SettingsPage() {
         )}
 
         {/* על הדוכן: מה שקונה שואלת לפני שהיא קונה */}
+        {/* התיאור והעיר נערכים למעלה, על הדוכן עצמו. כאן נשאר רק הגיל,
+            כי הוא היחיד שלא מוצג לקונות ולכן אין לו מקום בתצוגה. */}
         <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">על הדוכן</div>
+          <div className="text-[13px] font-bold">גיל</div>
           <p className="text-[11px] text-[var(--muted)] leading-relaxed mt-0.5">
-            מוצג מתחת לשם, בדף שקונים רואים.
+            לא מוצג בדוכן ולא בקוד המקור. עוזר לנו להתאים תוכן לפי גיל.
           </p>
-          <label className="block text-[11px] text-[var(--muted)] mt-2.5 mb-1">כמה מילים עלייך ועל הדוכן</label>
-          <textarea
-            value={info.about}
-            onChange={(e) => { setInfo({ ...info, about: e.target.value }); setDirty(true); }}
-            placeholder="לדוגמה: אני בת/בן 11, ואני מכינה צמידים מחוטים ומוכרת סקווישים שכבר לא בשימוש."
-            maxLength={300}
-            rows={3}
-            aria-label="על הדוכן"
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
+          <input
+            value={info.age}
+            onChange={(e) => { setInfo({ ...info, age: e.target.value.replace(/\D/g, "").slice(0, 2) }); setDirty(true); }}
+            placeholder="11"
+            inputMode="numeric"
+            maxLength={2}
+            aria-label="גיל"
+            className="w-20 mt-2 border border-[var(--line)] px-3 py-2.5 text-[13px]"
           />
-          <div className="flex gap-2 mt-2">
-            <div className="w-20">
-              <label className="block text-[11px] text-[var(--muted)] mb-1">גיל</label>
-              <input
-                value={info.age}
-                onChange={(e) => { setInfo({ ...info, age: e.target.value.replace(/\D/g, "").slice(0, 2) }); setDirty(true); }}
-                placeholder="11"
-                inputMode="numeric"
-                maxLength={2}
-                aria-label="גיל"
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-[11px] text-[var(--muted)] mb-1">עיר</label>
-              <input
-                value={info.city}
-                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                placeholder="למשל: רמת גן"
-                maxLength={30}
-                aria-label="עיר"
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-              />
-            </div>
-          </div>
-          <p className="text-[11px] text-[var(--muted)] mt-1">
-            הגיל לא מוצג בחנות ולעולם לא בקוד המקור. רק עיר, לעולם לא כתובת, זה מספיק כדי שקונה תדע אם מסירה הגיונית.
-          </p>
         </div>
 
         {/* משלוחים */}
