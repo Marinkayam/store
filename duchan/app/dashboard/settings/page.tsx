@@ -828,7 +828,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
-                <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בביט או בפייבוקס למרינה</li>
+                <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (חינם) או בביט</li>
                 <li>2. מרינה מאשרת שהתשלום הגיע</li>
                 <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
               </ol>

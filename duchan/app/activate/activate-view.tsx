@@ -5,6 +5,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../dashboard/use-store";
 import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../price/sections";
 import HelpButton from "../help-button";
+import { displayPhone } from "@/lib/phone";
 
 // הפלואו: בונים בחינם → רוצים לשתף → כאן מסבירים כמה ולמה → משלמים בביט/פייבוקס
 // → מצהירים "שילמנו" → המנהלת מאשרת → החנות באוויר והלינק ניתן לשיתוף.
@@ -38,6 +39,8 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
+  const [copiedName, setCopiedName] = useState(false);
   const [consent, setConsent] = useState<boolean | null>(null);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -311,27 +314,68 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         הכסף שקונים משלמים לך על מוצרים עובר <b>ישירות אליך</b>, בביט או במזומן, איך
         שנבחר בהגדרות. אנחנו לא נוגעים בו ולא לוקחים ממנו אגורה.
       </div>
-      <div className="flex flex-col gap-2">
-        {bitUrl && (
-          <a href={bitUrl} target="_blank" rel="noreferrer" className={payBtn}>
-            💳 תשלום ₪{price} בביט
-          </a>
-        )}
-        {payboxUrl && (
-          <a href={payboxUrl} target="_blank" rel="noreferrer" className={payBtn}>
-            📱 תשלום ₪{price} בפייבוקס
-          </a>
-        )}
-        {!bitUrl && !payboxUrl && ownerWhatsapp && (
-          <div className="bg-white border border-[var(--line)] p-3.5 text-[13px] leading-relaxed">
-            שולחים ביט או פייבוקס למספר{" "}
-            <span className="font-bold" dir="ltr">
-              {ownerWhatsapp.replace(/^972/, "0")}
+      {/* שתי דרכים, ולא רשימה של לינקים: פייבוקס ראשון כי הוא חינם, וביט
+          מתחתיו כדרך משנית. בשתיהן צריך לדעת מה לכתוב, אז שם הדוכן יושב
+          בכרטיס עם כפתור העתקה במקום להיזכר בו לבד. */}
+      <div className="flex flex-col gap-2.5">
+        <div className="bg-white border-[1.5px] border-[var(--ink)] p-3.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[15px] font-bold">📱 פייבוקס</span>
+            <span className="bg-[var(--ok-bg)] border border-[var(--ok-line)] text-[var(--ok-ink)] text-[11px] font-bold px-1.5 py-0.5">
+              השימוש חינם
             </span>
-            , על שם מרינה.
           </div>
-        )}
-        <a href={waOwner(`היי מרינה! רוצה להפעיל את החנות "${store.display_name}" (${store.slug}). איך משלמים?`)}
+          <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5">
+            מחכים לך בקבוצת <b>&quot;הקמת דוכן&quot;</b>. נכנסים לקבוצה ומשלמים שם ₪{price}.
+          </p>
+          {payboxUrl && (
+            <a href={payboxUrl} target="_blank" rel="noreferrer" className={`${payBtn} mt-2.5`}>
+              להצטרפות לקבוצה ולתשלום ←
+            </a>
+          )}
+        </div>
+
+        <div className="bg-white border border-[var(--line)] p-3.5">
+          <div className="text-[15px] font-bold">💳 או בביט</div>
+          <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5">
+            שולחים ₪{price} למספר הזה, וכותבים בהערה את שם הדוכן.
+          </p>
+          {bitUrl ? (
+            <a href={bitUrl} target="_blank" rel="noreferrer" className={`${payBtn} mt-2.5`}>
+              תשלום ₪{price} בביט ←
+            </a>
+          ) : (
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(ownerWhatsapp.replace(/^972/, "0"));
+                setCopiedPhone(true);
+                setTimeout(() => setCopiedPhone(false), 2000);
+              }}
+              className="mt-2.5 w-full border-[1.5px] border-[var(--line)] py-3 flex items-center justify-center gap-2"
+            >
+              <span className="text-[16px] font-bold tracking-wide" dir="ltr">
+                {displayPhone(ownerWhatsapp)}
+              </span>
+              <span className="text-[12px] text-[var(--muted)]">
+                {copiedPhone ? "הועתק ✓" : "להעתקה"}
+              </span>
+            </button>
+          )}
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(store.display_name);
+              setCopiedName(true);
+              setTimeout(() => setCopiedName(false), 2000);
+            }}
+            className="mt-1.5 w-full border border-dashed border-[var(--line)] py-2.5 text-[12.5px] text-start px-3"
+          >
+            <span className="text-[var(--muted)]">מה לכתוב בהערה: </span>
+            <b>{store.display_name}</b>
+            <span className="text-[var(--muted)]">{copiedName ? " · הועתק ✓" : " · להעתקה"}</span>
+          </button>
+        </div>
+
+        <a href={waOwner(`היי! רוצה להפעיל את הדוכן "${store.display_name}" (${store.slug}). איך משלמים?`)}
           className="bg-white border border-[var(--line)] py-3 text-[13px] font-bold text-center"
         >
           💬 יש לי שאלה, לדבר איתך בוואטסאפ

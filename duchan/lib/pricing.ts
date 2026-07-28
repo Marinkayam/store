@@ -53,9 +53,19 @@ export const IS_LAUNCH = ACTIVATION_PRICE < FULL_PRICE;
 
 /** לינק תשלום אישי. ריק = מציגים את המספר לביט ידני. */
 export const PAY_BIT_URL = process.env.NEXT_PUBLIC_PAY_BIT_URL ?? "";
-export const PAY_PAYBOX_URL = process.env.NEXT_PUBLIC_PAY_PAYBOX_URL ?? "";
-/** המספר שאליו שולחים ביט, ושבו פותחים וואטסאפ עם המנהלת. E.164 בלי + */
-export const OWNER_WHATSAPP = process.env.NEXT_PUBLIC_OWNER_WHATSAPP ?? "";
+/**
+ * קבוצת התשלום בפייבוקס. השימוש בפייבוקס חינם, ולכן זו הדרך המומלצת —
+ * נכנסים לקבוצה "הקמת דוכן" ומשלמים שם.
+ */
+export const PAY_PAYBOX_URL =
+  process.env.NEXT_PUBLIC_PAY_PAYBOX_URL ?? "https://links.payboxapp.com/4dGOrULw84b";
+/**
+ * המספר שאליו שולחים ביט, ושבו פותחים וואטסאפ עם המנהלת. E.164 בלי +.
+ * ברירת המחדל היא מספר המכירות, כדי שמסך התשלום לא יישאר בלי דרך לשלם
+ * כשמשתנה הסביבה לא מוגדר.
+ */
+export const OWNER_WHATSAPP =
+  process.env.NEXT_PUBLIC_OWNER_WHATSAPP ?? process.env.NEXT_PUBLIC_SALES_WHATSAPP ?? "972545888471";
 
 export const PAYMENT_METHODS = ["bit", "paybox", "other"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
