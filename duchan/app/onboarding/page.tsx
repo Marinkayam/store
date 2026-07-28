@@ -2,22 +2,39 @@
 
 import { useEffect, useRef, useState } from "react";
 import { COVERS, DEFAULT_COVER, coverCss } from "@/lib/covers";
+import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, MediaError } from "@/lib/media";
+import { uploadBlob } from "@/lib/upload-client";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "../phone-verify";
 import HelpButton from "../help-button";
 
-// ארבעה מסכים: שם → רקע → פרטים ואישור → טלפון. אין ערכות, אין מוצר —
-// מוצרים הם השלב הבא ושיתוף אחריו. כל מסך שואל דבר אחד, כדי שאף אחד
-// מהם לא יידחה כ"טופס ארוך מדי".
+// ארבעה מסכים: שם → עיצוב הדוכן → פרטים ואישור → טלפון.
+//
+// מסך 2 הוא הדוכן עצמו, חי וניתן לעריכה, כולל הוספת מוצרים. הכל שם קורה
+// לפני שמבקשים טלפון: הילד/ה רואה דוכן אמיתי עם המוצרים שלו/ה, ורק אז
+// מחליט/ה אם למסור מספר. המוצרים יושבים בטיוטה ונוצרים באמת אחרי
+// שהחשבון נפתח.
 
 type Step = 1 | 2 | 3 | 4;
+
+/** מוצר שנוסף לפני שיש חשבון. התמונה יושבת כ-data URL בטיוטה ומועלית
+ *  ל-R2 רק אחרי שהדוכן נוצר, כי לפני זה אין storeId לתלות בו קובץ. */
+export interface DraftProduct {
+  name: string;
+  price: string;
+  imageData: string | null;
+}
 
 interface Draft {
   step: Step;
   displayName: string;
+  tagline: string;
+  about: string;
   avatarData: string | null;
   cover: string;
+  theme: ThemeKey;
+  products: DraftProduct[];
   age: string;
   city: string;
   parentAware: boolean;
@@ -27,13 +44,21 @@ interface Draft {
 const EMPTY: Draft = {
   step: 1,
   displayName: "",
+  tagline: "",
+  about: "",
   avatarData: null,
   cover: DEFAULT_COVER.key,
+  theme: "cloud",
+  products: [],
   age: "",
   city: "",
   parentAware: false,
   ref: null,
 };
+
+/** תמונות ה-data URL תופסות מקום ב-sessionStorage. שלושה מוצרים בהקמה
+ *  זה מספיק כדי להבין איך הדוכן נראה, והשאר נוספים אחר כך בדשבורד. */
+const MAX_DRAFT_PRODUCTS = 3;
 
 function loadDraft(): Draft {
   try {
@@ -94,6 +119,9 @@ export default function Onboarding() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ slug: string } | null>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
+  const productRef = useRef<HTMLInputElement>(null);
+  // המוצר שנמצא כרגע בטופס ההוספה. null = הטופס סגור.
+  const [adding, setAdding] = useState<DraftProduct | null>(null);
 
   useEffect(() => setDraft(loadDraft()), []);
   useEffect(() => {
@@ -115,6 +143,21 @@ export default function Onboarding() {
     }
   }
 
+  /** תמונת מוצר בהקמה. 600 ולא 900: היא יושבת ב-sessionStorage עד
+   *  שנוצר הדוכן, ו-data URL גדול מדי ממלא את המכסה של הדפדפן. */
+  async function pickProductPhoto(file: File) {
+    setPhotoErr("");
+    try {
+      const blob = await squareImage(file, 600);
+      const reader = new FileReader();
+      reader.onload = () =>
+        setAdding((a) => (a ? { ...a, imageData: reader.result as string } : a));
+      reader.readAsDataURL(blob);
+    } catch (e) {
+      setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+    }
+  }
+
   /** נקרא אחרי אימות הטלפון — יש כבר סשן, ולכן זו רק יצירת הדוכן. */
   async function save() {
     setErr("");
@@ -125,6 +168,8 @@ export default function Onboarding() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           displayName: draft!.displayName,
+          tagline: draft!.tagline.trim() || undefined,
+          theme: draft!.theme,
           coverPreset: draft!.cover,
           age: draft!.age ? Number(draft!.age) : undefined,
           city: draft!.city.trim() || undefined,
@@ -155,6 +200,37 @@ export default function Onboarding() {
         } catch {}
       }
 
+      // התיאור נשמר בנפרד: /api/stores לא מקבל אותו, והעמודה עשויה
+      // עוד לא להיות בדאטהבייס. כישלון כאן לא מפיל את פתיחת הדוכן.
+      if (draft!.about.trim()) {
+        await supabaseBrowser()
+          .from("stores")
+          .update({ about: draft!.about.trim() })
+          .eq("id", data.storeId);
+      }
+
+      // המוצרים שנוספו לפני שהיה חשבון. עכשיו יש storeId, אז אפשר להעלות
+      // את התמונות וליצור אותם. מוצר שנכשל לא עוצר את השאר.
+      for (const pr of draft!.products) {
+        try {
+          let imageKey: string | null = null;
+          if (pr.imageData) {
+            const blob = await (await fetch(pr.imageData)).blob();
+            const up = await uploadBlob("image", blob, data.storeId);
+            if (!("error" in up)) imageKey = up.key;
+          }
+          await supabaseBrowser().from("products").insert({
+            store_id: data.storeId,
+            name: pr.name.trim().slice(0, 40) || "מוצר",
+            price: Math.max(0, Math.floor(Number(pr.price) || 0)),
+            image_key: imageKey,
+            stock: 1,
+          });
+        } catch (e) {
+          console.error("[onboarding] draft product failed:", e);
+        }
+      }
+
       sessionStorage.removeItem("duchan-draft");
       setResult({ slug: data.slug });
     } catch {
@@ -163,6 +239,9 @@ export default function Onboarding() {
       setBusy(false);
     }
   }
+
+  // הערכה שנבחרה, לצביעת התצוגה החיה של הדוכן
+  const th = themeOrDefault(draft.theme);
 
   // מסך הטלפון ומסך הסיום אינם חלק ממד ההתקדמות — הבנייה כבר נגמרה בהם
   const barStep = !result && draft.step <= 3 ? (draft.step as 1 | 2 | 3) : null;
@@ -198,92 +277,199 @@ export default function Onboarding() {
             onClick={() => set({ step: 2 })}
             className="btn btn-primary"
           >
-            הלאה, לבחירת רקע ←
+            הלאה, לעיצוב הדוכן ←
           </button>
         </div>
       )}
 
-      {/* 2 — רקע, עם תצוגה חיה שכוללת גם תמונה אישית אופציונלית */}
+      {/* 2 — הדוכן עצמו, חי וניתן לעריכה, כולל מוצרים.
+          כאן רואים איך הדוכן ייראה עוד לפני שמחברים טלפון: השם, המשפט,
+          התיאור, התמונות, הערכה, וגם מוצר או שניים. */}
       {draft.step === 2 && !result && (
-        <div className="w-full flex flex-col gap-5">
+        <div className="w-full flex flex-col gap-4">
           <div className="text-center">
-            <h1 className="t-title">איזה רקע בא לך?</h1>
+            <h1 className="t-title">ככה הדוכן שלך ייראה</h1>
             <p className="t-sub mt-2">
-              זה הצבע של כל הדוכן. אפשר לראות למעלה איך זה נראה.
+              לחיצה על כל דבר עורכת אותו. אפשר גם להוסיף מוצר ולראות אותו בפנים.
             </p>
           </div>
 
-          <div className="w-full overflow-hidden card">
-            <div className="h-20" style={{ background: coverCss(draft.cover) }} />
-            <div className="text-center -mt-8 pb-3">
-              <button
-                onClick={() => avatarRef.current?.click()}
-                aria-label={draft.avatarData ? "להחליף תמונה" : "להוסיף תמונה"}
-                className="relative w-20 h-20 inline-flex items-center justify-center overflow-hidden bg-white text-3xl"
-                style={{
-                  borderRadius: "var(--r)",
-                  border: draft.avatarData ? "1px solid var(--line)" : "2px dashed var(--sand)",
-                  boxShadow: "0 2px 10px rgba(0,0,0,.06)",
-                }}
-              >
-                {draft.avatarData ? (
-                  <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  "📷"
-                )}
-                <span
-                  className="absolute -bottom-1 -left-1 w-6 h-6 flex items-center justify-center text-xs bg-[var(--olive)] text-white"
-                  style={{ borderRadius: "999px", border: "2px solid white" }}
-                  aria-hidden
+          <input ref={avatarRef} type="file" accept="image/*" hidden
+            onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
+          <input ref={productRef} type="file" accept="image/*" hidden
+            onChange={(e) => e.target.files?.[0] && pickProductPhoto(e.target.files[0])} />
+
+          <div className="overflow-hidden border border-[var(--line)]"
+            style={{ background: th.bg, color: th.ink, fontFamily: th.font }}>
+            <div className="h-24" style={{ background: coverCss(draft.cover) }} />
+            <div className="px-4 pb-4 -mt-8">
+              <div className="text-center">
+                <button
+                  onClick={() => avatarRef.current?.click()}
+                  aria-label="החלפת תמונת הפרופיל"
+                  className="relative inline-block w-16 h-16 align-middle"
                 >
-                  {draft.avatarData ? "✎" : "+"}
-                </span>
-              </button>
-              <div className="t-heading mt-3">{draft.displayName || "הדוכן"}</div>
-              <div className="t-small text-[var(--muted)] mt-1">
-                {draft.avatarData ? "לחיצה כדי להחליף" : "לחיצה כדי להוסיף תמונה (לא חובה)"}
+                  <span className="flex w-full h-full items-center justify-center text-3xl overflow-hidden"
+                    style={{ background: th.surface, border: `2px solid ${th.bg}` }}>
+                    {draft.avatarData
+                      ? <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />
+                      : "📷"}
+                  </span>
+                  <span className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[10px] bg-[var(--ink)] text-white z-10"
+                    style={{ borderRadius: "999px", border: "1.5px solid var(--white)" }} aria-hidden>✎</span>
+                </button>
+              </div>
+
+              <input
+                value={draft.displayName}
+                maxLength={40}
+                aria-label="שם הדוכן"
+                placeholder="שם הדוכן"
+                onChange={(e) => set({ displayName: e.target.value })}
+                className="editable block w-full text-center font-bold text-[15px] mt-1.5"
+                style={{ color: th.ink }}
+              />
+              <input
+                value={draft.tagline}
+                maxLength={60}
+                aria-label="משפט אחד עלייך"
+                placeholder="משפט אחד עלייך (לא חובה)"
+                onChange={(e) => set({ tagline: e.target.value })}
+                className="editable block w-full text-center text-[12px] mt-0.5 opacity-80"
+                style={{ color: th.ink }}
+              />
+              <textarea
+                value={draft.about}
+                maxLength={280}
+                rows={2}
+                aria-label="על הדוכן"
+                placeholder="כמה מילים על הדוכן (לא חובה)"
+                onChange={(e) => set({ about: e.target.value })}
+                className="editable block w-full text-center text-[11.5px] mt-0.5 resize-none leading-snug opacity-80"
+                style={{ color: th.ink }}
+              />
+
+              {/* מוצרים שנוספו לפני שיש חשבון */}
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {draft.products.map((pr, i) => (
+                  <div key={i} className="relative" style={{ background: th.surface, border: `1px solid ${th.border}` }}>
+                    <button
+                      onClick={() => set({ products: draft.products.filter((_, j) => j !== i) })}
+                      aria-label={`הסרת ${pr.name || "המוצר"}`}
+                      className="absolute top-1 left-1 z-10 w-5 h-5 bg-black/55 text-white text-[11px] leading-none"
+                      style={{ borderRadius: "999px" }}
+                    >
+                      ×
+                    </button>
+                    <div className="h-20 flex items-center justify-center text-2xl overflow-hidden">
+                      {pr.imageData
+                        ? <img src={pr.imageData} alt="" className="w-full h-full object-cover" />
+                        : "🛍️"}
+                    </div>
+                    <div className="px-2 pb-2">
+                      <div className="text-[11.5px] truncate">{pr.name || "מוצר"}</div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[12px] font-bold">₪{pr.price || 0}</span>
+                        <span className="px-2 py-1 text-[10px] font-bold"
+                          style={{ background: th.primary, color: th.onPrimary }}>לסל</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {draft.products.length < MAX_DRAFT_PRODUCTS && (
+                  <button
+                    onClick={() => setAdding({ name: "", price: "", imageData: null })}
+                    className="border border-dashed py-6 text-[12px] col-span-2"
+                    style={{ borderColor: th.border, color: th.ink }}
+                  >
+                    + להוסיף מוצר
+                  </button>
+                )}
               </div>
             </div>
           </div>
-          <input ref={avatarRef} type="file" accept="image/*" hidden
-            onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
-          {photoErr && <p className="text-xs text-[var(--danger)] text-center">{photoErr}</p>}
 
-          <div className="grid grid-cols-4 gap-2.5">
-            {COVERS.map((c) => {
-              const on = draft.cover === c.key;
-              return (
+          {/* טופס הוספת מוצר, נפתח רק כשלוחצים */}
+          {adding && (
+            <div className="bg-white border border-[var(--line)] p-3 flex flex-col gap-2">
+              <div className="t-body font-medium">מוצר חדש</div>
+              <button
+                onClick={() => productRef.current?.click()}
+                className="h-28 border-[1.5px] border-dashed border-[var(--line)] bg-[var(--canvas)] flex items-center justify-center overflow-hidden"
+              >
+                {adding.imageData
+                  ? <img src={adding.imageData} alt="" className="w-full h-full object-cover" />
+                  : <span className="t-small text-[var(--muted)]">📷 להוסיף תמונה</span>}
+              </button>
+              <input
+                value={adding.name}
+                maxLength={40}
+                aria-label="שם המוצר"
+                placeholder="שם המוצר"
+                onChange={(e) => setAdding({ ...adding, name: e.target.value })}
+                className="field w-full px-3 py-3 t-small"
+              />
+              <input
+                value={adding.price}
+                inputMode="numeric"
+                aria-label="מחיר המוצר"
+                placeholder="מחיר בשקלים"
+                onChange={(e) => setAdding({ ...adding, price: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                className="field w-full px-3 py-3 t-small"
+              />
+              {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
+              <div className="flex gap-2">
                 <button
-                  key={c.key}
-                  onClick={() => set({ cover: c.key })}
-                  aria-label={c.label}
-                  aria-pressed={on}
-                  className="relative h-14 flex items-end justify-center pb-1"
-                  style={{
-                    background: c.css,
-                    borderRadius: "var(--r)",
-                    border: `2px solid ${on ? "var(--olive)" : "var(--line)"}`,
-                  }}
+                  disabled={!adding.name.trim()}
+                  onClick={() => { set({ products: [...draft.products, adding] }); setAdding(null); }}
+                  className="btn btn-primary flex-1"
                 >
-                  {on && (
-                    <span
-                      className="absolute top-1 left-1 w-5 h-5 flex items-center justify-center text-[11px] bg-[var(--olive)] text-white"
-                      style={{ borderRadius: "999px" }}
-                      aria-hidden
-                    >
-                      ✓
-                    </span>
-                  )}
-                  <span className="text-[9.5px] font-medium" style={{ color: "rgba(0,0,0,.55)" }}>
-                    {c.label}
-                  </span>
+                  הוספה לדוכן
                 </button>
-              );
-            })}
+                <button onClick={() => setAdding(null)} className="btn btn-secondary px-4">ביטול</button>
+              </div>
+            </div>
+          )}
+
+          {/* רקע וערכה */}
+          <div className="bg-white border border-[var(--line)] p-3">
+            <div className="t-small font-medium mb-2">רקע</div>
+            <div className="grid grid-cols-4 gap-2">
+              {COVERS.map((c) => (
+                <button key={c.key} onClick={() => set({ cover: c.key })}
+                  aria-label={c.label} aria-pressed={draft.cover === c.key}
+                  className="relative h-12"
+                  style={{ background: c.css, border: `2px solid ${draft.cover === c.key ? "var(--ink)" : "var(--line)"}` }}
+                />
+              ))}
+            </div>
+            <div className="t-small font-medium mt-3 mb-2">ערכת צבעים</div>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, tv]) => (
+                <button key={k} onClick={() => set({ theme: k })}
+                  aria-label={`ערכת ${tv.label}`} aria-pressed={draft.theme === k}
+                  className={`border-[1.5px] p-1.5 text-right ${draft.theme === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                  style={{ background: tv.bg }}>
+                  <div className="p-1" style={{ border: `1px solid ${tv.border}`, background: tv.surface }}>
+                    <div className="h-5 flex items-center justify-center text-[12px] opacity-70">🧁</div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[8px] font-bold" style={{ color: tv.ink }}>₪15</span>
+                      <span className="px-1 py-[2px] text-[7.5px] font-bold"
+                        style={{ background: tv.primary, color: tv.onPrimary }}>לסל</span>
+                    </div>
+                  </div>
+                  <span className="block text-[10.5px] mt-1" style={{ color: tv.ink }}>{tv.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <button onClick={() => set({ step: 3 })} className="btn btn-primary">
-            הלאה — לפרטים אחרונים ←
+          <button
+            disabled={!draft.displayName.trim()}
+            onClick={() => set({ step: 3 })}
+            className="btn btn-primary"
+          >
+            הלאה ←
           </button>
         </div>
       )}
@@ -402,7 +588,9 @@ export default function Onboarding() {
             <p className="t-label">נפתח דוכן</p>
             <h1 className="text-xl font-bold mt-0.5">{draft.displayName}</h1>
             <p className="t-sub mt-2">
-              הוא עדיין פרטי. מעלים מוצר אחד, ואז אפשר לפרסם.
+              {draft.products.length
+                ? "הוא עדיין פרטי. אפשר להוסיף עוד מוצרים, ואז לפרסם."
+                : "הוא עדיין פרטי. מעלים מוצר אחד, ואז אפשר לפרסם."}
             </p>
           </div>
 
@@ -421,19 +609,40 @@ export default function Onboarding() {
               </div>
               <div className="t-heading mt-3">{draft.displayName}</div>
               <div className="t-small text-[var(--muted)] mt-1">
-                {[draft.city, "0 מוצרים"].filter(Boolean).join(" · ")}
+                {[
+                  draft.city,
+                  draft.products.length === 1 ? "מוצר אחד" : `${draft.products.length} מוצרים`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </div>
             </div>
-            <div className="mx-4 mb-4 border-[1.5px] border-dashed border-[#D3D5DC] py-6 text-center t-small text-[var(--muted)]">
-              כאן יופיע המוצר הראשון
-            </div>
+            {draft.products.length ? (
+              <div className="grid grid-cols-2 gap-2 mx-4 mb-4">
+                {draft.products.map((pr, i) => (
+                  <div key={i} className="border border-[var(--line)]">
+                    <div className="h-16 flex items-center justify-center text-xl overflow-hidden bg-[var(--canvas)]">
+                      {pr.imageData ? <img src={pr.imageData} alt="" className="w-full h-full object-cover" /> : "🛍️"}
+                    </div>
+                    <div className="px-2 py-1.5 text-[11.5px] truncate">{pr.name}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mx-4 mb-4 border-[1.5px] border-dashed border-[#D3D5DC] py-6 text-center t-small text-[var(--muted)]">
+                כאן יופיע המוצר הראשון
+              </div>
+            )}
           </div>
 
-          <a href="/dashboard/products?new=1" className="btn btn-primary">
-            להעלות מוצר ראשון
+          <a
+            href={draft.products.length ? "/dashboard/products" : "/dashboard/products?new=1"}
+            className="btn btn-primary"
+          >
+            {draft.products.length ? "לדוכן שלי" : "להעלות מוצר ראשון"}
           </a>
-          <a href="/dashboard/products" className="btn btn-tertiary t-small">
-            אחר כך, לדוכן שלי
+          <a href="/dashboard/share" className="btn btn-tertiary t-small">
+            לשלוח את הלינק לחברים
           </a>
         </div>
       )}

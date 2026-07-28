@@ -11,7 +11,6 @@ import HelpButton from "./help-button";
 
 export default function Landing() {
   const router = useRouter();
-  const [name, setName] = useState("");
   const [ref, setRef] = useState<string | null>(null);
   const [from, setFrom] = useState<{ name: string; emoji: string } | null>(null);
   // יש כבר דוכן ומחוברת? הדף הזה חייב לומר את זה לפני הכל.
@@ -54,13 +53,8 @@ export default function Landing() {
 
   function start(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
-    sessionStorage.setItem(
-      "duchan-draft",
-      // step 1 ולא 2: השם עובר מכאן, אבל התמונה והרקע עדיין לפניה.
-      // עם step 2 היא הייתה מדלגת על כל מסך הזהות בלי לדעת שהוא קיים.
-      JSON.stringify({ displayName: name.trim(), step: 1, ref })
-    );
+    // רק ההפניה נשמרת. השם נשאל במסך הראשון של ההקמה ולא כאן.
+    sessionStorage.setItem("duchan-draft", JSON.stringify({ step: 1, ref }));
     router.push("/onboarding");
   }
 
@@ -90,20 +84,15 @@ export default function Landing() {
         </div>
       )}
 
-      {/* הכותרת: איור, שם, ואז המשפט שאומר מה מותר למכור.
-          "כל מה שרוצים" היא ההבטחה ו"וההורים מסכימים" הוא הגבול — הם נאמרים
-          באותה נשימה בכוונה, כדי שאף אחד מהם לא יישמע כמו תוספת קטנה. */}
+      {/* האיור נושא את המסך, לא הטקסט. השם קטן כי הוא כבר כתוב על האיור,
+          והמשפט קצר ובצבע מלא — הגרסה הקודמת הייתה ארוכה ואפורה. */}
       <div className="text-center flex flex-col items-center">
-        <StallArt className="w-56 h-auto stall-sway" />
-        <h1 className="text-[2.75rem] leading-none font-semibold tracking-[-0.03em] mt-2">דוכן</h1>
-        <p className="t-sub mt-4 max-w-[19rem]">
-          יש צעצועים שכבר לא משחקים בהם? בגדים עם התווית שעוד לא לבשו? ספר
-          שכבר קראו, או סקוויש שכבר מעכו עד הסוף?
+        <StallArt className="w-64 h-auto stall-sway" />
+        <h1 className="text-[1.5rem] leading-none font-semibold tracking-[-0.02em] mt-3">דוכן</h1>
+        <p className="text-[15px] leading-relaxed mt-3 max-w-[19rem] text-[var(--ink)]">
+          צעצועים, בגדים וספרים שכבר לא צריך?
           <br />
-          <span className="font-medium text-[var(--ink)]">
-            כאן פותחים דוכן אמיתי, עם עמוד וקישור לשלוח לכולם
-          </span>
-          , ומוכרים את זה לחברים. כל דבר שההורים מסכימים לו.
+          <span className="font-medium">פותחים דוכן ומוכרים לחברים.</span>
         </p>
       </div>
 
@@ -120,31 +109,17 @@ export default function Landing() {
         </a>
       )}
 
-      <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-3">
-        <label className="t-body font-medium">איך יקראו לדוכן שלך?</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="למשל: הדברים של נועה"
-          maxLength={40}
-          autoFocus
-          className="field w-full px-4 py-4 t-body"
-        />
-        <button
-          disabled={!name.trim()}
-          className="btn btn-primary"
-        >
-          נבנה את הדוכן ←
-        </button>
-        {/* פירוט המחיר עבר כולו ל-/price. כאן נשאר משפט אחד שמסיר את החשש
-            המיידי ("זה עולה לי כסף עכשיו?"), והקישור עצמו הוא כפתור ולא
-            שורה קטנה בתחתית — זו השאלה הראשונה שכל הורה שואל. */}
-        <p className="t-small text-center text-[var(--muted)]">
-          לבנות זה חינם. תשלום חד-פעמי רק כשרוצים לפרסם.
+      {/* בלי שדה שם כאן: השם נשאל ממילא במסך הראשון של ההקמה, ושתי
+          שאלות לאותו דבר גרמו לתחושה של טופס כפול. */}
+      <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-2.5">
+        <button className="btn btn-primary">לפתוח דוכן ←</button>
+        {/* הקישור בשורה נפרדת: כשהוא נגרר לסוף המשפט הוא נשבר באמצע
+            ("איך" בשורה אחת ו"זה עובד?" בשנייה) ונראה כמו טעות. */}
+        <p className="text-[13px] text-center text-[var(--ink)] leading-relaxed">
+          לבנות זה חינם. משלמים פעם אחת רק כשרוצים לפרסם.
+          <br />
+          <a href="/price" className="underline font-medium">איך זה עובד?</a>
         </p>
-        <a href="/price" className="btn btn-secondary">
-          איך זה עובד?
-        </a>
       </form>
 
       <p className="t-small text-[var(--muted)]">
