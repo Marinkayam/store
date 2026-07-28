@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import { mediaUrl } from "@/lib/media";
-import { typeLabel, sizeLabel, conditionLabel, type SquishItem } from "@/lib/squish";
+import { BRAND, typeLabel, sizeLabel, conditionLabel, type SquishItem } from "@/lib/squish";
 import { SquishOutline, TradeBadge, SwapGlyph } from "../../components";
 
 /**
@@ -78,12 +78,18 @@ export default async function SharedCollection({
   const title = profile.collection_title || `האוסף של ${profile.nickname}`;
 
   /* ── תצוגה מוגנת: מי שלא במעגל ── */
+  /* לא חסימה — הזמנה. מי שהגיעה לכאן קיבלה קישור מחברה, והמסך צריך
+     להרגיש כמו דלת שנפתחת ולא כמו שגיאה. */
   if (!canView) {
     return (
       <Shell>
-        <div className="text-center py-10 flex flex-col items-center gap-3">
-          <SquishOutline size={64} />
-          <h1 className="t-title">{title}</h1>
+        <div className="text-center py-10 flex flex-col items-center gap-3 px-5">
+          <SquishOutline size={72} />
+          <h1 className="t-title">{profile.nickname} הזמינה אותך למעגל שלה</h1>
+          <p className="t-sub max-w-[20rem]">
+            כדי לראות את הסקווישים שפתוחים לטרייד, הצטרפי דרך הקישור האישי
+            שקיבלת ממנה.
+          </p>
           <p className="t-small text-[var(--muted)] flex items-center gap-2">
             <span>{total ?? 0} סקווישים</span>
             <span aria-hidden>·</span>
@@ -92,17 +98,26 @@ export default async function SharedCollection({
               {openCount ?? 0} פתוחים לטרייד
             </span>
           </p>
-          <div className="bg-white border border-[var(--line)] p-4 text-[13px] leading-relaxed max-w-sm mt-2">
-            הגלריה הזו פרטית. כדי לראות מה יש בפנים, צריך להיות במעגל של{" "}
-            <b>{profile.nickname}</b>.
-            <br />
-            <span className="text-[var(--muted)]">
-              בקשי ממנה את קישור ההזמנה האישי שלה.
-            </span>
-          </div>
-          <a href="/squish" className="btn btn-primary w-full max-w-sm mt-1">
-            {viewer ? "לאוסף שלי ←" : "לפתוח אוסף משלי ←"}
+          <a href="/squish/new" className="btn btn-primary w-full max-w-sm mt-2">
+            להצטרף למעגל של {profile.nickname}
           </a>
+          <p className="t-small text-[var(--muted)]">
+            {viewer ? (
+              <>
+                כבר יש לך אוסף?{" "}
+                <a href="/squish/collection" className="underline text-[var(--ink)]">
+                  לגלריה שלי
+                </a>
+              </>
+            ) : (
+              <>
+                כבר יש לך {BRAND}?{" "}
+                <a href="/login?next=/squish/collection" className="underline text-[var(--ink)]">
+                  התחברי
+                </a>
+              </>
+            )}
+          </p>
         </div>
       </Shell>
     );
@@ -200,7 +215,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[var(--canvas)] max-w-md mx-auto">
       {children}
       <p className="text-center text-[11px] text-[var(--muted)] pb-6">
-        <a href="/squish" className="underline">Squish Club</a>
+        <a href="/squish" className="underline">{BRAND}</a>
         {" · "}
         <a href="/terms" className="underline">תנאים</a>
       </p>

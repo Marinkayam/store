@@ -255,3 +255,44 @@ h3 {
   pointer-events: none;
   animation: fly 0.9s ease-out forwards;
 }
+
+/* ── סקוויש קלאב ──
+   המטאפורה היא מדף אוסף, לא רשת מוצרים: הכרטיס בלי מסגרת, התמונה
+   נושאת אותו, ומתחתיה קו מדף עדין. */
+.squish-card {
+  background: transparent;
+  transition: transform 0.14s ease;
+}
+.squish-card > div:first-child {
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--wood) 22%, transparent);
+}
+.squish-card:active {
+  transform: scale(0.97);
+}
+
+/* המדף עצמו — פס עץ דק מתחת לכל שורה בגלריה */
+.squish-shelf {
+  position: relative;
+}
+.squish-shelf::after {
+  content: "";
+  position: absolute;
+  inset-inline: -0.25rem;
+  bottom: -0.5rem;
+  height: 3px;
+  background: color-mix(in srgb, var(--wood) 30%, transparent);
+}
+
+/* הסקווישי "נושם" — תנועה קטנה שגורמת לאוסף להרגיש חי ולא סטטי */
+@keyframes squish-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50%      { transform: scale(1.04, 0.96); }
+}
+.squish-breathe { animation: squish-breathe 3.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .squish-breathe { animation: none; }
+  .squish-card { transition: none; }
+}

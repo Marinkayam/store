@@ -36,7 +36,7 @@ export const contactWhatsappUrl = (msg: string) =>
   `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(msg)}`;
 
 /**
- * התת-דומיין של Squish Club.
+ * התת-דומיין של סקוויש קלאב.
  *
  * אותה אפליקציה ואותו דיפלוי — ה-middleware מזהה את המארח ומפנה פנימה
  * ל-/squish. אותם מסכים נגישים גם ב-duchan.app/squish, וזה מה שמאפשר

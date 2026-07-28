@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * הרכיבים המשותפים של Squish Club.
+ * הרכיבים המשותפים של סקוויש קלאב.
  *
  * השפה הוויזואלית היא של דוכן — שמנת, לבנדר, זית ועץ, קו דק אחד, פינה
  * ישרה — אבל המטאפורה כאן היא מדף אוסף ולא לוח ניהול: הכרטיס גדול,
@@ -18,22 +18,29 @@ import {
 
 /** תגית "פתוח לטרייד" — אייקון וקטורי משלנו, לא אימוג'י. */
 export function TradeBadge({ status }: { status: SquishItem["trade_status"] }) {
+  /* תגית קטנה בפינה, לא רצועה סגולה על חצי מהתמונה: התמונה היא מה
+     שצריך לתפוס את העין, והתגית היא סימן היכר לצידה. */
   if (status === "open_for_trade") {
     return (
       <span
-        className="inline-flex items-center gap-1 bg-[var(--lavender)] text-white text-[11px] font-medium px-1.5 py-0.5"
+        className="w-6 h-6 flex items-center justify-center bg-[var(--lavender)] text-white shadow-sm"
+        style={{ borderRadius: "999px" }}
         title="פתוח לטרייד"
+        aria-label="פתוח לטרייד"
       >
-        <SwapGlyph />
-        פתוח לטרייד
+        <SwapGlyph size={13} />
       </span>
     );
   }
   if (status === "maybe_trade") {
     return (
-      <span className="inline-flex items-center gap-1 bg-white border border-[var(--line)] text-[var(--muted)] text-[11px] px-1.5 py-0.5">
-        <SwapGlyph />
-        אולי
+      <span
+        className="w-6 h-6 flex items-center justify-center bg-white/90 text-[var(--muted)] border border-[var(--line)]"
+        style={{ borderRadius: "999px" }}
+        title="אולי לטרייד"
+        aria-label="אולי לטרייד"
+      >
+        <SwapGlyph size={13} />
       </span>
     );
   }
@@ -88,7 +95,7 @@ export function SquishyCard({
   return (
     <button
       onClick={onClick}
-      className={`text-start bg-white border border-[var(--line)] overflow-hidden flex flex-col ${dim ? "opacity-55" : ""}`}
+      className={`squish-card text-start flex flex-col ${dim ? "opacity-55" : ""}`}
     >
       <div className="relative aspect-square bg-[var(--cream)] flex items-center justify-center overflow-hidden">
         {video ? (
@@ -111,12 +118,18 @@ export function SquishyCard({
           </span>
         )}
         {video && (
-          <span className="absolute bottom-1.5 end-1.5 bg-black/55 text-white text-[10px] px-1.5 py-0.5">
-            סרטון
+          <span
+            className="absolute bottom-1.5 end-1.5 w-5 h-5 bg-black/50 text-white flex items-center justify-center"
+            style={{ borderRadius: "999px" }}
+            aria-label="יש סרטון"
+          >
+            <svg viewBox="0 0 12 12" width="7" height="7" fill="currentColor" aria-hidden>
+              <path d="M3 2 L10 6 L3 10 z" />
+            </svg>
           </span>
         )}
       </div>
-      <div className="p-2">
+      <div className="pt-1.5 px-0.5">
         <div className="text-[13px] font-medium truncate">{item.name}</div>
         <div className="text-[11.5px] text-[var(--muted)] truncate">
           {[typeLabel(item.squishy_type) === "אחר" ? item.custom_type || "אחר" : typeLabel(item.squishy_type),

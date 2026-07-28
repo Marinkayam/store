@@ -71,6 +71,9 @@ export default function NewCollection() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [editing, setEditing] = useState<DraftItem | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  // הטופס מפוצל לשניים: קודם מצלמים ונותנים שם, ואז הפרטים. שדה אחד
+  // ארוך גרם לזה להרגיש כמו מילוי טופס במקום כמו הוספת סקווישי.
+  const [editStep, setEditStep] = useState<1 | 2>(1);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [photoErr, setPhotoErr] = useState("");
@@ -212,11 +215,16 @@ export default function NewCollection() {
           hidden
           onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])}
         />
-        <h1 className="t-title">{editIndex === null ? "סקווישי חדש" : "עריכה"}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="t-title">{editIndex === null ? "סקווישי חדש" : "עריכה"}</h1>
+          <span className="t-label">{editStep} מתוך 2</span>
+        </div>
 
+        {editStep === 1 && (
+        <>
         <button
           onClick={() => fileRef.current?.click()}
-          className="h-44 border-[1.5px] border-dashed border-[var(--line)] bg-white flex items-center justify-center overflow-hidden"
+          className="h-52 border-[1.5px] border-dashed border-[var(--line)] bg-white flex items-center justify-center overflow-hidden"
         >
           {editing.imageData ? (
             <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
@@ -265,6 +273,31 @@ export default function NewCollection() {
           />
         )}
 
+        {editStep === 1 ? (
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => {
+                if (!editing.imageData) { setPhotoErr("צריך תמונה אחת לפחות"); return; }
+                setPhotoErr("");
+                setEditStep(2);
+              }}
+              className="btn btn-primary flex-1"
+            >
+              הלאה ←
+            </button>
+            <button
+              onClick={() => { setEditing(null); setEditIndex(null); setEditStep(1); }}
+              className="btn btn-secondary px-5"
+            >
+              ביטול
+            </button>
+          </div>
+        ) : null}
+        </>
+        )}
+
+        {editStep === 2 && (
+        <>
         <Chips
           label="גודל"
           options={SQUISH_SIZES}
@@ -320,16 +353,18 @@ export default function NewCollection() {
         </button>
 
         <div className="flex gap-2 mt-1">
-          <button onClick={saveItem} className="btn btn-primary flex-1">
-            שמירה
-          </button>
           <button
-            onClick={() => { setEditing(null); setEditIndex(null); }}
-            className="btn btn-secondary px-5"
+            onClick={() => { saveItem(); setEditStep(1); }}
+            className="btn btn-primary flex-1"
           >
-            ביטול
+            להוסיף לאוסף
+          </button>
+          <button onClick={() => setEditStep(1)} className="btn btn-secondary px-5">
+            → חזרה
           </button>
         </div>
+        </>
+        )}
       </main>
     );
   }
@@ -422,10 +457,11 @@ export default function NewCollection() {
     <main className="px-4 py-5 flex flex-col gap-4">
       <Progress step={ready ? 2 : 1} />
       <div className="text-center">
-        <h1 className="t-title">{ready ? "האוסף שלך מוכן" : "התחלה מעולה"}</h1>
+        {ready && <div className="text-4xl squish-breathe mb-1">🎉</div>}
+        <h1 className="t-title">{ready ? "יש לך גלריה משלך!" : "התחלה מעולה"}</h1>
         <p className="t-sub mt-1.5">
           {ready
-            ? "אילו מהם פתוחים לטרייד? אפשר לשנות בכל רגע."
+            ? "עכשיו בחרי אילו סקווישים חברות יכולות להציע עליהם טרייד."
             : count === 1
               ? "נוסיף עוד שניים כדי לפתוח את הגלריה שלך."
               : `עוד ${MIN_ITEMS - count} והגלריה שלך מוכנה.`}

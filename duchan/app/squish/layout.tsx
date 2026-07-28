@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import SquishNav from "./nav";
 
 /**
- * Squish Club — מועדון הטרייד.
+ * סקוויש קלאב — מועדון הטרייד.
  *
  * אותה אפליקציה ואותו חשבון כמו דוכן, זהות ויזואלית משלו. הניווט התחתון
  * מחזיק ארבעה אזורים בלבד: האוסף · לגלות · טריידים · שלי. "שלי" הוא
@@ -10,12 +10,12 @@ import SquishNav from "./nav";
  * שלא יהיו שישה טאבים ראשיים.
  */
 export const metadata: Metadata = {
-  title: "Squish Club",
+  title: "סקוויש קלאב",
   description: "מועדון הסקווישים. אוסף אישי, וטריידים עם חברות.",
   // אוספים הם פרטיים. אין אינדוקס ואין מפת אתר.
   robots: { index: false, follow: false },
   manifest: "/squish-manifest.json",
-  appleWebApp: { capable: true, title: "Squish Club", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "סקוויש קלאב", statusBarStyle: "default" },
   icons: { icon: "/squish-icon.svg", apple: "/squish-touch-icon.png" },
 };
 

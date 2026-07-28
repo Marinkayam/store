@@ -1,5 +1,5 @@
 /**
- * Squish Club — מקור האמת היחיד לטיפוסים, לתוויות ולכללי המוצר.
+ * סקוויש קלאב — מקור האמת היחיד לטיפוסים, לתוויות ולכללי המוצר.
  *
  * הערכים הפנימיים באנגלית ויציבים; העברית היא תצוגה בלבד. אסור לשנות ערך
  * קיים אחרי שהוא נשמר בדאטהבייס — רק להוסיף חדש, בדיוק כמו מפתחות ערכות
@@ -85,6 +85,12 @@ export const conditionLabel = (k: SquishCondition | null | undefined) => label(S
  */
 export const MIN_ITEMS = 3;
 
+/** השם בעברית. המוצר מדבר לילדות, ו-Squish Club באנגלית לא נקרא. */
+export const BRAND = "סקוויש קלאב";
+
+/** אמוג'י לתמונת הפרופיל, כשעוד לא הועלתה תמונה. כמו בדוכן. */
+export const SQUISH_EMOJIS = ["🧸", "🐸", "🦄", "🍡", "🐙", "☁️", "🍓", "🐥", "🌈", "🧁"];
+
 /** קוד אקראי לקישור. לא כינוי ולא שם — כמו slug של חנות. */
 export function squishCode(len = 6): string {
   const abc = "abcdefghjkmnpqrstuvwxyz23456789"; // בלי תווים שמתבלבלים
@@ -98,7 +104,7 @@ export function squishCode(len = 6): string {
 /** גרסת נוסח אישור ההורים. משתנה כשהנוסח משתנה, ונשמר יחד עם החותמת. */
 export const PARENT_AWARENESS_VERSION = "squish-2026-07";
 export const PARENT_AWARENESS_COPY =
-  "אני מאשרת שההורה שלי יודע שאני משתמשת ב-Squish Club ומאשר לי להעלות פריטים ולהציע טריידים.";
+  "אני מאשרת שההורה שלי יודע שאני משתמשת בסקוויש קלאב ומאשר לי להעלות פריטים ולהציע טריידים.";
 
 export interface SquishItem {
   id: string;
@@ -126,9 +132,13 @@ export interface SquishProfile {
   nickname: string;
   general_city: string | null;
   collection_title: string | null;
+  about: string | null;
   collection_code: string;
   collection_visibility: SquishVisibility;
   theme: string;
+  emoji: string;
+  avatar_key: string | null;
+  cover_key: string | null;
   cover_preset: string | null;
   parent_awareness_at: string | null;
   completed_trades: number;

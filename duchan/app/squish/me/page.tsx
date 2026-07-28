@@ -22,18 +22,31 @@ export default function MyArea() {
   const [count, setCount] = useState(0);
   const [openCount, setOpenCount] = useState(0);
   const [invite, setInvite] = useState<string | null>(null);
+  const [friends, setFriends] = useState<
+    { nickname: string; code: string; items: number; open: number; context: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
 
   useEffect(() => {
     const supa = supabaseBrowser();
     (async () => {
-      const { data: p } = await supa.from("squish_profiles").select("*").maybeSingle();
+      /* חייבים לסנן לפי המשתמשת במפורש. מרגע שיש חברות במעגל, ה-RLS
+         מחזיר גם את הפרופילים שלהן — ואז maybeSingle נכשל על יותר
+         משורה אחת, והמסך נראה כאילו אין בכלל אוסף. */
+      const { data: auth } = await supa.auth.getUser();
+      if (!auth.user) { setLoading(false); return; }
+      const { data: p } = await supa
+        .from("squish_profiles")
+        .select("*")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
       setProfile((p as SquishProfile) ?? null);
       if (p) {
         const { data: items } = await supa
           .from("squish_items")
           .select("trade_status")
+          .eq("owner_user_id", auth.user.id)
           .eq("profile_id", (p as SquishProfile).id)
           .is("deleted_at", null);
         setCount(items?.length ?? 0);
@@ -45,6 +58,8 @@ export default function MyArea() {
           .limit(1)
           .maybeSingle();
         setInvite(inv?.code ?? null);
+        const fr = await fetch("/api/squish/friends").then((r) => r.json()).catch(() => null);
+        setFriends(fr?.friends ?? []);
       }
       setLoading(false);
     })();
@@ -186,7 +201,7 @@ export default function MyArea() {
                 </button>
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(
-                    `${profile.nickname} פתחה אוסף ב-Squish Club והזמינה אותך למעגל שלה. הצטרפי כדי לראות אם יש לכן סקווישים שמתאימים לטרייד: ${inviteUrl}`
+                    `${profile.nickname} פתחה אוסף בסקוויש קלאב והזמינה אותך למעגל שלה. הצטרפי כדי לראות אם יש לכן סקווישים שמתאימים לטרייד: ${inviteUrl}`
                   )}`}
                   className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12px] font-medium text-center"
                 >
@@ -202,15 +217,45 @@ export default function MyArea() {
         </div>
       </section>
 
-      {/* חברות */}
+      {/* הגלריות של החברות שלי */}
       <section className="bg-white border border-[var(--line)] p-3">
-        <div className="t-label">חברות</div>
-        <p className="t-small text-[var(--muted)] leading-relaxed mt-1.5">
-          עדיין אין חברות במעגל שלך. כשחברה תצטרף דרך הקישור, היא תופיע כאן.
-        </p>
-        <div className="mt-2">
-          <ConnectionContext text="כל חיבור יסביר למה הוא קיים, בלי מספרי טלפון" />
-        </div>
+        <div className="t-label">הגלריות של החברות שלי</div>
+        {friends.length ? (
+          <div className="flex flex-col gap-1.5 mt-2">
+            {friends.map((f) => (
+              <a
+                key={f.code}
+                href={`/squish/c/${f.code}`}
+                className="flex items-center gap-3 border border-[var(--line)] px-3 py-2.5"
+              >
+                <span className="w-9 h-9 shrink-0 bg-[var(--cream)] flex items-center justify-center"
+                  style={{ borderRadius: "999px" }}>
+                  <SwapGlyph size={14} />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[13px] font-medium truncate">
+                    האוסף של {f.nickname}
+                  </span>
+                  <span className="block text-[12px] text-[var(--muted)]">
+                    {f.items} סקווישים · {f.open} פתוחים לטרייד
+                  </span>
+                  <ConnectionContext text={f.context} />
+                </span>
+                <span className="t-small">←</span>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <>
+            <p className="t-small text-[var(--muted)] leading-relaxed mt-1.5">
+              עדיין אין חברות במעגל שלך. כשחברה תצטרף דרך הקישור, הגלריה שלה
+              תופיע כאן.
+            </p>
+            <div className="mt-2">
+              <ConnectionContext text="כל חיבור מסביר למה הוא קיים, בלי מספרי טלפון" />
+            </div>
+          </>
+        )}
       </section>
 
       {/* קבוצות */}
