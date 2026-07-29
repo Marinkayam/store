@@ -7,7 +7,7 @@
 import { chromium } from "playwright";
 import pg from "pg";
 import { mkdirSync, writeFileSync } from "fs";
-import { verifyPhone, closeHelper } from "./helpers/index.mjs";
+import { clickUntil, verifyPhone, closeHelper } from "./helpers/index.mjs";
 
 const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
 const OUT = process.env.E2E_OUT ?? "/tmp/e2e-invite";
@@ -139,14 +139,18 @@ const { rows: [noyaCode] } = await db.query(
   "select collection_code from squish_profiles where user_id=$1", [noyaId]);
 await maya.goto(`${BASE}/squish/c/${noyaCode.collection_code}`, { waitUntil: "networkidle" });
 await maya.waitForTimeout(900);
-/* כל שלב מחכה לשלב הבא ולא לפרק זמן: לחיצה שהחמיצה כאן נראית אחר כך
-   כמו "החסימה לא עבדה", ושולחת לחפש באג במקום הלא נכון. */
-await maya.click("[data-testid=safety-open]");
-await maya.waitForSelector("[data-testid=safety-block]", { timeout: 10000 });
-await maya.click("[data-testid=safety-block]");
-await maya.waitForSelector("[data-testid=safety-confirm]", { timeout: 10000 });
+/* clickUntil ולא click+waitForSelector: הכפתור קיים ב-HTML לפני
+   ש-React חיבר אליו מאזין, ולחיצה בחלון הזה נופלת על סימון מת בלי
+   שום שגיאה. המתנה ארוכה יותר רק מסתירה את המרוץ. */
+await clickUntil(maya, "[data-testid=safety-open]", "[data-testid=safety-block]");
+await clickUntil(maya, "[data-testid=safety-block]", "[data-testid=safety-confirm]");
 await maya.click("[data-testid=safety-confirm]");
-await maya.waitForTimeout(2500);
+/* מחכים לאות שהאפליקציה עצמה נותנת — היא מעבירה לאוסף רק אחרי
+   שהחסימה חזרה בהצלחה מהשרת. המתנה של כמה שניות נראתה מספיקה, אבל
+   מסלול API שמתקמפל בפעם הראשונה לוקח יותר, והבדיקה הייתה קוראת את
+   הדאטהבייס בזמן שהבקשה עוד באוויר. אז זה נראה כמו "החסימה לא עבדה". */
+await maya.waitForURL("**/squish/collection", { timeout: 30000 });
+await maya.waitForTimeout(500);
 
 const { rows: [blocked] } = await db.query(
   "select status from squish_connections where user_id=$1 and connected_user_id=$2", [mayaId, noyaId]);

@@ -150,6 +150,33 @@ export async function joinCircle(page, code) {
   await page.waitForTimeout(1800);
 }
 
+/**
+ * לוחצת עד שהמסך באמת התקדם.
+ *
+ * **למה זה נחוץ:** דפי סקוויש מוגשים מהשרת ורק אז מתעוררים בדפדפן.
+ * בין הרגע שהכפתור קיים ב-HTML לרגע ש-React חיבר אליו מאזין יש חלון
+ * שבו לחיצה נופלת על סימון מת — Playwright רואה אלמנט "גלוי, פעיל
+ * ויציב" ולוחץ בהצלחה, ושום דבר לא קורה. סטנדאלון החלון הזה קצר
+ * ולא מורגש; בריצה רצופה, כשהשרת מקמפל מסלולים ברקע, הוא נפתח.
+ *
+ * הפתרון הוא לא המתנה ארוכה יותר — היא רק מסתירה את המרוץ. לוחצים,
+ * בודקים אם המצב הבא הגיע, ואם לא — לוחצים שוב. מחזירה כמה ניסיונות
+ * נדרשו, כדי שבדיקה תוכל להצהיר על זה במקום לבלוע.
+ */
+export async function clickUntil(page, selector, nextSelector, tries = 6) {
+  for (let i = 1; i <= tries; i++) {
+    await page.click(selector);
+    try {
+      await page.waitForSelector(nextSelector, { timeout: 2500 });
+      return i;
+    } catch {
+      if (i === tries) {
+        throw new Error(`אחרי ${tries} לחיצות על ${selector} לא הופיע ${nextSelector}`);
+      }
+    }
+  }
+}
+
 /** דפדפן של מי שלא מחוברת בכלל — לבדיקות פרטיות. */
 export const stranger = async (browser) =>
   (await browser.newContext({ viewport: { width: 390, height: 900 } })).newPage();
