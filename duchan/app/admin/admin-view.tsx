@@ -318,6 +318,91 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     )}`;
 
 /**
+ * חשבונות פיילוט — מד לחץ לסשן בדיקה מלווה.
+ *
+ * מוצג רק כשיש חשבון פיילוט פעיל, ולכן ברוב הימים הוא לא קיים בכלל.
+ * אין כאן תמונות, שמות פריטים, טלפון או עיר: זה מסך שאומר "האם היא
+ * מצליחה", לא מסך שעוקב אחרי ילדה.
+ */
+function PilotPanel() {
+  const [pilots, setPilots] = useState<PilotRow[] | null>(null);
+  const [busy, setBusy] = useState("");
+
+  const load = useCallback(() => {
+    fetch("/api/admin/squish-pilot").then((r) => r.json())
+      .then((d) => setPilots(d.pilots ?? [])).catch(() => setPilots([]));
+  }, []);
+  useEffect(load, [load]);
+
+  async function reset(userId: string, nickname: string) {
+    if (!confirm(`למחוק את כל אוסף הסקוויש של ${nickname}?\nחשבון הכניסה, הדוכנים וההזמנות לא ייגעו.`)) return;
+    setBusy(userId);
+    const r = await fetch("/api/admin/squish-pilot", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reset", userId }),
+    });
+    const d = await r.json().catch(() => null);
+    setBusy("");
+    if (d?.result) {
+      alert(`נמחקו ${d.result.items_removed} סקווישים.\nדוכנים שנשארו: ${d.result.stores_intact} · הזמנות: ${d.result.orders_intact}`);
+    }
+    load();
+  }
+
+  if (!pilots?.length) return null;
+  return (
+    <div data-testid="pilot-panel" className="bg-white border-[1.5px] border-[var(--lavender)] p-3.5">
+      <div className="text-[13px] font-bold">סשן פיילוט</div>
+      <div className="flex flex-col gap-2 mt-2">
+        {pilots.map((p) => (
+          <div key={p.userId} className="border border-[var(--line)] p-2.5 text-[12.5px]">
+            <div className="flex items-center justify-between gap-2">
+              <b>{p.nickname}</b>
+              <span className={p.parentApprovedAt ? "text-[var(--ok-ink)]" : "text-[var(--warn-ink)]"}>
+                {p.parentApprovedAt ? "✓ הורה אישר" : "⏳ ממתין לאישור הורה"}
+              </span>
+            </div>
+            <div className="text-[var(--muted)] mt-1 leading-relaxed">
+              {p.onboardingCompleted ? "✓ סיימה אונבורדינג" : "○ באמצע אונבורדינג"}
+              {" · "}{p.items} סקווישים
+              {p.failedWrites > 0 && (
+                <b className="text-[var(--danger)]"> · {p.failedWrites} שמירות נכשלו</b>
+              )}
+              {p.lastSavedAt && ` · שמירה אחרונה ${new Date(p.lastSavedAt).toLocaleTimeString("he-IL")}`}
+            </div>
+            <div className="text-[var(--faint)] text-[11.5px] mt-0.5">
+              {p.childDeclaredAt ? "הילדה סימנה שההורה יודע" : "הילדה לא סימנה"}
+              {p.parentRequestSentAt && " · בקשה נשלחה להורה"}
+              {p.parentDecision === false && " · ההורה סירב"}
+            </div>
+            <button
+              onClick={() => reset(p.userId, p.nickname)}
+              disabled={busy === p.userId}
+              className="mt-1.5 border border-[var(--line)] px-2.5 py-1 text-[12px] disabled:opacity-50"
+            >
+              {busy === p.userId ? "מוחקים…" : "לאפס את הפיילוט"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface PilotRow {
+  userId: string;
+  nickname: string;
+  onboardingCompleted: boolean;
+  items: number;
+  failedWrites: number;
+  lastSavedAt: string | null;
+  parentApprovedAt: string | null;
+  parentRequestSentAt: string | null;
+  parentDecision: boolean | null;
+  childDeclaredAt: string | null;
+}
+
+/**
  * אזהרה כשהדאטהבייס מפגר אחרי הקוד.
  *
  * זה המסך היחיד שבו זה נראה לפני שילדה נתקלת בזה. הבדיקה נעשית מול
@@ -351,6 +436,7 @@ function SchemaWarning() {
     <main className="min-h-screen bg-[var(--canvas)]">
       <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4 pb-16">
         <SchemaWarning />
+        <PilotPanel />
         <header className="flex items-center justify-between">
           <h1 className="text-lg font-bold">דוכן · חמ"ל 👑</h1>
           {totals && (

@@ -44,8 +44,21 @@ interface ItemInput {
   sort_order?: number;
 }
 
-/** לוג מובנה, בלי שום דבר שאפשר לזהות לפיו אדם. */
-function logFailure(cid: string, code: string | undefined, expects: string, detail?: string) {
+/**
+ * לוג מובנה, בלי שום דבר שאפשר לזהות לפיו אדם.
+ *
+ * נכתב גם לדאטהבייס: קונסולה של שרת היא בדיוק המקום שבו הכשל הזה
+ * נעלם קודם. המנהלת צריכה לראות "ניסתה לשמור ונכשל" בלי לחפור בלוגים,
+ * במיוחד בסשן מלווה שבו ילדה יושבת מולה עכשיו.
+ */
+async function logFailure(
+  db: ReturnType<typeof supabaseAdmin>,
+  userId: string | null,
+  cid: string,
+  code: string | undefined,
+  expects: string,
+  detail?: string
+) {
   console.error(
     JSON.stringify({
       op: "squish.item.create",
@@ -55,6 +68,14 @@ function logFailure(cid: string, code: string | undefined, expects: string, deta
       detail: detail ?? null,
     })
   );
+  // שדות קבועים בלבד — בלי שם הפריט, בלי מפתח מדיה, בלי טלפון
+  await db.from("squish_write_failures").insert({
+    user_id: userId,
+    op: "squish.item.create",
+    code: code ?? "unknown",
+    expects,
+    cid,
+  }).then(() => {}, () => {});
 }
 
 export async function POST(req: Request) {
@@ -129,7 +150,7 @@ export async function POST(req: Request) {
   if (error) {
     const missing = unknownColumn(error.message);
     if (missing && (OPTIONAL_ITEM_FIELDS as readonly string[]).includes(missing)) {
-      logFailure(cid, error.code, `squish_items.${missing}`, "retrying without optional field");
+      await logFailure(db, user.id, cid, error.code, `squish_items.${missing}`, "retrying without optional field");
       const reduced = { ...full };
       delete reduced[missing];
       dropped.push(missing as OptionalItemField);
@@ -139,7 +160,7 @@ export async function POST(req: Request) {
 
   if (error || !data?.id) {
     const missing = unknownColumn(error?.message);
-    logFailure(cid, error?.code, missing ? `squish_items.${missing}` : "squish_items.insert");
+    await logFailure(db, user.id, cid, error?.code, missing ? `squish_items.${missing}` : "squish_items.insert");
     return NextResponse.json(
       {
         error: "לא הצלחנו לשמור את הסקווישי",

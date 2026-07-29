@@ -51,6 +51,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "קודם מסמנים שההורה יודע" }, { status: 409 });
   }
 
+  /* חשבון פיילוט בלי אישור הורה אמיתי לא מגיע לוואטסאפ, גם אם סימנה
+     את התיבה. התיבה היא הצהרה שלה; זה אישור שההורה באמת נתן. */
+  const { data: gate } = await db.rpc("squish_pilot_gate", { p_user: user.id });
+  if (gate !== "ok") {
+    return NextResponse.json(
+      { error: "צריך אישור של הורה לפני תיאום בוואטסאפ" },
+      { status: 409 }
+    );
+  }
+
   const otherId = mine ? p.receiver_user_id : p.sender_user_id;
 
   // המספר הוא זה שאומת בסמס בחשבון דוכן — אין מספר נפרד לסקוויש

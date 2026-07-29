@@ -99,17 +99,30 @@ export async function PATCH(req: NextRequest) {
   const db = supabaseAdmin();
   const { data: row } = await db
     .from("squish_parent_approvals")
-    .select("id, decided_at")
+    .select("id, user_id, decided_at")
     .eq("token", body.token)
     .maybeSingle();
   if (!row) return NextResponse.json({ error: "הקישור לא נמצא" }, { status: 404 });
   if (row.decided_at) return NextResponse.json({ ok: true, already: true });
 
+  const decidedAt = new Date().toISOString();
   const { error } = await db
     .from("squish_parent_approvals")
-    .update({ approved: body.approved, decided_at: new Date().toISOString() })
+    .update({ approved: body.approved, decided_at: decidedAt })
     .eq("id", row.id);
   if (error) return NextResponse.json({ error: "לא הצלחנו לשמור" }, { status: 500 });
+
+  /**
+   * ההחלטה חייבת לנחות על הפרופיל, אחרת השער לעולם לא נפתח.
+   *
+   * זה נכתב כאן ולא בטריגר בכוונה: הטוקן הוא ההוכחה שההורה הוא זה
+   * שהחליט, והוא קיים רק בשרת הזה. סירוב לא מוחק כלום — האוסף נשאר
+   * שלה, פשוט סגור לאחרות.
+   */
+  await db
+    .from("squish_profiles")
+    .update({ parent_approved_at: body.approved ? decidedAt : null, updated_at: decidedAt })
+    .eq("user_id", row.user_id);
 
   return NextResponse.json({ ok: true });
 }

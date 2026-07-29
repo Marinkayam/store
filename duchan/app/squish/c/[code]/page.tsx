@@ -65,6 +65,14 @@ export default async function SharedCollection({
     canView = allowed === true;
   }
 
+  /* חשבון פיילוט לפני אישור הורה: הגלריה שלה נשארת שלה בלבד. היא
+     רואה את האוסף שבנתה במלואו — זה כל העניין בסשן הראשון — אבל
+     הקישור לא נפתח לאף אחת אחרת עד שההורה אישר. */
+  if (!isOwner) {
+    const { data: gate } = await db.rpc("squish_pilot_gate", { p_user: profile.user_id });
+    if (gate !== "ok") canView = false;
+  }
+
   const { count: total } = await db
     .from("squish_items")
     .select("id", { count: "exact", head: true })

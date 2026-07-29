@@ -33,6 +33,7 @@ const SQUISH = [
   "squish-safety.mjs",
   "squish-permissions.mjs",
   "squish-write-failure.mjs",
+  "squish-pilot.mjs",
   "invite-safety.mjs",
   "stickers.mjs",
 ];
