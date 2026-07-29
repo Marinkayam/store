@@ -130,16 +130,9 @@ export default function PhoneVerify({
           {busy ? "שולחים…" : cta}
         </button>
 
-        {/* לא כל ילד/ה יש לו/לה טלפון משלו/משלה — המספר יכול להיות של הורה,
-            וזה בכוונה לא הערת שוליים אלא תיבה עצמאית */}
-        <div className="bg-[var(--canvas)] border border-[var(--line)] px-3.5 py-3">
-          <div className="t-body font-medium">אפשר גם מספר של אמא או אבא</div>
-          <p className="t-small text-[var(--muted)] mt-1.5">
-            הקוד צריך להגיע בהודעה שאפשר לראות. אם זה מספר של מבוגר,
-            ההודעות על ההזמנות יגיעו אליו.
-          </p>
-        </div>
-
+        {/* "של מי המספר" ו"איך מוצאים אותו" הן אותה שאלה מבחינת מי ששואלת,
+            ולכן הן יושבות באותה מגירה. קודם הן היו שני דברים נפרדים על
+            המסך — תיבה שכולן קוראות וקישור שרק התוהות פותחות. */}
         <button
           type="button"
           onClick={() => setShowFindHelp(true)}
@@ -164,7 +157,17 @@ export default function PhoneVerify({
                 ✕
               </button>
             </div>
-            <p className="t-sub mb-5">שתי דרכים, לפי הטלפון:</p>
+            {/* קודם *של מי* המספר, ורק אחר כך איך מוצאים אותו: ילדה בלי
+                טלפון משלה תוקעת כאן, ורשימת הוראות לא עוזרת לה. */}
+            <div className="bg-[var(--canvas)] border border-[var(--line)] px-3.5 py-3 mb-5">
+              <div className="t-body font-medium">אפשר גם מספר של אמא או אבא</div>
+              <p className="t-small text-[var(--muted)] mt-1.5">
+                הקוד צריך להגיע בהודעה שאפשר לראות. אם זה מספר של מבוגר,
+                ההודעות על ההזמנות יגיעו אליו.
+              </p>
+            </div>
+
+            <p className="t-sub mb-3">ואם זה הטלפון שלך — ככה מוצאים אותו:</p>
 
             <FindNumberSteps
               title="באייפון"

@@ -20,7 +20,8 @@ import {
   type SquishSize,
   type SquishyType,
 } from "@/lib/squish";
-import { SquishOutline, SquishPlaceholder } from "../components";
+import { SquishOutline, SquishPlaceholder, SwapGlyph } from "../components";
+import { TypeIcon } from "../type-icons";
 
 /**
  * בניית האוסף — בונים לפני שנרשמים.
@@ -419,19 +420,36 @@ export default function NewCollection() {
           />
         </label>
 
-        <label className="t-small">
+        {/* פרוס ולא נפתח. עשרה סוגים בתפריט נפתח דורשים לפתוח, לגלול
+            ולקרוא עשר מילים כדי לגלות שיש בכלל "מפריח בועה" — והשמות
+            האלה הם חצי מהכיף. פרוס עם אייקון, הבחירה היא הצצה ולחיצה,
+            ומי שלא מכירה סוג לומדת אותו בלי לחפש אותו. */}
+        <div className="t-small">
           איזה סוג סקווישי זה?
-          <select
-            value={editing.squishy_type}
-            aria-label="סוג הסקווישי"
-            onChange={(e) => setEditing({ ...editing, squishy_type: e.target.value as SquishyType })}
-            className="field w-full px-3 py-3 mt-1 t-small bg-white"
-          >
-            {SQUISH_TYPES.map((t) => (
-              <option key={t.key} value={t.key}>{t.label}</option>
-            ))}
-          </select>
-        </label>
+          <div role="radiogroup" aria-label="סוג הסקווישי" className="grid grid-cols-3 gap-1.5 mt-1.5">
+            {SQUISH_TYPES.map((t) => {
+              const on = editing.squishy_type === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  aria-label={t.label}
+                  onClick={() => setEditing({ ...editing, squishy_type: t.key })}
+                  className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 border-[1.5px] text-[11.5px] leading-tight text-center ${
+                    on
+                      ? "border-[var(--ink)] bg-white font-medium"
+                      : "border-[var(--line)] text-[var(--muted)]"
+                  }`}
+                >
+                  <TypeIcon type={t.key} size={22} />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         {isOther && (
           <input
             value={editing.custom_type}
@@ -719,12 +737,27 @@ export default function NewCollection() {
                 }}
                 aria-pressed={it.open_for_trade}
                 aria-label={`פתוח לטרייד: ${it.name || "סקווישי"}`}
-                className={`mt-1 w-full text-[11.5px] py-1 border ${
+                className={`mt-1 w-full text-[11.5px] py-1 border flex items-center justify-center gap-1.5 ${
                   it.open_for_trade
                     ? "bg-[var(--lavender)] border-[var(--lavender)] text-white"
                     : "border-[var(--line)] text-[var(--muted)]"
                 }`}
               >
+                {/* המדבקה עצמה, ולא רק צבע רקע: זו בדיוק המדבקה שתופיע
+                    על הכרטיס בגלריה, וככה רואים מה נבחר במקום לנחש אם
+                    הכיתוב מתאר מצב או פעולה. */}
+                <span
+                  className="w-4 h-4 shrink-0 flex items-center justify-center"
+                  style={{
+                    borderRadius: "999px",
+                    background: it.open_for_trade ? "#FFFFFF" : "transparent",
+                    color: it.open_for_trade ? "var(--lavender)" : "var(--faint)",
+                    border: it.open_for_trade ? "none" : "1.2px solid var(--line)",
+                  }}
+                  aria-hidden
+                >
+                  {it.open_for_trade && <SwapGlyph size={9} />}
+                </span>
                 {it.open_for_trade ? "פתוח לטרייד" : "נשאר אצלי"}
               </button>
             </div>
