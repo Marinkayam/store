@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "@/app/phone-verify";
 import { track } from "@/lib/squish-analytics";
-import { BRAND } from "@/lib/squish";
+import { BRAND, INVITE_STATE_COPY, type InviteState } from "@/lib/squish";
 import { SquishOutline, SwapGlyph } from "../../components";
 
 /**
@@ -22,7 +22,12 @@ import { SquishOutline, SwapGlyph } from "../../components";
 export default function JoinCircle({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
   const router = useRouter();
-  const [inviter, setInviter] = useState<{ nickname: string; items: number; open: number } | null>(null);
+  const [inviter, setInviter] = useState<
+    { nickname: string; items: number; open: number; label: string | null } | null
+  >(null);
+  /* קישור שאינו תקף מקבל מסך משלו ולא הודעת שגיאה קטנה: מי שנחתה כאן
+     קיבלה קישור מחברה, וצריכה לדעת מה לעשות הלאה. */
+  const [bad, setBad] = useState<Exclude<InviteState, "ok"> | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -32,7 +37,10 @@ export default function JoinCircle({ params }: { params: Promise<{ code: string 
     // ספירת לחיצה, ומי הזמינה — בלי לחשוף פרטים אישיים
     fetch(`/api/squish/invite/${code}`)
       .then((r) => r.json())
-      .then((d) => d?.nickname && setInviter(d))
+      .then((d) => {
+        if (d?.state && d.state !== "ok") return setBad(d.state);
+        if (d?.nickname) setInviter(d);
+      })
       .catch(() => {});
     supabaseBrowser().auth.getUser().then(({ data }) => setSignedIn(!!data.user));
   }, [code]);
@@ -45,11 +53,17 @@ export default function JoinCircle({ params }: { params: Promise<{ code: string 
     setBusy(false);
     if (error) {
       console.error("[squish] join failed:", error.message);
-      setErr(
-        /own circle/.test(error.message)
-          ? "זה קישור ההזמנה שלך :)"
-          : "לא הצלחנו לצרף אותך, לנסות שוב"
-      );
+      const m = error.message;
+      if (/own circle/.test(m)) setErr("זה קישור ההזמנה שלך :)");
+      else if (/revoked/.test(m)) setBad("revoked");
+      else if (/expired/.test(m)) setBad("expired");
+      else if (/exhausted/.test(m)) setBad("exhausted");
+      else if (/not found/.test(m)) setBad("not_found");
+      // חסימה, השהיה והזמנה של חשבון מושהה — כולן אותה הודעה סתומה
+      // בכוונה: מי שנחסמה לא אמורה ללמוד מהמסך הזה שהיא נחסמה.
+      else if (/blocked|invite unavailable/.test(m)) setErr("אי אפשר להצטרף למעגל הזה.");
+      else if (/account suspended/.test(m)) setErr("החשבון שלך מושהה כרגע. אפשר לכתוב למרינה.");
+      else setErr("לא הצלחנו לצרף אותך, לנסות שוב");
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
@@ -57,13 +71,30 @@ export default function JoinCircle({ params }: { params: Promise<{ code: string 
     setDone({ nickname: row?.nickname ?? "החברה שלך", already: !!row?.already });
   }, [code]);
 
+  if (bad) {
+    return (
+      <Shell>
+        <div className="text-center flex flex-col items-center gap-3">
+          <SquishOutline size={64} />
+          <h1 className="t-title">{INVITE_STATE_COPY[bad]}</h1>
+          <p className="t-sub max-w-[20rem]">
+            אפשר לבקש מהחברה שהזמינה אותך קישור חדש — לוקח לה שנייה ליצור אותו.
+          </p>
+          <a href="/squish" className="btn btn-secondary w-full max-w-sm mt-1">
+            ל{BRAND}
+          </a>
+        </div>
+      </Shell>
+    );
+  }
+
   if (done) {
     return (
       <Shell>
         <div className="text-center flex flex-col items-center gap-3">
           <div className="text-5xl squish-breathe">🎉</div>
           <h1 className="t-title">
-            {done.already ? `כבר הייתן מחוברות` : `הצטרפת למעגל של ${done.nickname}`}
+            {done.already ? `אתן כבר באותו מעגל` : `הצטרפת למעגל של ${done.nickname}`}
           </h1>
           <p className="t-sub max-w-[19rem]">
             עכשיו אתן רואות אחת את הגלריה של השנייה, ואפשר להציע טריידים.

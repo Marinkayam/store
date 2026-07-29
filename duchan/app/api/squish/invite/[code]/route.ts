@@ -17,19 +17,27 @@ export async function GET(_req: Request, ctx: { params: Promise<{ code: string }
   }
 
   const db = supabaseAdmin();
+
+  /* המצב נקרא מהפונקציה ולא מחושב כאן: אותה תשובה בדיוק אוכפת את
+     ההצטרפות עצמה, ושני חישובים נפרדים הם שתי הזדמנויות להתפצל. */
+  const { data: state } = await db.rpc("squish_invite_state", { p_code: code });
+  if (state && state !== "ok") {
+    return NextResponse.json({ state }, { status: state === "not_found" ? 404 : 410 });
+  }
+
   const { data: invite } = await db
     .from("squish_invites")
-    .select("inviter_user_id")
+    .select("inviter_user_id, label")
     .eq("code", code)
     .maybeSingle();
-  if (!invite) return NextResponse.json({ error: "ההזמנה לא נמצאה" }, { status: 404 });
+  if (!invite) return NextResponse.json({ state: "not_found" }, { status: 404 });
 
   const { data: profile } = await db
     .from("squish_profiles")
     .select("id, nickname")
     .eq("user_id", invite.inviter_user_id)
     .maybeSingle();
-  if (!profile) return NextResponse.json({ error: "ההזמנה לא נמצאה" }, { status: 404 });
+  if (!profile) return NextResponse.json({ state: "not_found" }, { status: 404 });
 
   const { count: items } = await db
     .from("squish_items")
@@ -45,5 +53,11 @@ export async function GET(_req: Request, ctx: { params: Promise<{ code: string }
 
   await db.rpc("squish_invite_click", { p_code: code });
 
-  return NextResponse.json({ nickname: profile.nickname, items: items ?? 0, open: open ?? 0 });
+  return NextResponse.json({
+    state: "ok",
+    nickname: profile.nickname,
+    label: invite.label ?? null,
+    items: items ?? 0,
+    open: open ?? 0,
+  });
 }

@@ -67,9 +67,12 @@ export const SQUISH_TRADE_CHOICES: { key: SquishTradeStatus; label: string; hint
 export const SQUISH_VISIBILITY: { key: SquishVisibility; label: string; hint: string }[] = [
   { key: "private", label: "רק אני", hint: "אף אחת לא רואה את האוסף" },
   { key: "direct_friends", label: "החברות שלי", hint: "מי שהוספת למעגל" },
-  { key: "extended_circle", label: "גם חברות של חברות", hint: "מעגל רחב יותר" },
-  { key: "group_only", label: "קבוצות פרטיות", hint: "רק מי שאיתך בקבוצה" },
+  { key: "extended_circle", label: "גם המעגל המורחב", hint: "חברות של החברות שלך" },
 ];
+
+/* group_only ירד מהרשימה: שום דבר לא יוצר קשר מסוג group_member, ולכן
+   בחירה בו הסתירה את האוסף מכולן. ערך ה-enum נשאר בדאטהבייס — מחיקת
+   ערך enum שוברת כל שורה שמצביעה עליו — והנתונים הועברו במיגרציה 0032. */
 
 const label = <T extends string>(list: { key: T; label: string }[], key: T | null | undefined) =>
   list.find((x) => x.key === key)?.label ?? "";
@@ -189,3 +192,23 @@ export interface SquishProfile {
   parent_awareness_at: string | null;
   completed_trades: number;
 }
+
+/* ── קישורי הזמנה ──
+   התוקף והתקרה נאכפים בדאטהבייס (מיגרציה 0032). הערכים כאן הם רק
+   לתצוגה, כדי שהמסך יגיד את אותו דבר שהשרת יאכוף. */
+
+export const INVITE_DAYS = 30;
+export const INVITE_MAX_USES = 10;
+
+export type InviteState = "ok" | "not_found" | "revoked" | "expired" | "exhausted";
+
+/** מה להגיד למי שנחתה על קישור שאינו תקף. */
+export const INVITE_STATE_COPY: Record<Exclude<InviteState, "ok">, string> = {
+  not_found: "לא מצאנו את ההזמנה. אולי הקישור לא שלם.",
+  revoked: "הקישור הזה כבר לא פעיל.",
+  expired: "הקישור הזה פג. אפשר לבקש קישור חדש.",
+  exhausted: "הקישור הזה כבר שימש את מספר החברות שהוגדר לו.",
+};
+
+/** שמות מוצעים לקישור — במקום קבוצות. */
+export const INVITE_LABELS = ["חוג ריקוד", "הכיתה שלי", "בנות האקרובטיקה", "החברות מהשכונה"];

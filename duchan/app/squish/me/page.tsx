@@ -6,6 +6,8 @@ import {
   MIN_ITEMS,
   SQUISH_VISIBILITY,
   squishCode,
+  INVITE_DAYS,
+  INVITE_MAX_USES,
   type SquishProfile,
   type SquishVisibility,
 } from "@/lib/squish";
@@ -23,7 +25,10 @@ export default function MyArea() {
   const [profile, setProfile] = useState<SquishProfile | null>(null);
   const [count, setCount] = useState(0);
   const [openCount, setOpenCount] = useState(0);
-  const [invite, setInvite] = useState<string | null>(null);
+  const [invite, setInvite] = useState<
+    { code: string; label: string | null; uses: number; max_uses: number | null; expires_at: string | null } | null
+  >(null);
+  const [label, setLabel] = useState("");
   const [friends, setFriends] = useState<
     { nickname: string; code: string; items: number; open: number; context: string }[]
   >([]);
@@ -53,13 +58,16 @@ export default function MyArea() {
           .is("deleted_at", null);
         setCount(items?.length ?? 0);
         setOpenCount((items ?? []).filter((i) => i.trade_status === "open_for_trade").length);
+        /* רק קישור חי. קישור שבוטל נשאר בדאטהבייס למעקב, אבל אין טעם
+           להציג אותו כאילו אפשר לשלוח אותו. */
         const { data: inv } = await supa
           .from("squish_invites")
-          .select("code")
+          .select("code, label, uses, max_uses, expires_at")
+          .is("revoked_at", null)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        setInvite(inv?.code ?? null);
+        setInvite((inv as typeof invite) ?? null);
         const fr = await fetch("/api/squish/friends").then((r) => r.json()).catch(() => null);
         setFriends(fr?.friends ?? []);
       }
@@ -83,15 +91,32 @@ export default function MyArea() {
     const { data: auth } = await supa.auth.getUser();
     if (!auth.user) return;
     const code = squishCode(8);
-    const { error } = await supa
+    /* התוקף והתקרה נקבעים בדאטהבייס (ברירות מחדל ב-0032), לא כאן —
+       כדי שקישור שנוצר בעקיפה של המסך יקבל בדיוק אותם גבולות. */
+    const { data, error } = await supa
       .from("squish_invites")
-      .insert({ code, inviter_user_id: auth.user.id });
+      .insert({ code, inviter_user_id: auth.user.id, label: label.trim() || null })
+      .select("code, label, uses, max_uses, expires_at")
+      .maybeSingle();
     if (error) {
       showToast("לא הצלחנו ליצור קישור, לנסות שוב");
       return;
     }
     track("squish_invite_created");
-    setInvite(code);
+    setLabel("");
+    setInvite((data as typeof invite) ?? null);
+  }
+
+  async function revokeInvite() {
+    if (!invite) return;
+    const supa = supabaseBrowser();
+    const { error } = await supa.rpc("squish_revoke_invite", { p_code: invite.code });
+    if (error) {
+      showToast("לא הצלחנו לבטל, לנסות שוב");
+      return;
+    }
+    setInvite(null);
+    showToast("הקישור בוטל. מי שכבר הצטרפה נשארת במעגל.");
   }
 
   async function setVisibility(v: SquishVisibility) {
@@ -121,7 +146,7 @@ export default function MyArea() {
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const galleryUrl = `${origin}/squish/c/${profile.collection_code}`;
-  const inviteUrl = invite ? `${origin}/squish/join/${invite}` : null;
+  const inviteUrl = invite ? `${origin}/squish/join/${invite.code}` : null;
   const ready = count >= MIN_ITEMS;
 
   return (
@@ -190,11 +215,23 @@ export default function MyArea() {
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             מי שנכנסת דרכו מצטרפת למעגל שלך, ואז אתן רואות מה יש אחת לשנייה.
           </p>
-          {inviteUrl ? (
+          {inviteUrl && invite ? (
             <>
+              {/* השם מחליף קבוצות: "חוג ריקוד" נשלח לקבוצת הוואטסאפ
+                  הקיימת, וכל מי שנכנסת מתחברת ישירות אליה. */}
+              {invite.label && (
+                <div className="text-[13px] font-medium mt-1.5">{invite.label}</div>
+              )}
               <div className="text-[12px] text-[var(--muted)] font-mono my-1.5 break-all" dir="ltr">
                 {inviteUrl}
               </div>
+              <p className="text-[12px] text-[var(--muted)] mb-1.5">
+                {invite.max_uses
+                  ? `הצטרפו ${invite.uses} מתוך ${invite.max_uses}`
+                  : `הצטרפו ${invite.uses}`}
+                {invite.expires_at &&
+                  ` · פג ב-${new Date(invite.expires_at).toLocaleDateString("he-IL")}`}
+              </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => copy(inviteUrl, "קישור ההזמנה הועתק")}
@@ -211,11 +248,31 @@ export default function MyArea() {
                   להזמין חברה
                 </a>
               </div>
+              <button
+                onClick={revokeInvite}
+                className="t-small text-[var(--muted)] underline mt-2"
+              >
+                לבטל את הקישור
+              </button>
             </>
           ) : (
-            <button onClick={makeInvite} className="btn btn-secondary mt-1.5 t-small">
-              ליצור קישור הזמנה
-            </button>
+            <>
+              <input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="שם לקישור (לא חובה): חוג ריקוד"
+                aria-label="שם לקישור"
+                maxLength={30}
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] mt-1.5"
+              />
+              <button onClick={makeInvite} className="btn btn-secondary mt-1.5 t-small">
+                ליצור קישור הזמנה
+              </button>
+              <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
+                הקישור פעיל {INVITE_DAYS} יום ועד {INVITE_MAX_USES} חברות. אפשר ליצור
+                חדש בכל רגע.
+              </p>
+            </>
           )}
         </div>
       </section>
