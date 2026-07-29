@@ -1,13 +1,13 @@
 /**
  * חבילה 12 — מסך הפתיחה של סקוויש קלאב.
  *
- * המסך הזה פוצל לשניים בבקשה מפורשת: ראשון לוגו והזמנה, שני ההוכחה
- * — גלריה שנראית כמו הפרופיל האמיתי, ומתחתיה השלבים. הפיצול הוא
- * ההחלטה, ולכן הוא מה שנבדק: שהראשון תופס מסך, שהשני מתחתיו, ושהשלבים
- * ירדו לשני ולא נשארו בראשון.
+ * המסך פוצל לשניים בבקשה מפורשת, ו**מסך אינו מקטע בגלילה**: בכל רגע
+ * נתון רואים אחד בלבד, והשני מחליף אותו בלחיצה. זו ההחלטה שנבדקת כאן,
+ * כי היא זו שקל לאבד — מספיק שמישהו יחזיר את שניהם לאותו דף ארוך
+ * והפיצול מת בלי שאף בדיקה תצעק.
  *
- * הטקסט השיווקי עצמו לא נבדק מילה במילה — הוא ישתנה. מה שנבדק הוא
- * ההתנהגות: מה נמצא איפה, ולאן הכפתור לוקח.
+ * הטקסט השיווקי לא נבדק מילה במילה — הוא ישתנה. מה שנבדק הוא
+ * ההתנהגות: מה נמצא באיזה מסך, ולאן הכפתור לוקח.
  */
 import { BASE, checker, closeHelper, launch } from "./helpers/index.mjs";
 
@@ -20,43 +20,57 @@ p.on("pageerror", (e) => errs.push(e.message));
 await p.goto(`${BASE}/squish`, { waitUntil: "networkidle" });
 await p.waitForSelector("[data-testid=squish-hero]", { timeout: 30000 });
 
-/* ── 1. שני מסכים, בסדר הנכון ── */
-const hero = await p.locator("[data-testid=squish-hero]").boundingBox();
-const prev = await p.locator("[data-testid=squish-preview]").boundingBox();
-check("יש מסך פתיחה", !!hero);
-check("ויש מסך שני", !!prev);
-check("השני מתחת לראשון", !!hero && !!prev && prev.y >= hero.y + hero.height - 2,
-  `hero ${Math.round(hero?.height ?? -1)} · preview y ${Math.round(prev?.y ?? -1)}`);
+/* ── 1. נוחתים על הראשון, והשני לא קיים בכלל ── */
+check("נוחתים על מסך הפתיחה", (await p.locator("[data-testid=squish-hero]").count()) === 1);
+check("והמסך השני לא מרונדר יחד איתו",
+  (await p.locator("[data-testid=squish-preview]").count()) === 0);
 
-/* מסך פתיחה שלא תופס מסך אינו מסך פתיחה — הוא כותרת */
+const hero = await p.locator("[data-testid=squish-hero]").boundingBox();
 const vh = p.viewportSize().height;
 check("מסך הפתיחה תופס כמעט את כל הגובה", !!hero && hero.height >= vh * 0.75,
   `${Math.round(hero?.height ?? -1)} מתוך ${vh}`);
+/* אין גלילה: אם יש, זה שוב דף ארוך ולא מסך */
+const scrollable = await p.evaluate(() =>
+  document.documentElement.scrollHeight - window.innerHeight);
+check("ואין מה לגלול בו", scrollable <= 8, `${scrollable}px`);
 
-/* ── 2. מה יש בכל אחד ── */
-check("יש לוגו במסך הראשון", (await p.locator("[data-testid=squish-logo]").count()) === 1);
+/* ── 2. מה יש בראשון ── */
+check("יש לוגו", (await p.locator("[data-testid=squish-logo]").count()) === 1);
 const heroText = await p.textContent("[data-testid=squish-hero]");
 check("ההזמנה מופיעה בו", heroText.includes("אוסף סקווישים מטורף"));
 check("וגם מה עושים כאן", heroText.includes("טריידים"));
 
 const cta = p.locator("[data-testid=hero-cta]");
-check("יש כפתור אחד ברור", (await cta.count()) === 1);
+check("הכפתור הראשי במסך הראשון", (await cta.count()) === 1);
 check("והוא מוביל לבניית האוסף", (await cta.getAttribute("href")) === "/squish/new");
 
-/* ── 3. השלבים ירדו למסך השני ── */
+/* השלבים שייכים למסך השני, ולכן אסור שיהיו כאן */
+for (const step of ["בונים גלריה", "מסמנים מה פתוח לטרייד", "מזמינים חברות"]) {
+  check(`השלב "${step}" לא במסך הראשון`, !heroText.includes(step));
+}
+
+/* ── 3. מעבר למסך השני — הוא מחליף, לא נוסף ── */
+await p.click("[data-testid=to-preview]");
+await p.waitForSelector("[data-testid=squish-preview]", { timeout: 10000 });
+check("לחיצה מעבירה למסך השני",
+  (await p.locator("[data-testid=squish-preview]").count()) === 1);
+check("והראשון נעלם, לא נשאר מעליו",
+  (await p.locator("[data-testid=squish-hero]").count()) === 0);
+
+/* ── 4. מה יש בשני ── */
 const prevText = await p.textContent("[data-testid=squish-preview]");
 for (const step of ["בונים גלריה", "מסמנים מה פתוח לטרייד", "מזמינים חברות"]) {
   check(`השלב "${step}" נמצא במסך השני`, prevText.includes(step));
-  check(`והוא כבר לא במסך הראשון: ${step}`, !heroText.includes(step));
 }
 
-/* ── 4. הגלריה נראית כמו גלריה אמיתית ── */
 const tiles = await p.locator("[data-testid=squish-preview] .squish-card").count();
 check("יש מדף עם כרטיסים אמיתיים", tiles === 6, `${tiles}`);
 check("הכרטיסים בשתי עמודות, כמו באוסף",
   (await p.locator("[data-testid=squish-preview] .grid-cols-2").count()) >= 1);
 check("ולכרטיס יש שם מתחת לתמונה", prevText.includes("צפרדע ענקית"));
 check("ומסומן מה פתוח לטרייד", prevText.includes("פתוחים לטרייד"));
+check("וגם כאן אפשר להתחיל",
+  (await p.getAttribute("[data-testid=preview-cta]", "href")) === "/squish/new");
 
 /* ── 5. הפלייסהולדר, לא ריבוע ריק ──
    התמונה עצמה עשויה עוד לא להיות בריפו. מה שנבדק הוא שיש *משהו*
@@ -66,7 +80,14 @@ const filled = await p.evaluate(() =>
     .filter((c) => c.querySelector("img, svg")).length);
 check("בכל ריבוע יש פלייסהולדר", filled === 6, `${filled}/6`);
 
-/* ── 6. פרטיות: אוספים אינם ציבוריים ── */
+/* ── 6. אפשר לחזור ── */
+await p.click("[data-testid=back-to-hero]");
+await p.waitForSelector("[data-testid=squish-hero]", { timeout: 10000 });
+check("חזרה מחזירה למסך הראשון",
+  (await p.locator("[data-testid=squish-hero]").count()) === 1 &&
+  (await p.locator("[data-testid=squish-preview]").count()) === 0);
+
+/* ── 7. פרטיות: אוספים אינם ציבוריים ── */
 const html = await (await fetch(`${BASE}/squish`)).text();
 check("אין אינדוקס לדף", /noindex/i.test(html));
 

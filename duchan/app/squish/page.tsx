@@ -6,18 +6,20 @@ import { BRAND } from "@/lib/squish";
 import { SquishOutline, SquishPlaceholder, SwapGlyph, useBrokenImage } from "./components";
 
 /**
- * מסך הפתיחה של סקוויש קלאב — שני מסכים, לא אחד.
+ * מסך הפתיחה של סקוויש קלאב — שני מסכים, אחד אחרי השני.
  *
- * **למה שניים.** המסך הקודם ניסה להגיד הכל בגלילה אחת: כותרת, הבטחה,
- * הדגמה, כפתור ושלושה שלבים. התוצאה היא שאף אחד מהם לא קיבל מקום.
- * עכשיו הראשון הוא לוגו והזמנה — מה שרואים בשנייה הראשונה, בלי להסביר
- * כלום — והשני הוא ההוכחה: איך זה ייראה כשזה שלך.
+ * **מסך, לא מקטע בגלילה.** בכל רגע נתון מרונדר אחד בלבד: הראשון הוא
+ * לוגו והזמנה, והשני מחליף אותו כשלוחצים. הגרסה הקודמת שמה את שניהם
+ * בדף אחד ארוך, וזה הפך את השני להמשך של הראשון במקום לתחנה בפני
+ * עצמה — בדיוק מה שהפיצול נועד למנוע.
  *
- * שניהם באותו דף ולא בשני נתיבים. גלילה זולה יותר מניווט, והכפתור
- * במסך הראשון עובד בלי לראות את השני בכלל.
+ * **הכפתור הראשי נשאר בראשון.** מי שכבר יודעת מה היא רוצה לא צריכה
+ * לעבור דרך ההוכחה כדי להתחיל; המסך השני הוא בשביל מי שעוד מתלבטת,
+ * והוא נמצא מאחורי לחיצה אחת ולא מאחורי גלילה שאולי לא תקרה.
  */
 export default function SquishLanding() {
   const [mine, setMine] = useState<{ title: string; count: number } | null>(null);
+  const [screen, setScreen] = useState<1 | 2>(1);
 
   useEffect(() => {
     const supa = supabaseBrowser();
@@ -41,10 +43,12 @@ export default function SquishLanding() {
     });
   }, []);
 
-  return (
-    <main className="flex flex-col">
-      {/* ══ מסך 1 — לוגו והזמנה ══ */}
-      <section
+  const cta = mine ? "להוסיף סקווישי ←" : "לבנות את האוסף שלי ←";
+
+  /* ══ מסך 1 — לוגו והזמנה ══ */
+  if (screen === 1) {
+    return (
+      <main
         data-testid="squish-hero"
         className="min-h-[calc(100svh-5rem)] flex flex-col items-center justify-center px-6 py-10 gap-6 text-center"
       >
@@ -74,69 +78,78 @@ export default function SquishLanding() {
 
         <div className="w-full max-w-sm flex flex-col gap-2.5">
           <a href="/squish/new" className="btn btn-primary" data-testid="hero-cta">
-            {mine ? "להוסיף סקווישי ←" : "לבנות את האוסף שלי ←"}
+            {cta}
           </a>
+          <button
+            onClick={() => setScreen(2)}
+            data-testid="to-preview"
+            className="text-[13.5px] underline text-[var(--ink)] py-1"
+          >
+            לראות איך זה נראה
+          </button>
           <p className="text-[13px] text-[var(--ink)] leading-relaxed">
             הגלריה פרטית. רואות אותה רק החברות שהזמנת.
           </p>
         </div>
+      </main>
+    );
+  }
 
-        {/* רמז גלילה: בלעדיו מסך שתופס בדיוק גובה מסך נראה כמו סוף הדף */}
-        <a
-          href="#squish-preview"
-          aria-label="לראות איך זה נראה"
-          className="mt-2 text-[var(--muted)]"
+  /* ══ מסך 2 — ההוכחה: איך זה נראה כשזה שלך ══ */
+  return (
+    <main
+      data-testid="squish-preview"
+      className="min-h-[calc(100svh-5rem)] px-5 pt-4 pb-10 flex flex-col items-center gap-5"
+    >
+      <div className="w-full max-w-sm flex items-center">
+        <button
+          onClick={() => setScreen(1)}
+          data-testid="back-to-hero"
+          aria-label="חזרה"
+          className="p-1 -me-1 text-[var(--muted)]"
         >
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-            <path d="M7 10 L12 15 L17 10" strokeLinecap="round" strokeLinejoin="round" />
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+            <path d="M14 6 L8 12 L14 18" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </a>
-      </section>
-
-      {/* ══ מסך 2 — ההוכחה: איך זה נראה כשזה שלך ══ */}
-      <section
-        id="squish-preview"
-        data-testid="squish-preview"
-        className="px-5 pt-6 pb-14 flex flex-col items-center gap-6 scroll-mt-4"
-      >
-        <h2 className="text-[1.35rem] leading-tight font-semibold tracking-[-0.02em] text-center">
+        </button>
+        <h1 className="flex-1 text-[1.3rem] leading-tight font-semibold tracking-[-0.02em] text-center pe-5">
           ככה זה ייראה אצלכם
-        </h2>
+        </h1>
+      </div>
 
-        <DemoCollection />
+      <DemoCollection />
 
-        <ol className="w-full max-w-sm flex flex-col gap-3 text-[13px]">
-          {[
-            ["בונים גלריה", "מצלמים את הסקווישים, ורואים אותם על מדף"],
-            ["מסמנים מה פתוח לטרייד", "רק מה שאת בוחרת מוצע להחלפה"],
-            ["מזמינים חברות", "רואות מה יש לכן, ומציעות טרייד"],
-          ].map(([t, d], i) => (
-            <li key={i} className="flex items-start gap-2.5">
-              <span className="w-5 h-5 shrink-0 bg-[var(--ink)] text-white flex items-center justify-center text-[11px]">
-                {i + 1}
-              </span>
-              <span>
-                <b>{t}</b>
-                <br />
-                <span className="text-[var(--muted)] text-[12.5px]">{d}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
+      <ol className="w-full max-w-sm flex flex-col gap-3 text-[13px]">
+        {[
+          ["בונים גלריה", "מצלמים את הסקווישים, ורואים אותם על מדף"],
+          ["מסמנים מה פתוח לטרייד", "רק מה שאת בוחרת מוצע להחלפה"],
+          ["מזמינים חברות", "רואות מה יש לכן, ומציעות טרייד"],
+        ].map(([t, d], i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <span className="w-5 h-5 shrink-0 bg-[var(--ink)] text-white flex items-center justify-center text-[11px]">
+              {i + 1}
+            </span>
+            <span>
+              <b>{t}</b>
+              <br />
+              <span className="text-[var(--muted)] text-[12.5px]">{d}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
 
-        <a href="/squish/new" className="btn btn-primary w-full max-w-sm">
-          {mine ? "להוסיף סקווישי ←" : "לבנות את האוסף שלי ←"}
-        </a>
+      <a href="/squish/new" className="btn btn-primary w-full max-w-sm" data-testid="preview-cta">
+        {cta}
+      </a>
 
-        <p className="t-small text-[var(--muted)] text-center">
-          {BRAND} הוא חלק מ
-          <a href="/" className="underline">דוכן</a>
-          {" · "}
-          <a href="/terms" className="underline">תנאי שימוש</a>
-          {" · "}
-          <a href="/privacy" className="underline">פרטיות</a>
-        </p>
-      </section>
+      <p className="t-small text-[var(--muted)] text-center mt-auto pt-2">
+        {BRAND} הוא חלק מ
+        <a href="/" className="underline">דוכן</a>
+        {" · "}
+        <a href="/terms" className="underline">תנאי שימוש</a>
+        {" · "}
+        <a href="/privacy" className="underline">פרטיות</a>
+      </p>
     </main>
   );
 }
