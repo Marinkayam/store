@@ -138,6 +138,7 @@ export default function SharePage() {
                   />
                   <div className="flex gap-1.5 mt-2">
                     <button
+                      data-testid="share-send"
                       onClick={() => send(text)}
                       className="flex-1 bg-[var(--whatsapp)] text-white py-2.5 text-[12.5px] font-bold"
                     >

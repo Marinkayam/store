@@ -76,9 +76,9 @@ check("an iPhone .MOV is not rejected as too heavy or too long",
 const back = await ctx.newPage(); // אותו הקשר = אותן עוגיות, כמו לפתוח שוב את הלינק
 await back.goto(BASE);
 await back.waitForTimeout(2500);
-const landing = await back.textContent("body");
+await back.waitForSelector("[data-testid=my-store-card]", { timeout: 15000 }).catch(() => {});
 check("the landing page recognises a girl who is already signed in",
-  landing.includes("הדוכן שלך מחכה"));
+  (await back.locator("[data-testid=my-store-card]").count()) === 1);
 
 await back.goto(`${BASE}/login`);
 let redirected = true;
@@ -93,9 +93,10 @@ check("opening the login page while signed in goes straight to the dashboard", r
 const guest = await (await browser.newContext({ viewport: { width: 390, height: 800 } })).newPage();
 await guest.goto(BASE);
 await guest.waitForTimeout(1800);
-const guestBody = await guest.textContent("body");
-check("a visitor who never signed in still sees the sign-up form",
-  guestBody.includes("איך יקראו לדוכן שלך") && !guestBody.includes("הדוכן שלך מחכה"));
+check("a visitor who never signed in is not shown someone else's store",
+  (await guest.locator("[data-testid=my-store-card]").count()) === 0);
+check("and still gets the way in to open one",
+  (await guest.locator("a[href='/onboarding'], button:has-text('לפתוח דוכן')").count()) >= 1);
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} upload+session checks passed`);

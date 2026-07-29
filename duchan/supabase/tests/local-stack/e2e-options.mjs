@@ -48,12 +48,24 @@ await girl.screenshot({ path: `${shots}/60-products-add-button.png` });
 await addBtn.click();
 await girl.fill("input[aria-label='שם המוצר']", "צמיד קשת");
 await girl.fill("input[aria-label='מחיר']", "25");
-await girl.fill("input[aria-label='שם האפשרות']", "צבע");
-await girl.fill("input[aria-label='הבחירות']", "ורוד, כחול, ורוד, ");
-await girl.waitForTimeout(200);
-// הכפילות והרווח הריק נופלים — אחרת היא רואה 4 שבבים ובחנות יש 2
-const chips = await girl.locator("[data-chip='option']").allTextContents();
-check("duplicate and empty choices are dropped in the preview", chips.length === 2, chips.join("·"));
+/* האפשרויות אינן שדה טקסט חופשי יותר: בוחרים "צבע" או "מידה", וכל ערך
+   הוא שדה משלו. זה מה שמנע את הבאג הישן — שם קטגוריה שנכתב בטעות
+   במקום שם המוצר. */
+await girl.click("button[aria-label='יש לזה כמה צבעים']");
+await girl.waitForTimeout(300);
+check("choosing 'colour' names the option for her, so she cannot mistype it",
+  (await girl.getAttribute("button[aria-label='יש לזה כמה צבעים']", "aria-pressed")) === "true");
+await girl.fill("input[aria-label='צבע 1']", "ורוד");
+await girl.click("button:has-text('עוד צבע')");
+await girl.fill("input[aria-label='צבע 2']", "כחול");
+await girl.click("button:has-text('עוד צבע')");
+// כפילות ורווח ריק נופלים בשמירה — אחרת היא רואה ארבע אפשרויות ובדוכן יש שתיים
+await girl.fill("input[aria-label='צבע 3']", "ורוד");
+await girl.click("button:has-text('עוד צבע')");
+await girl.waitForTimeout(300);
+check("every choice she typed has its own field",
+  (await girl.locator("input[aria-label^='צבע ']").count()) === 4,
+  `${await girl.locator("input[aria-label^='צבע ']").count()}`);
 await girl.screenshot({ path: `${shots}/61-options-editor.png` });
 await girl.click("button:has-text('שמירה')");
 await girl.waitForTimeout(2500);
@@ -101,12 +113,11 @@ await buyer.screenshot({ path: `${shots}/63-cart-two-options.png`, fullPage: tru
 
 /* ── 4. הבחירה נכנסת להזמנה ולהודעת הוואטסאפ ── */
 let waUrl = "";
-buyer.on("framenavigated", (f) => {
-  if (f.url().startsWith("https://wa.me/")) waUrl = f.url();
-});
-await buyer.route("https://wa.me/**", (r) => r.fulfill({ status: 200, body: "ok" }));
+await buyer.route("https://wa.me/**", (r) => { waUrl = r.request().url(); r.abort(); });
+// השם נדרש בקופה: בלעדיו הילדה לא יודעת איזו שיחה שייכת לאיזו הזמנה
+await buyer.fill("input[aria-label='השם שלך']", "רוני");
 await buyer.locator("button:text-is('שליחה בוואטסאפ')").click();
-await buyer.waitForTimeout(2500);
+await buyer.waitForTimeout(3000);
 const msg = decodeURIComponent(waUrl);
 check("the chosen colour is in the whatsapp message", msg.includes("כחול") && msg.includes("ורוד"), waUrl ? "ok" : "no wa.me navigation");
 

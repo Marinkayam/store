@@ -19,7 +19,12 @@ const { rows: [store] } = await db.query(
   "select * from stores where activated_at is not null order by created_at limit 1"
 );
 await db.query("delete from orders where ip_hash is not null and created_at > now() - interval '1 day'");
-await db.query("update stores set payout_link = null where id = $1", [store.id]);
+/* החבילה קובעת את התנאים שלה ולא יורשת אותם מהחבילה הקודמת:
+   ריצה שתלויה במה שמישהי אחרת השאירה נופלת לפי סדר, לא לפי באג. */
+await db.query(
+  "update stores set payout_link = null, payout_bit = true, payout_paybox = true, payout_cash = true where id = $1",
+  [store.id]
+);
 // מוצר עם בחירה ומוצר בלי — שני המסלולים של ההוספה המהירה
 await db.query("delete from products where name in ('מחזיק מפתחות','גרביים מצחיקות')");
 const mk = (name, opts) =>
@@ -39,7 +44,7 @@ const fresh = () => `${BASE}/s/${store.slug}?t=${Date.now()}-${tick++}`;
 /* ── 1. הוספה מהירה מהרשת ── */
 let p = await phone();
 await p.goto(fresh(), { waitUntil: "networkidle" });
-const quick = p.locator("button[aria-label='הוספה מהירה — מחזיק מפתחות']");
+const quick = p.locator("button[aria-label='הוספה מהירה, מחזיק מפתחות']");
 check("every product card carries its own add button", (await quick.count()) === 1);
 
 await quick.click();
@@ -57,7 +62,7 @@ check("tapping again adds another one", ((await quick.textContent()) ?? "").incl
 await p.screenshot({ path: `${shots}/70-quick-add.png` });
 
 /* ── 2. מוצר עם בחירה נפתח במקום להתווסף בניחוש ── */
-const withOpt = p.locator("button[aria-label='הוספה מהירה — גרביים מצחיקות']");
+const withOpt = p.locator("button[aria-label='הוספה מהירה, גרביים מצחיקות']");
 check("a product with choices says so on the button",
   ((await withOpt.textContent()) ?? "").includes("בחירת צבע"), (await withOpt.textContent()) ?? "");
 await withOpt.click();
@@ -106,9 +111,9 @@ check("the database refuses a non-payment link even without the screen", dbRefus
 /* ── 5. הקונה רואה כפתור תשלום ── */
 const buyer = await phone();
 await buyer.goto(fresh(), { waitUntil: "networkidle" });
-await buyer.click("button[aria-label='הוספה מהירה — מחזיק מפתחות']");
+await buyer.click("button[aria-label='הוספה מהירה, מחזיק מפתחות']");
 await buyer.waitForTimeout(600);
-await buyer.click("text=פריט");
+await buyer.click("[data-testid=cart-bar]");
 await buyer.waitForSelector("text=ההזמנה שלך", { timeout: 10000 });
 // הלינק מופיע כשבוחרים פייבוקס — הוא שייך לאמצעי הזה ולא לכל הזמנה
 await buyer.click("button[aria-label='תשלום בפייבוקס']");

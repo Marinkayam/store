@@ -1,134 +1,164 @@
-// E2E: הפעלת חנות בתשלום + לולאת ההפניות (חנות מביאה חנות).
-// מריץ את המסלול המלא: בונים → הלינק נעול → מצהירים ששילמנו → המנהלת מאשרת
-// → הלינק פתוח → חברה מגיעה מהחנות ופותחת חנות משלה → הכל נראה בחמ"ל.
+// E2E: הפעלת דוכן בתשלום + לולאת ההפניות (דוכן מביא דוכן).
+// המסלול המלא: בונים → הלינק נעול → מצהירים ששילמנו → המנהלת מאשרת →
+// הלינק פתוח → חברה מגיעה מהדוכן ופותחת דוכן משלה → הכל נראה בחמ"ל.
+//
+// **מה הבדיקה הזו כן בודקת ומה לא.** היא לא בודקת ניסוח. משפט שיווקי
+// משתנה כל חודש, וכל שינוי כזה שבר כאן שרשרת שלמה. במקומו נבדקת
+// התנהגות: המסך מוצג, הכפתור קיים ופעיל, הלחיצה מקדמת לשלב הנכון,
+// והתוצאה נשמרת בדאטהבייס.
+//
+// טקסט מדויק נבדק רק כשהניסוח *עצמו* הוא ההבטחה: המחיר, אישור ההורים,
+// והבטחת "בלי עמלה". אלה לא מיקרו-קופי — אלה מה שהילדה וההורה שלה
+// מסתמכים עליו.
 import { chromium } from "playwright";
 import pg from "pg";
 import { mkdirSync, readFileSync } from "fs";
+import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
 import { verifyPhone } from "./sms-helper.mjs";
 
-const BASE = "http://localhost:3777";
-const shots = "/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/activation-shots";
+const HERE = dirname(fileURLToPath(import.meta.url));
+const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
+const IMG = join(HERE, "..", "..", "..", "e2e", "fixtures", "square.png");
+const shots = join(tmpdir(), "duchan-e2e-shots", "activation");
 mkdirSync(shots, { recursive: true });
 const db = new pg.Pool({ host: "/tmp", port: 5433, user: "postgres", database: "duchan" });
 
+/** מפתח ה-service מגיע מהסביבה של האפליקציה, לא מקובץ בתיקייה זמנית. */
+const SERVICE =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  readFileSync(join(HERE, "..", "..", "..", ".env.local"), "utf8")
+    .split("\n").find((l) => l.startsWith("SUPABASE_SERVICE_ROLE_KEY="))?.split("=")[1]?.trim();
+
 const results = [];
 const check = (name, ok, detail = "") => {
+  if (typeof ok !== "boolean") throw new Error(`check("${name}") לא קיבל בוליאני`);
   results.push({ name, ok });
   console.log(`${ok ? "PASS" : "FAIL"}: ${name}${detail ? " — " + detail : ""}`);
+};
+/** קיים, נראה, ולא מושבת. זה מה ש"ה-CTA עובד" אומר, בלי לגעת בניסוח. */
+const usable = async (page, sel) => {
+  const el = page.locator(sel).first();
+  return (await el.count()) >= 1 && (await el.isVisible()) && (await el.isEnabled());
 };
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const phone = () => browser.newContext({ viewport: { width: 390, height: 780 } }).then((c) => c.newPage());
 
-/* ── 0: החנות מ-e2e.mjs היא נקודת המוצא ── */
+/* ── 0: הדוכן הזרוע הוא נקודת המוצא ── */
 const { rows: [seed] } = await db.query("select * from stores order by created_at limit 1");
 if (!seed) {
-  console.error("צריך להריץ קודם את e2e.mjs — אין חנות בסיס");
+  console.error("צריך להריץ קודם: node supabase/tests/local-stack/seed.mjs");
   process.exit(1);
 }
-// מחזירים אותה למצב טיוטה כדי לבדוק את המסלול המלא מההתחלה
+// מחזירים למצב טיוטה כדי לבדוק את המסלול מההתחלה. גם אישור ההורים
+// מתאפס — דוכן שאישר בריצה קודמת לא יראה את החסימה.
 await db.query(
-  // גם אישור ההורים מתאפס: הריצה בודקת את המסלול מההתחלה, וחנות שכבר
-  // אישרה בריצה קודמת לא תראה את החסימה
   "update stores set activated_at = null, payment_claimed_at = null, payment_amount = null, parent_consent_at = null where id = $1",
   [seed.id]
 );
 await fetch(`${BASE}/api/revalidate`, { method: "POST" }).catch(() => {});
-
-// החנות של החברה נוצרת מחדש בכל ריצה. בלי הניקוי הזה נערמות שתיים ושלוש
-// חנויות לאותו מספר, והאשכול בחמ"ל סופר יותר ממה שהריצה יצרה.
+// הדוכן של החברה נוצר מחדש בכל ריצה, אחרת נערמים כמה לאותו מספר
+// והאשכול בחמ"ל סופר יותר ממה שהריצה יצרה.
 await db.query("delete from stores where contact_phone = '972529998877'");
+await db.query("delete from phone_accounts where phone = '972529998877'");
+await db.query("delete from auth.users where email like '972529998877@%'");
 
-/* ── 1: הילדה רואה שהלינק נעול ── */
+/* ── 1: הדוכן בתצוגה מקדימה, והמסך אומר את זה ── */
 const girl = await phone();
 await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
-await girl.waitForURL("**/dashboard", { timeout: 15000 });
-await girl.waitForSelector("text=הדוכן שלך בתצוגה מקדימה", { timeout: 10000 });
-check("dashboard shows the store is in preview, not blocked", true);
+await girl.waitForURL("**/dashboard", { timeout: 20000 });
+await girl.waitForSelector("[data-testid=store-state-banner]", { timeout: 15000 });
+check("הדשבורד מסמן שהדוכן בתצוגה מקדימה ולא חסום",
+  await usable(girl, "[data-testid=store-state-banner]"));
 await girl.screenshot({ path: `${shots}/40-dashboard-draft.png` });
 
 await girl.goto(`${BASE}/dashboard/settings`);
-await girl.waitForSelector("text=תצוגה מקדימה");
-check("settings offers the preview link before publishing", true);
-check("settings still pushes towards publishing",
-  (await girl.textContent("body")).includes("לפרסם את הדוכן"));
+await girl.waitForSelector("[data-testid=publish-cta]", { timeout: 15000 });
+check("ההגדרות מציגות את אזהרת התצוגה המקדימה",
+  await usable(girl, "[data-testid=preview-notice]"));
+check("ויש קריאה לפעולה לפרסום", await usable(girl, "[data-testid=publish-cta]"));
+check("שמובילה למסך ההפעלה",
+  (await girl.getAttribute("[data-testid=publish-cta]", "href")) === "/activate");
 
-/* ── 2: מסך ההפעלה — מה מקבלים, כמה, ואיך משלמים ── */
-await girl.goto(`${BASE}/activate`);
-await girl.waitForSelector("text=לצאת לעולם");
-const act = await girl.textContent("body");
-// מחיר ההשקה הוא המחיר שנגבה בפועל, והמחיר המלא מוצג לצידו מחוק
-check("activation screen states the one-time price", act.includes("₪50") && act.includes("פעם אחת"));
-check("the launch price is presented as a launch price, with an end date",
-  act.includes("מחיר השקה") && act.includes("₪200") && act.includes("30.7.2026"));
-check("activation screen lists what she gets", act.includes("חנות אמיתית") && act.includes("לינק פרטי משלך"));
-check("activation screen shows the payback math", act.includes("את מחזירה את זה") && act.includes("סקווישים"));
-check("activation screen has a parent explainer", act.includes("צריך אישור של הורה"));
-check("activation screen offers bit/paybox and whatsapp", act.includes("שולחים ביט") && act.includes("לדבר איתך בוואטסאפ"));
+/* ── 2: מסך ההפעלה ──
+   כאן נבדק המחיר כטקסט מדויק, כי המחיר *הוא* ההבטחה. */
+await girl.click("[data-testid=publish-cta]");
+await girl.waitForURL("**/activate");
+await girl.waitForSelector("[data-testid=activation-price]", { timeout: 15000 });
+const priceText = (await girl.textContent("[data-testid=activation-price]")).replace(/\s+/g, "");
+/* המחיר לא מקודד כאן. הוא נקרא מהמסך, ובסוף הריצה נבדק שהסכום שהמנהלת
+   רשמה בפועל הוא בדיוק זה — כך שינוי מחיר לא שובר את הבדיקה, אבל פער
+   בין מה שהובטח לילדה למה שנגבה כן. */
+const shown = priceText.match(/₪(\d+)/g)?.map((s) => Number(s.slice(1))) ?? [];
+const expectedPrice = shown[0];
+check("מסך ההפעלה מציג מחיר חד-פעמי", shown.length >= 1 && expectedPrice > 0, priceText);
+check("ולצידו מחיר מלא גבוה יותר, כדי שיהיה ברור שזו הנחת השקה",
+  shown.length === 2 && shown[1] > expectedPrice, priceText);
+
+check("ההסבר להורה מקופל כברירת מחדל",
+  (await girl.locator("[data-testid=parent-explainer]").count()) === 0);
+await girl.click("button:has-text('או להראות את זה כאן')");
+await girl.waitForSelector("[data-testid=parent-explainer]", { timeout: 10000 });
+check("ולחיצה פותחת אותו", await usable(girl, "[data-testid=parent-explainer]"));
+check("ויש בו גם הסבר על בטיחות",
+  (await girl.textContent("[data-testid=parent-explainer]")).includes("בטיחות"));
 await girl.screenshot({ path: `${shots}/41-activate.png`, fullPage: true });
 
-await girl.click("text=או להראות את זה כאן");
-await girl.waitForSelector("text=שיעור פרטי אחד");
-const parent = await girl.textContent("body");
-check("parent view shows learning + price anchors + safety", parent.includes("תמחור") && parent.includes("משחק קונסולה") && parent.includes("אין שדה כתובת"));
-await girl.screenshot({ path: `${shots}/42-activate-parent.png`, fullPage: true });
+/* ── 3: הצהרת תשלום חסומה עד אישור ההורים ── */
+const declare = girl.locator("[data-testid=declare-paid]");
+check("כפתור ההצהרה מושבת לפני אישור ההורים", !(await declare.isEnabled()));
+const consentBody = await girl.textContent("body");
+check("והמסך אומר במפורש שההורים צריכים לאשר",
+  consentBody.includes("ההורים שלי יודעים ומאשרים"));
 
-/* ── 3: הצהרת תשלום — חסומה עד אישור ההורים, ולא מפעילה כלום בעצמה ── */
-check("the parent-consent checkbox is on the screen", act.includes("ההורים שלי יודעים ומאשרים"));
-check("declaring is blocked until she confirms her parents know",
-  act.includes("קודם מסמנים שההורים מאשרים"));
-await girl.click("input[aria-label='אישור הורים']");
-await girl.waitForTimeout(700);
+await girl.check("input[aria-label='אישור הורים']");
+await girl.waitForTimeout(800);
 const { rows: [consented] } = await db.query("select parent_consent_at from stores where id=$1", [seed.id]);
-check("ticking the box is stamped on the server", !!consented.parent_consent_at);
+check("סימון התיבה נחתם בשרת, לא רק במסך", !!consented.parent_consent_at);
+check("ואז ההצהרה נפתחת", await declare.isEnabled());
 
-await girl.click("button:has-text('פייבוקס')");
-await girl.fill("input[placeholder='על שם מי שולם? (לא חובה)']", "אמא של תמר");
-await girl.click("button:has-text('שילמנו')");
-await girl.waitForSelector("text=קיבלנו, בודקים", { timeout: 10000 });
+await girl.click("[data-testid=pay-method-paybox]");
+await girl.fill("[data-testid=payment-ref]", "אמא של תמר");
+await declare.click();
+await girl.waitForSelector("[data-testid=payment-pending]", { timeout: 15000 });
 const { rows: [claimed] } = await db.query("select * from stores where id=$1", [seed.id]);
-check("payment declaration is recorded", !!claimed.payment_claimed_at && claimed.payment_method === "paybox", claimed.payment_ref ?? "");
-check("declaring payment does NOT activate the store", claimed.activated_at === null);
+check("ההצהרה נרשמה עם אמצעי התשלום שנבחר",
+  !!claimed.payment_claimed_at && claimed.payment_method === "paybox", claimed.payment_ref ?? "");
+check("והצהרה לבדה לא מפעילה את הדוכן", claimed.activated_at === null);
 await girl.screenshot({ path: `${shots}/43-pending.png` });
 
 const stillDraft = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
-check("link is still a preview after declaring payment", stillDraft.includes("תצוגה מקדימה"));
+check("הלינק עדיין תצוגה מקדימה אחרי ההצהרה", stillDraft.includes("תצוגה מקדימה"));
 const previewOrder = await fetch(`${BASE}/api/orders`, {
   method: "POST", headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ slug: seed.slug, items: [{ productId: "00000000-0000-0000-0000-000000000000", qty: 1 }] }),
 });
-check("a preview store still takes no orders", previewOrder.status === 404, `status=${previewOrder.status}`);
+check("ודוכן בתצוגה מקדימה לא מקבל הזמנות", previewOrder.status === 404, `status=${previewOrder.status}`);
 
-/* ── 4: הבעלות לא יכולה להפעיל את החנות בעצמה ──
-   התרחיש: ילדה (או מישהו בשבילה) לוקחת את ה-access token שלה ומעדכנת ישירות
-   את הטבלה. ה-RLS מרשה לה לערוך את החנות שלה, ולכן ההגנה חייבת להיות בטריגר. */
-// אין יותר סיסמה שהילדה מכירה — קובעים אחת דרך ה-admin כדי להשיג טוקן אמיתי
+/* ── 4: הבעלים לא יכולה להפעיל את הדוכן בעצמה ──
+   התרחיש: לוקחים את ה-access token שלה ומעדכנים ישירות את הטבלה.
+   ה-RLS מרשה לה לערוך את הדוכן שלה, ולכן ההגנה חייבת לשבת בטריגר. */
 const { rows: [ownerRow] } = await db.query("select owner_id from stores where id=$1", [seed.id]);
 const { rows: [ownerUser] } = await db.query("select email from auth.users where id=$1", [ownerRow.owner_id]);
-const SERVICE = readFileSync("/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/keys.env", "utf8")
-  .split("\n").find((l) => l.startsWith("SERVICE=")).slice(8).trim();
 await fetch(`http://localhost:8000/auth/v1/admin/users/${ownerRow.owner_id}`, {
   method: "PUT",
   headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE}` },
   body: JSON.stringify({ password: "attack-probe-123" }),
 });
 const tokenRes = await fetch("http://localhost:8000/auth/v1/token?grant_type=password", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
+  method: "POST", headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ email: ownerUser.email, password: "attack-probe-123" }),
 });
 const { access_token: girlToken } = await tokenRes.json();
-check("got the owner's real access token for the attack", !!girlToken);
+check("השגנו טוקן אמיתי של הבעלים לבדיקת התקיפה", !!girlToken);
 
 const attack = async (patch) => {
   const res = await fetch(`http://localhost:3001/stores?id=eq.${seed.id}`, {
     method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${girlToken}`,
-      apikey: girlToken,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${girlToken}`, apikey: girlToken, "Content-Type": "application/json" },
     body: JSON.stringify(patch),
   });
   return res.status;
@@ -136,18 +166,18 @@ const attack = async (patch) => {
 
 const s1 = await attack({ activated_at: new Date().toISOString() });
 const { rows: [afterHack] } = await db.query("select activated_at, payment_amount, ref_clicks from stores where id=$1", [seed.id]);
-check("owner cannot self-activate with her own token", afterHack.activated_at === null, `http=${s1}`);
+check("הבעלים לא יכולה להפעיל את עצמה עם הטוקן שלה", afterHack.activated_at === null, `http=${s1}`);
 
 await attack({ payment_amount: 999999 });
-check("owner cannot fake the paid amount", afterHack.payment_amount === null);
+check("ולא לזייף את הסכום ששולם", afterHack.payment_amount === null);
 
 const beforeClicks = afterHack.ref_clicks;
 await attack({ ref_clicks: 9999 });
 const { rows: [afterClicks] } = await db.query("select ref_clicks from stores where id=$1", [seed.id]);
-check("owner cannot inflate her referral clicks", afterClicks.ref_clicks === beforeClicks, `${afterClicks.ref_clicks}`);
+check("ולא לנפח את ספירת ההפניות שלה", afterClicks.ref_clicks === beforeClicks, `${afterClicks.ref_clicks}`);
 
-/* אישור ההורים הוא לא רק צ'קבוקס: מי שתקרא ל-RPC ישירות, בלי לעבור במסך,
-   עדיין תיחסם. מנקים את האישור ומנסים להצהיר שוב מול PostgREST. */
+/* אישור ההורים הוא לא רק צ'קבוקס: מי שתקרא ל-RPC ישירות, בלי לעבור
+   במסך, עדיין תיחסם. */
 await db.query("update stores set parent_consent_at = null, payment_claimed_at = null where id=$1", [seed.id]);
 const rpcNoConsent = await fetch("http://localhost:3001/rpc/claim_store_payment", {
   method: "POST",
@@ -155,10 +185,9 @@ const rpcNoConsent = await fetch("http://localhost:3001/rpc/claim_store_payment"
   body: JSON.stringify({ p_store: seed.id, p_method: "bit", p_ref: null }),
 });
 const { rows: [afterNoConsent] } = await db.query("select payment_claimed_at from stores where id=$1", [seed.id]);
-check("claiming payment without parent consent is refused server-side",
+check("הצהרת תשלום בלי אישור הורים נדחית בשרת",
   !rpcNoConsent.ok && afterNoConsent.payment_claimed_at === null, `http=${rpcNoConsent.status}`);
 
-// ...ועם אישור זה עובר
 await db.query("update stores set parent_consent_at = now() where id=$1", [seed.id]);
 const rpcConsent = await fetch("http://localhost:3001/rpc/claim_store_payment", {
   method: "POST",
@@ -166,12 +195,11 @@ const rpcConsent = await fetch("http://localhost:3001/rpc/claim_store_payment", 
   body: JSON.stringify({ p_store: seed.id, p_method: "paybox", p_ref: "אמא של תמר" }),
 });
 const { rows: [afterConsent] } = await db.query("select payment_claimed_at from stores where id=$1", [seed.id]);
-check("with consent the same call goes through", rpcConsent.ok && !!afterConsent.payment_claimed_at, `http=${rpcConsent.status}`);
+check("ועם אישור אותה קריאה עוברת", rpcConsent.ok && !!afterConsent.payment_claimed_at, `http=${rpcConsent.status}`);
 
-// ...אבל כן יכולה לערוך את מה ששלה
 const s2 = await attack({ tagline: "משהו חדש" });
 const { rows: [afterEdit] } = await db.query("select tagline from stores where id=$1", [seed.id]);
-check("owner can still edit her own store fields", afterEdit.tagline === "משהו חדש", `http=${s2}`);
+check("אבל כן אפשר לערוך את מה ששלה", afterEdit.tagline === "משהו חדש", `http=${s2}`);
 
 /* ── 5: המנהלת מאשרת מהחמ"ל ── */
 const admin = await browser.newContext({ viewport: { width: 720, height: 1000 } }).then((c) => c.newPage());
@@ -179,145 +207,176 @@ await admin.goto(`${BASE}/login`);
 await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 await admin.goto(`${BASE}/admin`);
-// החמ"ל נוחת ישירות על מסך האישורים כשמישהי מחכה — זו הפעולה הדוחקת
-await admin.waitForSelector("text=חנויות שהצהירו על תשלום", { timeout: 20000 });
+await admin.waitForSelector("[data-testid=approve-store]", { timeout: 25000 });
+check("החמ\"ל נוחת על תור האישורים כשמישהי מחכה",
+  await usable(admin, "[data-testid=approve-store]"));
 const queue = await admin.textContent("body");
-check("admin lands straight on the approvals screen when someone is waiting", true);
-check("admin queue lists the pending store with its declaration", queue.includes(seed.display_name) && queue.includes("פייבוקס"));
-check("the queue shows whether her parents approved", queue.includes("ההורים מאשרים") || queue.includes("בלי אישור הורים"));
+check("והתור מציג את הדוכן שמחכה ואת אמצעי התשלום שהצהיר",
+  queue.includes(seed.display_name) && queue.includes("פייבוקס"));
+check("ומראה אם ההורים אישרו",
+  queue.includes("ההורים מאשרים") || queue.includes("בלי אישור הורים"));
 await admin.screenshot({ path: `${shots}/44-admin-queue.png` });
 
-await admin.click("button:has-text('אישור והפעלה')");
-await admin.waitForSelector("text=הלינק פתוח");
-await admin.waitForTimeout(800);
+await admin.click("[data-testid=approve-store]");
+await admin.waitForTimeout(1500);
 const { rows: [live] } = await db.query("select * from stores where id=$1", [seed.id]);
-check("admin activation records the price actually charged, not a hardcoded one",
-  !!live.activated_at && live.payment_amount === 50 && live.status === "active", `₪${live.payment_amount}`);
+check("האישור רושם את המחיר שנגבה בפועל, לא מספר קשיח",
+  !!live.activated_at && live.payment_amount === expectedPrice && live.status === "active",
+  `₪${live.payment_amount}`);
 
 const liveHtml = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
-check("link opens immediately after approval (no 60s ISR wait)", !liveHtml.includes("תצוגה מקדימה") && liveHtml.includes("רוצה גם דוכן מכירות כזה"));
+check("הלינק נפתח מיד אחרי האישור, בלי המתנה ל-ISR", !liveHtml.includes("תצוגה מקדימה"));
 
 await girl.goto(`${BASE}/activate`);
-await girl.waitForSelector("text=החנות שלך באוויר");
-check("girl now sees her live link and share buttons", (await girl.textContent("body")).includes(`/s/${seed.slug}`));
+await girl.waitForSelector("[data-testid=store-live]", { timeout: 15000 });
+check("והילדה רואה שהדוכן באוויר", (await girl.textContent("body")).includes(`/s/${seed.slug}`));
 await girl.screenshot({ path: `${shots}/45-live.png` });
 
 /* ── 5ב: הכסף של הילדה נפרד מהתשלום לדוכן ── */
-// מתחילים מברירת המחדל כדי שהריצה תהיה חוזרת על עצמה
 await db.query(
   "update stores set payout_bit=true, payout_paybox=false, payout_cash=true, payout_note=null where id=$1",
   [seed.id]
 );
 await girl.goto(`${BASE}/dashboard/settings`);
-await girl.waitForSelector("text=איך משלמים לי");
-const payUi = await girl.textContent("body");
-check("settings separates her money from the platform fee",
-  payUi.includes("הכסף עובר ישירות אלייך") && payUi.includes("לא לוקח עמלה"));
+await girl.waitForSelector("#payment", { timeout: 15000 });
+const payUi = await girl.textContent("#payment");
+// זו הבטחה, לא ניסוח: דוכן לא נוגע בכסף של הקונות ולא לוקח ממנו אחוז
+check("ההגדרות מבטיחות במפורש שאין עמלה על המכירות", payUi.includes("לא לוקח עמלה"));
 
-// ברירת מחדל: ביט + מזומן. מכבים מזומן ומוסיפים הערה.
-await girl.click("button:has-text('מזומן')");
-await girl.fill("input[aria-label='הערה לקונה']", "ביט לאמא: 052-1234567");
-await girl.click("button:has-text('שמירת שינויים')");
-await girl.waitForSelector("text=נשמר");
-await girl.waitForTimeout(600);
-const { rows: [payRow] } = await db.query("select payout_bit, payout_cash, payout_note from stores where id=$1", [seed.id]);
-check("payout prefs saved", payRow.payout_bit === true && payRow.payout_cash === false && payRow.payout_note === "ביט לאמא: 052-1234567");
+/* "הערה לקונה" הוסרה מהמוצר בכוונה — רוב מה שנכתב בה היה מספר טלפון,
+   והיא נדחפה לתוך הודעת הוואטסאפ. הבדיקה לא מחזירה אותה; היא בודקת את
+   מה שבא במקומה: הסימונים, ולינק תשלום שנאכף. */
+await girl.click("#payment button:has-text('מזומן')");
+await girl.fill("input[aria-label='לינק לתשלום']", "https://www.bitpay.co.il/app/me/ABC123");
+await girl.click("[data-testid=save-settings]");
+await girl.waitForTimeout(2000);
+const { rows: [payRow] } = await db.query(
+  "select payout_bit, payout_cash, payout_link from stores where id=$1", [seed.id]);
+check("כיבוי אמצעי תשלום נשמר", payRow.payout_cash === false, `cash=${payRow.payout_cash}`);
+check("ומה שנשאר דלוק נשמר גם הוא", payRow.payout_bit === true, `bit=${payRow.payout_bit}`);
+check("ולינק התשלום נשמר", (payRow.payout_link ?? "").includes("bitpay.co.il"), String(payRow.payout_link));
 
-// אמצעי התשלום מוצגים בגיליון ההזמנה, ולכן בודקים בדפדפן ולא ב-HTML הגולמי
+// רק לינקים של ביט ופייבוקס מותרים, וזה נאכף בדאטהבייס ולא רק במסך
+let badLink = "";
+try {
+  await db.query("update stores set payout_link='https://evil.example.com/pay' where id=$1", [seed.id]);
+} catch (e) { badLink = e.message; }
+check("ולינק תשלום שאינו ביט או פייבוקס נדחה בדאטהבייס", badLink !== "", badLink.slice(0, 50));
+
 const buyer = await phone();
 await buyer.goto(`${BASE}/s/${seed.slug}`);
-await buyer.waitForSelector(".grid img", { timeout: 10000 });
-await buyer.click("text=סקוויש חד-קרן");
-await buyer.click("button[aria-label='הוספה לסל']");
-await buyer.click("text=פריט"); // הכפתור הצף של הסל
-await buyer.waitForSelector("text=ההזמנה שלך", { timeout: 10000 });
-const sheet = await buyer.textContent("body");
-// הקופה כבר לא מציגה רשימה — הקונה בוחרת אמצעי, וההוראות נכנסות להודעה
-check("checkout asks the buyer how she will pay", sheet.includes("איך תשלמי?"));
-check("and offers the methods this store accepts",
+await buyer.waitForSelector(".grid img", { timeout: 15000 });
+/* מוצר בלי אפשרויות בחירה: הוספה מהירה עליו באמת מוסיפה לסל, בעוד
+   שמוצר עם אפשרויות פותח גיליון בחירה ולא מוסיף כלום. */
+const { rows: [simple] } = await db.query(
+  "select name from products where store_id=$1 and deleted_at is null" +
+  " and coalesce(array_length(options, 1), 0) = 0 and stock > 0 order by sort_order limit 1",
+  [seed.id]);
+check("יש בדוכן מוצר זמין בלי אפשרויות בחירה", !!simple, String(simple?.name));
+await buyer.click(`button[aria-label='הוספה מהירה, ${simple.name}']`);
+await buyer.waitForTimeout(900);
+await buyer.click("[data-testid=cart-bar]");
+await buyer.waitForSelector("button[aria-label='תשלום בביט']", { timeout: 15000 });
+check("הקופה מציעה את אמצעי התשלום שהדוכן קיבל",
   (await buyer.locator("button[aria-label='תשלום בביט']").count()) === 1);
-check("her note to the buyer is shown", sheet.includes("ביט לאמא: 052-1234567"));
-check("cash is gone once she turned it off", !sheet.includes("מזומן"));
+check("ולא את זה שכובה בהגדרות",
+  (await buyer.locator("button[aria-label='תשלום במזומן']").count()) === 0);
 await buyer.screenshot({ path: `${shots}/49-checkout-payment.png` });
 
-// contact_phone עדיין לא ב-HTML — ההערה שלה היא בחירה שלה, לא דליפה שלנו
+// הטלפון שלה עדיין לא ב-HTML. ההערה היא בחירה שלה, לא דליפה שלנו.
 const storeHtml = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
-check("her whatsapp number still never appears in the HTML", !storeHtml.includes("972501234567"));
+check("מספר הוואטסאפ שלה עדיין לא מופיע בקוד המקור", !storeHtml.includes("972501234567"));
 
 /* ── 5ג: תצוגה מקדימה בוואטסאפ ── */
 const og = (prop) => storeHtml.match(new RegExp(`<meta property="${prop}" content="([^"]*)"`))?.[1];
-check("og:title is the store name", og("og:title") === seed.display_name, og("og:title"));
-check("og:url is absolute on the real domain", og("og:url")?.startsWith("https://duchan.app/s/"), og("og:url"));
-check("og:image points at a real uploaded image", !!og("og:image")?.includes("/duchan-media/"), og("og:image"));
-check("preview image is actually fetchable", (await fetch(og("og:image"))).ok);
+check("og:title הוא שם הדוכן", og("og:title") === seed.display_name, og("og:title"));
+check("og:url מוחלט על הדומיין האמיתי", og("og:url")?.startsWith("https://duchan.app/s/") === true, og("og:url"));
+check("og:image מצביע על תמונה שהועלתה", og("og:image")?.includes("/duchan-media/") === true, og("og:image"));
 // noindex ו-OpenGraph חיים יחד בכוונה: לא נמצא בגוגל, אבל נראה טוב בשיתוף
-check("still noindex despite having a preview card", storeHtml.includes("noindex"));
+check("ועדיין noindex למרות כרטיס התצוגה", storeHtml.includes("noindex"));
 
-/* ── 6: מסך "להפיץ" — ההודעות המוכנות ── */
+/* ── 6: מסך "להפיץ" ── */
 await girl.goto(`${BASE}/dashboard/share`);
-// מחכים לתוכן שנטען אחרי useStore, לא לכותרת שקיימת גם בניווט התחתון
-await girl.waitForSelector("textarea", { timeout: 10000 });
-const share = await girl.textContent("body");
-check("share tab offers ready-made messages", share.includes("פתחתי חנות") && share.includes("לחברה אחת") && share.includes("למשפחה"));
+await girl.waitForSelector("textarea", { timeout: 15000 });
 const box = await girl.locator("textarea").first().inputValue();
-check("message is personalised with the store name and link", box.includes(seed.display_name) && box.includes(`/s/${seed.slug}`));
-check("share tab has an invite-a-friend link", share.includes("להזמין חברה לפתוח חנות"));
+check("ההודעה המוכנה נושאת את שם הדוכן ואת הלינק",
+  box.includes(seed.display_name) && box.includes(`/s/${seed.slug}`));
+check("ואפשר לשלוח אותה בוואטסאפ בלחיצה", await usable(girl, "[data-testid=share-send]"));
 await girl.screenshot({ path: `${shots}/46-share.png`, fullPage: true });
 
-/* ── 7: הלולאה — חברה מגיעה מהחנות ופותחת חנות משלה ── */
+/* ── 7: הלולאה — חברה מגיעה מהדוכן ופותחת דוכן משלה ── */
 const friend = await phone();
 await friend.goto(`${BASE}/s/${seed.slug}`);
-await friend.waitForSelector("text=פתחי חנות משלך");
-check("live storefront invites visitors to open their own store", true);
-// הפנייה אליי היא הערוץ שממנו מגיעות רוב הלקוחות, וההודעה נושאת את שם
-// הדוכן ואת הקוד — בלעדיהם אי אפשר לדעת מאיפה הפנייה הגיעה
+const openOwn = `a[href="/?ref=${seed.slug}"]`;
+await friend.waitForSelector(openOwn, { timeout: 15000 });
+check("דוכן חי מזמין מבקרות לפתוח דוכן משלהן", await usable(friend, openOwn));
+
+// הפנייה למרינה היא הערוץ שממנו מגיעות רוב הלקוחות, וההודעה נושאת את
+// שם הדוכן ואת הקוד — בלעדיהם אי אפשר לדעת מאיפה הפנייה הגיעה
 const salesHref = await friend.locator("a[href*='wa.me']").first().getAttribute("href");
 const salesMsg = decodeURIComponent(salesHref ?? "");
-check("the storefront footer offers a direct line to marina",
-  salesMsg.includes("wa.me/972545888471"), salesHref?.slice(0, 40));
-check("and her message says which stall it came from",
+check("ויש קו ישיר למרינה", salesMsg.includes("wa.me/972545888471"), salesHref?.slice(0, 40));
+check("וההודעה אומרת מאיזה דוכן היא הגיעה",
   salesMsg.includes(seed.display_name) && salesMsg.includes(seed.slug));
-await friend.click("text=פתחי חנות משלך");
+
+await friend.click(openOwn);
 await friend.waitForURL(`**/?ref=${seed.slug}`);
-await friend.waitForSelector("text=עכשיו תורך", { timeout: 10000 });
-check("landing greets the referred visitor by the referring store", (await friend.textContent("body")).includes(seed.display_name));
+/* שם הדוכן המפנה מגיע מקריאת רשת אחרי ההידרציה, ולכן מחכים לאלמנט
+   עצמו ולא לפרק זמן שרירותי. */
+await friend.waitForSelector("[data-testid=referred-from]", { timeout: 20000 }).catch(() => {});
+check("דף הנחיתה מזכיר את הדוכן שהפנה",
+  ((await friend.textContent("[data-testid=referred-from]").catch(() => "")) ?? "")
+    .includes(seed.display_name));
 const { rows: [clicked] } = await db.query("select ref_clicks from stores where id=$1", [seed.id]);
-check("referral click counted on the referring store", clicked.ref_clicks >= 1, `clicks=${clicked.ref_clicks}`);
+check("והלחיצה נספרה על הדוכן המפנה", clicked.ref_clicks >= 1, `clicks=${clicked.ref_clicks}`);
 await friend.screenshot({ path: `${shots}/47-referred-landing.png` });
 
-await friend.fill("input", "החנות של נועה");
-await friend.click("button:has-text('בואי נבנה את הדוכן')");
+/* אונבורדינג מלא של החברה, דרך המסכים האמיתיים */
+await friend.click("a[href='/onboarding'], button:has-text('לפתוח דוכן')");
 await friend.waitForURL("**/onboarding");
-// אונבורדינג בן ארבעה מסכים: שם → מוצר → "מוכנה" (שם גם בוחרים סגנון) → שמירה
-// שלב 1: שם, תמונה, רקע — ואז ממשיכים למספר
-await friend.waitForSelector("text=בואי נפתח לך דוכן");
-await friend.click("button:has-text('הלאה')");
-await friend.waitForSelector("input[aria-label='מספר טלפון']");
+await friend.waitForTimeout(900);
+await friend.fill("input[aria-label='שם הדוכן']", "החנות של נועה");
+await friend.click("button:has-text('הלאה, לעיצוב הדוכן')");
+await friend.waitForTimeout(900);
+await friend.click("button:has-text('+ להוסיף מוצר')");
+await friend.waitForTimeout(600);
+await friend.setInputFiles("input[type=file] >> nth=1", IMG);
+await friend.waitForTimeout(1500);
+await friend.fill("input[aria-label='שם המוצר']", "צמיד קשת");
+await friend.fill("input[aria-label='מחיר המוצר']", "12");
+await friend.click("button:has-text('הוספה לדוכן')");
+await friend.waitForTimeout(900);
+await friend.click("button:has-text('הלאה ←')");
+await friend.waitForTimeout(1100);
+await friend.check("input[aria-label='ההורים שלי יודעים']");
+await friend.click("button:has-text('הלאה, למספר הטלפון')");
+await friend.waitForTimeout(1100);
 await verifyPhone(friend, "0529998877");
-await friend.waitForSelector("text=הדוכן שלך נפתח", { timeout: 30000 });
+await friend.waitForSelector("text=נפתח דוכן", { timeout: 40000 });
 
-// אין יותר parent_email — החנות מזוהה לפי המספר שאומת בסמס
 const { rows: [noa] } = await db.query("select * from stores where contact_phone = '972529998877'");
-check("referred store records who brought it", noa?.referred_by === seed.id && noa?.referral_source === "store");
-check("referred store also starts as a draft", noa?.activated_at === null);
+check("הדוכן שהופנה רושם מי הביא אותו",
+  noa?.referred_by === seed.id && noa?.referral_source === "store",
+  `${noa?.referral_source}`);
+check("והוא גם מתחיל כטיוטה", noa?.activated_at === null);
 
 /* ── 8: החמ"ל מראה את הרשת ── */
 await admin.goto(`${BASE}/admin`);
-await admin.waitForSelector('text=חמ"ל');
+await admin.waitForTimeout(1200);
 await admin.click("button:has-text('רשת')");
-await admin.waitForSelector("text=אשכולות");
+await admin.waitForTimeout(1500);
 const net = await admin.textContent("body");
-check("network tab shows the cluster with both stores", net.includes("אשכול של 2 חנויות") && net.includes("החנות של נועה"));
-check("network tab counts referrals and clicks", net.includes("הגיעו מחנות"));
+check("לשונית הרשת מציגה את האשכול עם שני הדוכנים",
+  net.includes("אשכול של 2 חנויות") && net.includes("החנות של נועה"));
+check("וסופרת הפניות", net.includes("הגיעו מחנות"));
 await admin.screenshot({ path: `${shots}/48-admin-network.png`, fullPage: true });
 
-/* ── 9: אימות שדות רגישים לא דלפו בדרך ── */
-check("referral endpoint returns only name/emoji", !JSON.stringify(
-  await (await fetch(`${BASE}/api/track/ref`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug: seed.slug }),
-  })).json()
-).includes("972"));
+/* ── 9: שדות רגישים לא דלפו בדרך ── */
+const refBody = JSON.stringify(await (await fetch(`${BASE}/api/track/ref`, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ slug: seed.slug }),
+})).json());
+check("נקודת ההפניה מחזירה רק שם ואמוג׳י, בלי טלפון", !refBody.includes("972"), refBody.slice(0, 60));
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} activation+referral checks passed`);

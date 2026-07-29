@@ -56,8 +56,8 @@ await admin.screenshot({ path: `${shots}/20-overview.png` });
 await admin.click("button:has-text('חנויות')");
 await admin.waitForTimeout(500);
 await admin.locator("button", { hasText: store.display_name }).first().click();
-await admin.waitForSelector("text=וואטסאפ לבעלת החנות");
-const waHref = await admin.getAttribute("a:has-text('וואטסאפ לבעלת החנות')", "href");
+await admin.waitForSelector("text=וואטסאפ לבעלי הדוכן");
+const waHref = await admin.getAttribute("a:has-text('וואטסאפ לבעלי הדוכן')", "href");
 check("one-click WhatsApp to store owner", waHref?.includes(`wa.me/${store.contact_phone}`), waHref ?? "");
 check("visits chart in store file", (await admin.textContent("body")).includes("14 ימים"));
 
@@ -72,8 +72,9 @@ await admin.locator("button", { hasText: store.display_name }).first().click();
 await admin.waitForSelector("text=מוצר עתיק שנמחק");
 check("products deleted long ago still visible to admin (nothing is ever lost)", true);
 await admin.screenshot({ path: `${shots}/21-store-file.png` });
-const restoreBtns = admin.locator("button:has-text('שחזור')");
-await restoreBtns.last().click(); // המוצר העתיק נוסף אחרון ברשימה
+/* מכוונים לכפתור של המוצר הזה בדיוק, ולא ל"אחרון ברשימה": סדר הרשימה
+   הוא פרט תצוגה, ובדיקה שנשענת עליו נשברת מכל שינוי מיון. */
+await admin.click(`[data-testid='restore-product-${oldDeleted.id}']`);
 await admin.waitForTimeout(1500);
 const { rows: [restored] } = await db.query("select deleted_at from products where id=$1", [oldDeleted.id]);
 check("admin restores product with no 30-day limit", restored.deleted_at === null);

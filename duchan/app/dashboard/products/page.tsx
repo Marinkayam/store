@@ -836,7 +836,7 @@ export default function ProductsPage() {
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[12px] text-[var(--muted)]">תיאור קצר (לא חובה)</label>
               {store.ai_enabled && (edit.pendingImage || edit.imageKey || edit.posterKey) && (
-                <button onClick={writeDescription} disabled={aiBusy}
+                <button data-testid="ai-describe" onClick={writeDescription} disabled={aiBusy}
                   className="text-[12px] text-[var(--ink)] border border-[var(--line)] px-2 py-1 disabled:opacity-50">
                   {aiBusy ? "כותבים…" : "✨ לכתוב לי תיאור"}
                 </button>
@@ -936,6 +936,8 @@ export default function ProductsPage() {
               {PICKABLE.map((b) => (
                 <button
                   key={b.key}
+                  data-testid={`badge-${b.key}`}
+                  aria-pressed={edit.badge === b.key}
                   onClick={() => setEdit((s) => s && { ...s, badge: s.badge === b.key ? null : b.key })}
                   className={`flex-1 border py-2 text-[12.5px] transition ${
                     edit.badge === b.key
@@ -1085,7 +1087,7 @@ export default function ProductsPage() {
           המסך הזה עושה דבר אחד: מוציא אותה מכאן אל השיתוף. "אחר כך" קיים,
           אבל הוא קטן ואפור, כי הצעד הבא האמיתי הוא לשלוח את הלינק. */}
       {celebrate && store && (
-        <div className="fixed inset-0 z-[95] bg-white flex flex-col items-center justify-center text-center px-8 gap-4">
+        <div data-testid="first-product-celebration" className="fixed inset-0 z-[95] bg-white flex flex-col items-center justify-center text-center px-8 gap-4">
           <Icon name="party" size={68} tone="var(--lavender)" className="text-[var(--wood)]" />
           <h2 className="text-[22px] font-bold leading-tight">הדוכן שלך באוויר!</h2>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">

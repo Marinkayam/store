@@ -68,6 +68,7 @@ export default function Landing() {
         // המקורית התנגשה עם האיור הרך שמתחתיה ונראתה כמו שני אתרים שונים.
         <a
           href="/dashboard"
+          data-testid="my-store-card"
           className="w-full max-w-sm border-[1.5px] border-[var(--olive)] bg-white px-4 py-3 flex items-center gap-3"
         >
           <span className="text-xl">{mine.emoji}</span>
@@ -81,7 +82,7 @@ export default function Landing() {
       )}
 
       {from && (
-        <div className="card px-4 py-3 t-small text-center max-w-sm">
+        <div data-testid="referred-from" className="card px-4 py-3 t-small text-center max-w-sm">
           {from.emoji} הגעת מ<span className="font-bold">{from.name}</span>, עכשיו תורך
         </div>
       )}

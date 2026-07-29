@@ -244,7 +244,7 @@ export default function OrdersPage() {
             <span className="text-2xl">{store.payment_claimed_at ? "⏳" : "🚀"}</span>
             <div className="flex-1">
               <div className="text-[13.5px] font-bold">
-                {store.payment_claimed_at ? "מחכות לאישור התשלום" : "הדוכן שלך בתצוגה מקדימה"}
+                <span data-testid="store-state-banner">{store.payment_claimed_at ? "מחכות לאישור התשלום" : "הדוכן שלך בתצוגה מקדימה"}</span>
               </div>
               <div className="text-[12.5px] opacity-70 leading-relaxed">
                 {store.payment_claimed_at

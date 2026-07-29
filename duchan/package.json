@@ -13,7 +13,8 @@
     "check:dns": "node scripts/check-dns.mjs",
     "gen:catchup": "node scripts/gen-catchup.mjs",
     "test:e2e": "node scripts/e2e.mjs",
-    "test:e2e:squish": "node scripts/e2e.mjs squish"
+    "test:e2e:squish": "node scripts/e2e.mjs squish",
+    "test:e2e:duchan": "node scripts/e2e.mjs duchan"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

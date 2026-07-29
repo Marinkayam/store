@@ -36,14 +36,16 @@ await db.query("delete from phone_otps");
 
 /* ── 1. הרשמה מלאה בלי מייל ובלי סיסמה ── */
 const p = await phone();
-await p.goto(BASE);
-await p.fill("input", "החנות של אורי");
-await p.click("button:has-text('בואי נבנה את הדוכן')");
-await p.waitForURL("**/onboarding");
-// שלב 1: שם, תמונה, רקע — ואז ממשיכים למספר
-await p.waitForSelector("text=בואי נפתח לך דוכן");
-await p.click("button:has-text('הלאה')");
-await p.waitForSelector("input[aria-label='מספר טלפון']");
+await p.goto(`${BASE}/onboarding`, { waitUntil: "networkidle" });
+await p.waitForSelector("input[aria-label='שם הדוכן']", { timeout: 15000 });
+await p.fill("input[aria-label='שם הדוכן']", "החנות של אורי");
+await p.click("button:has-text('הלאה, לעיצוב הדוכן')");
+await p.waitForTimeout(900);
+await p.click("button:has-text('הלאה ←')");
+await p.waitForTimeout(1000);
+await p.check("input[aria-label='ההורים שלי יודעים']");
+await p.click("button:has-text('הלאה, למספר הטלפון')");
+await p.waitForSelector("input[aria-label='מספר טלפון']", { timeout: 15000 });
 const body = await p.textContent("body");
 check("the save screen asks for nothing but a phone",
   !body.includes("סיסמה") && !body.includes("אימייל"), "");
@@ -52,7 +54,8 @@ await p.screenshot({ path: `${shots}/80-phone-step.png` });
 await p.fill("input[aria-label='מספר טלפון']", NUM);
 await p.click("button:has-text('שלחו לי קוד')");
 await p.waitForSelector("input[aria-label='קוד אימות']", { timeout: 15000 });
-check("a code is requested and the code screen opens", true);
+check("a code is requested and the code screen opens",
+  (await p.locator("input[aria-label='קוד אימות']").count()) === 1);
 await p.screenshot({ path: `${shots}/81-code-step.png` });
 
 const { rows: otpRows } = await db.query("select code_hash, phone from phone_otps where phone=$1", [E164]);
@@ -62,7 +65,8 @@ check("the code itself is never stored", !/^\d{6}$/.test(otpRows[0]?.code_hash ?
 /* ── 2. קוד שגוי נחסם ומודיע כמה נשאר ── */
 await p.fill("input[aria-label='קוד אימות']", "000000");
 await p.waitForSelector("text=/הקוד לא נכון|יותר מדי/", { timeout: 10000 });
-check("a wrong code is rejected", true);
+check("a wrong code is rejected, and the code screen stays open",
+  (await p.locator("input[aria-label='קוד אימות']").count()) === 1);
 const { rows: att } = await db.query("select attempts from phone_otps where phone=$1", [E164]);
 check("the failed attempt is counted server-side", att[0].attempts >= 1, `attempts=${att[0].attempts}`);
 
@@ -70,8 +74,9 @@ check("the failed attempt is counted server-side", att[0].attempts >= 1, `attemp
 const code = await lastCode(E164);
 check("an sms actually went out with a 6-digit code", !!code, code ? "נשלח" : "לא נשלח");
 await p.fill("input[aria-label='קוד אימות']", code);
-await p.waitForSelector("text=הדוכן שלך נפתח", { timeout: 25000 });
-check("the store is created straight after verification", true);
+await p.waitForSelector("text=נפתח דוכן", { timeout: 40000 });
+check("the store is created straight after verification",
+  (await db.query("select 1 from stores where display_name='החנות של אורי'")).rowCount === 1);
 await p.screenshot({ path: `${shots}/82-saved.png` });
 
 const { rows: [store] } = await db.query("select * from stores where display_name='החנות של אורי'");

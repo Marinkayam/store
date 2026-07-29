@@ -52,6 +52,7 @@ export function FriendSafety({ code, nickname }: { code: string; nickname: strin
   if (!open)
     return (
       <button
+        data-testid="safety-open"
         onClick={() => setOpen(true)}
         className="t-small text-[var(--muted)] underline self-start"
       >
@@ -67,6 +68,7 @@ export function FriendSafety({ code, nickname }: { code: string; nickname: strin
         <>
           <div className="t-small font-medium">מה תרצי לעשות?</div>
           <button
+            data-testid="safety-remove"
             onClick={() => setConfirm("remove")}
             className="border border-[var(--line)] px-3 py-2 text-[13px] text-start"
           >
@@ -76,6 +78,7 @@ export function FriendSafety({ code, nickname }: { code: string; nickname: strin
             </span>
           </button>
           <button
+            data-testid="safety-block"
             onClick={() => setConfirm("block")}
             className="border border-[var(--danger-line)] text-[var(--danger)] px-3 py-2 text-[13px] text-start"
           >
@@ -238,6 +241,7 @@ function Confirm({
       <p className="text-[12px] text-[var(--muted)] leading-relaxed">{body}</p>
       <div className="flex gap-2">
         <button
+          data-testid="safety-confirm"
           disabled={busy}
           onClick={onYes}
           className={`flex-1 px-3 py-2 text-[13px] font-medium ${

@@ -52,32 +52,37 @@ await empty.goto(`${BASE}/dashboard/share`);
 await empty.waitForSelector("text=רגע לפני ששולחים", { timeout: 15000 });
 const gate = await empty.textContent("body");
 check("sharing is blocked while the store has no products", gate.includes("עוד אין מוצרים"));
-check("the block offers the one thing that unblocks it", gate.includes("בואי נוסיף את המוצר הראשון"));
+check("the block offers the one thing that unblocks it",
+  (await empty.locator("a[href='/dashboard/products?new=1']").count()) === 1);
 check("no ready-made message is shown yet", (await empty.locator("textarea").count()) === 0);
 await empty.screenshot({ path: `${shots}/51-share-locked.png` });
 
 /* ── 3. המוצר הראשון פותח את החגיגה ── */
-await empty.click("text=בואי נוסיף את המוצר הראשון");
+await empty.click("a[href='/dashboard/products?new=1']");
 await empty.waitForURL("**/dashboard/products?new=1");
-await empty.waitForSelector("text=מוצר חדש", { timeout: 15000 });
-check("the '+' opens straight into a new product from the share screen", true);
+await empty.waitForSelector("input[aria-label='שם המוצר']", { timeout: 15000 });
+check("the share screen's CTA opens straight into a new product form",
+  (await empty.locator("input[aria-label='שם המוצר']").count()) === 1);
 await empty.fill("input[aria-label='שם המוצר']", "צמיד חוטים");
 await empty.fill("input[aria-label='מחיר']", "12");
 await empty.locator("button:text-is('שמירה')").click();
 
-await empty.waitForSelector("text=הדוכן שלך באוויר!", { timeout: 20000 });
-const party = await empty.textContent("body");
-check("the first product is celebrated, not toasted", true);
-check("the celebration's main button is sharing", party.includes("שלחי לחברות"));
+await empty.waitForSelector("[data-testid=first-product-celebration]", { timeout: 25000 });
+check("the first product is celebrated, not toasted",
+  await empty.locator("[data-testid=first-product-celebration]").isVisible());
+check("and the celebration's main button leads to sharing",
+  (await empty.locator("[data-testid=first-product-celebration] a[href='/dashboard/share']").count()) === 1);
 await empty.screenshot({ path: `${shots}/52-celebration.png` });
 
 /* ── 4. ומשם ישר להפצה ── */
-await empty.click("text=שלחי לחברות");
+await empty.click("[data-testid=first-product-celebration] a[href='/dashboard/share']");
 await empty.waitForURL("**/dashboard/share");
 await empty.waitForSelector("textarea", { timeout: 15000 });
-const opened = await empty.textContent("body");
-check("share opens for real once a product exists", opened.includes("פתחתי חנות"));
-check("share says the link already works as a preview", opened.includes("תצוגה מקדימה"));
+check("share opens for real once a product exists",
+  (await empty.locator("textarea").count()) >= 1);
+const shareBox = await empty.locator("textarea").first().inputValue();
+check("and the ready-made message carries the store link",
+  shareBox.includes(`/s/${noa.slug}`), shareBox.slice(0, 60));
 await empty.screenshot({ path: `${shots}/53-share-open.png`, fullPage: true });
 
 /* ── 5. חברה נכנסת לתצוגה מקדימה ורואה חנות אמיתית ── */
@@ -87,10 +92,12 @@ await friend.waitForSelector("text=צמיד חוטים", { timeout: 15000 });
 const seen = await friend.textContent("body");
 check("a friend sees the real products before publishing", seen.includes("₪12"));
 check("and is told plainly that orders aren't open yet", seen.includes("עוד לא נפתח להזמנות"));
-await friend.click("text=צמיד חוטים");
-await friend.waitForSelector("text=הדוכן עוד לא נפתח להזמנות", { timeout: 10000 });
-const addBtn = friend.locator("button:has-text('הדוכן עוד לא נפתח להזמנות')");
-check("the add-to-cart button is disabled in a preview", await addBtn.isDisabled());
+check("and a preview banner says so, without her having to guess",
+  await friend.locator("[data-testid=preview-banner]").isVisible());
+await friend.click("button[aria-label='צמיד חוטים']");
+await friend.waitForSelector("button[aria-label='הוספה לסל']", { timeout: 15000 });
+check("the add-to-cart button is disabled in a preview",
+  await friend.locator("button[aria-label='הוספה לסל']").isDisabled());
 await friend.screenshot({ path: `${shots}/54-preview-friend.png` });
 
 /* ── 6. הבעלים רואה בתצוגה המקדימה את הדרך לפרסום ── */
@@ -99,8 +106,12 @@ await ownerView.goto(`${BASE}/login`);
 await verifyPhone(ownerView, "0529998877");
 await ownerView.waitForURL("**/dashboard", { timeout: 15000 });
 await ownerView.goto(`${BASE}/s/${noa.slug}`);
-await ownerView.waitForSelector("text=פרסמי את הדוכן", { timeout: 15000 });
-check("the owner gets a publish button on her own preview", true);
+/* זהות הבעלים נקבעת אחרי ההידרציה, ולכן מחכים לגרסת-הבעלים של הרצועה
+   ולא רק לרצועה עצמה. */
+const ownerPublish = "[data-testid=preview-banner] a[href='/activate']";
+await ownerView.waitForSelector(ownerPublish, { timeout: 20000 }).catch(() => {});
+check("the owner gets a route to publishing on her own preview",
+  (await ownerView.locator(ownerPublish).count()) === 1);
 await ownerView.screenshot({ path: `${shots}/55-preview-owner.png` });
 
 /* ── 7. פרימיום AI ── */
@@ -138,7 +149,9 @@ const png = `${shots}/prod.png`;
 await girl.screenshot({ path: png });
 await girl.setInputFiles("input[type=file][accept='image/*']", png);
 await girl.waitForTimeout(1500);
-check("AI button appears once AI on + photo", (await girl.textContent("body")).includes("כתבי לי תיאור"));
+await girl.waitForSelector("[data-testid=ai-describe]", { timeout: 15000 }).catch(() => {});
+check("AI button appears once AI on + photo",
+  (await girl.locator("[data-testid=ai-describe]").count()) === 1);
 
 /* ── 8. עריכה של מוצר קיים: אותה תמונה, בלי לצלם מחדש ── */
 await girl.goto(`${BASE}/dashboard/products`);
@@ -148,7 +161,7 @@ check("a product row says out loud that it opens for editing",
 await girl.click("text=סקוויש חד-קרן");
 await girl.waitForSelector("input[aria-label='שם המוצר']");
 check("editing an existing product can still ask for a description",
-  (await girl.textContent("body")).includes("כתבי לי תיאור"));
+  (await girl.locator("[data-testid=ai-describe]").count()) === 1);
 await girl.keyboard.press("Escape").catch(() => {});
 await girl.goto(`${BASE}/dashboard/products`);
 

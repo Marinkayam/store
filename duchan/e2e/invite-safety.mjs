@@ -139,11 +139,13 @@ const { rows: [noyaCode] } = await db.query(
   "select collection_code from squish_profiles where user_id=$1", [noyaId]);
 await maya.goto(`${BASE}/squish/c/${noyaCode.collection_code}`, { waitUntil: "networkidle" });
 await maya.waitForTimeout(900);
-await maya.click("button:has-text('משהו לא בסדר כאן?')");
-await maya.waitForTimeout(300);
-await maya.click("button:has-text('לחסום את NoyaI')");
-await maya.waitForTimeout(300);
-await maya.click("button:has-text('כן, לחסום')");
+/* כל שלב מחכה לשלב הבא ולא לפרק זמן: לחיצה שהחמיצה כאן נראית אחר כך
+   כמו "החסימה לא עבדה", ושולחת לחפש באג במקום הלא נכון. */
+await maya.click("[data-testid=safety-open]");
+await maya.waitForSelector("[data-testid=safety-block]", { timeout: 10000 });
+await maya.click("[data-testid=safety-block]");
+await maya.waitForSelector("[data-testid=safety-confirm]", { timeout: 10000 });
+await maya.click("[data-testid=safety-confirm]");
 await maya.waitForTimeout(2500);
 
 const { rows: [blocked] } = await db.query(

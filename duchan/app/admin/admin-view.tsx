@@ -406,6 +406,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                     </div>
                     <div className="flex gap-1.5 mt-2.5">
                       <button
+                        data-testid="approve-store"
                         onClick={() => setActivation(s.id, true, ACTIVATION_PRICE)}
                         className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
                       >
@@ -918,7 +919,8 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
                         </div>
                       </div>
                       {p.deleted_at ? (
-                        <button onClick={() => productAction(p.id, detail.store.id, "restore")}
+                        <button data-testid={`restore-product-${p.id}`}
+                          onClick={() => productAction(p.id, detail.store.id, "restore")}
                           className="text-[12px] border border-[var(--line)] px-2.5 py-1.5 shrink-0">
                           שחזור
                         </button>

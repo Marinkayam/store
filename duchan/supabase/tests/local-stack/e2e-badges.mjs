@@ -164,14 +164,17 @@ await girl.locator("div", { hasText: "תג-אלף" }).last().click();
 await girl.waitForSelector("input[aria-label='שם המוצר']");
 const editorBody = await girl.textContent("body");
 // האימוג'ים הוחלפו באייקונים משלנו, ולכן מזהים לפי הטקסט בלבד
-const pickable = await girl
-  .locator("button")
-  .filter({ hasText: /^\s*(נדיר|מבצע|הכי נמכר|חדש|אחרון במלאי)\s*$/ })
-  .count();
+const pickable = await girl.locator("[data-testid^='badge-']").count();
 check("the editor offers exactly the two she can pick", pickable === 2, `${pickable} כפתורים`);
 check("the editor explains which badges are automatic",
   editorBody.includes("מופיעות לבד"));
-await girl.locator("button:has-text('🎁 מבצע')").click();
+const sale = girl.locator("[data-testid='badge-sale']");
+check("no badge is picked before she taps one",
+  (await sale.getAttribute("aria-pressed")) === "false");
+await sale.click();
+await girl.waitForTimeout(300);
+check("and tapping it marks it as pressed",
+  (await sale.getAttribute("aria-pressed")) === "true");
 await girl.locator("button:text-is('שמירה')").click();
 await girl.waitForTimeout(2500);
 const { rows: [saved] } = await db.query("select badge from products where id=$1", [a.id]);

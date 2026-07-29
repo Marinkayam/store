@@ -797,7 +797,7 @@ export default function SettingsPage() {
         </div>
 
         {dirty && (
-          <button onClick={save} className="bg-[var(--ink)] text-white py-3 text-sm font-bold">
+          <button data-testid="save-settings" onClick={save} className="bg-[var(--ink)] text-white py-3 text-sm font-bold">
             שמירת שינויים
           </button>
         )}
@@ -815,7 +815,7 @@ export default function SettingsPage() {
             זה הקישור לדוכן שלך. כל מי שלוחץ עליו רואה את המוצרים ויכול להזמין.
           </p>
           {!store.activated_at && (
-            <div className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-1.5">
+            <div data-testid="preview-notice" className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-1.5">
               👀 כרגע זו תצוגה מקדימה: אפשר לשלוח והחברים יראו הכל, אבל עדיין
               אי אפשר להזמין. הפרסום למטה פותח את ההזמנות.
             </div>
@@ -837,7 +837,7 @@ export default function SettingsPage() {
         {/* התשלום היה מוסתר מאחורי "לפרסם את הדוכן", ולא היה ברור שיש כאן
             שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */}
         {!store.activated_at && (
-          <a href="/activate" className="bg-[var(--ink)] text-white p-3.5 mt-1 block">
+          <a href="/activate" data-testid="publish-cta" className="bg-[var(--ink)] text-white p-3.5 mt-1 block">
             <div className="text-[13px] font-bold">
               {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
             </div>

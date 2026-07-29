@@ -331,7 +331,7 @@ export default function StoreView({
       {/* תצוגה מקדימה — הדוכן בנוי ונראה, אבל עוד לא נפתח להזמנות.
           הרצועה מחוץ לערכת הנושא בכוונה: זו הודעת מערכת, לא חלק מהחנות. */}
       {preview && (
-        <div className="bg-[var(--warn-bg)] text-[var(--warn-ink)] border-b border-[var(--warn-line)]" dir="rtl">
+        <div data-testid="preview-banner" className="bg-[var(--warn-bg)] text-[var(--warn-ink)] border-b border-[var(--warn-line)]" dir="rtl">
           {owner ? (
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
               <span className="text-[12.5px] leading-tight">
@@ -535,6 +535,8 @@ export default function StoreView({
 
       {/* cart bar */}
       <div
+        data-testid="cart-bar"
+        role="button"
         className={`fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-4 pb-5 cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
         style={{ background: "var(--s-primary)", color: "var(--s-onprimary)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)" }}
         onClick={() => cartCount && setOrderOpen(true)}

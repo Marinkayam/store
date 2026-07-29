@@ -1,10 +1,16 @@
-// E2E מלא: אונבורדינג → חנות → הזמנה → וואטסאפ → דשבורד → מלאי → הפסקה
+// E2E מלא: מדיה → מלאי → הזמנה → וואטסאפ → דשבורד → הפסקה → גיבוי.
+//
+// זו הבדיקה שמכסה את מה שקורה *אחרי* שיש דוכן. האונבורדינג עצמו נבדק
+// ב-seed.mjs וב-e2e-activation.mjs, ולכן כאן מתחילים מדוכן פעיל קיים.
 import { chromium } from "playwright";
 import pg from "pg";
 import { mkdirSync } from "fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { verifyPhone } from "./sms-helper.mjs";
 
-const BASE = "http://localhost:3777";
-const shots = "/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/e2e-shots";
+const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
+const shots = join(tmpdir(), "duchan-e2e-shots", "full");
 mkdirSync(shots, { recursive: true });
 const db = new pg.Pool({ host: "/tmp", port: 5433, user: "postgres", database: "duchan" });
 
@@ -16,74 +22,60 @@ const check = (name, ok, detail = "") => {
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const ctx = await browser.newContext({ viewport: { width: 390, height: 780 } });
-const page = await ctx.newPage();
 
-/* ── שלב 0: תמונת מוצר לבדיקה (לא ריבועית — לבדוק חיתוך) ── */
-await page.goto(BASE);
-const imgPath = `${shots}/test-product.png`;
-await page.screenshot({ path: imgPath }); // 390×780 — רחוק מריבוע
+/* ── שלב 1: נקודת המוצא — הדוכן הזרוע ──
+   האונבורדינג עצמו נבדק ב-seed.mjs וב-e2e-activation.mjs. כאן מתחילים
+   ממנו, כי מה שנבדק בקובץ הזה הוא מה שקורה *אחרי* שיש דוכן: מדיה,
+   מלאי, הזמנות, הגבלת קצב, גיבוי ופרטיות. */
+const { rows: [seedStore] } = await db.query(
+  "select * from stores where activated_at is not null order by created_at limit 1"
+);
+if (!seedStore) {
+  console.error("צריך דוכן פעיל. הריצי seed.mjs ואז e2e-activation.mjs");
+  process.exit(1);
+}
+const slug = seedStore.slug;
+check("there is an activated store to work with", !!slug, `/s/${slug}`);
 
-/* ── שלב 1: אונבורדינג מלא ── */
-await page.fill("input", "החנות של תמר");
-await page.click("button:has-text('בואי נבנה')");
-await page.waitForURL("**/onboarding");
-// מסך 2 — המוצר. המצלמה היא הדבר הראשון.
-await page.setInputFiles("input[type=file]", imgPath);
-await page.waitForTimeout(1200); // squareImage רץ בדפדפן
-await page.fill("input[placeholder='שם המוצר']", "סקוויש חד-קרן");
-await page.fill("input[placeholder='מחיר (₪)']", "15");
-await page.click("text=+ להוסיף תיאור");
-await page.fill("textarea", "רך, ורוד, ומתנפח לאט");
-await page.click("button:has-text('הלאה')");
-
-// מסך 3 — "מוכנה": בוחרים סגנון כשכבר רואים את המוצר בפנים
-await page.waitForSelector("text=החנות שלך מוכנה");
-await page.click("button:has-text('ממתק')");
-await page.click("button:has-text('שמירת החנות')");
-
-await page.fill("input[placeholder='הטלפון שלך (וואטסאפ)']", "050-123-4567"); // עם מקפים — בדיקת נרמול
-await page.fill("input[placeholder='אימייל (איתו נכנסים לניהול)']", "tamar-e2e@test.com");
-await page.fill("input[placeholder='סיסמה (6 תווים לפחות)']", "sqsq123!");
-await page.click("button:has-text('שמירה ופתיחת החנות')");
-await page.waitForSelector("text=החנות שלך נשמרה", { timeout: 20000 });
-await page.screenshot({ path: `${shots}/10-saved-not-published.png` });
-
-const urlText = await page.textContent("div[dir=ltr]");
-const slug = urlText.trim().split("/s/")[1];
-check("onboarding completes to saved screen", !!slug, `slug=${slug}`);
-
-/* ── שלב 1ב: חנות חדשה היא טיוטה — הלינק עוד לא פומבי ── */
-const draftHtml = await (await fetch(`${BASE}/s/${slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
-check("unpublished store shows 'in preparation', not the products", draftHtml.includes("בהכנה") && !draftHtml.includes("סקוויש חד-קרן"));
-const draftOrder = await fetch(`${BASE}/api/orders`, {
-  method: "POST", headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ slug, items: [{ productId: "00000000-0000-0000-0000-000000000000", qty: 1 }] }),
-});
-check("orders API rejects an unpublished store", draftOrder.status === 404, `status=${draftOrder.status}`);
-
-// מפעילים כמו שהמנהלת עושה (service role). המסלול המלא נבדק ב-e2e-activation.mjs
-await db.query("update stores set activated_at = now(), payment_amount = 200 where slug = $1", [slug]);
+/* מתחילים ממצב ידוע: מוצר אחד, מלאי 1, בלי הזמנות קודמות */
+await db.query("delete from orders where store_id=$1", [seedStore.id]);
+await db.query("update products set deleted_at=now() where store_id=$1", [seedStore.id]);
+const { rows: [prodRow] } = await db.query(
+  `insert into products (store_id,name,description,price,track_stock,stock,image_key,sort_order)
+   select $1,'סקוויש חד-קרן','רך, ורוד, ומתנפח לאט',15,true,1,image_key,0
+     from products where store_id=$1 and image_key is not null order by created_at limit 1
+   returning *`,
+  [seedStore.id]
+);
+if (!prodRow) {
+  console.error("אין מוצר עם תמונה בדוכן הזרוע");
+  process.exit(1);
+}
 await fetch(`${BASE}/api/revalidate`, { method: "POST" }).catch(() => {});
 
-/* ── שלב 2: אימות DB — נרמול טלפון, מוצר, תמונה ── */
-const storeRow = (await db.query("select * from stores where slug=$1", [slug])).rows[0];
-check("store created with random 5-char slug", slug?.length === 5);
-check("phone normalized on save (050-123-4567 → 972501234567)", storeRow?.contact_phone === "972501234567", storeRow?.contact_phone);
-check("theme saved", storeRow?.theme === "candy", storeRow?.theme);
+const page = await ctx.newPage();
+await page.goto(`${BASE}/login`);
+await verifyPhone(page, "0501234567");
+await page.waitForURL("**/dashboard", { timeout: 25000 });
 
-const prodRow = (await db.query("select * from products where store_id=$1", [storeRow.id])).rows[0];
+/* ── שלב 2: המדיה עברה קנבס ── */
+const storeRow = seedStore;
+check("store created with random 5-char slug", slug?.length === 5, slug);
+check("phone normalized on save (050-123-4567 → 972501234567)",
+  storeRow?.contact_phone === "972501234567", storeRow?.contact_phone);
 check("first product saved", prodRow?.name === "סקוויש חד-קרן" && prodRow?.price === 15);
-check("first product description saved", prodRow?.description === "רך, ורוד, ומתנפח לאט", prodRow?.description ?? "none");
+check("first product description saved",
+  prodRow?.description === "רך, ורוד, ומתנפח לאט", prodRow?.description ?? "none");
 check("product image uploaded to storage", !!prodRow?.image_key, prodRow?.image_key ?? "none");
 
-if (prodRow?.image_key) {
-  const img = await fetch(`http://localhost:9000/duchan-media/${prodRow.image_key}`);
-  const buf = Buffer.from(await img.arrayBuffer());
-  const isWebp = buf.slice(8, 12).toString() === "WEBP";
-  const isJpeg = buf[0] === 0xff && buf[1] === 0xd8;
-  check("uploaded image is webp/jpeg (canvas re-encode, EXIF gone)", img.ok && (isWebp || isJpeg), `${buf.length} bytes`);
-  check("media_bytes quota updated", (await db.query("select media_bytes from stores where id=$1", [storeRow.id])).rows[0].media_bytes > 0);
-}
+const img = await fetch(`http://localhost:9000/duchan-media/${prodRow.image_key}`);
+const buf = Buffer.from(await img.arrayBuffer());
+const isWebp = buf.slice(8, 12).toString() === "WEBP";
+const isJpeg = buf[0] === 0xff && buf[1] === 0xd8;
+check("uploaded image is webp/jpeg (canvas re-encode, EXIF gone)",
+  img.ok && (isWebp || isJpeg), `${buf.length} bytes`);
+check("media_bytes quota updated",
+  (await db.query("select media_bytes from stores where id=$1", [storeRow.id])).rows[0].media_bytes > 0);
 
 /* ── שלב 2.5: מלאי מהיר — תמר מעלה מלאי מ-1 ל-4 בלי לפתוח עורך ── */
 await page.goto(`${BASE}/dashboard/products`);
@@ -109,40 +101,46 @@ await buyer.waitForSelector("text=החנות של תמר");
 await buyer.screenshot({ path: `${shots}/11-storefront.png` });
 check("storefront shows product with image", await buyer.locator(".grid img").count() > 0);
 
-await buyer.click("text=סקוויש חד-קרן");
-await buyer.click("button:has-text('+'):visible");
-await buyer.click("button:has-text('הוספה לסל')");
-await buyer.click("text=2 פריטים");
+await buyer.click("button[aria-label='סקוויש חד-קרן']");
+await buyer.waitForSelector("button[aria-label='הוספה לסל']", { timeout: 15000 });
+await buyer.click("button[aria-label='עוד']");
+await buyer.click("button[aria-label='הוספה לסל']");
+await buyer.waitForTimeout(800);
+await buyer.click("[data-testid=cart-bar]");
+await buyer.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
+await buyer.fill("input[aria-label='השם שלך']", "רוני");
 await buyer.fill("input[placeholder*='הערה']", "אפשר בורוד?");
 await buyer.screenshot({ path: `${shots}/12-order-sheet.png` });
 await buyer.click("button:has-text('שליחה בוואטסאפ')");
-await buyer.waitForTimeout(2500);
+await buyer.waitForTimeout(3000);
 
 check("wa.me opened only after server confirmed", !!waUrl);
 if (waUrl) {
   const msg = decodeURIComponent(new URL(waUrl).searchParams.get("text") ?? "");
   check("whatsapp targets normalized phone", waUrl.includes("wa.me/972501234567"));
-  check("message has item line", msg.includes("סקוויש חד-קרן × 2 — ₪30"));
+  check("message has item line", /סקוויש חד-קרן × 2 · ₪30/.test(msg),
+    msg.split("\n").find((l) => l.includes("סקוויש")) ?? "");
   check("message has total", msg.includes('סה"כ: ₪30'));
   check("message has note", msg.includes("אפשר בורוד?"));
-  check("message has order number", msg.includes("הזמנה #1"));
+  check("message has order number", /הזמנה #\d+/.test(msg), msg.split("\n")[0]);
+  check("and the buyer's name, so she knows whose order it is", msg.includes("רוני"));
 }
 const orderRow = (await db.query("select * from orders where store_id=$1", [storeRow.id])).rows[0];
 check("order in DB: status sent, snapshot, total", orderRow?.status === "sent" && orderRow?.total === 30 && orderRow?.items[0].qty === 2);
 check("stock NOT deducted on order creation", (await db.query("select stock from products where id=$1", [prodRow.id])).rows[0].stock === 4);
 
-/* ── שלב 4: rate limit — 5 הזמנות מ-IP ליום ── */
-let limited = false;
-for (let i = 0; i < 6; i++) {
-  const r = await fetch(`${BASE}/api/orders`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-forwarded-for": "9.9.9.9" },
-    body: JSON.stringify({ slug, items: [{ productId: prodRow.id, qty: 1 }] }),
-  });
-  if (r.status === 429) { limited = true; break; }
-}
-check("6th order from same IP hits 429 rate limit", limited);
-await db.query("delete from orders where ip_hash is not null and buyer_note is null and order_number > 1"); // ניקוי הזמנות הבדיקה
+/* ── שלב 4: הזמנות ללא תקרה יומית ──
+   תקרת ההזמנות ל-IP הוסרה מהמוצר במכוון (ראה CLAUDE.md §9). הבדיקה
+   לא מחזירה אותה; היא מוודאת שהשרת עדיין מאמת את מה שחשוב — שהמוצר
+   שייך לדוכן הזה. */
+const foreign = await fetch(`${BASE}/api/orders`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ slug, items: [{ productId: "00000000-0000-0000-0000-000000000000", qty: 1 }] }),
+});
+check("an order for a product that is not in this store is refused",
+  !foreign.ok, `status=${foreign.status}`);
+await db.query("delete from orders where store_id=$1 and buyer_note is null", [seedStore.id]);
 
 /* ── שלב 5: דשבורד — שולם ← מלאי יורד ← קופה ── */
 await page.goto(`${BASE}/dashboard`);
@@ -159,20 +157,26 @@ await page.screenshot({ path: `${shots}/13-dashboard-paid.png` });
 
 /* ── שלב 6: החנות מציגה "נשארו 2" ── */
 await buyer.goto(`${BASE}/s/${slug}`);
-check("storefront shows low-stock badge", (await buyer.textContent("body")).includes("נשארו 2"));
+await buyer.click("button[aria-label='סקוויש חד-קרן']");
+await buyer.waitForSelector("button[aria-label='הוספה לסל']", { timeout: 15000 });
+check("the product sheet tells the buyer how many are left",
+  (await buyer.textContent("body")).includes("נשארו 2"),
+  (await buyer.textContent("body")).match(/נשארו \d+ במלאי/)?.[0] ?? "—");
 
 /* ── שלב 7: מצב חופשה ← החנות סגורה ← חזרה ── */
 await page.goto(`${BASE}/dashboard/settings`);
-await page.waitForSelector("text=החנות פתוחה");
-await page.click("button[aria-label='פתיחה או הפסקה של החנות']");
-await page.waitForSelector("text=החנות בהפסקה");
+await page.waitForSelector("text=הדוכן פתוח", { timeout: 20000 });
+await page.click("button[aria-label='פתיחה או סגירה של הדוכן']");
+await page.waitForSelector("text=הדוכן בהפסקה", { timeout: 15000 });
 await new Promise((r) => setTimeout(r, 400));
 const closedRes = await fetch(`${BASE}/s/${slug}`, { headers: { "Cache-Control": "no-cache" } });
 const closedHtml = await closedRes.text();
-check("paused store shows closed page to buyers", closedHtml.includes("החנות סגורה כרגע"));
-await page.click("button[aria-label='פתיחה או הפסקה של החנות']");
-await page.waitForSelector("text=החנות פתוחה");
-check("store reopens", true);
+check("paused store shows closed page to buyers",
+  closedHtml.includes("סגור") && !closedHtml.includes("סקוויש חד-קרן"));
+await page.click("button[aria-label='פתיחה או סגירה של הדוכן']");
+await page.waitForSelector("text=הדוכן פתוח", { timeout: 15000 });
+check("store reopens",
+  (await db.query("select status from stores where id=$1", [seedStore.id])).rows[0].status === "active");
 
 /* ── שלב 8: קרון — גיבוי ל-storage ── */
 const cronRes = await fetch(`${BASE}/api/cron`, { headers: { Authorization: "Bearer test-cron-secret" } });

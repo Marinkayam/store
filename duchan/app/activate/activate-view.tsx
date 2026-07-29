@@ -123,7 +123,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       <Shell>
         <div className="text-center flex flex-col gap-4">
           <div className="text-5xl">🎊</div>
-          <h1 className="text-xl font-bold">החנות שלך באוויר</h1>
+          <h1 data-testid="store-live" className="text-xl font-bold">החנות שלך באוויר</h1>
           <p className="text-[13px] text-[var(--muted)] leading-relaxed">
             הלינק פעיל. כל מי שמקבל אותו ממך יכול להיכנס ולהזמין.
           </p>
@@ -159,7 +159,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
       <Shell>
         <div className="text-center flex flex-col gap-4">
           <div className="text-5xl">⏳</div>
-          <h1 className="text-xl font-bold">קיבלנו, בודקים</h1>
+          <h1 data-testid="payment-pending" className="text-xl font-bold">קיבלנו, בודקים</h1>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
             אנחנו מאשרות כל חנות ידנית, לרוב תוך כמה שעות.
             <br />
@@ -208,7 +208,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
             🎉 מחיר השקה, עד {launchUntil}
           </div>
         )}
-        <div className="mt-3 flex items-baseline justify-center gap-2">
+        <div data-testid="activation-price" className="mt-3 flex items-baseline justify-center gap-2">
           <span className="text-5xl font-bold">₪{price}</span>
           {isLaunch && (
             <span className="text-2xl text-[var(--faint)] line-through">₪{fullPrice}</span>
@@ -255,7 +255,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
           {showParent ? "סגירה" : "או להראות את זה כאן"}
         </button>
         {showParent && (
-          <div className="mt-4 flex flex-col gap-4">
+          <div data-testid="parent-explainer" className="mt-4 flex flex-col gap-4">
             <div>
               <div className="text-[13px] font-bold mb-2">מה היא באמת לומדת</div>
               <LearnsTable />
@@ -392,6 +392,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
           {METHODS.map((m) => (
             <button
               key={m.key}
+              data-testid={`pay-method-${m.key}`}
               onClick={() => setMethod(m.key)}
               className={`flex-1 border-[1.5px] py-2.5 text-[12px] font-medium ${
                 method === m.key ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)]"
@@ -404,12 +405,14 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         <input
           value={ref}
           onChange={(e) => setRef(e.target.value)}
+          data-testid="payment-ref"
           placeholder="על שם מי שולם? (לא חובה)"
           maxLength={60}
           className="mt-2 w-full border border-[var(--line)] px-3.5 py-2.5 text-[13px]"
         />
         {err && <p className="text-[12px] text-[var(--danger)] mt-2">{err}</p>}
         <button
+          data-testid="declare-paid"
           onClick={declarePaid}
           disabled={busy || !consentOn}
           className="mt-2 w-full bg-[var(--ink)] text-white py-3.5 text-[14px] font-bold disabled:opacity-40"
