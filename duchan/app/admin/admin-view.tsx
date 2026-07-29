@@ -318,121 +318,6 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     )}`;
 
 /**
- * חשבונות פיילוט — מד לחץ לסשן בדיקה מלווה.
- *
- * מוצג רק כשיש חשבון פיילוט פעיל, ולכן ברוב הימים הוא לא קיים בכלל.
- * אין כאן תמונות, שמות פריטים, טלפון או עיר: זה מסך שאומר "האם היא
- * מצליחה", לא מסך שעוקב אחרי ילדה.
- */
-function PilotPanel() {
-  const [pilots, setPilots] = useState<PilotRow[] | null>(null);
-  const [busy, setBusy] = useState("");
-  const [link, setLink] = useState("");
-
-  const load = useCallback(() => {
-    fetch("/api/admin/squish-pilot").then((r) => r.json())
-      .then((d) => setPilots(d.pilots ?? [])).catch(() => setPilots([]));
-  }, []);
-  useEffect(load, [load]);
-
-  async function reset(userId: string, nickname: string) {
-    if (!confirm(`למחוק את כל אוסף הסקוויש של ${nickname}?\nחשבון הכניסה, הדוכנים וההזמנות לא ייגעו.`)) return;
-    setBusy(userId);
-    const r = await fetch("/api/admin/squish-pilot", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "reset", userId }),
-    });
-    const d = await r.json().catch(() => null);
-    setBusy("");
-    if (d?.result) {
-      alert(`נמחקו ${d.result.items_removed} סקווישים.\nדוכנים שנשארו: ${d.result.stores_intact} · הזמנות: ${d.result.orders_intact}`);
-    }
-    load();
-  }
-
-  async function makeLink() {
-    setBusy("link");
-    const r = await fetch("/api/admin/squish-pilot", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "link" }),
-    });
-    const d = await r.json().catch(() => null);
-    setBusy("");
-    if (d?.url) { setLink(d.url); navigator.clipboard?.writeText(d.url).catch(() => {}); }
-  }
-
-  return (
-    <div data-testid="pilot-panel" className="bg-white border-[1.5px] border-[var(--lavender)] p-3.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-[13px] font-bold">סשן פיילוט</div>
-        <button
-          onClick={makeLink}
-          disabled={busy === "link"}
-          data-testid="pilot-link"
-          className="border border-[var(--line)] px-2.5 py-1 text-[12px] disabled:opacity-50"
-        >
-          {busy === "link" ? "רגע…" : "קישור פיילוט חדש"}
-        </button>
-      </div>
-      {link && (
-        <div className="mt-2 border border-[var(--lavender)] p-2.5">
-          <div className="text-[12px] font-medium">הועתק. שהילדה תפתח אותו לפני שהיא מתחילה.</div>
-          <div className="text-[11px] text-[var(--muted)] mt-1 break-all" dir="ltr">{link}</div>
-          <div className="text-[11.5px] text-[var(--muted)] mt-1">
-            חד-פעמי · תקף שבוע · נצמד לחשבון הראשון שמאמת טלפון דרכו
-          </div>
-        </div>
-      )}
-      <div className="flex flex-col gap-2 mt-2">
-        {(pilots ?? []).map((p) => (
-          <div key={p.userId} className="border border-[var(--line)] p-2.5 text-[12.5px]">
-            <div className="flex items-center justify-between gap-2">
-              <b>{p.nickname}</b>
-              <span className={p.parentApprovedAt ? "text-[var(--ok-ink)]" : "text-[var(--warn-ink)]"}>
-                {p.parentApprovedAt ? "✓ הורה אישר" : "⏳ ממתין לאישור הורה"}
-              </span>
-            </div>
-            <div className="text-[var(--muted)] mt-1 leading-relaxed">
-              {p.onboardingCompleted ? "✓ סיימה אונבורדינג" : "○ באמצע אונבורדינג"}
-              {" · "}{p.items} סקווישים
-              {p.failedWrites > 0 && (
-                <b className="text-[var(--danger)]"> · {p.failedWrites} שמירות נכשלו</b>
-              )}
-              {p.lastSavedAt && ` · שמירה אחרונה ${new Date(p.lastSavedAt).toLocaleTimeString("he-IL")}`}
-            </div>
-            <div className="text-[var(--faint)] text-[11.5px] mt-0.5">
-              {p.childDeclaredAt ? "הילדה סימנה שההורה יודע" : "הילדה לא סימנה"}
-              {p.parentRequestSentAt && " · בקשה נשלחה להורה"}
-              {p.parentDecision === false && " · ההורה סירב"}
-            </div>
-            <button
-              onClick={() => reset(p.userId, p.nickname)}
-              disabled={busy === p.userId}
-              className="mt-1.5 border border-[var(--line)] px-2.5 py-1 text-[12px] disabled:opacity-50"
-            >
-              {busy === p.userId ? "מוחקים…" : "לאפס את הפיילוט"}
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-interface PilotRow {
-  userId: string;
-  nickname: string;
-  onboardingCompleted: boolean;
-  items: number;
-  failedWrites: number;
-  lastSavedAt: string | null;
-  parentApprovedAt: string | null;
-  parentRequestSentAt: string | null;
-  parentDecision: boolean | null;
-  childDeclaredAt: string | null;
-}
-
-/**
  * אזהרה כשהדאטהבייס מפגר אחרי הקוד.
  *
  * זה המסך היחיד שבו זה נראה לפני שילדה נתקלת בזה. הבדיקה נעשית מול
@@ -466,15 +351,19 @@ function SchemaWarning() {
     <main className="min-h-screen bg-[var(--canvas)]">
       <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4 pb-16">
         <SchemaWarning />
-        <PilotPanel />
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between gap-2">
           <h1 className="text-lg font-bold">דוכן · חמ"ל 👑</h1>
-          {totals && (
-            <span className="text-xs text-[var(--muted)]">
-              {totals.activeStores}/{totals.stores} חנויות פעילות
-            </span>
-          )}
+          {/* סקוויש קלאב הוא חמ"ל נפרד. בלי הקישור הזה הוא היה מסך
+              שצריך לדעת את הכתובת שלו כדי להגיע אליו. */}
+          <a href="/admin/squish" className="text-[12.5px] border border-[var(--line)] bg-white px-2.5 py-1.5 shrink-0">
+            סקוויש קלאב →
+          </a>
         </header>
+        {totals && (
+          <div className="text-xs text-[var(--muted)] -mt-2">
+            {totals.activeStores}/{totals.stores} חנויות פעילות
+          </div>
+        )}
 
         <div className="flex bg-[var(--sub)] p-0.5 sticky top-2 z-20 ">
           {([

@@ -38,10 +38,20 @@ export async function GET() {
       db.from("squish_items").select("created_at")
         .eq("owner_user_id", p.user_id).order("created_at", { ascending: false })
         .limit(1).maybeSingle(),
-      db.from("squish_parent_approvals").select("sent_at, decided_at, approved")
+      db.from("squish_parent_approvals").select("token, sent_at, decided_at, approved")
         .eq("user_id", p.user_id).order("created_at", { ascending: false })
         .limit(1).maybeSingle(),
     ]);
+
+    /* מצב אחד, מחושב בשרת — כדי ששני מסכים לא יגזרו אותו אחרת.
+       הסדר הוא סדר הדחיפות: שגיאת שמירה קודמת לכל השאר, כי ילדה
+       יושבת עכשיו מול מסך שלא שמר. */
+    const status =
+      (failures ?? 0) > 0 ? "write_error"
+      : p.parent_approved_at ? "approved"
+      : (items ?? 0) === 0 ? "onboarding"
+      : approval.data?.sent_at ? "awaiting_parent"
+      : "building";
 
     rows.push({
       userId: p.user_id,
@@ -53,8 +63,13 @@ export async function GET() {
       items: items ?? 0,
       failedWrites: failures ?? 0,
       lastSavedAt: lastItem.data?.created_at ?? null,
+      status,
       parentApprovedAt: p.parent_approved_at,
       parentRequestSentAt: approval.data?.sent_at ?? null,
+      /* קישור ההחלטה של ההורה. מוצג למנהלת כדי שתוכל למסור אותו ביד
+         כשהסמס לא הגיע — לא כדי לאשר במקומו. */
+      parentLink: approval.data?.token && !approval.data?.decided_at
+        ? `${SITE_URL}/squish/parent/${approval.data.token}` : null,
       parentDecision: approval.data?.decided_at ? approval.data.approved : null,
       // ההצהרה של הילדה עצמה, בנפרד מאישור ההורה — שניהם מוצגים כדי
       // שלא יתבלבלו זה בזה
