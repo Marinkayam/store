@@ -327,6 +327,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 function PilotPanel() {
   const [pilots, setPilots] = useState<PilotRow[] | null>(null);
   const [busy, setBusy] = useState("");
+  const [link, setLink] = useState("");
 
   const load = useCallback(() => {
     fetch("/api/admin/squish-pilot").then((r) => r.json())
@@ -349,12 +350,41 @@ function PilotPanel() {
     load();
   }
 
-  if (!pilots?.length) return null;
+  async function makeLink() {
+    setBusy("link");
+    const r = await fetch("/api/admin/squish-pilot", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "link" }),
+    });
+    const d = await r.json().catch(() => null);
+    setBusy("");
+    if (d?.url) { setLink(d.url); navigator.clipboard?.writeText(d.url).catch(() => {}); }
+  }
+
   return (
     <div data-testid="pilot-panel" className="bg-white border-[1.5px] border-[var(--lavender)] p-3.5">
-      <div className="text-[13px] font-bold">סשן פיילוט</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[13px] font-bold">סשן פיילוט</div>
+        <button
+          onClick={makeLink}
+          disabled={busy === "link"}
+          data-testid="pilot-link"
+          className="border border-[var(--line)] px-2.5 py-1 text-[12px] disabled:opacity-50"
+        >
+          {busy === "link" ? "רגע…" : "קישור פיילוט חדש"}
+        </button>
+      </div>
+      {link && (
+        <div className="mt-2 border border-[var(--lavender)] p-2.5">
+          <div className="text-[12px] font-medium">הועתק. שהילדה תפתח אותו לפני שהיא מתחילה.</div>
+          <div className="text-[11px] text-[var(--muted)] mt-1 break-all" dir="ltr">{link}</div>
+          <div className="text-[11.5px] text-[var(--muted)] mt-1">
+            חד-פעמי · תקף שבוע · נצמד לחשבון הראשון שמאמת טלפון דרכו
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-2 mt-2">
-        {pilots.map((p) => (
+        {(pilots ?? []).map((p) => (
           <div key={p.userId} className="border border-[var(--line)] p-2.5 text-[12.5px]">
             <div className="flex items-center justify-between gap-2">
               <b>{p.nickname}</b>

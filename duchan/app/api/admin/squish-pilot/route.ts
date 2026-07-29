@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin-auth";
+import { SITE_URL } from "@/lib/site";
+import { randomBytes } from "node:crypto";
+
+/** 32 תווים אקראיים. לא ניתן לניחוש, ולא נגזר משום דבר שאפשר לדעת. */
+const randomToken = () => randomBytes(24).toString("base64url");
 
 /**
  * חשבונות פיילוט — מה שהמנהלת צריכה לראות בזמן סשן מלווה.
@@ -65,15 +70,28 @@ export async function POST(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "אין הרשאה" }, { status: 403 });
 
-  let body: { action?: string; userId?: string };
+  let body: { action?: string; userId?: string; label?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
-  if (!body.userId) return NextResponse.json({ error: "חסר משתמש" }, { status: 400 });
+  if (body.action !== "link" && !body.userId) {
+    return NextResponse.json({ error: "חסר משתמש" }, { status: 400 });
+  }
 
   const db = supabaseAdmin();
+
+  if (body.action === "link") {
+    /* קישור חד-פעמי. הילדה פותחת אותו לפני האונבורדינג, והטוקן נצמד
+       לחשבון שלה באימות הטלפון — לפני שיש פרופיל, ולכן לפני שיש חלון. */
+    const token = randomToken();
+    const { error } = await db.from("squish_pilot_tokens").insert({
+      token, label: body.label?.slice(0, 40) ?? null, created_by: admin.email,
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true, url: `${SITE_URL}/squish/pilot/${token}` });
+  }
 
   if (body.action === "start") {
     const { error } = await db.rpc("squish_pilot_start", {

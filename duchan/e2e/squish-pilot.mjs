@@ -15,6 +15,7 @@
  */
 import {
   BASE, IMG, asUser, checker, closeHelper, db, launch, newCollector, stranger, uidOf, wipe,
+  verifyPhone,
 } from "./helpers/index.mjs";
 
 const U = {
@@ -27,17 +28,95 @@ const pool = db();
 await wipe(pool, Object.values(U).map((u) => u.e164));
 await pool.query("delete from squish_parent_approvals where parent_phone = $1", ["972521130899"]);
 
+/** בונה אוסף בדף שכבר קיים — כדי לשמור על ההקשר שנושא את העוגייה. */
+async function buildCollection(page, user, names) {
+  await page.click("a[href='/squish/new']");
+  await page.waitForURL("**/squish/new");
+  for (const [i, it] of names.entries()) {
+    await page.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
+    await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
+    await page.waitForTimeout(600);
+    await page.fill("input[aria-label='שם הסקווישי']", it.name);
+    await page.click("button:has-text('הלאה')");
+    await page.waitForTimeout(250);
+    if (it.sticker) await page.click(`button[aria-label='${it.sticker}']`);
+    if (it.keep) await page.click("button[aria-label='פתוח לטרייד']");
+    await page.click("button:has-text('להוסיף לאוסף')");
+    await page.waitForTimeout(400);
+  }
+  await page.fill("input[aria-label='שם האוסף']", user.title);
+  await page.click("button:has-text('לשמור את האוסף')");
+  await page.fill("input[aria-label='כינוי']", user.nick);
+  await page.check("input[aria-label='ההורים שלי יודעים']");
+  await page.waitForTimeout(300);
+  await verifyPhone(page, user.num);
+  await page.waitForURL("**/squish/collection", { timeout: 40000 });
+  await page.waitForTimeout(900);
+}
+
 const { check, done } = checker("בדיקות פיילוט");
 const errs = [];
 const b = await launch();
 
-/* ── 1. הסשן הראשון: כל מה שהיא אמורה להצליח לעשות ── */
-const kid = await newCollector(b, U.kid, [
+/* ── 0. הבוטסטראפ: הסימון קיים לפני שיש מה לסמן ──
+   זה החלון שהיה פתוח: הילדה סיימה אונבורדינג, ורק אחר כך מישהי סימנה
+   אותה. בין לבין היא כבר מאומתת, ו-squish_own_invites מרשה להכניס
+   קישור הזמנה גם בלי פרופיל. */
+const { rows: [tokRow] } = await pool.query(
+  "insert into squish_pilot_tokens (token, label, created_by) values ($1,'בדיקה','tester') returning token",
+  ["pilot-token-" + Date.now().toString(36) + "-abcdefghij"]);
+const PILOT_TOKEN = tokRow.token;
+
+const kidCtx = await b.newContext({ viewport: { width: 390, height: 900 }, reducedMotion: "reduce" });
+const kid = await kidCtx.newPage();
+kid.on("pageerror", (e) => errs.push(`${U.kid.nick}: ${e.message}`));
+
+await kid.goto(`${BASE}/squish/pilot/${PILOT_TOKEN}`, { waitUntil: "networkidle" });
+check("הקישור מעביר לסקוויש בלי להשאיר את הטוקן בכתובת",
+  kid.url().endsWith("/squish") && !kid.url().includes(PILOT_TOKEN), kid.url());
+const cookies = await kidCtx.cookies();
+const pilotCookie = cookies.find((c) => c.name === "squish_pilot");
+check("הטוקן עבר לעוגייה httpOnly", !!pilotCookie && pilotCookie.httpOnly === true);
+check("והוא לא נגיש לג׳אווהסקריפט בדף",
+  (await kid.evaluate(() => document.cookie)).includes("squish_pilot") === false);
+const { rows: [opened] } = await pool.query(
+  "select opened_at, claimed_by_user_id from squish_pilot_tokens where token=$1", [PILOT_TOKEN]);
+check("הפתיחה נרשמה", !!opened.opened_at);
+check("ועוד לא נצמד לאף חשבון", opened.claimed_by_user_id === null);
+
+/* בונים את האוסף דרך אותו הקשר — כלומר עם העוגייה */
+await buildCollection(kid, U.kid, [
   { name: "חד-קרן ורוד", sticker: "נדיר בעיניי" },
   { name: "ענן קטן" },
   { name: "לימון", keep: true },
-], errs);
+]);
 const kidId = await uidOf(pool, U.kid.e164);
+
+const { rows: [claimed] } = await pool.query(
+  "select claimed_by_user_id, claimed_at from squish_pilot_tokens where token=$1", [PILOT_TOKEN]);
+check("הטוקן נצמד לחשבון שלה", claimed.claimed_by_user_id === kidId);
+check("עם חותמת הצמדה", !!claimed.claimed_at);
+const { rows: [born] } = await pool.query(
+  "select pilot_user, pilot_started_at, parent_approved_at from squish_profiles where user_id=$1", [kidId]);
+check("הפרופיל **נולד** מסומן כפיילוט — לא סומן אחר כך", born.pilot_user === true);
+check("עם חותמת התחלה מהרגע הראשון", !!born.pilot_started_at);
+check("ובלי אישור הורה", born.parent_approved_at === null);
+check("כלומר השער סגור מהבקשה המאומתת הראשונה",
+  (await pool.query("select squish_pilot_gate($1) g", [kidId])).rows[0].g === "awaiting_parent");
+
+/* אין רגע שבו היה פרופיל לא מסומן: מספר הפריטים שנוצרו לפני הסימון
+   חייב להיות אפס, כי הסימון קדם לפרופיל עצמו. */
+const { rows: [order] } = await pool.query(
+  "select (select pilot_started_at from squish_profiles where user_id=$1) p," +
+  " (select min(created_at) from squish_items where owner_user_id=$1) i", [kidId]);
+check("הסימון קדם לסקווישי הראשון שנשמר",
+  order.p !== null && order.i !== null && new Date(order.p) <= new Date(order.i),
+  `${order.p} ≤ ${order.i}`);
+
+/* טוקן חד-פעמי: לא נצמד לחשבון שני */
+const { rows: [reclaim] } = await pool.query(
+  "select squish_claim_pilot_token($1,'00000000-0000-0000-0000-000000000001') ok", [PILOT_TOKEN]);
+check("טוקן שכבר נתפס לא נצמד לחשבון אחר", reclaim.ok === false);
 const friend = await newCollector(b, U.friend, ["ח1", "ח2", "ח3"], errs);
 const friendId = await uidOf(pool, U.friend.e164);
 
@@ -50,14 +129,14 @@ check("מדבקה שהיא בחרה נשמרה", (items[0].stickers ?? []).inclu
 check("ופריט שסימנה כשלה אינו פתוח לטרייד",
   items.find((i) => i.name === "לימון")?.trade_status === "keep");
 
-/* ── 2. מסמנים אותה כפיילוט ── */
-await pool.query("select squish_pilot_start($1,'tester')", [kidId]);
+/* ── 2. חברה רגילה, בלי טוקן — כדי להוכיח שהשער לא נוגע בה ── */
 const { rows: [prof] } = await pool.query(
-  "select pilot_user, pilot_started_at, parent_approved_at, collection_code from squish_profiles where user_id=$1", [kidId]);
-check("החשבון מסומן כפיילוט", prof.pilot_user === true);
-check("עם חותמת התחלה", !!prof.pilot_started_at);
-check("ובלי אישור הורה עדיין", prof.parent_approved_at === null);
-check("השער סגור", (await pool.query("select squish_pilot_gate($1) g", [kidId])).rows[0].g === "awaiting_parent");
+  "select collection_code from squish_profiles where user_id=$1", [kidId]);
+const { rows: [friendGate] } = await pool.query("select squish_pilot_gate($1) g", [friendId]);
+check("חשבון רגיל לא מושפע מהשער", friendGate.g === "ok");
+const { rows: [friendProf] } = await pool.query(
+  "select pilot_user from squish_profiles where user_id=$1", [friendId]);
+check("והוא לא מסומן כפיילוט", friendProf.pilot_user === false);
 
 /* ── 3. היא עדיין רואה את האוסף שלה במלואו ── */
 await kid.goto(`${BASE}/squish/collection`, { waitUntil: "networkidle" });

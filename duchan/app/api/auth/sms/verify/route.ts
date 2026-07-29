@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/phone";
 import { codeMatches, randomPassword, OTP_MAX_ATTEMPTS } from "@/lib/otp";
+import { PILOT_COOKIE } from "@/lib/squish-pilot";
 
 // POST /api/auth/sms/verify { phone, code } — מאמת את הקוד ופותח סשן.
 //
@@ -104,6 +105,12 @@ export async function POST(req: NextRequest) {
   const email = existing.user?.email;
   if (!email) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
 
+  /* טוקן פיילוט, אם הילדה פתחה את הקישור לפני האונבורדינג.
+     נצמד כאן ולא ביצירת הפרופיל: בין האימות ליצירת הפרופיל היא כבר
+     מאומתת, ו-squish_own_invites מרשה להכניס קישור הזמנה גם בלי
+     פרופיל. זה היה החלון. */
+  const pilotToken = req.cookies.get(PILOT_COOKIE)?.value;
+
   const supa = await supabaseServer();
 
   /**
@@ -154,5 +161,19 @@ export async function POST(req: NextRequest) {
     .limit(1)
     .maybeSingle();
 
-  return NextResponse.json({ ok: true, isNew, hasStore: !!store, phone });
+  /* מרגע הזה השער סגור, גם לפני שקיים פרופיל סקוויש. הצמדה חד-פעמית:
+     טוקן שכבר שייך לחשבון אחר לא ייצמד לשני. */
+  if (pilotToken) {
+    const { data: claimed } = await db.rpc("squish_claim_pilot_token", {
+      p_token: pilotToken, p_user: userId,
+    });
+    if (claimed !== true) {
+      console.error(JSON.stringify({ op: "squish.pilot.claim", result: "rejected" }));
+    }
+  }
+
+  const res = NextResponse.json({ ok: true, isNew, hasStore: !!store, phone });
+  // העוגייה סיימה את תפקידה — מכאן ההוכחה יושבת בדאטהבייס
+  if (pilotToken) res.cookies.set(PILOT_COOKIE, "", { path: "/", maxAge: 0 });
+  return res;
 }

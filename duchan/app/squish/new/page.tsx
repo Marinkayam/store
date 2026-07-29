@@ -16,7 +16,6 @@ import {
   SQUISH_CONDITIONS,
   SQUISH_SIZES,
   SQUISH_TYPES,
-  squishCode,
   type SquishCondition,
   type SquishSize,
   type SquishyType,
@@ -208,29 +207,25 @@ export default function NewCollection() {
       return;
     }
 
-    /* ── הפרופיל ── */
+    /* ── הפרופיל ──
+       נוצר בשרת, כדי שסימון הפיילוט ייכתב באותה טרנזקציה. קודם הוא
+       נוצר כאן מהדפדפן והסימון הגיע אחר כך — ובין לבין היה פרופיל
+       חי בלי שער. */
     let profileId = profileRef.current;
-    for (let i = 0; i < 5 && !profileId; i++) {
-      const { data, error } = await supa
-        .from("squish_profiles")
-        .insert({
-          user_id: auth.user.id,
-          nickname: draft.nickname.trim().slice(0, 24) || "אספנית",
-          general_city: draft.city.trim() || null,
-          collection_title: draft.collectionTitle.trim().slice(0, 40) || null,
-          collection_code: squishCode(),
-          parent_awareness_at: draft.parentAware ? new Date().toISOString() : null,
-          parent_awareness_version: draft.parentAware ? PARENT_AWARENESS_VERSION : null,
-        })
-        .select("id")
-        .single();
-      if (!error && data) profileId = data.id;
-      else if (error && !/duplicate|unique/i.test(error.message)) {
-        // כבר יש פרופיל לחשבון הזה? ממשיכים איתו במקום להיכשל
-        const { data: mine } = await supa.from("squish_profiles").select("id").maybeSingle();
-        if (mine) profileId = mine.id;
-        else break;
-      }
+    if (!profileId) {
+      const res = await fetch("/api/squish/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nickname: draft.nickname,
+          city: draft.city,
+          title: draft.collectionTitle,
+          parentAware: draft.parentAware,
+          awarenessVersion: PARENT_AWARENESS_VERSION,
+        }),
+      }).catch(() => null);
+      const b = res ? await res.json().catch(() => null) : null;
+      profileId = b?.id ?? null;
     }
     if (!profileId) {
       setErr("לא הצלחנו לפתוח את האוסף, לנסות שוב");
