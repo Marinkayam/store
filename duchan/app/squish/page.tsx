@@ -154,7 +154,7 @@ export default function SquishLanding() {
  * במקומו. מסך פתיחה עם אייקון תמונה שבורה גרוע ממסך פתיחה בלי לוגו.
  */
 function Logo() {
-  const ok = useAssetExists("/squish-logo.png");
+  const ok = useAssetExists("/squish-logo.webp");
   if (!ok) {
     return (
       <div className="flex flex-col items-center gap-2" data-testid="squish-logo">
@@ -165,7 +165,7 @@ function Logo() {
   }
   return (
     <img
-      src="/squish-logo.png"
+      src="/squish-logo.webp"
       alt={BRAND}
       data-testid="squish-logo"
       className="w-52 max-w-[62%] h-auto"
@@ -185,10 +185,10 @@ function Logo() {
  * חייבים להישאר נראים באותה נשימה.
  */
 const DEMO: SquishItem[] = [
-  { name: "צפרדע ענקית", squishy_type: "animal", size: "large", condition: "like_new", trade_status: "open_for_trade", stickers: ["rare"] },
-  { name: "אבוקדו", squishy_type: "food", size: "medium", condition: "good", trade_status: "none", stickers: ["new"] },
-  { name: "חד-קרן ורוד", squishy_type: "animal", size: "medium", condition: "like_new", trade_status: "none", stickers: [] },
-  { name: "דונאט", squishy_type: "food", size: "small", condition: "good", trade_status: "open_for_trade", stickers: [] },
+  { name: "באו גלקסי", image_key: "/demo/bao.webp", squishy_type: "food", size: "medium", condition: "like_new", trade_status: "open_for_trade", stickers: ["rare"] },
+  { name: "תות", image_key: "/demo/strawberry.webp", squishy_type: "food", size: "small", condition: "good", trade_status: "none", stickers: ["new"] },
+  { name: "מדוזה", image_key: "/demo/jellyfish.webp", squishy_type: "animal", size: "large", condition: "like_new", trade_status: "none", stickers: [] },
+  { name: "גבינה", image_key: "/demo/cheese.webp", squishy_type: "food", size: "medium", condition: "good", trade_status: "open_for_trade", stickers: [] },
 ].map((d, i) => ({
   id: `demo-${i}`,
   owner_user_id: "demo",
@@ -196,7 +196,6 @@ const DEMO: SquishItem[] = [
   custom_type: null,
   condition_note: null,
   wanted_description: null,
-  image_key: null,
   video_key: null,
   poster_key: null,
   series: null,

@@ -186,7 +186,7 @@ export function SquishPlaceholder({ size }: { size?: number }) {
   );
 }
 
-export const PLACEHOLDER_SRC = "/squish-placeholder.png";
+export const PLACEHOLDER_SRC = "/squish-placeholder.webp";
 
 /** תוצאות בדיקה, פר כתובת. מודול ולא סטייט — שישה כרטיסים במסך אחד לא
     צריכים לשלוח שש בקשות לאותו קובץ. */

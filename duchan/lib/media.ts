@@ -221,6 +221,11 @@ export async function openCamera(): Promise<MediaStream> {
 
 export function mediaUrl(key: string | null | undefined): string | null {
   if (!key) return null;
+  /* מפתח שמתחיל בלוכסן הוא נכס שיושב אצלנו ב-public, לא אובייקט ב-R2.
+     מפתחות R2 נוצרים תמיד כ-`{storeId}/products/…` ולעולם לא פותחים
+     בלוכסן, אז אין כאן דו-משמעות — וזה מה שמאפשר להזין לכרטיס האמיתי
+     תמונת הדגמה מקומית בלי לפצל אותו לשני מסלולי רינדור. */
+  if (key.startsWith("/")) return key;
   const base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? "";
   return `${base.replace(/\/$/, "")}/${key}`;
 }
