@@ -2401,6 +2401,44 @@ exception when undefined_object then null; end $$;
 
 insert into schema_migrations (name) values ('0030_squish_safety.sql') on conflict do nothing;
 
+-- ───────────────────────────────────────────────────────────────
+-- 0031_squish_stickers.sql
+-- ───────────────────────────────────────────────────────────────
+
+-- 0031 — מדבקות על סקווישי.
+--
+-- מה שהופך פריט מרשומה באוסף לחפץ אספני הוא לא עוד שדה טקסט, אלא סימן
+-- קטן שהילדה שמה עליו בעצמה.
+--
+-- **ההפרדה החשובה כאן היא בין מדבקה אישית למדבקת פעולה:**
+--
+--   אישית  — "נדיר בעיניי", "חדש באוסף". דעה של הילדה, ולכן היא נשמרת
+--            כאן, בעמודה הזו.
+--   פעולה  — "פתוח לטרייד" נגזר מ-trade_status, ו"אהוב עליי" נגזר
+--            מ-squish_profiles.favorite_item_id. שניהם *מצב* ולא תווית,
+--            ולכן הם לא נכנסים לעמודה — אחרת היה אפשר לסמן "פתוח
+--            לטרייד" על פריט שנעול בטרייד, והמדבקה הייתה משקרת.
+--
+-- **"נדיר בעיניי" ולא "נדיר".** אין קטלוג שיודע כמה קיימים בעולם, ולכן
+-- כל טענת נדירות מוחלטת היא מידע מומצא. הניסוח שומר על תחושת האספנות
+-- בלי להמציא עובדה.
+
+alter table squish_items
+  add column if not exists stickers text[] not null default '{}';
+
+comment on column squish_items.stickers is
+  'מדבקות אישיות שהילדה בחרה. rare/new בלבד — טרייד ואהוב נגזרים ממצב.';
+
+/* רשימה סגורה, נאכפת בדאטהבייס ולא רק בממשק: מדבקה שהגיעה מקוד ישן או
+   מהקונסולה לא תיכנס, וכך אין ערכים שהמסך לא יודע לצייר. */
+do $$ begin
+  alter table squish_items
+    add constraint squish_items_stickers_known
+    check (stickers <@ array['rare','new']::text[]);
+exception when duplicate_object then null; end $$;
+
+insert into schema_migrations (name) values ('0031_squish_stickers.sql') on conflict do nothing;
+
 commit;
 
 -- אחרי ההרצה: לרענן את הקאש של ה-API

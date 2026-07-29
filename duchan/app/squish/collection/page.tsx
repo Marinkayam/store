@@ -26,6 +26,7 @@ import {
 import WishEditor from "../wish-editor";
 import { EmptyCollection, SquishyCard, SwapGlyph } from "../components";
 import Feedback from "../feedback";
+import { StickerIntro } from "../stickers";
 import { track } from "@/lib/squish-analytics";
 
 /**
@@ -354,6 +355,7 @@ export default function MyCollection() {
                   <SquishyCard
                     key={it.id}
                     item={it}
+                    isFavorite={it.id === profile.favorite_item_id}
                     onClick={() => router.push(`/squish/item/${it.id}`)}
                   />
                 ))}
@@ -423,6 +425,7 @@ export default function MyCollection() {
 
         {/* שאלה אחת אחרי שהאוסף כבר קיים באמת. מוצגת פעם אחת בלבד,
             ורק כשדגל הפיילוט דלוק. */}
+        <StickerIntro items={items.length} />
         {activated && <Feedback moment="collection_activated" />}
       </div>
 

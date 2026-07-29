@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/squish-analytics";
+import { StickerPicker } from "../stickers";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
@@ -43,6 +44,10 @@ interface DraftItem {
   wanted_description: string;
   series: string;
   open_for_trade: boolean;
+  /** מדבקות אישיות — rare / new */
+  stickers: string[];
+  /** האהוב על האוסף. אחד בלבד, ולכן נאכף על כל הרשימה בבחירה. */
+  loved: boolean;
   imageData: string | null;
   /** מפתח לסרטון שיושב ב-draftVideos */
   videoId: string | null;
@@ -78,6 +83,8 @@ const blank = (): DraftItem => ({
   wanted_description: "",
   series: "",
   open_for_trade: true,
+  stickers: [],
+  loved: false,
   imageData: null,
   videoId: null,
 });
@@ -150,9 +157,15 @@ export default function NewCollection() {
       setPhotoErr("צריך סרטון או תמונה");
       return;
     }
-    const items = [...draft.items];
+    let items = [...draft.items];
     if (editIndex === null) items.push(editing);
     else items[editIndex] = editing;
+    /* אהוב עליי הוא אחד לאוסף. סימון על פריט חדש מוריד אותו מהקודם,
+       כדי שלא ייווצרו שניים ואז אחד מהם ייעלם בשקט בשמירה. */
+    if (editing.loved) {
+      const keep = editIndex === null ? items.length - 1 : editIndex;
+      items = items.map((it, i) => (i === keep ? it : { ...it, loved: false }));
+    }
     set({ items, step: items.length >= MIN_ITEMS ? 3 : 2 });
     setEditing(null);
     setEditIndex(null);
@@ -207,6 +220,7 @@ export default function NewCollection() {
     }
 
     // עכשיו יש פרופיל, אז אפשר להעלות מדיה ולכתוב את הפריטים
+    let lovedId: string | null = null;
     for (const [i, it] of draft.items.entries()) {
       try {
         let imageKey: string | null = null;
@@ -243,11 +257,20 @@ export default function NewCollection() {
           video_key: videoKey,
           poster_key: posterKey,
           series: it.series.trim() || null,
+          stickers: it.stickers,
           sort_order: i,
+        }).select("id").maybeSingle().then(({ data }) => {
+          if (it.loved && data?.id) lovedId = data.id;
         });
       } catch (e) {
         console.error("[squish] item failed:", e);
       }
+    }
+
+    /* האהוב נשמר אחרי כל הפריטים, כי רק אז יש לו מזהה. אחד לאוסף —
+       זה בדיוק אותו favorite_item_id שנעוץ בראש הגלריה. */
+    if (lovedId) {
+      await supa.from("squish_profiles").update({ favorite_item_id: lovedId }).eq("id", profileId);
     }
 
     sessionStorage.removeItem(KEY);
@@ -441,24 +464,22 @@ export default function NewCollection() {
           />
         </label>
 
-        <button
-          onClick={() => setEditing({ ...editing, open_for_trade: !editing.open_for_trade })}
-          aria-pressed={editing.open_for_trade}
-          aria-label="פתוח לטרייד"
-          className={`flex items-center gap-2.5 border-[1.5px] px-3 py-3 text-start ${
-            editing.open_for_trade ? "border-[var(--ink)] bg-white" : "border-[var(--line)]"
-          }`}
-        >
-          <span
-            className={`w-4 h-4 flex items-center justify-center text-[10px] ${
-              editing.open_for_trade ? "bg-[var(--ink)] text-white" : "border border-[#D3D5DC]"
-            }`}
-          >
-            {editing.open_for_trade ? "✓" : ""}
-          </span>
-          <span className="t-small flex-1">פתוח לטרייד</span>
-          <span className="text-[12px] text-[var(--muted)]">אפשר לשנות אחר כך</span>
-        </button>
+        {/* המדבקות החליפו כאן תיבת סימון שתפסה שורה שלמה בשביל דבר אחד.
+            עכשיו זה נראה כמו אוסף, והילדה מכירה את הסמלים כבר בהוספה
+            הראשונה — אותם סמלים בדיוק יופיעו אחר כך על הכרטיסים. */}
+        <StickerPicker
+          personal={editing.stickers}
+          openForTrade={editing.open_for_trade}
+          loved={editing.loved}
+          onPersonal={(k, on) =>
+            setEditing({
+              ...editing,
+              stickers: on ? [...editing.stickers, k] : editing.stickers.filter((x) => x !== k),
+            })
+          }
+          onTrade={(on) => setEditing({ ...editing, open_for_trade: on })}
+          onLoved={(on) => setEditing({ ...editing, loved: on })}
+        />
 
         <div className="flex gap-2 mt-1">
           <button

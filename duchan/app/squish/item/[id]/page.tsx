@@ -16,6 +16,7 @@ import {
   type SquishItem,
   type SquishyType,
 } from "@/lib/squish";
+import { StickerPicker } from "../../stickers";
 import { SquishOutline, TradeBadge } from "../../components";
 
 /**
@@ -81,6 +82,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         trade_status: item.trade_status,
         wanted_description: item.wanted_description?.trim() || null,
         series: item.series?.trim() || null,
+        // בלי זה כיבוי מדבקה נראה כאילו נשמר במסך וחוזר בטעינה הבאה
+        stickers: (item.stickers ?? []).filter((k) => k === "rare" || k === "new"),
         updated_at: new Date().toISOString(),
       })
       .eq("id", item.id);
@@ -310,6 +313,21 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           className="field w-full px-3 py-3 mt-1 t-small"
         />
       </label>
+
+      {/* המדבקות יושבות מעל מצב הטרייד, כי זה מה שהילדה באה לשנות. */}
+      <StickerPicker
+        personal={(item.stickers ?? []).filter((k) => k === "rare" || k === "new")}
+        openForTrade={item.trade_status === "open_for_trade"}
+        loved={favoriteId === item.id}
+        onPersonal={(k, on) => {
+          const next = on
+            ? [...(item.stickers ?? []), k]
+            : (item.stickers ?? []).filter((x) => x !== k);
+          patch({ stickers: next });
+        }}
+        onTrade={(on) => setStatus(on ? "open_for_trade" : "keep")}
+        onLoved={() => toggleFavorite()}
+      />
 
       <div>
         <div className="t-small mb-1.5">מצב הטרייד</div>

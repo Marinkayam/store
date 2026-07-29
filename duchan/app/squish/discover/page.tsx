@@ -12,6 +12,7 @@ import {
 } from "@/lib/squish";
 import { track } from "@/lib/squish-analytics";
 import { ReportItem } from "../safety";
+import { StickerCorner, StickerNames } from "../stickers";
 import Feedback from "../feedback";
 import { ConnectionContext, EmptyCollection, SquishOutline, SwapGlyph } from "../components";
 
@@ -149,13 +150,10 @@ export default function Discover() {
           ) : (
             <SquishOutline size={80} />
           )}
-          <span
-            className="absolute top-2 start-2 w-7 h-7 bg-[var(--lavender)] text-white flex items-center justify-center"
-            style={{ borderRadius: "999px" }}
-            aria-label="פתוח לטרייד"
-          >
-            <SwapGlyph size={15} />
-          </span>
+          {/* אותן מדבקות בדיוק כמו בגלריה שלה — כך "נדיר בעיניי" נוסע
+              איתה לכרטיס שחברה רואה, וזה מה שהופך אותו למעניין. */}
+          <StickerCorner item={current.item as SquishItem} size={26} />
+          <StickerNames item={current.item as SquishItem} />
         </div>
 
         <div className="p-3.5">

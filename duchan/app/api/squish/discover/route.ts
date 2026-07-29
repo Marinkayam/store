@@ -76,7 +76,7 @@ export async function GET() {
   const { data: items } = await db
     .from("squish_items")
     .select(
-      "id, profile_id, name, squishy_type, custom_type, size, condition, condition_note, wanted_description, image_key, video_key, poster_key, created_at"
+      "id, profile_id, name, squishy_type, custom_type, size, condition, condition_note, wanted_description, image_key, video_key, poster_key, stickers, created_at"
     )
     .in("profile_id", (profiles ?? []).map((p) => p.id))
     .eq("trade_status", "open_for_trade")

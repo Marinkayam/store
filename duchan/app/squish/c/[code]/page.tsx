@@ -5,6 +5,7 @@ import { mediaUrl } from "@/lib/media";
 import { BRAND, typeLabel, sizeLabel, conditionLabel, type SquishItem, type Wish } from "@/lib/squish";
 import { WishlistRow } from "../../collection-parts";
 import { FriendSafety } from "../../safety";
+import { StickerCorner, StickerNames } from "../../stickers";
 import { SquishOutline, TradeBadge, SwapGlyph } from "../../components";
 
 /**
@@ -129,7 +130,7 @@ export default async function SharedCollection({
   const { data: items } = await db
     .from("squish_items")
     .select(
-      "id, name, squishy_type, custom_type, size, condition, condition_note, trade_status, wanted_description, image_key, video_key, poster_key"
+      "id, name, squishy_type, custom_type, size, condition, condition_note, trade_status, wanted_description, image_key, video_key, poster_key, stickers"
     )
     .eq("profile_id", profile.id)
     .is("deleted_at", null)
@@ -197,9 +198,8 @@ export default async function SharedCollection({
                 ) : (
                   <SquishOutline />
                 )}
-                <span className="absolute top-1.5 start-1.5">
-                  <TradeBadge status={it.trade_status!} />
-                </span>
+                <StickerCorner item={it as SquishItem} />
+                <StickerNames item={it as SquishItem} />
               </div>
               <div className="p-2 flex-1 flex flex-col">
                 <div className="text-[13px] font-medium truncate">{it.name}</div>
@@ -264,12 +264,9 @@ function FriendFavorite({ item }: { item: Partial<SquishItem> }) {
           ) : (
             <SquishOutline size={72} />
           )}
-          <span className="absolute top-2 start-2 flex items-center gap-1.5">
-            <span className="w-7 h-7 bg-white text-[15px] flex items-center justify-center" style={{ borderRadius: "999px" }} aria-hidden>
-              ⭐
-            </span>
-            <TradeBadge status={item.trade_status!} />
-          </span>
+          {/* האהוב מקבל את מדבקת הלב, ולא כוכב נפרד — אותה שפה בכל מקום */}
+          <StickerCorner item={item as SquishItem} isFavorite size={26} />
+          <StickerNames item={item as SquishItem} isFavorite />
         </div>
         <div className="pt-2 px-0.5">
           <div className="t-heading">{item.name}</div>

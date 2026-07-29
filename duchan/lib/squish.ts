@@ -159,6 +159,8 @@ export interface SquishItem {
   condition: SquishCondition;
   condition_note: string | null;
   trade_status: SquishTradeStatus;
+  /** מדבקות אישיות: rare / new. טרייד ואהוב נגזרים ממצב ולא נשמרים כאן. */
+  stickers: string[] | null;
   wanted_description: string | null;
   image_key: string | null;
   video_key: string | null;

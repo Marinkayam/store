@@ -15,6 +15,7 @@ import {
   typeLabel,
   type SquishItem,
 } from "@/lib/squish";
+import { StickerCorner, StickerNames } from "./stickers";
 
 /** תגית "פתוח לטרייד" — אייקון וקטורי משלנו, לא אימוג'י. */
 export function TradeBadge({ status }: { status: SquishItem["trade_status"] }) {
@@ -83,10 +84,12 @@ export function SquishyCard({
   item,
   onClick,
   showBadge = true,
+  isFavorite = false,
 }: {
   item: SquishItem;
   onClick?: () => void;
   showBadge?: boolean;
+  isFavorite?: boolean;
 }) {
   const poster = mediaUrl(item.poster_key) ?? mediaUrl(item.image_key);
   const video = mediaUrl(item.video_key);
@@ -112,10 +115,13 @@ export function SquishyCard({
         ) : (
           <SquishOutline />
         )}
+        {/* מדבקות במקום שבב טקסט: סימנים קטנים בפינה, עד שלושה, ובסדר
+            קבוע — טרייד ראשון כי הוא היחיד שמזמין פעולה מחברה. */}
         {showBadge && (
-          <span className="absolute top-1.5 start-1.5">
-            <TradeBadge status={item.trade_status} />
-          </span>
+          <>
+            <StickerCorner item={item} isFavorite={isFavorite} />
+            <StickerNames item={item} isFavorite={isFavorite} />
+          </>
         )}
         {video && (
           <span
