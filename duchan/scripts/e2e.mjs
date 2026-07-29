@@ -31,6 +31,7 @@ const SQUISH = [
   "squish-discover.mjs",
   "squish-trades.mjs",
   "squish-safety.mjs",
+  "squish-permissions.mjs",
   "invite-safety.mjs",
   "stickers.mjs",
 ];
