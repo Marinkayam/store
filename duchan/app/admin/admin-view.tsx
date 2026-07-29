@@ -317,9 +317,40 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
       `היי! כאן מרינה מדוכן 👋\nראיתי את "${s.display_name}" ורציתי לומר שלום 💜`
     )}`;
 
+/**
+ * אזהרה כשהדאטהבייס מפגר אחרי הקוד.
+ *
+ * זה המסך היחיד שבו זה נראה לפני שילדה נתקלת בזה. הבדיקה נעשית מול
+ * הסכמה עצמה ולא מול `schema_migrations`, כי הטבלה ההיא יודעת רק מה
+ * הרצנו — לא מה קיים.
+ */
+function SchemaWarning() {
+  const [state, setState] = useState<{ ok: boolean; missingColumns?: string[]; missingFunctions?: string[] } | null>(null);
+  useEffect(() => {
+    fetch("/api/squish/preflight").then((r) => r.json()).then(setState).catch(() => {});
+  }, []);
+  if (!state || state.ok) return null;
+  const missing = [...(state.missingColumns ?? []), ...(state.missingFunctions ?? [])];
+  return (
+    <div
+      data-testid="schema-warning"
+      className="bg-[var(--danger)] text-white p-3.5 text-[13px] leading-relaxed"
+    >
+      <div className="font-bold">הדאטהבייס מפגר אחרי הקוד</div>
+      <p className="opacity-90 mt-1">
+        סקוויש קלאב עלול להיכשל בשקט עד שמריצים את המיגרציות החסרות.
+      </p>
+      {!!missing.length && (
+        <p className="opacity-80 mt-1.5 text-[12px]" dir="ltr">{missing.slice(0, 8).join(" · ")}</p>
+      )}
+    </div>
+  );
+}
+
   return (
     <main className="min-h-screen bg-[var(--canvas)]">
       <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4 pb-16">
+        <SchemaWarning />
         <header className="flex items-center justify-between">
           <h1 className="text-lg font-bold">דוכן · חמ"ל 👑</h1>
           {totals && (

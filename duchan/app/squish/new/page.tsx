@@ -99,6 +99,19 @@ export default function NewCollection() {
   const [editStep, setEditStep] = useState<1 | 2>(1);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  /**
+   * מה כבר נשמר בפועל, לפי מיקום הפריט בטיוטה.
+   *
+   * זה מה שמונע כפילויות בניסיון חוזר: פריט שכבר קיבל מזהה מהשרת לא
+   * נכתב שוב. המפתחות של המדיה נשמרים גם הם, כדי שניסיון חוזר לא
+   * יעלה את אותה תמונה פעמיים.
+   */
+  const savedRef = useRef<Map<number, string>>(new Map());
+  const mediaRef = useRef<Map<number, { image_key: string | null; video_key: string | null; poster_key: string | null }>>(new Map());
+  const profileRef = useRef<string | null>(null);
+  /** כישלון שמירה: איזה פריט, ומה להציג. null = אין כישלון. */
+  const [failure, setFailure] = useState<{ index: number; name: string; reason: string; cid: string } | null>(null);
+  const [droppedNote, setDroppedNote] = useState("");
   const [photoErr, setPhotoErr] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -171,11 +184,22 @@ export default function NewCollection() {
     setEditIndex(null);
   }
 
-  /** יוצר את הפרופיל ואת הפריטים אחרי שיש חשבון. */
+  /**
+   * יוצר את הפרופיל ואת הפריטים אחרי שיש חשבון.
+   *
+   * **הכלל: מסך הצלחה רק אחרי שכל פריט חזר עם מזהה מהשרת.** קודם
+   * ה-insert ישב ב-try/catch שכתב לקונסולה וממשיך, ולכן עמודה חסרה
+   * בפרודקשן הפילה את כל הפריטים בשקט — והילדה ראתה "האוסף נוצר"
+   * ונחתה על גלריה ריקה.
+   *
+   * ניסיון חוזר בטוח: מה שכבר נשמר יושב ב-savedRef ולא נכתב שוב,
+   * והמדיה שכבר הועלתה יושבת ב-mediaRef ולא מועלית שוב.
+   */
   async function create() {
     if (!draft) return;
     setBusy(true);
     setErr("");
+    setFailure(null);
     const supa = supabaseBrowser();
     const { data: auth } = await supa.auth.getUser();
     if (!auth.user) {
@@ -184,8 +208,8 @@ export default function NewCollection() {
       return;
     }
 
-    // קוד אקראי, עם ניסיון חוזר אם במקרה נתפס
-    let profileId: string | null = null;
+    /* ── הפרופיל ── */
+    let profileId = profileRef.current;
     for (let i = 0; i < 5 && !profileId; i++) {
       const { data, error } = await supa
         .from("squish_profiles")
@@ -205,12 +229,7 @@ export default function NewCollection() {
         // כבר יש פרופיל לחשבון הזה? ממשיכים איתו במקום להיכשל
         const { data: mine } = await supa.from("squish_profiles").select("id").maybeSingle();
         if (mine) profileId = mine.id;
-        else {
-          console.error("[squish] profile insert failed:", error.message);
-          setErr("לא הצלחנו לפתוח את האוסף, לנסות שוב");
-          setBusy(false);
-          return;
-        }
+        else break;
       }
     }
     if (!profileId) {
@@ -218,63 +237,103 @@ export default function NewCollection() {
       setBusy(false);
       return;
     }
+    profileRef.current = profileId;
 
-    // עכשיו יש פרופיל, אז אפשר להעלות מדיה ולכתוב את הפריטים
-    let lovedId: string | null = null;
+    /* ── הפריטים, אחד-אחד, ועוצרים על הראשון שנכשל ── */
+    const dropped = new Set<string>();
     for (const [i, it] of draft.items.entries()) {
-      try {
-        let imageKey: string | null = null;
-        let videoKey: string | null = null;
-        let posterKey: string | null = null;
-        // התמונה שנשמרה בטיוטה משמשת כפוסטר כשיש סרטון, ואחרת כתמונה
-        if (it.imageData) {
-          const blob = await (await fetch(it.imageData)).blob();
-          const up = await uploadBlob(it.videoId ? "squish-poster" : "squish", blob);
-          if (!("error" in up)) {
-            if (it.videoId) posterKey = up.key;
-            else imageKey = up.key;
+      if (savedRef.current.has(i)) continue; // כבר נשמר בניסיון קודם
+
+      /* מדיה: מעלים פעם אחת בלבד. ניסיון חוזר משתמש במה שכבר עלה. */
+      let media = mediaRef.current.get(i);
+      if (!media) {
+        let image_key: string | null = null;
+        let video_key: string | null = null;
+        let poster_key: string | null = null;
+        try {
+          if (it.imageData) {
+            const blob = await (await fetch(it.imageData)).blob();
+            const up = await uploadBlob(it.videoId ? "squish-poster" : "squish", blob);
+            if ("error" in up) throw new Error("upload");
+            if (it.videoId) poster_key = up.key;
+            else image_key = up.key;
           }
-        }
-        if (it.videoId) {
-          const vid = draftVideos.get(it.videoId);
-          if (vid) {
-            const up = await uploadBlob("squish-video", vid);
-            if (!("error" in up)) videoKey = up.key;
+          if (it.videoId) {
+            const vid = draftVideos.get(it.videoId);
+            if (vid) {
+              const up = await uploadBlob("squish-video", vid);
+              if (!("error" in up)) video_key = up.key;
+            }
           }
+        } catch {
+          setFailure({ index: i, name: it.name.trim() || `סקווישי ${i + 1}`, reason: "media", cid: "" });
+          setBusy(false);
+          return;
         }
-        await supa.from("squish_items").insert({
-          owner_user_id: auth.user.id,
-          profile_id: profileId,
-          name: it.name.trim().slice(0, 40) || "סקווישי",
-          squishy_type: it.squishy_type,
-          custom_type: it.squishy_type === "other" ? it.custom_type.trim() || null : null,
-          size: it.size,
-          condition: it.condition,
-          condition_note: it.condition === "flawed" ? it.condition_note.trim() || null : null,
-          trade_status: it.open_for_trade ? "open_for_trade" : "keep",
-          wanted_description: it.wanted_description.trim() || null,
-          image_key: imageKey,
-          video_key: videoKey,
-          poster_key: posterKey,
-          series: it.series.trim() || null,
-          stickers: it.stickers,
-          sort_order: i,
-        }).select("id").maybeSingle().then(({ data }) => {
-          if (it.loved && data?.id) lovedId = data.id;
-        });
-      } catch (e) {
-        console.error("[squish] item failed:", e);
+        media = { image_key, video_key, poster_key };
+        mediaRef.current.set(i, media);
       }
+
+      const res = await fetch("/api/squish/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId,
+          item: {
+            name: it.name,
+            squishy_type: it.squishy_type,
+            custom_type: it.custom_type.trim() || null,
+            size: it.size,
+            condition: it.condition,
+            condition_note: it.condition_note.trim() || null,
+            trade_status: it.open_for_trade ? "open_for_trade" : "keep",
+            wanted_description: it.wanted_description.trim() || null,
+            series: it.series.trim() || null,
+            stickers: it.stickers,
+            ...media,
+            sort_order: i,
+          },
+        }),
+      }).catch(() => null);
+
+      const body = res ? await res.json().catch(() => null) : null;
+      /* הצלחה נמדדת במזהה שחזר, לא בהיעדר חריגה ולא בניווט. */
+      if (!res?.ok || !body?.id) {
+        setFailure({
+          index: i,
+          name: it.name.trim() || `סקווישי ${i + 1}`,
+          reason: body?.reason ?? "write_failed",
+          cid: body?.cid ?? "",
+        });
+        setBusy(false);
+        return;
+      }
+      savedRef.current.set(i, body.id);
+      for (const d of body.dropped ?? []) dropped.add(d);
     }
 
-    /* האהוב נשמר אחרי כל הפריטים, כי רק אז יש לו מזהה. אחד לאוסף —
-       זה בדיוק אותו favorite_item_id שנעוץ בראש הגלריה. */
+    /* ── האהוב, אחרי שלכולם יש מזהה ── */
+    const lovedIndex = draft.items.findIndex((it) => it.loved);
+    const lovedId = lovedIndex >= 0 ? savedRef.current.get(lovedIndex) : null;
     if (lovedId) {
       await supa.from("squish_profiles").update({ favorite_item_id: lovedId }).eq("id", profileId);
     }
 
     sessionStorage.removeItem(KEY);
     track("squish_collection_created");
+
+    /* שדה אופציונלי שהדאטהבייס לא הכיר — הפריט נשמר בלעדיו, וזה נאמר
+       לפני המעבר. "נשמר חלקית" בלי לספר הוא בדיוק סוג ההשתקה שהבאג
+       הזה נולד ממנה. */
+    if (dropped.size) {
+      setDroppedNote(
+        dropped.has("stickers")
+          ? "הסקווישים נשמרו, אבל המדבקות שבחרת לא נשמרו איתם."
+          : "הסקווישים נשמרו, אבל חלק מהפרטים לא נשמרו איתם."
+      );
+      setBusy(false);
+      return;
+    }
     router.push("/squish/collection");
   }
 
@@ -566,16 +625,42 @@ export default function NewCollection() {
           </span>
         </label>
 
-        {!draft.parentAware ? (
+        {droppedNote ? (
+          <div
+            data-testid="save-partial"
+            className="bg-white border-[1.5px] border-[var(--warn-line)] p-4 flex flex-col gap-2"
+          >
+            <div className="text-[15px] font-bold">האוסף נשמר, אבל לא הכל</div>
+            <p className="t-small text-[var(--muted)] leading-relaxed">{droppedNote}</p>
+            <p className="t-small">אפשר להוסיף אותן שוב מתוך האוסף.</p>
+            <button
+              onClick={() => router.push("/squish/collection")}
+              className="btn btn-primary t-small mt-1"
+            >
+              לאוסף שלי
+            </button>
+          </div>
+        ) : failure ? (
+          <SaveFailed
+            failure={failure}
+            total={draft.items.length}
+            saved={savedRef.current.size}
+            busy={busy}
+            onRetry={create}
+            onBack={() => { setFailure(null); set({ step: 3 }); }}
+          />
+        ) : !draft.parentAware ? (
           <p className="t-small text-[var(--muted)] text-center">
             קודם מסמנים שההורה יודע ↑
           </p>
         ) : (
           <SaveStep busy={busy} err={err} onVerified={create} />
         )}
-        <button onClick={() => set({ step: 3 })} className="btn btn-tertiary t-small">
-          ← חזרה
-        </button>
+        {!failure && !droppedNote && (
+          <button onClick={() => set({ step: 3 })} className="btn btn-tertiary t-small">
+            ← חזרה
+          </button>
+        )}
       </main>
     );
   }
@@ -693,6 +778,55 @@ function SaveStep({
         onVerified={onVerified}
       />
       {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
+    </div>
+  );
+}
+
+/**
+ * מסך כישלון שמירה.
+ *
+ * שלושה דברים שהוא עושה, ושלושתם היו חסרים: הוא **לא** מציג הצלחה,
+ * הוא אומר איזה סקווישי נתקע, והוא משאיר את כל מה שהיא הקלידה במסך
+ * מאחוריו — הטיוטה לא נמחקת, והמדיה שכבר עלתה לא תעלה שוב.
+ */
+function SaveFailed({
+  failure, total, saved, busy, onRetry, onBack,
+}: {
+  failure: { index: number; name: string; reason: string; cid: string };
+  total: number;
+  saved: number;
+  busy: boolean;
+  onRetry: () => void | Promise<void>;
+  onBack: () => void;
+}) {
+  if (busy) return <p className="t-small text-center py-8">שומרים את האוסף…</p>;
+  return (
+    <div
+      data-testid="save-failed"
+      className="bg-white border-[1.5px] border-[var(--danger-line)] p-4 flex flex-col gap-2"
+    >
+      <div className="text-[15px] font-bold">לא הצלחנו לשמור את הסקווישי</div>
+      <p className="t-small text-[var(--muted)] leading-relaxed">
+        הפרטים שלך נשמרו במסך. אפשר לנסות שוב.
+      </p>
+      {/* אומרים איזה מהם, אחרת היא לא יודעת מה לבדוק */}
+      <p className="t-small">
+        נתקענו על <b>{failure.name}</b>
+        {total > 1 && ` (${failure.index + 1} מתוך ${total})`}
+        {saved > 0 && ` · ${saved} כבר נשמרו, והם לא יישמרו פעמיים`}
+      </p>
+      {failure.reason === "media" && (
+        <p className="t-small text-[var(--muted)]">התמונה או הסרטון לא עלו.</p>
+      )}
+      <button onClick={onRetry} data-testid="save-retry" className="btn btn-primary t-small mt-1">
+        לנסות שוב
+      </button>
+      <button onClick={onBack} className="btn btn-tertiary t-small">
+        לחזור ולבדוק את הפרטים
+      </button>
+      {failure.cid && (
+        <p className="text-[11px] text-[var(--faint)] text-center" dir="ltr">{failure.cid}</p>
+      )}
     </div>
   );
 }
