@@ -153,9 +153,24 @@ export default function SquishLanding() {
  * הלוגו. קובץ בנתיב קבוע, ואם הוא עוד לא הועלה — סימן המותג הווקטורי
  * במקומו. מסך פתיחה עם אייקון תמונה שבורה גרוע ממסך פתיחה בלי לוגו.
  */
+const LOGO_STILL = "/squish-logo.webp";
+const LOGO_ANIM = "/squish-logo-anim.webp";
+
+/**
+ * הלוגו — סטטי קודם, מונפש אחר כך.
+ *
+ * המונפש שוקל 218KB מול 60KB לפריים אחד, וזה המסך הראשון שכל ילדה
+ * רואה. לכן לא בוחרים ביניהם: הסטטי מצויר מיד, ההנפשה יורדת ברקע,
+ * וברגע שהיא כאן היא מחליפה אותו. מי שעל רשת איטית רואה לוגו במקום
+ * ריבוע ריק, ומי שעל רשת טובה רואה אותו זז תוך פחות משנייה.
+ *
+ * ההחלפה עצמה חלקה: כשהדגימה הסתיימה הקובץ כבר במטמון הדפדפן, אז
+ * ה-src החדש לא מוריד שוב ולא מהבהב.
+ */
 function Logo() {
-  const ok = useAssetExists("/squish-logo.webp");
-  if (!ok) {
+  const still = useAssetExists(LOGO_STILL);
+  const animated = useAssetExists(LOGO_ANIM);
+  if (!still && !animated) {
     return (
       <div className="flex flex-col items-center gap-2" data-testid="squish-logo">
         <SquishOutline size={96} />
@@ -165,7 +180,7 @@ function Logo() {
   }
   return (
     <img
-      src="/squish-logo.webp"
+      src={animated ? LOGO_ANIM : LOGO_STILL}
       alt={BRAND}
       data-testid="squish-logo"
       className="w-52 max-w-[62%] h-auto"
