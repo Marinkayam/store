@@ -24,6 +24,9 @@ function verifyJwt(token) {
   return JSON.parse(Buffer.from(b, "base64url").toString());
 }
 
+/** טוקני magic-link חד-פעמיים, בזיכרון בלבד. */
+const magicTokens = new Map();
+
 function session(user) {
   const expiresIn = 60 * 60 * 24 * 7;
   const access_token = signJwt({
@@ -119,6 +122,66 @@ const server = http.createServer(async (req, res) => {
       return res.end();
     }
 
+    /* admin.listUsers — משמש בגיבוי היומי. */
+    if (url.pathname === "/auth/v1/admin/users" && req.method === "GET") {
+      const token = (req.headers.authorization ?? "").replace("Bearer ", "");
+      const claims = token && verifyJwt(token);
+      if (claims?.role !== "service_role") return json(res, 403, { msg: "forbidden" });
+      const page = Math.max(1, Number(url.searchParams.get("page") ?? 1));
+      const per = Math.min(1000, Number(url.searchParams.get("per_page") ?? 50));
+      const r = await db.query(
+        "select id, email from auth.users order by id limit $1 offset $2",
+        [per, (page - 1) * per]
+      );
+      return json(res, 200, { users: r.rows.map((u) => userJson(u)), aud: "authenticated" });
+    }
+
+    /* admin.getUserById — נקרא בכניסה בסמס לפני יצירת הסשן. */
+    if (/^\/auth\/v1\/admin\/users\/[0-9a-f-]{36}$/.test(url.pathname) && req.method === "GET") {
+      const token = (req.headers.authorization ?? "").replace("Bearer ", "");
+      const claims = token && verifyJwt(token);
+      if (claims?.role !== "service_role") return json(res, 403, { msg: "forbidden" });
+      const id = url.pathname.split("/").pop();
+      const r = await db.query("select id, email from auth.users where id=$1", [id]);
+      if (!r.rows.length) return json(res, 404, { msg: "user not found" });
+      return json(res, 200, userJson(r.rows[0]));
+    }
+
+    /* admin.generateLink — הכניסה בסמס נשענת עליו.
+       GoTrue האמיתי מחזיר את hashed_token *שטוח* בתשובה, ו-supabase-js
+       הוא שמפצל אותו ל-properties. שים שמחזיר אותו מקונן שובר את
+       כל מסלול הכניסה בלי שום שגיאה ברורה. */
+    if (url.pathname === "/auth/v1/admin/generate_link" && req.method === "POST") {
+      const token = (req.headers.authorization ?? "").replace("Bearer ", "");
+      const claims = token && verifyJwt(token);
+      if (claims?.role !== "service_role") return json(res, 403, { msg: "forbidden" });
+      const { email } = await readBody(req);
+      const r = await db.query("select id, email from auth.users where email=$1", [
+        String(email ?? "").toLowerCase(),
+      ]);
+      if (!r.rows.length) return json(res, 404, { msg: "user not found" });
+      const hashed = crypto.randomUUID().replace(/-/g, "");
+      magicTokens.set(hashed, r.rows[0].id);
+      return json(res, 200, {
+        ...userJson(r.rows[0]),
+        action_link: `http://localhost:8000/auth/v1/verify?token=${hashed}`,
+        hashed_token: hashed,
+        verification_type: "magiclink",
+      });
+    }
+
+    /* verifyOtp({ token_hash }) — צורך את הטוקן ומחזיר סשן. */
+    if (url.pathname === "/auth/v1/verify" && req.method === "POST") {
+      const body = await readBody(req);
+      const hashed = body.token_hash ?? body.token;
+      const uid = magicTokens.get(hashed);
+      if (!uid) return json(res, 401, { msg: "invalid token" });
+      magicTokens.delete(hashed);
+      const r = await db.query("select id, email from auth.users where id=$1", [uid]);
+      if (!r.rows.length) return json(res, 401, { msg: "user not found" });
+      return json(res, 200, session(r.rows[0]));
+    }
+
     if (url.pathname === "/auth/v1/admin/users" && req.method === "POST") {
       const token = (req.headers.authorization ?? "").replace("Bearer ", "");
       const claims = token && verifyJwt(token);
@@ -128,6 +191,29 @@ const server = http.createServer(async (req, res) => {
       await db.query("insert into auth.users (id, email) values ($1,$2)", [id, email.toLowerCase()]);
       await db.query("insert into auth.shim_passwords (user_id, password) values ($1,$2)", [id, password]);
       return json(res, 200, userJson({ id, email: email.toLowerCase() }));
+    }
+
+    // admin.updateUserById — משמש לסיבוב הסיסמה בכניסה בסמס
+    if (/^\/auth\/v1\/admin\/users\/[0-9a-f-]{36}$/.test(url.pathname) && req.method === "PUT") {
+      const token = (req.headers.authorization ?? "").replace("Bearer ", "");
+      const claims = token && verifyJwt(token);
+      if (claims?.role !== "service_role") return json(res, 403, { msg: "forbidden" });
+      const id = url.pathname.split("/").pop();
+      const patch = await readBody(req);
+      const r = await db.query("select id, email from auth.users where id=$1", [id]);
+      if (!r.rows.length) return json(res, 404, { msg: "user not found" });
+      if (patch.email) {
+        await db.query("update auth.users set email=$2 where id=$1", [id, patch.email.toLowerCase()]);
+      }
+      if (patch.password) {
+        await db.query(
+          `insert into auth.shim_passwords (user_id, password) values ($1,$2)
+           on conflict (user_id) do update set password = excluded.password`,
+          [id, patch.password]
+        );
+      }
+      const after = await db.query("select id, email from auth.users where id=$1", [id]);
+      return json(res, 200, userJson(after.rows[0]));
     }
 
     /* ---------- rest → PostgREST ---------- */

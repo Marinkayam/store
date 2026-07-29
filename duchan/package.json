@@ -11,7 +11,9 @@
     "gen:setup": "node scripts/gen-setup.mjs",
     "check": "node scripts/check-setup.mjs",
     "check:dns": "node scripts/check-dns.mjs",
-    "gen:catchup": "node scripts/gen-catchup.mjs"
+    "gen:catchup": "node scripts/gen-catchup.mjs",
+    "test:e2e": "node scripts/e2e.mjs",
+    "test:e2e:squish": "node scripts/e2e.mjs squish"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
@@ -31,6 +33,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "pg": "^8.22.0",
+    "playwright": "^1.62.0",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.7.0"
   }

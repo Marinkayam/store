@@ -3,7 +3,8 @@
 // → הלינק פתוח → חברה מגיעה מהחנות ופותחת חנות משלה → הכל נראה בחמ"ל.
 import { chromium } from "playwright";
 import pg from "pg";
-import { mkdirSync } from "fs";
+import { mkdirSync, readFileSync } from "fs";
+import { verifyPhone } from "./sms-helper.mjs";
 
 const BASE = "http://localhost:3777";
 const shots = "/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/activation-shots";
@@ -27,31 +28,40 @@ if (!seed) {
 }
 // מחזירים אותה למצב טיוטה כדי לבדוק את המסלול המלא מההתחלה
 await db.query(
-  "update stores set activated_at = null, payment_claimed_at = null, payment_amount = null where id = $1",
+  // גם אישור ההורים מתאפס: הריצה בודקת את המסלול מההתחלה, וחנות שכבר
+  // אישרה בריצה קודמת לא תראה את החסימה
+  "update stores set activated_at = null, payment_claimed_at = null, payment_amount = null, parent_consent_at = null where id = $1",
   [seed.id]
 );
 await fetch(`${BASE}/api/revalidate`, { method: "POST" }).catch(() => {});
 
+// החנות של החברה נוצרת מחדש בכל ריצה. בלי הניקוי הזה נערמות שתיים ושלוש
+// חנויות לאותו מספר, והאשכול בחמ"ל סופר יותר ממה שהריצה יצרה.
+await db.query("delete from stores where contact_phone = '972529998877'");
+
 /* ── 1: הילדה רואה שהלינק נעול ── */
 const girl = await phone();
 await girl.goto(`${BASE}/login`);
-await girl.fill("input[type=email]", "tamar-e2e@test.com");
-await girl.fill("input[type=password]", "sqsq123!");
-await girl.click("button:has-text('כניסה')");
+await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 15000 });
-await girl.waitForSelector("text=החנות שלך עוד לא פורסמה", { timeout: 10000 });
-check("dashboard shows the store is unpublished", true);
+await girl.waitForSelector("text=הדוכן שלך בתצוגה מקדימה", { timeout: 10000 });
+check("dashboard shows the store is in preview, not blocked", true);
 await girl.screenshot({ path: `${shots}/40-dashboard-draft.png` });
 
 await girl.goto(`${BASE}/dashboard/settings`);
-await girl.waitForSelector("text=הלינק עוד נעול");
-check("settings hides the share link until published", true);
+await girl.waitForSelector("text=תצוגה מקדימה");
+check("settings offers the preview link before publishing", true);
+check("settings still pushes towards publishing",
+  (await girl.textContent("body")).includes("לפרסם את הדוכן"));
 
 /* ── 2: מסך ההפעלה — מה מקבלים, כמה, ואיך משלמים ── */
 await girl.goto(`${BASE}/activate`);
 await girl.waitForSelector("text=לצאת לעולם");
 const act = await girl.textContent("body");
-check("activation screen states the one-time price", act.includes("₪200") && act.includes("פעם אחת"));
+// מחיר ההשקה הוא המחיר שנגבה בפועל, והמחיר המלא מוצג לצידו מחוק
+check("activation screen states the one-time price", act.includes("₪50") && act.includes("פעם אחת"));
+check("the launch price is presented as a launch price, with an end date",
+  act.includes("מחיר השקה") && act.includes("₪200") && act.includes("30.7.2026"));
 check("activation screen lists what she gets", act.includes("חנות אמיתית") && act.includes("לינק פרטי משלך"));
 check("activation screen shows the payback math", act.includes("את מחזירה את זה") && act.includes("סקווישים"));
 check("activation screen has a parent explainer", act.includes("צריך אישור של הורה"));
@@ -64,7 +74,15 @@ const parent = await girl.textContent("body");
 check("parent view shows learning + price anchors + safety", parent.includes("תמחור") && parent.includes("משחק קונסולה") && parent.includes("אין שדה כתובת"));
 await girl.screenshot({ path: `${shots}/42-activate-parent.png`, fullPage: true });
 
-/* ── 3: הצהרת תשלום — לא מפעילה כלום בעצמה ── */
+/* ── 3: הצהרת תשלום — חסומה עד אישור ההורים, ולא מפעילה כלום בעצמה ── */
+check("the parent-consent checkbox is on the screen", act.includes("ההורים שלי יודעים ומאשרים"));
+check("declaring is blocked until she confirms her parents know",
+  act.includes("קודם מסמנים שההורים מאשרים"));
+await girl.click("input[aria-label='אישור הורים']");
+await girl.waitForTimeout(700);
+const { rows: [consented] } = await db.query("select parent_consent_at from stores where id=$1", [seed.id]);
+check("ticking the box is stamped on the server", !!consented.parent_consent_at);
+
 await girl.click("button:has-text('פייבוקס')");
 await girl.fill("input[placeholder='על שם מי שולם? (לא חובה)']", "אמא של תמר");
 await girl.click("button:has-text('שילמנו')");
@@ -75,15 +93,30 @@ check("declaring payment does NOT activate the store", claimed.activated_at === 
 await girl.screenshot({ path: `${shots}/43-pending.png` });
 
 const stillDraft = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
-check("link is still closed after declaring payment", stillDraft.includes("בהכנה"));
+check("link is still a preview after declaring payment", stillDraft.includes("תצוגה מקדימה"));
+const previewOrder = await fetch(`${BASE}/api/orders`, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ slug: seed.slug, items: [{ productId: "00000000-0000-0000-0000-000000000000", qty: 1 }] }),
+});
+check("a preview store still takes no orders", previewOrder.status === 404, `status=${previewOrder.status}`);
 
 /* ── 4: הבעלות לא יכולה להפעיל את החנות בעצמה ──
    התרחיש: ילדה (או מישהו בשבילה) לוקחת את ה-access token שלה ומעדכנת ישירות
    את הטבלה. ה-RLS מרשה לה לערוך את החנות שלה, ולכן ההגנה חייבת להיות בטריגר. */
+// אין יותר סיסמה שהילדה מכירה — קובעים אחת דרך ה-admin כדי להשיג טוקן אמיתי
+const { rows: [ownerRow] } = await db.query("select owner_id from stores where id=$1", [seed.id]);
+const { rows: [ownerUser] } = await db.query("select email from auth.users where id=$1", [ownerRow.owner_id]);
+const SERVICE = readFileSync("/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/keys.env", "utf8")
+  .split("\n").find((l) => l.startsWith("SERVICE=")).slice(8).trim();
+await fetch(`http://localhost:8000/auth/v1/admin/users/${ownerRow.owner_id}`, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE}` },
+  body: JSON.stringify({ password: "attack-probe-123" }),
+});
 const tokenRes = await fetch("http://localhost:8000/auth/v1/token?grant_type=password", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email: "tamar-e2e@test.com", password: "sqsq123!" }),
+  body: JSON.stringify({ email: ownerUser.email, password: "attack-probe-123" }),
 });
 const { access_token: girlToken } = await tokenRes.json();
 check("got the owner's real access token for the attack", !!girlToken);
@@ -113,6 +146,28 @@ await attack({ ref_clicks: 9999 });
 const { rows: [afterClicks] } = await db.query("select ref_clicks from stores where id=$1", [seed.id]);
 check("owner cannot inflate her referral clicks", afterClicks.ref_clicks === beforeClicks, `${afterClicks.ref_clicks}`);
 
+/* אישור ההורים הוא לא רק צ'קבוקס: מי שתקרא ל-RPC ישירות, בלי לעבור במסך,
+   עדיין תיחסם. מנקים את האישור ומנסים להצהיר שוב מול PostgREST. */
+await db.query("update stores set parent_consent_at = null, payment_claimed_at = null where id=$1", [seed.id]);
+const rpcNoConsent = await fetch("http://localhost:3001/rpc/claim_store_payment", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${girlToken}`, apikey: girlToken, "Content-Type": "application/json" },
+  body: JSON.stringify({ p_store: seed.id, p_method: "bit", p_ref: null }),
+});
+const { rows: [afterNoConsent] } = await db.query("select payment_claimed_at from stores where id=$1", [seed.id]);
+check("claiming payment without parent consent is refused server-side",
+  !rpcNoConsent.ok && afterNoConsent.payment_claimed_at === null, `http=${rpcNoConsent.status}`);
+
+// ...ועם אישור זה עובר
+await db.query("update stores set parent_consent_at = now() where id=$1", [seed.id]);
+const rpcConsent = await fetch("http://localhost:3001/rpc/claim_store_payment", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${girlToken}`, apikey: girlToken, "Content-Type": "application/json" },
+  body: JSON.stringify({ p_store: seed.id, p_method: "paybox", p_ref: "אמא של תמר" }),
+});
+const { rows: [afterConsent] } = await db.query("select payment_claimed_at from stores where id=$1", [seed.id]);
+check("with consent the same call goes through", rpcConsent.ok && !!afterConsent.payment_claimed_at, `http=${rpcConsent.status}`);
+
 // ...אבל כן יכולה לערוך את מה ששלה
 const s2 = await attack({ tagline: "משהו חדש" });
 const { rows: [afterEdit] } = await db.query("select tagline from stores where id=$1", [seed.id]);
@@ -120,30 +175,27 @@ check("owner can still edit her own store fields", afterEdit.tagline === "משה
 
 /* ── 5: המנהלת מאשרת מהחמ"ל ── */
 const admin = await browser.newContext({ viewport: { width: 720, height: 1000 } }).then((c) => c.newPage());
-await fetch("http://localhost:8000/auth/v1/signup", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email: "admin@duchan.test", password: "admin123!" }),
-});
 await admin.goto(`${BASE}/login`);
-await admin.fill("input[type=email]", "admin@duchan.test");
-await admin.fill("input[type=password]", "admin123!");
-await admin.click("button:has-text('כניסה')");
+await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 await admin.goto(`${BASE}/admin`);
-await admin.waitForSelector('text=ממתינות לאישור תשלום');
+// החמ"ל נוחת ישירות על מסך האישורים כשמישהי מחכה — זו הפעולה הדוחקת
+await admin.waitForSelector("text=חנויות שהצהירו על תשלום", { timeout: 20000 });
 const queue = await admin.textContent("body");
+check("admin lands straight on the approvals screen when someone is waiting", true);
 check("admin queue lists the pending store with its declaration", queue.includes(seed.display_name) && queue.includes("פייבוקס"));
+check("the queue shows whether her parents approved", queue.includes("ההורים מאשרים") || queue.includes("בלי אישור הורים"));
 await admin.screenshot({ path: `${shots}/44-admin-queue.png` });
 
 await admin.click("button:has-text('אישור והפעלה')");
 await admin.waitForSelector("text=הלינק פתוח");
 await admin.waitForTimeout(800);
 const { rows: [live] } = await db.query("select * from stores where id=$1", [seed.id]);
-check("admin activation sets activated_at + amount + active", !!live.activated_at && live.payment_amount === 200 && live.status === "active");
+check("admin activation records the price actually charged, not a hardcoded one",
+  !!live.activated_at && live.payment_amount === 50 && live.status === "active", `₪${live.payment_amount}`);
 
 const liveHtml = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
-check("link opens immediately after approval (no 60s ISR wait)", !liveHtml.includes("בהכנה") && liveHtml.includes("גם לך יש דברים למכור"));
+check("link opens immediately after approval (no 60s ISR wait)", !liveHtml.includes("תצוגה מקדימה") && liveHtml.includes("רוצה גם דוכן מכירות כזה"));
 
 await girl.goto(`${BASE}/activate`);
 await girl.waitForSelector("text=החנות שלך באוויר");
@@ -164,7 +216,7 @@ check("settings separates her money from the platform fee",
 
 // ברירת מחדל: ביט + מזומן. מכבים מזומן ומוסיפים הערה.
 await girl.click("button:has-text('מזומן')");
-await girl.fill("input[placeholder='הערה לקונה — \"ביט לאמא: 052-1234567\"']", "ביט לאמא: 052-1234567");
+await girl.fill("input[aria-label='הערה לקונה']", "ביט לאמא: 052-1234567");
 await girl.click("button:has-text('שמירת שינויים')");
 await girl.waitForSelector("text=נשמר");
 await girl.waitForTimeout(600);
@@ -176,11 +228,14 @@ const buyer = await phone();
 await buyer.goto(`${BASE}/s/${seed.slug}`);
 await buyer.waitForSelector(".grid img", { timeout: 10000 });
 await buyer.click("text=סקוויש חד-קרן");
-await buyer.click("button:has-text('הוספה לסל')");
+await buyer.click("button[aria-label='הוספה לסל']");
 await buyer.click("text=פריט"); // הכפתור הצף של הסל
 await buyer.waitForSelector("text=ההזמנה שלך", { timeout: 10000 });
 const sheet = await buyer.textContent("body");
-check("checkout shows how to pay her", sheet.includes("אפשר לשלם ב") && sheet.includes("ביט"));
+// הקופה כבר לא מציגה רשימה — הקונה בוחרת אמצעי, וההוראות נכנסות להודעה
+check("checkout asks the buyer how she will pay", sheet.includes("איך תשלמי?"));
+check("and offers the methods this store accepts",
+  (await buyer.locator("button[aria-label='תשלום בביט']").count()) === 1);
 check("her note to the buyer is shown", sheet.includes("ביט לאמא: 052-1234567"));
 check("cash is gone once she turned it off", !sheet.includes("מזומן"));
 await buyer.screenshot({ path: `${shots}/49-checkout-payment.png` });
@@ -214,6 +269,14 @@ const friend = await phone();
 await friend.goto(`${BASE}/s/${seed.slug}`);
 await friend.waitForSelector("text=פתחי חנות משלך");
 check("live storefront invites visitors to open their own store", true);
+// הפנייה אליי היא הערוץ שממנו מגיעות רוב הלקוחות, וההודעה נושאת את שם
+// הדוכן ואת הקוד — בלעדיהם אי אפשר לדעת מאיפה הפנייה הגיעה
+const salesHref = await friend.locator("a[href*='wa.me']").first().getAttribute("href");
+const salesMsg = decodeURIComponent(salesHref ?? "");
+check("the storefront footer offers a direct line to marina",
+  salesMsg.includes("wa.me/972545888471"), salesHref?.slice(0, 40));
+check("and her message says which stall it came from",
+  salesMsg.includes(seed.display_name) && salesMsg.includes(seed.slug));
 await friend.click("text=פתחי חנות משלך");
 await friend.waitForURL(`**/?ref=${seed.slug}`);
 await friend.waitForSelector("text=עכשיו תורך", { timeout: 10000 });
@@ -223,21 +286,18 @@ check("referral click counted on the referring store", clicked.ref_clicks >= 1, 
 await friend.screenshot({ path: `${shots}/47-referred-landing.png` });
 
 await friend.fill("input", "החנות של נועה");
-await friend.click("button:has-text('בואי נבנה')");
+await friend.click("button:has-text('בואי נבנה את הדוכן')");
 await friend.waitForURL("**/onboarding");
-await friend.click("button:has-text('ענן')");
+// אונבורדינג בן ארבעה מסכים: שם → מוצר → "מוכנה" (שם גם בוחרים סגנון) → שמירה
+// שלב 1: שם, תמונה, רקע — ואז ממשיכים למספר
+await friend.waitForSelector("text=בואי נפתח לך דוכן");
 await friend.click("button:has-text('הלאה')");
-await friend.fill("input[placeholder='שם המוצר']", "צמיד חוטים");
-await friend.fill("input[placeholder='מחיר (₪)']", "30");
-await friend.click("button:has-text('הלאה')");
-await friend.click("button:has-text('שמירת החנות')");
-await friend.fill("input[placeholder='הטלפון שלך (וואטסאפ)']", "0529998877");
-await friend.fill("input[placeholder='אימייל (איתו נכנסים לניהול)']", "noa-e2e@test.com");
-await friend.fill("input[placeholder='סיסמה (6 תווים לפחות)']", "noano123!");
-await friend.click("button:has-text('שמירה ופתיחת החנות')");
-await friend.waitForSelector("text=החנות שלך נשמרה", { timeout: 20000 });
+await friend.waitForSelector("input[aria-label='מספר טלפון']");
+await verifyPhone(friend, "0529998877");
+await friend.waitForSelector("text=הדוכן שלך נפתח", { timeout: 30000 });
 
-const { rows: [noa] } = await db.query("select * from stores where parent_email = 'noa-e2e@test.com'");
+// אין יותר parent_email — החנות מזוהה לפי המספר שאומת בסמס
+const { rows: [noa] } = await db.query("select * from stores where contact_phone = '972529998877'");
 check("referred store records who brought it", noa?.referred_by === seed.id && noa?.referral_source === "store");
 check("referred store also starts as a draft", noa?.activated_at === null);
 

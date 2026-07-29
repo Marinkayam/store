@@ -2,6 +2,7 @@
 import { chromium } from "playwright";
 import pg from "pg";
 import { mkdirSync } from "fs";
+import { verifyPhone } from "./sms-helper.mjs";
 
 const BASE = "http://localhost:3777";
 const shots = "/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/admin-shots";
@@ -40,9 +41,7 @@ await fetch("http://localhost:8000/auth/v1/signup", {
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ email: "admin@duchan.test", password: "admin123!" }),
 });
-await admin.fill("input[type=email]", "admin@duchan.test");
-await admin.fill("input[type=password]", "admin123!");
-await admin.click("button:has-text('כניסה')");
+await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 
 await admin.goto(`${BASE}/admin`);
@@ -81,6 +80,8 @@ check("admin restores product with no 30-day limit", restored.deleted_at === nul
 await db.query("delete from products where id=$1", [oldDeleted.id]); // ניקוי בדיקה
 
 /* ── 4. עדכונים: פרסום מהחמ"ל → מגיע לדשבורד של הילדה ── */
+// ריצה קודמת השאירה עדכון, והמונה היה מראה 2 במקום 1
+await db.query("delete from announcements");
 await admin.click("button[aria-label='סגירה']");
 await admin.waitForTimeout(400);
 await admin.click("button:has-text('עדכונים')");
@@ -94,9 +95,7 @@ await admin.screenshot({ path: `${shots}/22-news.png` });
 // הילדה (בעלת החנות) רואה את זה
 const girl = await (await browser.newContext({ viewport: { width: 390, height: 780 } })).newPage();
 await girl.goto(`${BASE}/login`);
-await girl.fill("input[type=email]", "tamar-e2e@test.com");
-await girl.fill("input[type=password]", "sqsq123!");
-await girl.click("button:has-text('כניסה')");
+await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 15000 });
 await girl.waitForSelector("button[aria-label='מה חדש']");
 const badge = await girl.textContent("button[aria-label='מה חדש']");

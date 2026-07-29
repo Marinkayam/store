@@ -7,7 +7,7 @@
 import { chromium } from "playwright";
 import pg from "pg";
 import { mkdirSync, writeFileSync } from "fs";
-import { verifyPhone, closeHelper } from "./sms-helper.mjs";
+import { verifyPhone, closeHelper } from "./helpers/index.mjs";
 
 const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
 const OUT = process.env.E2E_OUT ?? "/tmp/e2e-invite";

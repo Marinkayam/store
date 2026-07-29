@@ -6,7 +6,7 @@
 import { chromium } from "playwright";
 import pg from "pg";
 import { mkdirSync, writeFileSync } from "fs";
-import { verifyPhone, closeHelper } from "./sms-helper.mjs";
+import { verifyPhone, closeHelper } from "./helpers/index.mjs";
 
 const BASE = "http://localhost:3777";
 const OUT = "/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/stickers";

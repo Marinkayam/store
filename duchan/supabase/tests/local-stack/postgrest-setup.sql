@@ -1,4 +1,12 @@
 -- תפקידי PostgREST כמו ב-Supabase אמיתי
+--
+-- **מריצים את הקובץ הזה *אחרי* המיגרציות, לא לפניהן.**
+-- `grant on all tables in schema public` הוא צילום מצב של הרגע, לא כלל
+-- מתמשך: טבלה שנוצרה אחר כך לא מקבלת כלום. הרצה לפני המיגרציות על
+-- דאטהבייס נקי נותנת סטאק שנראה תקין ונופל על
+-- "permission denied for table stores" בבקשה הראשונה.
+-- מיגרציות סקוויש עושות grant מפורש בעצמן, ולכן הן דווקא עובדות —
+-- וזה בדיוק מה שהופך את התקלה למבלבלת.
 do $$ begin
   if not exists (select from pg_roles where rolname='anon') then create role anon nologin; end if;
   if not exists (select from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
