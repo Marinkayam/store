@@ -221,6 +221,55 @@ export function useAssetExists(src: string) {
   return ok;
 }
 
+/**
+ * מסך ההמתנה של שמירת האוסף.
+ *
+ * השמירה מעלה תמונות ולפעמים סרטון, וזה לוקח שניות אמיתיות. קודם ישבה
+ * כאן שורת טקסט אחת, וההמתנה נראתה כמו מסך תקוע — בדיוק ברגע שבו הכי
+ * חשוב שיהיה ברור שמשהו קורה ושלא כדאי לסגור.
+ *
+ * וקטור ולא קובץ: זה מסך שנראה פעם אחת לכמה שניות, ולא שווה לו הורדה.
+ */
+export function SavingDumplings({ label = "שומרים את האוסף…" }: { label?: string }) {
+  return (
+    <div className="py-10 flex flex-col items-center gap-3" role="status" aria-live="polite">
+      <svg viewBox="0 0 96 62" className="w-28 h-auto" aria-hidden>
+        {/* אדים */}
+        {[26, 48, 70].map((x, i) => (
+          <path
+            key={x}
+            className="steam"
+            style={{ animationDelay: `${i * 0.45}s` }}
+            d={`M${x} 14 c-2.5 -3 2.5 -5 0 -8`}
+            fill="none"
+            stroke="var(--muted)"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        ))}
+        {/* שלושה דאמפלינגים, כל אחד בקצב שלו */}
+        {[26, 48, 70].map((x, i) => (
+          <g key={x} className="dumpling" style={{ animationDelay: `${i * 0.16}s` }}>
+            <path
+              d={`M${x - 11} 42 c0 -8 5 -13 11 -13 s11 5 11 13 z`}
+              fill="var(--sand)"
+              stroke="var(--wood)"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+            <path d={`M${x - 4} 31 c1.5 3 1.5 7 1 11 M${x + 4} 31 c-1.5 3 -1.5 7 -1 11`}
+              fill="none" stroke="var(--wood)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+          </g>
+        ))}
+        {/* הסיר */}
+        <rect x="10" y="42" width="76" height="8" fill="var(--cream)" stroke="var(--wood)" strokeWidth="1.8" />
+        <rect x="14" y="50" width="68" height="7" fill="var(--sand)" stroke="var(--wood)" strokeWidth="1.8" />
+      </svg>
+      <p className="t-small text-[var(--muted)]">{label}</p>
+    </div>
+  );
+}
+
 export function CollectionGrid({
   items,
   onOpen,

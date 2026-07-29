@@ -301,6 +301,29 @@ h3 {
   .squish-card { transition: none; }
 }
 
+/* שמירת האוסף — דאמפלינגים שקופצים בסיר.
+   השמירה כוללת העלאת מדיה ויכולה לקחת כמה שניות; שורת טקסט לבדה
+   הופכת את ההמתנה הזו למסך תקוע, ובדיוק ברגע שבו הכי חשוב שיהיה
+   ברור שמשהו קורה. */
+@keyframes dumpling-pop {
+  0%, 100% { transform: translateY(0)    scale(1, 1); }
+  28%      { transform: translateY(-7px) scale(0.96, 1.05); }
+  56%      { transform: translateY(0)    scale(1.05, 0.95); }
+}
+.dumpling { animation: dumpling-pop 1.1s ease-in-out infinite; transform-origin: 50% 100%; }
+
+@keyframes steam-rise {
+  0%   { opacity: 0;   transform: translateY(2px)  scaleX(0.8); }
+  35%  { opacity: 0.55; }
+  100% { opacity: 0;   transform: translateY(-9px) scaleX(1.25); }
+}
+.steam { animation: steam-rise 2s ease-out infinite; transform-origin: 50% 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dumpling, .steam { animation: none; }
+  .steam { opacity: 0.4; }
+}
+
 /* כרטיס בלגלות נחשף, לא מופיע: תנועה קצרה שגורמת לזה להרגיש כמו
    הפיכת קלף אוסף ולא כמו רענון רשימה. */
 @keyframes squish-reveal {

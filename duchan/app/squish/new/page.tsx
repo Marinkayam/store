@@ -20,7 +20,7 @@ import {
   type SquishSize,
   type SquishyType,
 } from "@/lib/squish";
-import { SquishOutline, SquishPlaceholder, SwapGlyph } from "../components";
+import { SavingDumplings, SquishOutline, SquishPlaceholder, SwapGlyph } from "../components";
 import { TypeIcon } from "../type-icons";
 
 /**
@@ -796,7 +796,7 @@ function SaveStep({
   err: string;
   onVerified: () => void | Promise<void>;
 }) {
-  if (busy) return <p className="t-small text-center py-8">שומרים את האוסף…</p>;
+  if (busy) return <SavingDumplings />;
   return (
     <div className="flex flex-col gap-2">
       <PhoneVerify
@@ -827,7 +827,7 @@ function SaveFailed({
   onRetry: () => void | Promise<void>;
   onBack: () => void;
 }) {
-  if (busy) return <p className="t-small text-center py-8">שומרים את האוסף…</p>;
+  if (busy) return <SavingDumplings />;
   return (
     <div
       data-testid="save-failed"

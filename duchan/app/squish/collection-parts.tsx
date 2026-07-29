@@ -106,7 +106,10 @@ export function WishlistRow({ wishes }: { wishes: Wish[] }) {
             className="flex items-center gap-1.5 bg-[var(--cream)] border-[1.5px] border-[var(--lavender)] px-2.5 py-1.5 text-[12.5px]"
           >
             <SwapGlyph size={12} />
-            {[w.squishy_type ? typeLabel(w.squishy_type) : null, w.color, w.description]
+            {/* התיאור שלה מוביל, והסוג והצבע אחריו — אותו סדר שבו היא
+                הקלידה אותם. "צפרדע גדולה · ורוד · נידו" נקרא כמו בקשה;
+                "נידו · ורוד · צפרדע גדולה" נקרא כמו שדות בטופס. */}
+            {[w.description, w.color, w.squishy_type ? typeLabel(w.squishy_type) : null]
               .filter(Boolean)
               .join(" · ")}
           </span>

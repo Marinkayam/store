@@ -86,7 +86,7 @@ export default function WishEditor({
               aria-label={`להסיר מהמבוקשים`}
               className="text-[11.5px] text-[var(--muted)] underline"
             >
-              להסיר: {[w.squishy_type, w.color, w.description].filter(Boolean)[0]}
+              להסיר: {[w.description, w.color, w.squishy_type].filter(Boolean)[0]}
             </button>
           ))}
         </div>
@@ -96,6 +96,17 @@ export default function WishEditor({
         (open ? (
           <div className="bg-white border border-[var(--line)] p-3 flex flex-col gap-2">
             <div className="t-small font-medium">מה את מחפשת?</div>
+            {/* המילים שלה קודם, והסוג והצבע אחריהן — באותו סדר שבו
+                המבוקש ייקרא אחר כך במדף. כשהטקסט היה אחרון, "צפרדע
+                גדולה" הופיע בסוף השורה ומה שהוביל אותה היה "כל סוג". */}
+            <input
+              value={desc}
+              maxLength={40}
+              aria-label="תיאור מבוקש"
+              placeholder="למשל: צפרדע גדולה"
+              onChange={(e) => setDesc(e.target.value)}
+              className="field w-full px-3 py-2.5 t-small"
+            />
             <select
               value={type}
               aria-label="סוג מבוקש"
@@ -121,14 +132,6 @@ export default function WishEditor({
                 </button>
               ))}
             </div>
-            <input
-              value={desc}
-              maxLength={40}
-              aria-label="תיאור מבוקש"
-              placeholder="למשל: צפרדע גדולה, או פתוחה להצעות"
-              onChange={(e) => setDesc(e.target.value)}
-              className="field w-full px-3 py-2.5 t-small"
-            />
             <div className="flex gap-2">
               <button onClick={add} disabled={busy} className="btn btn-primary flex-1 t-small">
                 {busy ? "רגע…" : "להוסיף"}
