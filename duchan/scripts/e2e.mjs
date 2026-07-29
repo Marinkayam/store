@@ -14,11 +14,46 @@
  * דורש שרת פיתוח חי על E2E_BASE (ברירת מחדל http://localhost:3777).
  */
 import { spawn } from "node:child_process";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * דגלים שהחבילות מניחות שדולקים.
+ *
+ * `.env.local` אינו בגיט — הוא נבנה מחדש בכל סביבה, ודגל שנשכח בו לא
+ * מפיל את השרת אלא גורם למסלול להחזיר 404. החבילה נופלת אז על "אפשר
+ * לשלוח בקשת אישור להורה — 404", וזה נראה בדיוק כמו באג במוצר.
+ *
+ * לכן זה נבדק כאן, פעם אחת, לפני שמריצים משהו: עשרים דקות של אבחון
+ * מוחלפות בשורה שאומרת מה להוסיף ולאן.
+ */
+const REQUIRED_FLAGS = [
+  ["NEXT_PUBLIC_SQUISH_PARENT_APPROVAL", "1", "אישור הורה בפיילוט — squish-pilot ו-squish-admin"],
+];
+
+function preflight() {
+  let envFile = "";
+  try {
+    envFile = readFileSync(join(ROOT, ".env.local"), "utf8");
+  } catch {
+    console.error("✗ אין .env.local. בלעדיו אין לשרת מפתחות, ושום חבילה לא תעבור.");
+    process.exit(1);
+  }
+  const missing = REQUIRED_FLAGS.filter(([key, val]) => {
+    const line = envFile.split("\n").find((l) => l.trim().startsWith(`${key}=`));
+    return !line || line.trim().slice(key.length + 1).trim() !== val;
+  });
+  if (!missing.length) return;
+  console.error("✗ חסרים דגלים ב-.env.local. הוסיפי אותם והפעילי מחדש את שרת הפיתוח:\n");
+  for (const [key, val, why] of missing) console.error(`    ${key}=${val}      # ${why}`);
+  console.error("\nדגל חסר לא מפיל את השרת — הוא גורם למסלול להחזיר 404,");
+  console.error("והחבילה נופלת כאילו יש באג במוצר.");
+  process.exit(1);
+}
+preflight();
 const SQUISH_DIR = join(ROOT, "e2e");
 const DUCHAN_DIR = join(ROOT, "supabase", "tests", "local-stack");
 const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
