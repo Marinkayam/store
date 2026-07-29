@@ -9,7 +9,7 @@
  * מכאן: כל פעולה בחמ"ל נבדקת **דרך המסך שהמנהלת באמת פותחת**.
  */
 import {
-  BASE, asUser, checker, closeHelper, db, launch, newCollector, uidOf, verifyPhone, wipe,
+  BASE, asUser, checker, clickUntil, closeHelper, db, launch, newCollector, uidOf, verifyPhone, wipe,
 } from "./helpers/index.mjs";
 
 const ADMIN = "0509990000";
@@ -53,9 +53,12 @@ for (const s of ["סשני פיילוט", "דיווחים", "טריידים תק
 check("אין סשן פיילוט — ומוצג מצב ריק מוסבר",
   body.includes("אין סשן פיילוט פעיל") && body.includes("קישור חד-פעמי"));
 
-/* ── 3. מק"ט הקישור באמת עובד ── */
-await admin.click("[data-testid=pilot-link]");
-await admin.waitForTimeout(2000);
+/* ── 3. מק"ט הקישור באמת עובד ──
+   `clickUntil` ולא `click` + המתנה קבועה: המסך מרענן את עצמו כשנתוני
+   החמ"ל חוזרים מהשרת, והרינדור מחדש מנתק את הכפתור בדיוק כשלוחצים
+   עליו. הלחיצה נופלת בלי שקרה כלום, וזה נראה כמו שבירה של החמ"ל.
+   כאן לוחצים עד שהתוצאה מופיעה במסך — הקישור עצמו. */
+await clickUntil(admin, "[data-testid=pilot-link]", "text=/\\/squish\\/pilot\\//");
 const { rows: toks } = await pool.query("select token, created_by from squish_pilot_tokens");
 check("לחיצה מייצרת טוקן אמיתי בדאטהבייס", toks.length === 1, `${toks.length}`);
 check("ומתועד מי יצרה אותו", !!toks[0]?.created_by);
