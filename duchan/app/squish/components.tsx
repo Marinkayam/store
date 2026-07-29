@@ -8,7 +8,7 @@
  * התמונה נושאת אותו, והתגית היא סימן היכר ולא סטטוס טכני.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import {
   conditionLabel,
@@ -173,16 +173,13 @@ export function SquishOutline({ size = 44 }: { size?: number }) {
  * חזרה לצללית הוקטורית — מסך בלי תמונה עדיף על אייקון תמונה שבורה.
  */
 export function SquishPlaceholder({ size }: { size?: number }) {
-  const [broken, setBroken] = useState(false);
-  const check = useBrokenImage(setBroken);
-  if (broken) return <SquishOutline size={size ?? 44} />;
+  const ok = useAssetExists(PLACEHOLDER_SRC);
+  if (!ok) return <SquishOutline size={size ?? 44} />;
   return (
     <img
-      ref={check}
       src={PLACEHOLDER_SRC}
       alt=""
       aria-hidden
-      onError={() => setBroken(true)}
       className={size ? "" : "w-3/4 h-3/4 object-contain"}
       style={size ? { width: size, height: size, objectFit: "contain" } : undefined}
     />
@@ -191,18 +188,37 @@ export function SquishPlaceholder({ size }: { size?: number }) {
 
 export const PLACEHOLDER_SRC = "/squish-placeholder.png";
 
+/** תוצאות בדיקה, פר כתובת. מודול ולא סטייט — שישה כרטיסים במסך אחד לא
+    צריכים לשלוח שש בקשות לאותו קובץ. */
+const assetProbe = new Map<string, boolean>();
+
 /**
- * זיהוי תמונה שנכשלה, כולל כשהכישלון קרה לפני שריאקט הספיק להאזין.
+ * האם הקובץ באמת קיים — נבדק לפני שמרנדרים אותו, ולא אחרי שנכשל.
  *
- * `onError` לבדו לא מספיק: ה-`img` מרונדר בשרת, הדפדפן מתחיל להוריד
- * מיד, וכשהקובץ חסר האירוע נורה לפני ההידרציה ואובד. התוצאה היא
- * אייקון תמונה שבורה במקום ה-fallback. ה-ref נקרא אחרי החיבור ובודק
- * את המצב הסופי: הורדה שהסתיימה ברוחב אפס היא הורדה שנכשלה.
+ * הניסיון הקודם רינדר `<img>` וחיכה ל-`onError`. זה נראה סביר ולא
+ * עובד: כשהמסך נוצר אחרי לחיצה, האירוע לא הגיע כלל, והתוצאה הייתה
+ * ריבועים ריקים — גרוע יותר מהצללית שהם היו אמורים להחליף.
+ *
+ * לכן הכיוון הפוך: **ברירת המחדל היא הצללית**, והתמונה נכנסת רק אחרי
+ * שהוכיחה שהיא נטענת. `Image` בזיכרון מדווח נאמנה גם על 404 וגם על
+ * קובץ פגום, ובלי לרנדר שום דבר שבור על המסך בינתיים.
  */
-export function useBrokenImage(onBroken: (v: boolean) => void) {
-  return (el: HTMLImageElement | null) => {
-    if (el && el.complete && el.naturalWidth === 0) onBroken(true);
-  };
+export function useAssetExists(src: string) {
+  const [ok, setOk] = useState(() => assetProbe.get(src) ?? false);
+  useEffect(() => {
+    if (assetProbe.has(src)) return;
+    const img = new Image();
+    img.onload = () => {
+      assetProbe.set(src, img.naturalWidth > 0);
+      setOk(img.naturalWidth > 0);
+    };
+    img.onerror = () => {
+      assetProbe.set(src, false);
+      setOk(false);
+    };
+    img.src = src;
+  }, [src]);
+  return ok;
 }
 
 export function CollectionGrid({

@@ -64,7 +64,7 @@ for (const step of ["בונים גלריה", "מסמנים מה פתוח לטר�
 }
 
 const tiles = await p.locator("[data-testid=squish-preview] .squish-card").count();
-check("יש מדף עם כרטיסים אמיתיים", tiles === 6, `${tiles}`);
+check("יש מדף עם כרטיסים אמיתיים", tiles === 4, `${tiles}`);
 check("הכרטיסים בשתי עמודות, כמו באוסף",
   (await p.locator("[data-testid=squish-preview] .grid-cols-2").count()) >= 1);
 check("ולכרטיס יש שם מתחת לתמונה", prevText.includes("צפרדע ענקית"));
@@ -78,7 +78,7 @@ check("וגם כאן אפשר להתחיל",
 const filled = await p.evaluate(() =>
   [...document.querySelectorAll("[data-testid=squish-preview] .squish-card")]
     .filter((c) => c.querySelector("img, svg")).length);
-check("בכל ריבוע יש פלייסהולדר", filled === 6, `${filled}/6`);
+check("בכל ריבוע יש פלייסהולדר", filled === 4, `${filled}/4`);
 
 /* ── 6. אפשר לחזור ── */
 await p.click("[data-testid=back-to-hero]");

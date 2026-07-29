@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { BRAND } from "@/lib/squish";
-import { SquishOutline, SquishPlaceholder, SwapGlyph, useBrokenImage } from "./components";
+import { BRAND, type SquishItem } from "@/lib/squish";
+import { SquishOutline, SquishyCard, SwapGlyph, useAssetExists } from "./components";
 
 /**
  * מסך הפתיחה של סקוויש קלאב — שני מסכים, אחד אחרי השני.
@@ -119,21 +119,16 @@ export default function SquishLanding() {
 
       <DemoCollection />
 
-      <ol className="w-full max-w-sm flex flex-col gap-3 text-[13px]">
-        {[
-          ["בונים גלריה", "מצלמים את הסקווישים, ורואים אותם על מדף"],
-          ["מסמנים מה פתוח לטרייד", "רק מה שאת בוחרת מוצע להחלפה"],
-          ["מזמינים חברות", "רואות מה יש לכן, ומציעות טרייד"],
-        ].map(([t, d], i) => (
-          <li key={i} className="flex items-start gap-2.5">
+      {/* שלושה שלבים בשורה אחת כל אחד. הכותרת לבדה נושאת את המשמעות,
+          ומשפט ההסבר שהיה מתחתיה הכפיל את הגובה בלי להוסיף מידע שלא
+          כתוב ממש מעל, בגלריה עצמה. */}
+      <ol className="w-full max-w-sm flex flex-col gap-2 text-[13px]">
+        {["בונים גלריה מהטלפון", "מסמנים מה פתוח לטרייד", "מזמינים חברות למעגל"].map((t, i) => (
+          <li key={i} className="flex items-center gap-2.5">
             <span className="w-5 h-5 shrink-0 bg-[var(--ink)] text-white flex items-center justify-center text-[11px]">
               {i + 1}
             </span>
-            <span>
-              <b>{t}</b>
-              <br />
-              <span className="text-[var(--muted)] text-[12.5px]">{d}</span>
-            </span>
+            <b>{t}</b>
           </li>
         ))}
       </ol>
@@ -142,7 +137,7 @@ export default function SquishLanding() {
         {cta}
       </a>
 
-      <p className="t-small text-[var(--muted)] text-center mt-auto pt-2">
+      <p className="t-small text-[var(--muted)] text-center">
         {BRAND} הוא חלק מ
         <a href="/" className="underline">דוכן</a>
         {" · "}
@@ -159,9 +154,8 @@ export default function SquishLanding() {
  * במקומו. מסך פתיחה עם אייקון תמונה שבורה גרוע ממסך פתיחה בלי לוגו.
  */
 function Logo() {
-  const [broken, setBroken] = useState(false);
-  const check = useBrokenImage(setBroken);
-  if (broken) {
+  const ok = useAssetExists("/squish-logo.png");
+  if (!ok) {
     return (
       <div className="flex flex-col items-center gap-2" data-testid="squish-logo">
         <SquishOutline size={96} />
@@ -171,11 +165,9 @@ function Logo() {
   }
   return (
     <img
-      ref={check}
       src="/squish-logo.png"
       alt={BRAND}
       data-testid="squish-logo"
-      onError={() => setBroken(true)}
       className="w-52 max-w-[62%] h-auto"
     />
   );
@@ -184,49 +176,51 @@ function Logo() {
 /**
  * הגלריה לדוגמה.
  *
- * זו לא הדמיה מופשטת אלא **אותו כרטיס שהמסך האמיתי מרנדר** — אותו
- * ריבוע, אותה כותרת מתחת, אותה מדבקת טרייד בפינה. אם הכרטיס האמיתי
- * ישתנה, ההבטחה כאן תשתנה איתו במקום להישאר תמונה ישנה של המוצר.
+ * **מרונדרת ב-`SquishyCard` — הרכיב האמיתי של האוסף.** לא העתק שלו.
+ * לכן המדבקות כאן הן המדבקות (⇄ פתוח לטרייד, ★ נדיר, ♥ אהוב,
+ * ✦ חדש), שורת הפרטים מתחת לשם היא אותה שורה, והכל ישתנה לבד ביום
+ * שהכרטיס האמיתי ישתנה. הדגמה שמצוירת ביד מזדקנת מהיום שנכתבה.
+ *
+ * ארבעה פריטים ולא שישה: מסך שני שגולל אינו מסך, והשלבים והכפתור
+ * חייבים להישאר נראים באותה נשימה.
  */
-function DemoCollection() {
-  const items = [
-    { name: "צפרדע ענקית", trade: true },
-    { name: "אבוקדו", trade: false },
-    { name: "חד-קרן ורוד", trade: false },
-    { name: "דונאט", trade: true },
-    { name: "חתול שמן", trade: false },
-    { name: "ענן", trade: false },
-  ];
-  const open = items.filter((i) => i.trade).length;
+const DEMO: SquishItem[] = [
+  { name: "צפרדע ענקית", squishy_type: "animal", size: "large", condition: "like_new", trade_status: "open_for_trade", stickers: ["rare"] },
+  { name: "אבוקדו", squishy_type: "food", size: "medium", condition: "good", trade_status: "none", stickers: ["new"] },
+  { name: "חד-קרן ורוד", squishy_type: "animal", size: "medium", condition: "like_new", trade_status: "none", stickers: [] },
+  { name: "דונאט", squishy_type: "food", size: "small", condition: "good", trade_status: "open_for_trade", stickers: [] },
+].map((d, i) => ({
+  id: `demo-${i}`,
+  owner_user_id: "demo",
+  profile_id: "demo",
+  custom_type: null,
+  condition_note: null,
+  wanted_description: null,
+  image_key: null,
+  video_key: null,
+  poster_key: null,
+  series: null,
+  sort_order: i,
+  duchan_product_id: null,
+  created_at: "",
+  ...d,
+})) as SquishItem[];
 
+function DemoCollection() {
+  const open = DEMO.filter((i) => i.trade_status === "open_for_trade").length;
   return (
-    <div className="w-full max-w-sm bg-white border border-[var(--line)] p-4 pb-5">
-      <div className="flex items-center justify-between mb-3">
+    <div className="w-full max-w-sm bg-white border border-[var(--line)] p-3.5 pb-4">
+      <div className="flex items-center justify-between mb-2.5">
         <span className="text-[13px] font-bold">האוסף של נועה</span>
         <span className="inline-flex items-center gap-1 text-[11.5px] text-[var(--muted)]">
           <SwapGlyph />
           {open} פתוחים לטרייד
         </span>
       </div>
+      {/* isFavorite על הראשון: ♥ הוא אחד לאוסף, בדיוק כמו במסך האמיתי */}
       <div className="grid grid-cols-2 gap-2.5">
-        {items.map((it, i) => (
-          <div key={i} className="squish-card text-start flex flex-col">
-            <div className="relative aspect-square bg-[var(--cream)] flex items-center justify-center overflow-hidden">
-              <SquishPlaceholder />
-              {it.trade && (
-                <span
-                  className="absolute top-1 start-1 w-5 h-5 bg-[var(--lavender)] text-white flex items-center justify-center"
-                  style={{ borderRadius: "999px" }}
-                  aria-hidden
-                >
-                  <SwapGlyph size={11} />
-                </span>
-              )}
-            </div>
-            <div className="pt-1.5 px-0.5">
-              <div className="text-[12.5px] font-medium truncate">{it.name}</div>
-            </div>
-          </div>
+        {DEMO.map((it, i) => (
+          <SquishyCard key={it.id} item={it} isFavorite={i === 0} />
         ))}
       </div>
     </div>
