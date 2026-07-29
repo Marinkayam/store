@@ -102,7 +102,12 @@ export async function POST(req: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (recent && now - new Date(recent.created_at).getTime() < RESEND_SECONDS * 1000) {
+  /* ההמתנה של דקה נועדה לעצור הצפה מלחיצות חוזרות, לא לחסום את מי
+     שבודקת את המוצר שלה עשרים פעם ביום. בעלת דוכן ומספר שסומן פטור
+     כבר עוקפים את המכסה היומית — הם עוקפים גם את זו, אחרת "אל תגביל
+     אותי בכניסות" נשאר חצי נכון. */
+  if (!owner && !trusted && recent
+      && now - new Date(recent.created_at).getTime() < RESEND_SECONDS * 1000) {
     const wait = Math.ceil((RESEND_SECONDS * 1000 - (now - new Date(recent.created_at).getTime())) / 1000);
     return NextResponse.json({ error: `כבר שלחנו קוד. אפשר לבקש שוב בעוד ${wait} שניות` }, { status: 429 });
   }

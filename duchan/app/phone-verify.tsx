@@ -30,6 +30,18 @@ export default function PhoneVerify({
   const [showFindHelp, setShowFindHelp] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
 
+  /* המספר האחרון שאומת *במכשיר הזה*, כדי שלא יצטרכו להקליד אותו שוב
+     בכל כניסה. הוא נשמר מקומית בלבד ולעולם לא נשלח לשום מקום — אנחנו
+     כבר יודעים אותו, זה בדיוק המספר שאליו נשלח הקוד. */
+  useEffect(() => {
+    try {
+      const last = localStorage.getItem("duchan-last-phone");
+      if (last) setPhone(last);
+    } catch {
+      /* דפדפן שחוסם אחסון מקומי — פשוט לא ממלאים מראש */
+    }
+  }, []);
+
   // ספירה לאחור לכפתור "לא קיבלתי" — בלי זה היא לוחצת שוב ושוב ומקבלת שגיאה
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -82,6 +94,8 @@ export default function PhoneVerify({
         setCode("");
         return;
       }
+      /* נשמר רק אחרי אימות מוצלח: מספר שהוקלד בטעות לא נדבק למכשיר */
+      try { localStorage.setItem("duchan-last-phone", phone); } catch { /* אין אחסון */ }
       await onVerified(data);
     } catch {
       setErr("אין חיבור, לנסות שוב");
