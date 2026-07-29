@@ -31,6 +31,9 @@ export default function SettingsPage() {
     shipping_note: "",
     shipping_price: "" as string,
   });
+  /* ההודעה לקונות — "מבצע החודש". נשמרת גם כשהיא כבויה, כדי שכיבוי
+     לא ימחק מה שנכתב. */
+  const [promo, setPromo] = useState({ promo_on: false, promo_title: "", promo_text: "" });
   const [toast, setToast] = useState("");
   const [dirty, setDirty] = useState(false);
   // איך הקונה משלמת לילדה. נפרד לגמרי מתשלום ההקמה לדוכן (activated_at / payment_*).
@@ -62,6 +65,11 @@ export default function SettingsPage() {
     setPhone(displayPhone(store.contact_phone));
     setCoverPreview(mediaUrl(store.cover_key));
     setPreset(store.cover_preset ?? null);
+    setPromo({
+      promo_on: store.promo_on ?? false,
+      promo_title: store.promo_title ?? "",
+      promo_text: store.promo_text ?? "",
+    });
     setInfo({
       about: store.about ?? "",
       city: store.city ?? "",
@@ -140,6 +148,9 @@ export default function SettingsPage() {
       ships: info.ships,
       shipping_note: info.ships ? info.shipping_note.trim() || null : null,
       shipping_price: info.ships && info.shipping_price !== "" ? Math.max(0, Math.min(200, Math.round(Number(info.shipping_price) || 0))) : null,
+      promo_on: promo.promo_on,
+      promo_title: promo.promo_title.trim().slice(0, 40) || null,
+      promo_text: promo.promo_text.trim().slice(0, 180) || null,
     };
     /**
      * שמירה שעומדת בפער סכמה.
@@ -318,6 +329,9 @@ export default function SettingsPage() {
         </a>
         <a href="#order-msg" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
           הודעת הזמנה
+        </a>
+        <a href="#promo" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
+          הודעה לקונות
         </a>
         <a href="#payment" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
           תשלום
@@ -728,6 +742,80 @@ export default function SettingsPage() {
               ? `הקונה בוחרת בקופה מתוך מה שסימנת למטה (${payLabels.join(" / ")}), ומה שהיא בחרה מופיע בהודעה.`
               : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
           </p>
+        </div>
+
+        {/* ── הודעה לקונות ──
+            המקום היחיד לכתוב "בקנייה מעל ₪50 מקבלים מתנה" היה עד היום
+            התיאור, והוא מיועד לספר מה יש בדוכן — לא להכריז על מבצע
+            שנגמר בסוף החודש. */}
+        <div id="promo" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="text-[13px] font-bold">הודעה לקונות</div>
+              <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
+                מופיעה בדוכן מתחת לשם, מעל המוצרים.
+              </p>
+            </div>
+            <button
+              onClick={() => { setPromo({ ...promo, promo_on: !promo.promo_on }); setDirty(true); }}
+              aria-pressed={promo.promo_on}
+              aria-label="הצגת ההודעה בדוכן"
+              data-testid="promo-toggle"
+              className={`shrink-0 w-12 h-7 border-[1.5px] flex items-center px-0.5 ${
+                promo.promo_on ? "bg-[var(--ink)] border-[var(--ink)] justify-end" : "border-[var(--line)] justify-start"
+              }`}
+            >
+              <span className={`w-5 h-5 ${promo.promo_on ? "bg-white" : "bg-[#D3D5DC]"}`} />
+            </button>
+          </div>
+
+          <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">כותרת קצרה</label>
+          <input
+            value={promo.promo_title}
+            onChange={(e) => { setPromo({ ...promo, promo_title: e.target.value }); setDirty(true); }}
+            placeholder="מבצע החודש"
+            aria-label="כותרת ההודעה"
+            maxLength={40}
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+          />
+
+          <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">מה ההודעה?</label>
+          <textarea
+            value={promo.promo_text}
+            onChange={(e) => { setPromo({ ...promo, promo_text: e.target.value }); setDirty(true); }}
+            placeholder="למשל: בקנייה מעל ₪50 מקבלים מחזיק מפתחות מתנה 🎁"
+            aria-label="תוכן ההודעה"
+            maxLength={180}
+            rows={3}
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
+          />
+          <div className="text-[11.5px] text-[var(--faint)] mt-1 text-start">
+            {promo.promo_text.length}/180
+          </div>
+
+          {/* תצוגה מקדימה בערכת הנושא של הדוכן — כדי שלא צריך לפרסם
+              ואז לבדוק איך זה נראה */}
+          {promo.promo_text.trim() && (
+            <>
+              <div className="text-[12px] text-[var(--muted)] mt-2 mb-1">ככה זה ייראה:</div>
+              <div
+                data-testid="promo-preview"
+                className="border-[1.5px] px-3.5 py-3 text-center"
+                style={{ background: t.surface, borderColor: t.primary, color: t.ink }}
+              >
+                <div className="text-[12px] font-bold" style={{ color: t.primary }}>
+                  {promo.promo_title.trim() || "מבצע החודש"}
+                </div>
+                <p className="text-[13.5px] leading-relaxed mt-1 whitespace-pre-line">{promo.promo_text}</p>
+              </div>
+            </>
+          )}
+
+          {!promo.promo_on && promo.promo_text.trim() && (
+            <p className="text-[12px] text-[var(--warn-ink)] mt-2">
+              ההודעה כבויה כרגע ולא מופיעה בדוכן. מה שכתבת נשמר.
+            </p>
+          )}
         </div>
 
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}

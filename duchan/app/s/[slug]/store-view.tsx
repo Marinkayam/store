@@ -418,6 +418,27 @@ export default function StoreView({
         )}
       </div>
 
+      {/* ── ההודעה של בעלת הדוכן ──
+          יושבת בין הכותרת למוצרים בכוונה: מבצע שמופיע מתחת לרשת נקרא
+          אחרי שכבר החליטו מה לקנות, וזה בדיוק מאוחר מדי. היא לובשת את
+          ערכת הנושא של הדוכן — זו הודעה *שלה*, לא רצועת מערכת. */}
+      {store.promo_on && store.promo_text?.trim() && (
+        <div className="px-3 pb-1">
+          <div
+            data-testid="store-promo"
+            className="mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"
+            style={{ background: "var(--s-surface)", borderColor: "var(--s-primary)" }}
+          >
+            <div className="text-[12px] font-bold tracking-wide" style={{ color: "var(--s-primary)" }}>
+              {store.promo_title?.trim() || "מבצע החודש"}
+            </div>
+            <p className="text-[13.5px] leading-relaxed mt-1 whitespace-pre-line">
+              {store.promo_text}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* grid */}
       <div className="flex-1 px-3 pb-24" ref={gridRef}>
         {sorted.length === 0 ? (

@@ -44,6 +44,9 @@ export interface Store {
   shipping_price: number | null;
   order_intro: string | null;
   order_outro: string | null;
+  promo_on: boolean;
+  promo_title: string | null;
+  promo_text: string | null;
   referred_by: string | null;
   referral_source: string | null;
   ref_clicks: number;
@@ -119,6 +122,9 @@ export interface PublicStore {
   // נוסחי הפתיחה והסיום של הודעת ההזמנה שמגיעה אליה בוואטסאפ
   order_intro: string | null;
   order_outro: string | null;
+  promo_on: boolean;
+  promo_title: string | null;
+  promo_text: string | null;
 }
 
 export interface PublicProduct {
