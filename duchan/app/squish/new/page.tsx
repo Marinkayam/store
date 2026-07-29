@@ -20,7 +20,7 @@ import {
   type SquishSize,
   type SquishyType,
 } from "@/lib/squish";
-import { SquishOutline } from "../components";
+import { SquishOutline, SquishPlaceholder } from "../components";
 
 /**
  * בניית האוסף — בונים לפני שנרשמים.
@@ -374,7 +374,7 @@ export default function NewCollection() {
             <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
           ) : (
             <span className="flex flex-col items-center gap-2 text-[var(--muted)]">
-              <SquishOutline />
+              <SquishPlaceholder size={64} />
               <span className="t-small">סרטון או תמונה</span>
             </span>
           )}
@@ -701,12 +701,12 @@ export default function NewCollection() {
           <div key={i} className="bg-white border border-[var(--line)] overflow-hidden">
             <button
               onClick={() => { setEditing(it); setEditIndex(i); }}
-              className="block w-full aspect-square bg-[var(--cream)] overflow-hidden"
+              className="block w-full aspect-square bg-[var(--cream)] overflow-hidden flex items-center justify-center"
             >
               {it.imageData ? (
                 <img src={it.imageData} alt="" className="w-full h-full object-cover" />
               ) : (
-                <SquishOutline />
+                <SquishPlaceholder />
               )}
             </button>
             <div className="p-2">

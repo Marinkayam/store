@@ -92,6 +92,33 @@ check("הבאנר יושב מעל המוצרים",
   !!promoBox && !!gridBox && promoBox.y < gridBox.y,
   `promo ${Math.round(promoBox?.y ?? -1)} · grid ${Math.round(gridBox?.y ?? -1)}`);
 
+/* הרווח משני הצדדים נמדד ולא נסמך על כך שהקלאסים "נראים נכון": הריפוד
+   מעל מגיע מגוש הכותרת ומתחת מהעטיפה של הבאנר, שני מקומות שונים בקוד.
+   מספיק שאחד מהם ישתנה כדי שהבאנר ייצמד למוצרים או ירחף מתחת לכותרת. */
+const gaps = await buyer.evaluate(() => {
+  const el = document.querySelector("[data-testid=store-promo]");
+  const headerLast = el.parentElement.previousElementSibling.lastElementChild;
+  const grid = document.querySelector(".grid");
+  const r = (e) => e.getBoundingClientRect();
+  const b = r(el);
+  return {
+    above: Math.round(b.top - r(headerLast).bottom),
+    below: Math.round(r(grid.firstElementChild).top - b.bottom),
+    left: Math.round(b.left - r(grid).left),
+    right: Math.round(r(grid).right - b.right),
+    inTop: Math.round(r(el.children[0]).top - b.top),
+    inBottom: Math.round(b.bottom - r(el.children[1]).bottom),
+  };
+});
+check("הרווח מעל הבאנר ומתחתיו שווה",
+  Math.abs(gaps.above - gaps.below) <= 1, `מעל ${gaps.above} · מתחת ${gaps.below}`);
+check("ויש רווח בכלל, הבאנר לא נצמד",
+  gaps.above >= 8 && gaps.below >= 8, `מעל ${gaps.above} · מתחת ${gaps.below}`);
+check("והבאנר מיושר לקצוות הרשת",
+  Math.abs(gaps.left) <= 1 && Math.abs(gaps.right) <= 1, `ימין ${gaps.right} · שמאל ${gaps.left}`);
+check("גם בתוך הקופסה הרווח מאוזן",
+  Math.abs(gaps.inTop - gaps.inBottom) <= 2, `מעל ${gaps.inTop} · מתחת ${gaps.inBottom}`);
+
 /* ── 4. כיבוי מסתיר ולא מוחק ── */
 await girl.click("[data-testid=promo-toggle]");
 await girl.waitForTimeout(300);

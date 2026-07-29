@@ -6,7 +6,7 @@ import { BRAND, typeLabel, sizeLabel, conditionLabel, type SquishItem, type Wish
 import { WishlistRow } from "../../collection-parts";
 import { FriendSafety } from "../../safety";
 import { StickerCorner, StickerNames } from "../../stickers";
-import { SquishOutline, TradeBadge, SwapGlyph } from "../../components";
+import { SquishOutline, SquishPlaceholder, TradeBadge, SwapGlyph } from "../../components";
 
 /**
  * גלריה משותפת בקישור.
@@ -204,7 +204,7 @@ export default async function SharedCollection({
                 {poster ? (
                   <img src={poster} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <SquishOutline />
+                  <SquishPlaceholder />
                 )}
                 <StickerCorner item={it as SquishItem} />
                 <StickerNames item={it as SquishItem} />

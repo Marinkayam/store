@@ -217,8 +217,20 @@ check("ומראה אם ההורים אישרו",
   queue.includes("ההורים מאשרים") || queue.includes("בלי אישור הורים"));
 await admin.screenshot({ path: `${shots}/44-admin-queue.png` });
 
+/* המתנה לתוצאה של האפליקציה, לא לשעון.
+   קודם עמדו כאן 1500ms קבועים, וזה החזיק כל עוד המסלול היה מהודר.
+   בריצה על שרת קר האישור לוקח יותר, הבדיקה קראה את הדאטהבייס באמצע
+   הכתיבה, וקיבלה ₪null — כישלון שנראה כמו באג במוצר ואינו. הדוכן יוצא
+   מתור האישורים כשהאישור נכתב, אז זה מה שמחכים לו. */
+const pending = await admin.locator("[data-testid=approve-store]").count();
 await admin.click("[data-testid=approve-store]");
-await admin.waitForTimeout(1500);
+await admin
+  .waitForFunction(
+    (before) => document.querySelectorAll("[data-testid=approve-store]").length < before,
+    pending,
+    { timeout: 30000 }
+  )
+  .catch(() => {});
 const { rows: [live] } = await db.query("select * from stores where id=$1", [seed.id]);
 check("האישור רושם את המחיר שנגבה בפועל, לא מספר קשיח",
   !!live.activated_at && live.payment_amount === expectedPrice && live.status === "active",

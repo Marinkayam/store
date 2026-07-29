@@ -8,6 +8,7 @@
  * התמונה נושאת אותו, והתגית היא סימן היכר ולא סטטוס טכני.
  */
 
+import { useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import {
   conditionLabel,
@@ -113,7 +114,7 @@ export function SquishyCard({
         ) : poster ? (
           <img src={poster} alt="" className="w-full h-full object-cover" />
         ) : (
-          <SquishOutline />
+          <SquishPlaceholder />
         )}
         {/* מדבקות במקום שבב טקסט: סימנים קטנים בפינה, עד שלושה, ובסדר
             קבוע — טרייד ראשון כי הוא היחיד שמזמין פעולה מחברה. */}
@@ -162,6 +163,46 @@ export function SquishOutline({ size = 44 }: { size?: number }) {
       <path d="M20 29 a4.5 4.5 0 0 0 8 0" fill="none" stroke="var(--wood)" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
+}
+
+/**
+ * הפלייסהולדר של המערכת — מה שרואים כשאין עדיין תמונה.
+ *
+ * קובץ אחד בנתיב קבוע, ורכיב אחד שקורא לו, כדי שהחלפת הדמות תהיה
+ * החלפת קובץ ולא סריקה של עשרה מסכים. אם הקובץ חסר עדיין, נופלים
+ * חזרה לצללית הוקטורית — מסך בלי תמונה עדיף על אייקון תמונה שבורה.
+ */
+export function SquishPlaceholder({ size }: { size?: number }) {
+  const [broken, setBroken] = useState(false);
+  const check = useBrokenImage(setBroken);
+  if (broken) return <SquishOutline size={size ?? 44} />;
+  return (
+    <img
+      ref={check}
+      src={PLACEHOLDER_SRC}
+      alt=""
+      aria-hidden
+      onError={() => setBroken(true)}
+      className={size ? "" : "w-3/4 h-3/4 object-contain"}
+      style={size ? { width: size, height: size, objectFit: "contain" } : undefined}
+    />
+  );
+}
+
+export const PLACEHOLDER_SRC = "/squish-placeholder.png";
+
+/**
+ * זיהוי תמונה שנכשלה, כולל כשהכישלון קרה לפני שריאקט הספיק להאזין.
+ *
+ * `onError` לבדו לא מספיק: ה-`img` מרונדר בשרת, הדפדפן מתחיל להוריד
+ * מיד, וכשהקובץ חסר האירוע נורה לפני ההידרציה ואובד. התוצאה היא
+ * אייקון תמונה שבורה במקום ה-fallback. ה-ref נקרא אחרי החיבור ובודק
+ * את המצב הסופי: הורדה שהסתיימה ברוחב אפס היא הורדה שנכשלה.
+ */
+export function useBrokenImage(onBroken: (v: boolean) => void) {
+  return (el: HTMLImageElement | null) => {
+    if (el && el.complete && el.naturalWidth === 0) onBroken(true);
+  };
 }
 
 export function CollectionGrid({

@@ -423,7 +423,11 @@ export default function StoreView({
           אחרי שכבר החליטו מה לקנות, וזה בדיוק מאוחר מדי. היא לובשת את
           ערכת הנושא של הדוכן — זו הודעה *שלה*, לא רצועת מערכת. */}
       {store.promo_on && store.promo_text?.trim() && (
-        <div className="px-3 pb-1">
+        /* pb-4 ולא pb-1: מעל הבאנר יש 16px מה-pb-4 של גוש הכותרת, ולרשת
+           אין ריפוד עליון משלה. כל ערך אחר כאן יוצר באנר שנצמד למוצרים
+           ומרחף מתחת לכותרת — נראה כאילו הוא שייך לרשת ולא הודעה בפני
+           עצמה. שני הצדדים נמדדים בבדיקה, כדי שלא ייפרד בשקט. */
+        <div className="px-3 pb-4">
           <div
             data-testid="store-promo"
             className="mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"

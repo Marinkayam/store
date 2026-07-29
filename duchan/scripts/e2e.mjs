@@ -26,6 +26,7 @@ const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
 /* סדר קבוע: מהיסוד כלפי מעלה. חבילה שנופלת מוקדם מצביעה על משהו בסיסי
    יותר, ולכן קל יותר לאבחן אותה קודם. */
 const SQUISH = [
+  "squish-landing.mjs",
   "squish-collection.mjs",
   "squish-circle.mjs",
   "squish-discover.mjs",

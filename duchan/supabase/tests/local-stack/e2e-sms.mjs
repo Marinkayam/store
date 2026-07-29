@@ -33,6 +33,12 @@ const NUM = "0521110001";
 const E164 = "972521110001";
 await db.query("delete from sms_outbox");
 await db.query("delete from phone_otps");
+/* הדוכן שהחבילה הזו פותחת נמחק בתחילת כל ריצה. בלי זה הוא נערם —
+   ומעבר ל"עוד שורה בטבלה", חבילות אחרות סופרות דוכנים ותורי אישור
+   ונופלות על מה שהחבילה הזו השאירה מריצה קודמת. */
+await db.query("delete from stores where contact_phone = $1", [E164]);
+await db.query("delete from phone_accounts where phone = $1", [E164]);
+await db.query("delete from auth.users where email like $1", [`${E164}@%`]);
 
 /* ── 1. הרשמה מלאה בלי מייל ובלי סיסמה ── */
 const p = await phone();
