@@ -36,6 +36,7 @@ export default function MyArea() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [showInstall, setShowInstall] = useState(false);
+  const [hasStore, setHasStore] = useState(false);
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -65,6 +66,9 @@ export default function MyArea() {
         setInvite((inv as typeof invite) ?? null);
         const fr = await fetch("/api/squish/friends").then((r) => r.json()).catch(() => null);
         setFriends(fr?.friends ?? []);
+        /* ה-RLS על stores מחזיר רק את הדוכנים שלה — שורה אחת = יש דוכן */
+        const { data: st } = await supa.from("stores").select("id").limit(1);
+        setHasStore(!!st?.length);
       }
       setLoading(false);
     })();
@@ -344,9 +348,18 @@ export default function MyArea() {
           הגלריה לא מופיעה בגוגל ואי אפשר לחפש אותה. קישור לבדו לא פותח אותה
           למי שלא במעגל.
         </p>
-        <a href="/dashboard" className="block text-center t-small underline mt-3">
-          לדוכן שלי ←
-        </a>
+        {hasStore ? (
+          <a href="/dashboard" className="block text-center t-small underline mt-3">
+            לדוכן שלי ←
+          </a>
+        ) : (
+          <p className="text-center t-small text-[var(--muted)] mt-3">
+            יש לך דברים למכור?{" "}
+            <a href="/onboarding" className="underline text-[var(--ink)]">
+              פותחים דוכן ←
+            </a>
+          </p>
+        )}
       </section>
 
       {/* מחיקה יושבת אחרונה, שקטה, ולא בתוך כרטיס עם כותרת גדולה.

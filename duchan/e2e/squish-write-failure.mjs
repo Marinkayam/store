@@ -34,6 +34,7 @@ async function buildDraft(names) {
     await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
     await page.waitForTimeout(600);
     await page.fill("input[aria-label='שם הסקווישי']", name);
+    await page.click("button[aria-label='נידו']");
     await page.click("button:has-text('הלאה')");
     await page.waitForTimeout(250);
     await page.click("button:has-text('להוסיף לאוסף')");
@@ -123,6 +124,7 @@ await (async () => {
     await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
     await p.waitForTimeout(600);
     await p.fill("input[aria-label='שם הסקווישי']", name);
+    await p.click("button[aria-label='נידו']");
     await p.click("button:has-text('הלאה')");
     await p.waitForTimeout(250);
     await p.click("button:has-text('להוסיף לאוסף')");

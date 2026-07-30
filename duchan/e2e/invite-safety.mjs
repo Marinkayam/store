@@ -52,6 +52,7 @@ async function newUser(user, names) {
     await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
     await page.waitForTimeout(600);
     await page.fill("input[aria-label='שם הסקווישי']", nm);
+    await page.click("button[aria-label='נידו']");
     await page.click("button:has-text('הלאה')");
     await page.waitForTimeout(200);
     await page.click("button:has-text('להוסיף לאוסף')");

@@ -43,6 +43,7 @@ for (const [i, nm] of NAMES.entries()) {
   await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
   await p.waitForTimeout(600);
   await p.fill("input[aria-label='שם הסקווישי']", nm);
+  await p.click("button[aria-label='נידו']");
   await p.click("button:has-text('הלאה')");
   await p.waitForTimeout(300);
 
@@ -164,6 +165,30 @@ const locked = (await p.locator(".sr-only").allTextContents()).join(" | ");
 check("פריט שנעול בטרייד לא מוצג כפתוח לטרייד",
   !/ענן נדיר/.test(locked) || (locked.match(/פתוח לטרייד/g) ?? []).length <= 1,
   locked.slice(0, 120));
+
+/* ── סוג הוא בחירה, לא ברירת מחדל ──
+   "אחר" שסומן מראש השאיר אוספים שלמים אפורים. עכשיו אי אפשר להתקדם
+   בלי לבחור, והשגיאה אומרת מה חסר. */
+await p.goto(`${BASE}/squish/collection`, { waitUntil: "networkidle" });
+await p.waitForTimeout(700);
+await p.click("a:has-text('להוסיף סקווישי')");
+await p.waitForURL("**/squish/new");
+await p.waitForTimeout(600);
+/* טיוטה חדשה נפתחת ריקה גם כשיש אוסף שמור — הכפתור תלוי בזה */
+const firstBtn = await p.locator("button:has-text('להוסיף את הראשון')").count();
+await p.click(firstBtn ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
+await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
+await p.waitForTimeout(600);
+await p.fill("input[aria-label='שם הסקווישי']", "בלי סוג");
+check("שום סוג לא מסומן מראש",
+  (await p.locator("[role=radio][aria-checked=true]").count()) === 0);
+await p.click("button:has-text('הלאה')");
+await p.waitForTimeout(400);
+check("בלי סוג אי אפשר להתקדם", (await p.textContent("body")).includes("בחרי מהרשימה"));
+await p.click("button[aria-label='מים']");
+await p.click("button:has-text('הלאה')");
+await p.waitForTimeout(400);
+check("אחרי בחירה — מתקדמים", (await p.textContent("body")).includes("תוסיפי לו מדבקה"));
 
 check("אין שגיאות ג׳אווהסקריפט", errs.length === 0, errs.slice(0, 2).join(" | "));
 

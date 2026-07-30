@@ -53,6 +53,11 @@ check("וגם לאנדרואיד", sheet.includes("באנדרואיד"));
 await page.click("button:has-text('הבנתי')");
 await page.waitForTimeout(400);
 check("והוא נסגר", !(await page.textContent("body")).includes("כפתור השיתוף"));
+/* ── 5. ההחלטה של מרינה: הזמנה לדוכן, לא קישור למסך ריק ── */
+const meBody = await page.textContent("body");
+check("למי שאין דוכן — הזמנה לפתוח אחד", meBody.includes("פותחים דוכן"));
+check("ולא קישור לדשבורד ריק", !meBody.includes("לדוכן שלי"));
+
 check("אין שגיאות ג׳אווהסקריפט", errs.length === 0, errs.slice(0, 2).join(" | "));
 
 await b.close();

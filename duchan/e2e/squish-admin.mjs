@@ -78,6 +78,7 @@ for (const [i, name] of ["מ1", "מ2", "מ3"].entries()) {
   await kid.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
   await kid.waitForTimeout(600);
   await kid.fill("input[aria-label='שם הסקווישי']", name);
+  await kid.click("button[aria-label='נידו']");
   await kid.click("button:has-text('הלאה')");
   await kid.waitForTimeout(250);
   await kid.click("button:has-text('להוסיף לאוסף')");

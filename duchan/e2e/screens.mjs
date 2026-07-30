@@ -49,6 +49,7 @@ await guest.click("button:has-text('להוסיף את הראשון')");
 await guest.setInputFiles("input[type=file][accept='image/*'] >> nth=0", "e2e/fixtures/square.png");
 await guest.waitForTimeout(600);
 await guest.fill("input[aria-label='שם הסקווישי']", "באו גלקסי");
+await guest.click("button[aria-label='נידו']");
 await shot(guest, "03-הוספה-שלב-1");
 await guest.click("button:has-text('הלאה')");
 await shot(guest, "04-הוספה-שלב-2");

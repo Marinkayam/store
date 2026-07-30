@@ -36,7 +36,8 @@ import { TypeIcon } from "../type-icons";
 
 interface DraftItem {
   name: string;
-  squishy_type: SquishyType;
+  /** null = עוד לא נבחר. "אחר" הוא בחירה, לא ברירת מחדל שקטה. */
+  squishy_type: SquishyType | null;
   custom_type: string;
   size: SquishSize;
   condition: SquishCondition;
@@ -75,7 +76,7 @@ const draftVideos = new Map<string, Blob>();
 let videoSeq = 0;
 const blank = (): DraftItem => ({
   name: "",
-  squishy_type: "other",
+  squishy_type: null,
   custom_type: "",
   size: "medium",
   condition: "good",
@@ -168,6 +169,10 @@ export default function NewCollection() {
     if (!editing || !draft) return;
     if (!editing.imageData && !editing.videoId) {
       setPhotoErr("צריך סרטון או תמונה");
+      return;
+    }
+    if (!editing.squishy_type) {
+      setPhotoErr("איזה סוג הסקווישי? בחרי מהרשימה");
       return;
     }
     let items = [...draft.items];
@@ -436,7 +441,7 @@ export default function NewCollection() {
                   role="radio"
                   aria-checked={on}
                   aria-label={t.label}
-                  onClick={() => setEditing({ ...editing, squishy_type: t.key })}
+                  onClick={() => { setPhotoErr(""); setEditing({ ...editing, squishy_type: t.key }); }}
                   className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 border-[1.5px] text-[11.5px] leading-tight text-center ${
                     on
                       ? "border-[var(--ink)] bg-white font-medium"
@@ -466,6 +471,9 @@ export default function NewCollection() {
             <button
               onClick={() => {
                 if (!editing.imageData && !editing.videoId) { setPhotoErr("צריך סרטון או תמונה"); return; }
+                /* סוג הוא בחירה, לא ברירת מחדל: "אחר" מסומן מראש השאיר
+                   אוספים שלמים בלי הקשת של "כמה נידו, כמה מים". */
+                if (!editing.squishy_type) { setPhotoErr("איזה סוג הסקווישי? בחרי מהרשימה"); return; }
                 setPhotoErr("");
                 setEditStep(2);
               }}

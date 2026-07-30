@@ -109,6 +109,8 @@ export async function newCollector(browser, user, names, errs = []) {
     await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
     await page.waitForTimeout(600);
     await page.fill("input[aria-label='שם הסקווישי']", it.name);
+    /* סוג הוא שדה חובה מאז שירדה ברירת המחדל "אחר" */
+    await page.click(`button[aria-label='${it.type ?? "נידו"}']`);
     await page.click("button:has-text('הלאה')");
     await page.waitForTimeout(250);
     if (it.sticker) await page.click(`button[aria-label='${it.sticker}']`);
