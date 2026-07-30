@@ -77,6 +77,10 @@ node scripts/migrate.mjs "postgresql://postgres@localhost:5433/duchan" >"$LOGS/m
 # ההרשאות הן תצלום רגע: כל טבלה חדשה צריכה grant מפורש, ולכן זה רץ
 # **אחרי** המיגרציות ולא לפניהן.
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/tests/local-stack/postgrest-setup.sql >/dev/null 2>&1
+# ה-grant הגורף שם פותח מחדש גם פונקציות שמיגרציה 0040 נעלה לשרת
+# בלבד — ואז הבדיקה המקומית עוברת בזמן שפרודקשן חסום, או להפך.
+# מריצים את הנעילה שוב, אחרונה, כדי שהמקומי יתנהג כמו פרודקשן.
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0040_function_grants.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
 up 3001 || { say "מפעיל PostgREST"; ("$PGREST" "$PGREST_CONF" >"$LOGS/postgrest.log" 2>&1 &); sleep 5; }

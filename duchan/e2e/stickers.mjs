@@ -40,7 +40,7 @@ await p.waitForURL("**/squish/new");
 const NAMES = ["ענן נדיר", "לב אהוב", "כוכב חדש"];
 for (const [i, nm] of NAMES.entries()) {
   await p.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-  await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
+  await p.setInputFiles("[data-testid=squish-media]", IMG);
   await p.waitForSelector("input[aria-label='שם הסקווישי']");
   await p.fill("input[aria-label='שם הסקווישי']", nm);
   await p.click("button:has-text('הלאה')");
@@ -185,7 +185,7 @@ await p.waitForTimeout(600);
 /* טיוטה חדשה נפתחת ריקה גם כשיש אוסף שמור — הכפתור תלוי בזה */
 const firstBtn = await p.locator("button:has-text('להוסיף את הראשון')").count();
 await p.click(firstBtn ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
+await p.setInputFiles("[data-testid=squish-media]", IMG);
 await p.waitForSelector("input[aria-label='שם הסקווישי']");
 await p.fill("input[aria-label='שם הסקווישי']", "בלי סוג");
 await p.click("button:has-text('הלאה')");

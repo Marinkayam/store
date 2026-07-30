@@ -47,7 +47,7 @@ await shot(guest, "02-פתיחה-מסך-2");
 /* ההוספה היא שיחה: תמונה ← שם ← סוג ← גודל ← מצב ← טרייד ← תוספות */
 await guest.goto(`${BASE}/squish/new`, { waitUntil: "networkidle" });
 await guest.click("button:has-text('להוסיף את הראשון')");
-await guest.setInputFiles("input[type=file][accept='image/*'] >> nth=0", "e2e/fixtures/square.png");
+await guest.setInputFiles("[data-testid=squish-media]", "e2e/fixtures/square.png");
 await guest.waitForSelector("input[aria-label='שם הסקווישי']");
 await guest.fill("input[aria-label='שם הסקווישי']", "באו גלקסי");
 await shot(guest, "03-הוספה-שאלת-שם");

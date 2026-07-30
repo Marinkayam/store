@@ -119,7 +119,6 @@ export default function NewCollection() {
     setStage("media");
     setReachedIdx(0);
     setPhotoErr("");
-    setPickerOpen(false);
   };
   const startEdit = (it: DraftItem, i: number) => {
     setEditing(it);
@@ -134,9 +133,6 @@ export default function NewCollection() {
     setStage("media");
     setReachedIdx(0);
   };
-  /* בחירת הצילום נפתחת רק אחרי לחיצה על הפלוס — הריבוע עצמו הוא
-     הכפתור, והבחירה בין סרטון/תמונה/גלריה מופיעה כשמבקשים אותה */
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [hasAccount, setHasAccount] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiErr, setAiErr] = useState("");
@@ -161,8 +157,6 @@ export default function NewCollection() {
   const [droppedNote, setDroppedNote] = useState("");
   const [photoErr, setPhotoErr] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLInputElement>(null);
-  const photoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabaseBrowser().auth.getUser().then(({ data }) => setHasAccount(!!data.user));
@@ -462,12 +456,17 @@ export default function NewCollection() {
 
     return (
       <main className="px-5 py-6 flex flex-col gap-3 max-w-md mx-auto">
-        <input ref={fileRef} type="file" accept="image/*" hidden
-          onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
-        <input ref={videoRef} type="file" accept="video/*" capture="environment" hidden
-          onChange={(e) => e.target.files?.[0] && pickVideo(e.target.files[0])} />
-        <input ref={photoRef} type="file" accept="image/*" capture="environment" hidden
-          onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
+        {/* קלט אחד, בלי capture: לחיצה פותחת את חלון המכשיר עצמו —
+            מצלמה או גלריה — בדיוק כמו העלאת סטטוס. אנחנו לא בונים
+            מסך בחירה משלנו, רק מזהים אחר כך אם חזר סרטון או תמונה. */}
+        <input ref={fileRef} type="file" accept="image/*,video/*" data-testid="squish-media" hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (!f) return;
+            if (f.type.startsWith("video")) pickVideo(f);
+            else pickPhoto(f);
+          }} />
 
         <div className="flex items-center justify-between">
           <h1 className="t-title">{editIndex === null ? "סקווישי חדש" : "עריכה"}</h1>
@@ -487,7 +486,7 @@ export default function NewCollection() {
               /* הריבוע הריק הוא כפתור פלוס: לוחצים, ואז מופיעה הבחירה
                  בין סרטון, תמונה וגלריה — לא שלושה כפתורים מראש */
               <button
-                onClick={() => setPickerOpen(true)}
+                onClick={() => fileRef.current?.click()}
                 aria-label="להוסיף סרטון או תמונה"
                 className="w-full h-full flex flex-col items-center justify-center gap-3 transition-transform active:scale-[0.99]"
               >
@@ -505,7 +504,7 @@ export default function NewCollection() {
                 </span>
                 <span className="flex flex-col items-center gap-0.5" aria-hidden>
                   <span className="text-[14.5px] font-medium text-[var(--ink)]">מוסיפים סקווישי לאוסף שלך</span>
-                  <span className="text-[12.5px] text-[var(--muted)]">לוחצים כאן ומצלמים אותו</span>
+                  <span className="text-[12.5px] text-[var(--muted)]">לוחצים כאן ומצלמים אותו — סרטון קצר הכי כיף</span>
                 </span>
               </button>
             )}
@@ -528,36 +527,15 @@ export default function NewCollection() {
             </span>
           </div>
           {editing.imageData && (
-            <button onClick={() => setStage("media")} className="text-[12px] text-[var(--muted)] underline">
+            <button onClick={() => fileRef.current?.click()} className="text-[12px] text-[var(--muted)] underline">
               להחליף תמונה
             </button>
           )}
         </div>
 
         {/* ── השיחה ── */}
-        {stage === "media" && photoErr && !pickerOpen && !editing.imageData && (
+        {stage === "media" && photoErr && (
           <p className="t-small text-[var(--danger)] text-center">{photoErr}</p>
-        )}
-        {stage === "media" && (pickerOpen || editing.imageData) && (
-          <Ask q={editing.imageData ? "רוצה תמונה אחרת?" : "איך נצלם אותו?"}>
-            {/* גלולות נקיות: ראשית אחת בצבע, שתי משניות בקרם — בלי
-                מסגרות, בלי צללים, בלי אייקונים צפופים. */}
-            <button onClick={() => videoRef.current?.click()} className="pill pill-primary w-full">
-              לצלם סרטון
-            </button>
-            <p className="text-[12.5px] text-[var(--muted)] text-center -mt-1">
-              רואים איך הוא נמעך
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => photoRef.current?.click()} className="pill pill-quiet flex-1">
-                לצלם תמונה
-              </button>
-              <button onClick={() => fileRef.current?.click()} className="pill pill-quiet flex-1">
-                מהגלריה
-              </button>
-            </div>
-            {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
-          </Ask>
         )}
 
         {show("name") && (stage === "name" ? (
