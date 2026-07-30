@@ -51,13 +51,25 @@ const PATHS = [
 // שגיאות שאין להן משמעות לבדיקה: תמונות חסרות בסביבה המקומית
 // fonts.googleapis חסום בסביבת הבדיקה בלבד; בפרודקשן הוא נטען, ובכל מקרה
 // כשל בפונט נופל לפונט המערכת ולא שובר שום דבר
-const IGNORE = /favicon|manifest|_next\/image|duchan-media|ERR_ABORTED|fonts\.googleapis|ERR_TUNNEL/i;
+/* רעש שאינו מעיד על המוצר.
+   `_vercel/insights` הוא סקריפט האנליטיקס שוורסל מגישה בעצמה: בבילד
+   פרודקשן הוא מוזרק לכל דף, ומקומית אין מי שיגיש אותו. הבדיקות רצות
+   מול בילד ולא מול שרת פיתוח — כי שרת פיתוח מקמפל לפי דרישה וזה מקור
+   של פלייקים — ולכן ה-404 הזה מופיע בכל דף ואומר על הקוד בדיוק כלום. */
+const IGNORE = /favicon|manifest|_next\/image|duchan-media|_vercel|ERR_ABORTED|fonts\.googleapis|ERR_TUNNEL/i;
 
 for (const [path, label] of PATHS) {
   const errors = [];
   page.removeAllListeners("console");
   page.removeAllListeners("pageerror");
-  page.on("console", (m) => m.type() === "error" && !IGNORE.test(m.text()) && errors.push(m.text()));
+  /* גם הכתובת ולא רק הטקסט: הודעת הקונסול על משאב שנכשל היא "Failed to
+     load resource…" בלי הכתובת בתוכה, ולכן סינון לפי טקסט לבדו לא יכול
+     לדעת *מה* נכשל. הכתובת יושבת ב-location(). */
+  page.on("console", (m) => {
+    if (m.type() !== "error") return;
+    const what = `${m.text()} ${m.location()?.url ?? ""}`;
+    if (!IGNORE.test(what)) errors.push(m.text());
+  });
   page.on("pageerror", (e) => errors.push(String(e)));
 
   const res = await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" }).catch(() => null);
