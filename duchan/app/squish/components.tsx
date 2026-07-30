@@ -8,7 +8,7 @@
  * התמונה נושאת אותו, והתגית היא סימן היכר ולא סטטוס טכני.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import {
   conditionLabel,
@@ -81,6 +81,40 @@ export function SwapGlyph({ size = 11 }: { size?: number }) {
 }
 
 /** כרטיס פריט. גדול, ויזואלי, והמדיה נושאת אותו. */
+/**
+ * וידאו שמתנהג כמו גיף: מתנגן בשקט כשהוא על המסך, נעצר כשגוללים
+ * ממנו הלאה. ה-IntersectionObserver הוא לא קישוט — שישה סרטונים
+ * שמתנגנים ביחד מקפיאים גלילה בטלפון ישן, ולכן רק מה שנראה חי.
+ */
+export function GifVideo({ src, poster, className }: { src: string; poster?: string | null; className?: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) v.play().catch(() => {});
+        else v.pause();
+      },
+      { threshold: 0.35 }
+    );
+    io.observe(v);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      poster={poster ?? undefined}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      className={className}
+    />
+  );
+}
+
 export function SquishyCard({
   item,
   onClick,
@@ -103,14 +137,7 @@ export function SquishyCard({
     >
       <div className="relative aspect-square bg-[var(--cream)] flex items-center justify-center overflow-hidden">
         {video ? (
-          <video
-            src={video}
-            poster={poster ?? undefined}
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-          />
+          <GifVideo src={video} poster={poster} className="w-full h-full object-cover" />
         ) : poster ? (
           <img src={poster} alt="" className="w-full h-full object-cover" />
         ) : (
@@ -123,17 +150,6 @@ export function SquishyCard({
             <StickerCorner item={item} isFavorite={isFavorite} />
             <StickerNames item={item} isFavorite={isFavorite} />
           </>
-        )}
-        {video && (
-          <span
-            className="absolute bottom-1.5 end-1.5 w-5 h-5 bg-black/50 text-white flex items-center justify-center"
-            style={{ borderRadius: "999px" }}
-            aria-label="יש סרטון"
-          >
-            <svg viewBox="0 0 12 12" width="7" height="7" fill="currentColor" aria-hidden>
-              <path d="M3 2 L10 6 L3 10 z" />
-            </svg>
-          </span>
         )}
       </div>
       <div className="pt-1.5 px-0.5">

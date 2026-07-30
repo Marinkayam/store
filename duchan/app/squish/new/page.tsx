@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { track } from "@/lib/squish-analytics";
 import { StickerPicker } from "../stickers";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib/media";
+import { gifVideo, squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import PhoneVerify from "@/app/phone-verify";
 import {
@@ -169,6 +169,8 @@ export default function NewCollection() {
   const [failure, setFailure] = useState<{ index: number; name: string; reason: string; cid: string } | null>(null);
   const [droppedNote, setDroppedNote] = useState("");
   const [photoErr, setPhotoErr] = useState("");
+  /** "מכינים את הסרטון…" — הדחיסה לוקחת כאורך הסרטון, ורואים את זה */
+  const [prepNote, setPrepNote] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   /** נהיה true אחרי שניסינו לשחזר — לפני זה אסור לאפקט השמירה לרוץ,
@@ -233,10 +235,15 @@ export default function NewCollection() {
       setPhotoErr(ok.reason);
       return;
     }
+    /* קליל כמו גיף: ריבוע, בלי פסקול, ~1MB במקום 20. לוקח כאורך
+       הסרטון, ולכן אומרים מה קורה. אם הדפדפן לא מסוגל — המקור עולה. */
+    setPrepNote("מכינים את הסרטון… כמה שניות");
+    const light = await gifVideo(file).catch(() => null);
+    setPrepNote("");
     const id = `v${++videoSeq}`;
-    draftVideos.set(id, file);
+    draftVideos.set(id, light ?? file);
     // פוסטר מיידי, כדי שהכרטיס לא יהיה ריבוע שחור בזמן הבנייה
-    const poster = await posterFrom(URL.createObjectURL(file));
+    const poster = await posterFrom(URL.createObjectURL(light ?? file));
     const reader = new FileReader();
     reader.onload = () => {
       setEditing((e) => (e ? { ...e, videoId: id, imageData: reader.result as string } : e));
@@ -592,6 +599,9 @@ export default function NewCollection() {
         </div>
 
         {/* ── השיחה ── */}
+        {prepNote && (
+          <p className="t-small text-[var(--muted)] text-center">{prepNote}</p>
+        )}
         {stage === "media" && photoErr && (
           <p className="t-small text-[var(--danger)] text-center">{photoErr}</p>
         )}

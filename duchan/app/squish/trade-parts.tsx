@@ -9,13 +9,13 @@
 
 import { mediaUrl } from "@/lib/media";
 import type { SquishItem } from "@/lib/squish";
-import { SquishOutline, SwapGlyph } from "./components";
+import { SquishOutline, SwapGlyph, GifVideo } from "./components";
 
 export function Media({ item }: { item: Pick<SquishItem, "image_key" | "video_key" | "poster_key"> }) {
   const poster = mediaUrl(item.poster_key) ?? mediaUrl(item.image_key);
   const video = mediaUrl(item.video_key);
   if (video)
-    return <video src={video} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />;
+    return <GifVideo src={video} poster={poster} className="w-full h-full object-cover" />;
   if (poster) return <img src={poster} alt="" className="w-full h-full object-cover" />;
   return <SquishOutline size={40} />;
 }

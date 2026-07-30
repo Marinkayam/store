@@ -154,6 +154,80 @@ export function validateGalleryVideo(file: File): Promise<{ ok: true } | { ok: f
   });
 }
 
+/**
+ * הופך סרטון גלריה לקליל כמו גיף: ריבוע 720, קצב סיביות של הקלטה,
+ * ו**בלי פסקול** — סרטון מהגלריה של ילדה מגיע עם קולות של הבית,
+ * וההקלטה שלנו ממילא בלי אודיו בכוונה. התוצאה: 20MB מהאייפון
+ * הופכים ל~1MB.
+ *
+ * זה לא ffmpeg: הסרטון מנוגן לקנבס בזמן אמת ומוקלט מחדש עם
+ * MediaRecorder — כלים שכל דפדפן מביא איתו. המחיר הוא המתנה באורך
+ * הסרטון (עד 10 שניות), והמסך אומר את זה. אם משהו בדרך לא נתמך —
+ * מחזירים null והקובץ המקורי עולה כמו קודם; קליל זה שיפור, לא תנאי.
+ */
+export async function gifVideo(file: File | Blob): Promise<Blob | null> {
+  if (typeof MediaRecorder === "undefined") return null;
+  const url = URL.createObjectURL(file);
+  const v = document.createElement("video");
+  v.src = url;
+  v.muted = true;
+  v.playsInline = true;
+  try {
+    await new Promise<void>((res, rej) => {
+      v.onloadedmetadata = () => res();
+      v.onerror = () => rej(new Error("decode"));
+      setTimeout(() => rej(new Error("timeout")), 5000);
+    });
+    if (!v.videoWidth) return null;
+
+    const side = 720;
+    const c = document.createElement("canvas");
+    c.width = c.height = side;
+    const ctx = c.getContext("2d");
+    if (!ctx || !c.captureStream) return null;
+
+    const mimeType = MediaRecorder.isTypeSupported("video/mp4") ? "video/mp4" : "video/webm";
+    const rec = new MediaRecorder(c.captureStream(24), { mimeType, videoBitsPerSecond: 1_500_000 });
+    const chunks: BlobPart[] = [];
+    rec.ondataavailable = (e) => chunks.push(e.data);
+    const recorded = new Promise<Blob>((res) => {
+      rec.onstop = () => res(new Blob(chunks, { type: mimeType }));
+    });
+
+    let raf = 0;
+    const draw = () => {
+      const s = Math.min(v.videoWidth, v.videoHeight);
+      ctx.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, side, side);
+      raf = requestAnimationFrame(draw);
+    };
+
+    rec.start();
+    await v.play();
+    draw();
+    await new Promise<void>((res) => {
+      let finished = false;
+      const stop = () => {
+        if (finished) return;
+        finished = true;
+        cancelAnimationFrame(raf);
+        if (rec.state !== "inactive") rec.stop();
+        res();
+      };
+      v.onended = stop;
+      // עצירה קשיחה: גם אם onended לא הגיע, לא מקליטים מעבר לתקרה
+      setTimeout(stop, Math.min(v.duration || MAX_VIDEO_SECONDS, MAX_VIDEO_SECONDS) * 1000 + 400);
+    });
+    const out = await recorded;
+    // אם היצוא לא קטן מהמקור — אין סיבה להחליף אותו
+    return out.size > 50_000 && out.size < file.size ? out : null;
+  } catch {
+    return null;
+  } finally {
+    v.pause();
+    URL.revokeObjectURL(url);
+  }
+}
+
 export interface RecorderHandle {
   stop: () => void;
   cancel: () => void;

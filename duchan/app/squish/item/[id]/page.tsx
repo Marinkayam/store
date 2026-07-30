@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { mediaUrl, squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib/media";
+import { gifVideo, mediaUrl, squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import {
   SQUISH_CONDITIONS,
@@ -133,13 +133,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       showToast(ok.reason);
       return;
     }
+    /* קליל כמו גיף: ריבוע, בלי פסקול, ~1MB במקום 20 */
+    setMediaBusy("מכינים את הסרטון… כמה שניות");
+    const light = (await gifVideo(file).catch(() => null)) ?? file;
     setMediaBusy("מעלים סרטון…");
     try {
-      const up = await uploadBlob("squish-video", file);
+      const up = await uploadBlob("squish-video", light);
       if ("error" in up) throw new Error(up.error);
       // פוסטר חובה, אחרת הרשת מציגה ריבוע שחור עד שהסרטון נטען
       let posterKey: string | null = null;
-      const poster = await posterFrom(URL.createObjectURL(file));
+      const poster = await posterFrom(URL.createObjectURL(light));
       if (poster) {
         const pu = await uploadBlob("squish-poster", poster);
         if (!("error" in pu)) posterKey = pu.key;
