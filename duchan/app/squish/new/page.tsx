@@ -19,7 +19,7 @@ import {
   type SquishSize,
   type SquishyType,
 } from "@/lib/squish";
-import { SavingDumplings, SquishOutline, SquishPlaceholder, SwapGlyph } from "../components";
+import { SavingDumplings, SquishPlaceholder, SwapGlyph } from "../components";
 import { TypeDot, TypeIcon } from "../type-icons";
 
 /**
@@ -141,6 +141,12 @@ export default function NewCollection() {
     setPhotoErr("");
   };
   const closeEditor = () => {
+    /* בלי אף סקווישי אין גלריה לחזור אליה — "ביטול" חוזר למועדון */
+    if (!draft?.items.length) {
+      store.del(EDIT_KEY);
+      router.push("/squish");
+      return;
+    }
     setEditing(null);
     setEditIndex(null);
     setStage("media");
@@ -208,6 +214,14 @@ export default function NewCollection() {
       }
     } catch { /* טיוטה פגומה לא חוסמת התחלה חדשה */ }
     hydratedRef.current = true;
+
+    /* אין מסך פתיחה נפרד: אם אין עדיין כלום, העורך עם הפלוס הוא
+       המסך הראשון. מסך "איזה סקווישים יש לך?" היה עוד לחיצה שאומרת
+       את מה שהפלוס כבר אומר. */
+    if (d.items.length === 0 && !store.get(EDIT_KEY)) {
+      setEditing(blank());
+      setEditIndex(null);
+    }
   }, []);
 
   /* כל שינוי בפריט הפתוח נשמר מיד — רענון באמצע שאלה לא מוחק כלום */
@@ -848,25 +862,6 @@ export default function NewCollection() {
 
   const count = draft.items.length;
 
-  /* ── 1: המסך הראשון ── */
-  if (draft.step === 1 && count === 0) {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center px-6 gap-5 text-center">
-        <SquishOutline size={72} />
-        <h1 className="t-title">איזה סקווישים יש לך?</h1>
-        <p className="t-sub max-w-[18rem]">
-          מצלמים אחד אחד, ובונים גלריה שאפשר להראות לחברות.
-        </p>
-        <button
-          onClick={() => { setEditing(blank()); setEditIndex(null); }}
-          className="btn btn-primary w-full max-w-sm"
-        >
-          להוסיף את הראשון ←
-        </button>
-      </main>
-    );
-  }
-
   /* ── 4: פרטים אחרונים והרשמה ── */
   if (draft.step === 4) {
     return (
@@ -957,14 +952,14 @@ export default function NewCollection() {
   /* ── 2/3: הגלריה נבנית ── */
   const ready = count >= MIN_ITEMS;
   return (
-    <main className="px-4 py-5 flex flex-col gap-4">
+    <main className="px-5 py-6 flex flex-col gap-4 max-w-md mx-auto">
       <Progress step={ready ? 2 : 1} />
       <div className="text-center">
         {ready && <div className="text-4xl squish-breathe mb-1">🎉</div>}
         <h1 className="t-title">{ready ? "יש לך גלריה משלך!" : "התחלה מעולה"}</h1>
         <p className="t-sub mt-1.5">
           {ready
-            ? "עכשיו בחרי אילו סקווישים חברות יכולות להציע עליהם טרייד."
+            ? "אפשר להוסיף עוד, או לשמור את האוסף ולהראות לחברות."
             : count === 1
               ? "נוסיף עוד שניים כדי לפתוח את הגלריה שלך."
               : `עוד ${MIN_ITEMS - count} והגלריה שלך מוכנה.`}
@@ -977,7 +972,7 @@ export default function NewCollection() {
 
       <div className="grid grid-cols-2 gap-2.5">
         {draft.items.map((it, i) => (
-          <div key={i} className="bg-white border border-[var(--line)] overflow-hidden">
+          <div key={i} className="bg-white rounded-[16px] overflow-hidden">
             <button
               onClick={() => { setEditing(it); setEditIndex(i); }}
               className="block w-full aspect-square bg-[var(--cream)] overflow-hidden flex items-center justify-center"
@@ -998,10 +993,10 @@ export default function NewCollection() {
                 }}
                 aria-pressed={it.open_for_trade}
                 aria-label={`פתוח לטרייד: ${it.name || "סקווישי"}`}
-                className={`mt-1 w-full text-[11.5px] py-1 border flex items-center justify-center gap-1.5 ${
+                className={`mt-1 w-full text-[11.5px] py-1.5 rounded-full flex items-center justify-center gap-1.5 ${
                   it.open_for_trade
-                    ? "bg-[var(--lavender)] border-[var(--lavender)] text-white"
-                    : "border-[var(--line)] text-[var(--muted)]"
+                    ? "bg-[var(--lavender)] text-white"
+                    : "bg-[var(--cream)] text-[var(--muted)]"
                 }`}
               >
                 {/* המדבקה עצמה, ולא רק צבע רקע: זו בדיוק המדבקה שתופיע
@@ -1011,9 +1006,8 @@ export default function NewCollection() {
                   className="w-4 h-4 shrink-0 flex items-center justify-center"
                   style={{
                     borderRadius: "999px",
-                    background: it.open_for_trade ? "#FFFFFF" : "transparent",
+                    background: it.open_for_trade ? "#FFFFFF" : "white",
                     color: it.open_for_trade ? "var(--lavender)" : "var(--faint)",
-                    border: it.open_for_trade ? "none" : "1.2px solid var(--line)",
                   }}
                   aria-hidden
                 >
@@ -1026,17 +1020,25 @@ export default function NewCollection() {
         ))}
         <button
           onClick={() => { setEditing(blank()); setEditIndex(null); }}
-          className="border border-dashed border-[var(--line)] aspect-square flex flex-col items-center justify-center gap-1.5 text-[var(--muted)]"
+          className="bg-[var(--cream)] rounded-[16px] aspect-square flex flex-col items-center justify-center gap-2 text-[var(--muted)] transition-transform active:scale-[0.99]"
         >
-          <span className="text-2xl leading-none">+</span>
-          <span className="text-[12.5px]">להוסיף סקווישי</span>
+          <span
+            className="w-11 h-11 rounded-full flex items-center justify-center text-white"
+            style={{ background: "var(--lavender-deep)" }}
+            aria-hidden
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </span>
+          <span className="text-[12.5px] font-medium">להוסיף סקווישי</span>
         </button>
       </div>
 
       <button
         onClick={() => set({ step: 4 })}
         disabled={!ready}
-        className="btn btn-primary disabled:opacity-40"
+        className="pill pill-primary"
       >
         {ready ? "לשמור את האוסף ←" : `צריך ${MIN_ITEMS} סקווישים`}
       </button>

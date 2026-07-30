@@ -100,7 +100,9 @@ export async function asUser(pool, userId, sql, params = []) {
  */
 export async function addSquishy(page, item, isFirst = false) {
   const it = typeof item === "string" ? { name: item } : item;
-  await page.click(isFirst ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
+  /* בפריט הראשון אין כפתור — העורך עם הפלוס הוא המסך הראשון */
+  if (isFirst) await page.waitForSelector("button[aria-label='להוסיף סרטון או תמונה']");
+  else await page.click("button:has-text('להוסיף סקווישי')");
   await page.setInputFiles("[data-testid=squish-media]", IMG);
   await page.waitForSelector("input[aria-label='שם הסקווישי']");
   await page.fill("input[aria-label='שם הסקווישי']", it.name);
