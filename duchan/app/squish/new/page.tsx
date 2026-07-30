@@ -473,15 +473,25 @@ export default function NewCollection() {
         </div>
 
         {/* הריבוע נעוץ למעלה מהרגע הראשון — הכרטיס שנבנה. לפני שיש
-            תמונה יושב בו הקמע כפלייסהולדר, שיהיה ברור מה הולך למלא
-            את המקום הזה. */}
-        <div className="flex flex-col items-center gap-1 pb-1">
-          <div className="relative w-[210px] aspect-square rounded-[14px] overflow-hidden bg-[var(--cream)]">
+            תמונה הוא מסגרת מקווקוות עם הקמע נושם בפנים: מקום ששמור
+            למישהו, לא בלוק ריק. */}
+        <div className="flex flex-col items-center gap-1.5 pb-1">
+          <div
+            className={`relative w-[210px] aspect-square rounded-[22px] overflow-hidden ${
+              editing.imageData ? "bg-[var(--cream)]" : "border-2 border-dashed border-[var(--stone)]"
+            }`}
+            style={editing.imageData ? undefined : {
+              background: "linear-gradient(160deg, color-mix(in srgb, var(--blush) 45%, white), var(--cream))",
+            }}
+          >
             {editing.imageData ? (
               <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center opacity-50" aria-hidden>
-                <SquishPlaceholder size={120} />
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2" aria-hidden>
+                <div className="squish-breathe">
+                  <SquishPlaceholder size={110} />
+                </div>
+                <span className="text-[12px] text-[var(--muted)]">כאן תופיע התמונה שלו</span>
               </div>
             )}
             {editing.videoId && (
@@ -502,12 +512,10 @@ export default function NewCollection() {
               ))}
             </span>
           </div>
-          {editing.imageData ? (
+          {editing.imageData && (
             <button onClick={() => setStage("media")} className="text-[12px] text-[var(--muted)] underline">
               להחליף תמונה
             </button>
-          ) : (
-            <p className="text-[12px] text-[var(--muted)]">כאן תופיע התמונה שלו</p>
           )}
         </div>
 
@@ -515,22 +523,51 @@ export default function NewCollection() {
         {stage === "media" && (
           <Ask q={editing.imageData ? "רוצה תמונה אחרת?" : "מוסיפים סקווישי לאוסף שלך"}>
             {!editing.imageData && (
-              <p className="text-[13px] text-[var(--muted)] leading-relaxed -mt-1">
-                כדי שהוא ייכנס לאוסף צריך לצלם אותו — סרטון או תמונה.
+              <p className="text-[13.5px] text-[var(--muted)] leading-relaxed -mt-1">
+                כדי שהוא ייכנס לאוסף מצלמים אותו — סרטון או תמונה.
               </p>
             )}
-            <button onClick={() => videoRef.current?.click()} className="btn btn-primary">
-              🎥 לצלם סרטון
+            {/* אריחים מלאים, בלי מסגרות: הסרטון הוא הבחירה המומלצת
+                והוא היחיד בצבע; השניים האחרים שקטים אבל באותה שפה. */}
+            <button
+              onClick={() => videoRef.current?.click()}
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-[18px] text-white text-start transition-transform active:translate-y-px"
+              style={{ background: "var(--lavender-deep)", boxShadow: "0 6px 18px color-mix(in srgb, var(--lavender) 45%, transparent)" }}
+            >
+              <span className="w-10 h-10 shrink-0 rounded-full bg-white/20 flex items-center justify-center" aria-hidden>
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2.5" y="6.5" width="13" height="11" rx="3" />
+                  <path d="M15.5 10.5l5-2.5v8l-5-2.5" />
+                </svg>
+              </span>
+              <span className="flex flex-col">
+                <span className="text-[15.5px] font-semibold leading-tight">לצלם סרטון</span>
+                <span className="text-[12.5px] text-white/85 leading-tight mt-0.5">רואים איך הוא נמעך</span>
+              </span>
             </button>
-            <p className="text-[12px] text-[var(--muted)] text-center -mt-1">
-              סרטון קצר הכי טוב כדי לראות איך הוא נמעך
-            </p>
             <div className="flex gap-2">
-              <button onClick={() => photoRef.current?.click()} className="btn btn-secondary flex-1 t-small">
-                לצלם תמונה
+              <button
+                onClick={() => photoRef.current?.click()}
+                className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-[16px] transition-transform active:translate-y-px"
+                style={{ background: "color-mix(in srgb, var(--blush) 55%, white)" }}
+              >
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M4 8h2.2l1.5-2.2h8.6L17.8 8H20a1.5 1.5 0 0 1 1.5 1.5V18A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9.5A1.5 1.5 0 0 1 4 8Z" />
+                  <circle cx="12" cy="13.3" r="3.4" />
+                </svg>
+                <span className="text-[13px] font-medium">לצלם תמונה</span>
               </button>
-              <button onClick={() => fileRef.current?.click()} className="btn btn-secondary flex-1 t-small">
-                לבחור מהגלריה
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-[16px] transition-transform active:translate-y-px"
+                style={{ background: "var(--sand)" }}
+              >
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+                  <circle cx="9" cy="10" r="1.7" />
+                  <path d="M3.5 16.5l4.8-4.3 3.6 3.2 3.4-2.9 5.2 4" />
+                </svg>
+                <span className="text-[13px] font-medium">מהגלריה</span>
               </button>
             </div>
             {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
