@@ -65,16 +65,17 @@ export function StickerPicker({
               onClick={() => toggle(s)}
               aria-pressed={on}
               aria-label={s.label}
-              className={`flex items-center gap-2 border-[1.5px] px-2.5 py-2.5 text-start ${
-                on ? "border-[var(--ink)] bg-white" : "border-[var(--line)]"
+              className={`flex items-center gap-2 rounded-full px-3 py-2.5 text-start transition-transform active:translate-y-px ${
+                on ? "font-medium" : "bg-[var(--cream)]"
               }`}
+              style={on ? { background: `color-mix(in srgb, ${s.bg} 30%, white)` } : undefined}
             >
               <span
                 className="w-6 h-6 shrink-0 flex items-center justify-center text-[13px]"
                 style={
                   on
                     ? { background: s.bg, color: s.fg, borderRadius: "999px" }
-                    : { border: "1.5px solid var(--line)", color: "var(--faint)", borderRadius: "999px" }
+                    : { background: "white", color: "var(--faint)", borderRadius: "999px" }
                 }
                 aria-hidden
               >

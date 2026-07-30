@@ -152,6 +152,47 @@ h3 {
   opacity: 0.4;
 }
 
+/* ── גלולות — שפת הכפתורים של סקוויש קלאב ──
+   בלי מסגרות: היררכיה נעשית במילוי. ראשי = לבנדר כהה עם טקסט לבן,
+   שקט = קרם. מצב נבחר בצ׳יפים = דיו מלא, לא קו מסביב. */
+.pill {
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.875rem; /* 46px — מעל יעד המגע */
+  font-weight: 500;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.pill:active:not(:disabled) { transform: translateY(1px); }
+.pill:disabled { opacity: 0.4; }
+.pill-primary {
+  background: var(--lavender-deep);
+  color: var(--white);
+  min-height: 3.25rem; /* 52px */
+  font-size: 0.96875rem;
+}
+.pill-quiet {
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+.chip {
+  border-radius: 999px;
+  padding: 0.625rem 1rem;
+  font-size: 0.84375rem;
+  background: var(--cream);
+  color: var(--ink);
+  transition: transform 0.12s ease;
+}
+.chip:active { transform: translateY(1px); }
+.chip[aria-pressed="true"], .chip[aria-checked="true"] {
+  background: var(--ink);
+  color: var(--white);
+  font-weight: 500;
+}
+
 /* שדה שנראה כמו הטקסט שהוא עורך.
    משמש במסך "הדוכן שלי", שבו העריכה קורית על הדוכן עצמו ולא בטופס נפרד:
    השם נערך במקום שבו השם מופיע.

@@ -407,7 +407,7 @@ export default function NewCollection() {
     const Done = ({ t, q, children }: { t: Stage; q: string; children: React.ReactNode }) => (
       <button
         onClick={() => setStage(t)}
-        className="w-full flex items-center gap-2.5 bg-white rounded-[var(--r)] px-3.5 py-2.5 text-start"
+        className="w-full flex items-center gap-2.5 bg-white rounded-[16px] px-4 py-3 text-start"
         aria-label={`לשנות: ${q}`}
       >
         <span className="text-[12px] text-[var(--muted)] shrink-0">{q}</span>
@@ -415,7 +415,7 @@ export default function NewCollection() {
       </button>
     );
     const Ask = ({ q, children }: { q: string; children: React.ReactNode }) => (
-      <div className="bg-white rounded-[calc(var(--r)+4px)] p-4 flex flex-col gap-2.5">
+      <div className="bg-white rounded-[20px] p-5 flex flex-col gap-3">
         <div className="t-body font-medium">{q}</div>
         {children}
       </div>
@@ -457,7 +457,7 @@ export default function NewCollection() {
     }
 
     return (
-      <main className="px-4 py-5 flex flex-col gap-2.5 max-w-md mx-auto">
+      <main className="px-5 py-6 flex flex-col gap-3 max-w-md mx-auto">
         <input ref={fileRef} type="file" accept="image/*" hidden
           onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
         <input ref={videoRef} type="file" accept="video/*" capture="environment" hidden
@@ -472,26 +472,19 @@ export default function NewCollection() {
           </button>
         </div>
 
-        {/* הריבוע נעוץ למעלה מהרגע הראשון — הכרטיס שנבנה. לפני שיש
-            תמונה הוא מסגרת מקווקוות עם הקמע נושם בפנים: מקום ששמור
-            למישהו, לא בלוק ריק. */}
+        {/* הריבוע נעוץ למעלה מהרגע הראשון — הכרטיס שנבנה. אותו רוחב
+            בדיוק כמו הכרטיסים שמתחתיו: עמודה אחת נקייה, לא שני
+            רוחבים שמתחרים. לפני שיש תמונה הקמע נושם בו בשקט. */}
         <div className="flex flex-col items-center gap-1.5 pb-1">
-          <div
-            className={`relative w-[210px] aspect-square rounded-[22px] overflow-hidden ${
-              editing.imageData ? "bg-[var(--cream)]" : "border-2 border-dashed border-[var(--stone)]"
-            }`}
-            style={editing.imageData ? undefined : {
-              background: "linear-gradient(160deg, color-mix(in srgb, var(--blush) 45%, white), var(--cream))",
-            }}
-          >
+          <div className="relative w-full aspect-square rounded-[20px] overflow-hidden bg-white">
             {editing.imageData ? (
               <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-2" aria-hidden>
-                <div className="squish-breathe">
-                  <SquishPlaceholder size={110} />
+              <div className="w-full h-full flex flex-col items-center justify-center gap-3" aria-hidden>
+                <div className="squish-breathe opacity-80">
+                  <SquishPlaceholder size={120} />
                 </div>
-                <span className="text-[12px] text-[var(--muted)]">כאן תופיע התמונה שלו</span>
+                <span className="text-[13px] text-[var(--faint)]">כאן תופיע התמונה שלו</span>
               </div>
             )}
             {editing.videoId && (
@@ -527,47 +520,20 @@ export default function NewCollection() {
                 כדי שהוא ייכנס לאוסף מצלמים אותו — סרטון או תמונה.
               </p>
             )}
-            {/* אריחים מלאים, בלי מסגרות: הסרטון הוא הבחירה המומלצת
-                והוא היחיד בצבע; השניים האחרים שקטים אבל באותה שפה. */}
-            <button
-              onClick={() => videoRef.current?.click()}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-[18px] text-white text-start transition-transform active:translate-y-px"
-              style={{ background: "var(--lavender-deep)", boxShadow: "0 6px 18px color-mix(in srgb, var(--lavender) 45%, transparent)" }}
-            >
-              <span className="w-10 h-10 shrink-0 rounded-full bg-white/20 flex items-center justify-center" aria-hidden>
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2.5" y="6.5" width="13" height="11" rx="3" />
-                  <path d="M15.5 10.5l5-2.5v8l-5-2.5" />
-                </svg>
-              </span>
-              <span className="flex flex-col">
-                <span className="text-[15.5px] font-semibold leading-tight">לצלם סרטון</span>
-                <span className="text-[12.5px] text-white/85 leading-tight mt-0.5">רואים איך הוא נמעך</span>
-              </span>
+            {/* גלולות נקיות: ראשית אחת בצבע, שתי משניות בקרם — בלי
+                מסגרות, בלי צללים, בלי אייקונים צפופים. */}
+            <button onClick={() => videoRef.current?.click()} className="pill pill-primary w-full">
+              לצלם סרטון
             </button>
+            <p className="text-[12.5px] text-[var(--muted)] text-center -mt-1">
+              רואים איך הוא נמעך
+            </p>
             <div className="flex gap-2">
-              <button
-                onClick={() => photoRef.current?.click()}
-                className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-[16px] transition-transform active:translate-y-px"
-                style={{ background: "color-mix(in srgb, var(--blush) 55%, white)" }}
-              >
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M4 8h2.2l1.5-2.2h8.6L17.8 8H20a1.5 1.5 0 0 1 1.5 1.5V18A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9.5A1.5 1.5 0 0 1 4 8Z" />
-                  <circle cx="12" cy="13.3" r="3.4" />
-                </svg>
-                <span className="text-[13px] font-medium">לצלם תמונה</span>
+              <button onClick={() => photoRef.current?.click()} className="pill pill-quiet flex-1">
+                לצלם תמונה
               </button>
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-[16px] transition-transform active:translate-y-px"
-                style={{ background: "var(--sand)" }}
-              >
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
-                  <circle cx="9" cy="10" r="1.7" />
-                  <path d="M3.5 16.5l4.8-4.3 3.6 3.2 3.4-2.9 5.2 4" />
-                </svg>
-                <span className="text-[13px] font-medium">מהגלריה</span>
+              <button onClick={() => fileRef.current?.click()} className="pill pill-quiet flex-1">
+                מהגלריה
               </button>
             </div>
             {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
@@ -589,7 +555,7 @@ export default function NewCollection() {
             <button
               onClick={() => go("type")}
               disabled={!editing.name.trim()}
-              className="btn btn-primary disabled:opacity-40"
+              className="pill pill-primary"
             >
               הלאה ←
             </button>
@@ -616,9 +582,10 @@ export default function NewCollection() {
                       /* לחיצה היא התשובה — חוץ מ"אחר", ששואל מה כן */
                       if (t.key !== "other") go("size");
                     }}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-[var(--r)] border-[1.5px] text-[11.5px] leading-tight text-center ${
-                      on ? "border-[var(--ink)] bg-white font-medium" : "border-transparent bg-white text-[var(--muted)]"
+                    className={`flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-[16px] text-[11.5px] leading-tight text-center transition-transform active:translate-y-px ${
+                      on ? "font-medium" : "bg-[var(--cream)] text-[var(--muted)]"
                     }`}
+                    style={on ? { background: "color-mix(in srgb, var(--lavender) 26%, white)" } : undefined}
                   >
                     <TypeDot type={t.key} size={34} />
                     {t.label}
@@ -636,7 +603,7 @@ export default function NewCollection() {
                   onChange={(e) => setEditing({ ...editing, custom_type: e.target.value })}
                   className="field w-full px-3 py-3 t-small"
                 />
-                <button onClick={() => go("size")} className="btn btn-primary">הלאה ←</button>
+                <button onClick={() => go("size")} className="pill pill-primary">הלאה ←</button>
               </>
             )}
           </Ask>
@@ -655,9 +622,7 @@ export default function NewCollection() {
                   key={o.key}
                   onClick={() => { setEditing({ ...editing, size: o.key }); go("condition"); }}
                   aria-pressed={editing.size === o.key}
-                  className={`px-3.5 py-2.5 text-[13px] rounded-full border-[1.5px] ${
-                    editing.size === o.key ? "border-[var(--ink)] bg-white font-medium" : "border-transparent bg-white text-[var(--muted)]"
-                  }`}
+                  className="chip"
                 >
                   {o.label}
                 </button>
@@ -679,9 +644,7 @@ export default function NewCollection() {
                     if (o.key !== "flawed") go("trade");
                   }}
                   aria-pressed={editing.condition === o.key}
-                  className={`px-3.5 py-2.5 text-[13px] rounded-full border-[1.5px] ${
-                    editing.condition === o.key ? "border-[var(--ink)] bg-white font-medium" : "border-transparent bg-white text-[var(--muted)]"
-                  }`}
+                  className="chip"
                 >
                   {o.label}
                 </button>
@@ -697,7 +660,7 @@ export default function NewCollection() {
                   onChange={(e) => setEditing({ ...editing, condition_note: e.target.value })}
                   className="field w-full px-3 py-3 t-small"
                 />
-                <button onClick={() => go("trade")} className="btn btn-primary">הלאה ←</button>
+                <button onClick={() => go("trade")} className="pill pill-primary">הלאה ←</button>
               </>
             )}
           </Ask>
@@ -713,13 +676,13 @@ export default function NewCollection() {
             </p>
             <button
               onClick={() => { setEditing({ ...editing, open_for_trade: true }); go("extras"); }}
-              className="btn btn-primary"
+              className="pill pill-primary"
             >
               כן, פתוח לטרייד ⇄
             </button>
             <button
               onClick={() => { setEditing({ ...editing, open_for_trade: false }); go("extras"); }}
-              className="btn btn-secondary"
+              className="pill pill-quiet"
             >
               לא, הוא נשאר רק אצלי
             </button>
@@ -755,7 +718,7 @@ export default function NewCollection() {
                   </>
                 ) : (
                   <button onClick={suggestDescription} disabled={aiBusy}
-                    className="btn btn-secondary t-small">
+                    className="pill pill-quiet">
                     {aiBusy ? "כותבים…" : "כן, תציעו תיאור"}
                   </button>
                 )}
@@ -792,7 +755,7 @@ export default function NewCollection() {
 
             {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
 
-            <button onClick={saveItem} className="btn btn-primary mt-1">
+            <button onClick={saveItem} className="pill pill-primary mt-1">
               {editIndex === null ? "להוסיף לאוסף ←" : "לשמור שינויים"}
             </button>
             {editIndex !== null && (
