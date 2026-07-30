@@ -67,7 +67,13 @@ const tiles = await p.locator("[data-testid=squish-preview] .squish-card").count
 check("יש מדף עם כרטיסים אמיתיים", tiles === 4, `${tiles}`);
 check("הכרטיסים בשתי עמודות, כמו באוסף",
   (await p.locator("[data-testid=squish-preview] .grid-cols-2").count()) >= 1);
-check("ולכרטיס יש שם מתחת לתמונה", prevText.includes("צפרדע ענקית"));
+/* שם מתוך הרשימה, ולא שם מקודד: כשהחלפתי את פריטי ההדגמה לתמונות
+   האמיתיות נשאר כאן "צפרדע ענקית" שלא קיים יותר, והבדיקה הפכה לשקר
+   שממתין להתגלות. עכשיו נבדק שכל ארבעת השמות שבמסך באמת מוצגים. */
+const DEMO_NAMES = ["באו גלקסי", "תות", "מדוזה", "גבינה"];
+for (const n of DEMO_NAMES) {
+  check(`לכרטיס יש שם מתחת לתמונה: ${n}`, prevText.includes(n));
+}
 check("ומסומן מה פתוח לטרייד", prevText.includes("פתוחים לטרייד"));
 check("וגם כאן אפשר להתחיל",
   (await p.getAttribute("[data-testid=preview-cta]", "href")) === "/squish/new");
