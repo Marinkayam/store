@@ -119,6 +119,7 @@ export default function NewCollection() {
     setStage("media");
     setReachedIdx(0);
     setPhotoErr("");
+    setPickerOpen(false);
   };
   const startEdit = (it: DraftItem, i: number) => {
     setEditing(it);
@@ -133,6 +134,9 @@ export default function NewCollection() {
     setStage("media");
     setReachedIdx(0);
   };
+  /* בחירת הצילום נפתחת רק אחרי לחיצה על הפלוס — הריבוע עצמו הוא
+     הכפתור, והבחירה בין סרטון/תמונה/גלריה מופיעה כשמבקשים אותה */
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [hasAccount, setHasAccount] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiErr, setAiErr] = useState("");
@@ -480,12 +484,30 @@ export default function NewCollection() {
             {editing.imageData ? (
               <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-3" aria-hidden>
-                <div className="squish-breathe opacity-80">
-                  <SquishPlaceholder size={120} />
+              /* הריבוע הריק הוא כפתור פלוס: לוחצים, ואז מופיעה הבחירה
+                 בין סרטון, תמונה וגלריה — לא שלושה כפתורים מראש */
+              <button
+                onClick={() => setPickerOpen(true)}
+                aria-label="להוסיף סרטון או תמונה"
+                className="w-full h-full flex flex-col items-center justify-center gap-3 transition-transform active:scale-[0.99]"
+              >
+                <div className="squish-breathe opacity-80" aria-hidden>
+                  <SquishPlaceholder size={110} />
                 </div>
-                <span className="text-[13px] text-[var(--faint)]">כאן תופיע התמונה שלו</span>
-              </div>
+                <span
+                  className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-white"
+                  style={{ background: "var(--lavender-deep)" }}
+                  aria-hidden
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
+                <span className="flex flex-col items-center gap-0.5" aria-hidden>
+                  <span className="text-[14.5px] font-medium text-[var(--ink)]">מוסיפים סקווישי לאוסף שלך</span>
+                  <span className="text-[12.5px] text-[var(--muted)]">לוחצים כאן ומצלמים אותו</span>
+                </span>
+              </button>
             )}
             {editing.videoId && (
               <span className="absolute bottom-1.5 end-1.5 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded-full">
@@ -513,13 +535,11 @@ export default function NewCollection() {
         </div>
 
         {/* ── השיחה ── */}
-        {stage === "media" && (
-          <Ask q={editing.imageData ? "רוצה תמונה אחרת?" : "מוסיפים סקווישי לאוסף שלך"}>
-            {!editing.imageData && (
-              <p className="text-[13.5px] text-[var(--muted)] leading-relaxed -mt-1">
-                כדי שהוא ייכנס לאוסף מצלמים אותו — סרטון או תמונה.
-              </p>
-            )}
+        {stage === "media" && photoErr && !pickerOpen && !editing.imageData && (
+          <p className="t-small text-[var(--danger)] text-center">{photoErr}</p>
+        )}
+        {stage === "media" && (pickerOpen || editing.imageData) && (
+          <Ask q={editing.imageData ? "רוצה תמונה אחרת?" : "איך נצלם אותו?"}>
             {/* גלולות נקיות: ראשית אחת בצבע, שתי משניות בקרם — בלי
                 מסגרות, בלי צללים, בלי אייקונים צפופים. */}
             <button onClick={() => videoRef.current?.click()} className="pill pill-primary w-full">

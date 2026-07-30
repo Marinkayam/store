@@ -66,16 +66,18 @@ export function StickerPicker({
               aria-pressed={on}
               aria-label={s.label}
               className={`flex items-center gap-2 rounded-full px-3 py-2.5 text-start transition-transform active:translate-y-px ${
-                on ? "font-medium" : "bg-[var(--cream)]"
+                on ? "font-medium" : ""
               }`}
-              style={on ? { background: `color-mix(in srgb, ${s.bg} 30%, white)` } : undefined}
+              /* צבעונית גם כשלא נבחרה — כמו אייקוני הסוג: הגוון של
+                 המדבקה ברקע חלש, והבחירה ממלאה את העיגול ומעמיקה אותו */
+              style={{ background: `color-mix(in srgb, ${s.bg} ${on ? 32 : 12}%, white)` }}
             >
               <span
                 className="w-6 h-6 shrink-0 flex items-center justify-center text-[13px]"
                 style={
                   on
                     ? { background: s.bg, color: s.fg, borderRadius: "999px" }
-                    : { background: "white", color: "var(--faint)", borderRadius: "999px" }
+                    : { background: "white", color: s.bg, borderRadius: "999px" }
                 }
                 aria-hidden
               >
