@@ -19,7 +19,6 @@ import {
   Badges,
   Breakdown,
   CollectionSummary,
-  FavoriteCard,
   SeriesRow,
   WishlistRow,
 } from "../collection-parts";
@@ -201,7 +200,6 @@ export default function MyCollection() {
     joinedViaInvite: joined,
     completedTrades: profile.completed_trades,
   });
-  const favorite = items.find((i) => i.id === profile.favorite_item_id) ?? null;
   const avatar = mediaUrl(profile.avatar_key);
   const cover = mediaUrl(profile.cover_key);
 
@@ -212,11 +210,12 @@ export default function MyCollection() {
       <input ref={avatarRef} type="file" accept="image/*" hidden
         onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], "avatar")} />
 
-      {/* קאבר + תמונת פרופיל, בדיוק כמו בדוכן */}
+      {/* קאבר + תמונת פרופיל, כמו בדוכן — אבל נמוך: הקאבר הוא רקע,
+          לא תוכן, וב-128 פיקסל הוא דחף את המדף אל מתחת לקפל. */}
       <button
         onClick={() => coverRef.current?.click()}
         aria-label="החלפת תמונת הקאבר"
-        className="block w-full h-32 overflow-hidden relative"
+        className="block w-full h-20 overflow-hidden relative"
         style={cover ? undefined : { background: coverCss(profile.cover_preset) }}
       >
         {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
@@ -258,37 +257,30 @@ export default function MyCollection() {
         />
         <p className="t-small text-[var(--muted)] mt-0.5">האוסף של {profile.nickname}</p>
 
-        {/* שיתוף וצפייה כחברה — שתי הפעולות הראשיות של המסך */}
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => {
-              const url = `${window.location.origin}/squish/c/${profile.collection_code}`;
-              navigator.clipboard.writeText(url);
-              showToast(ready ? "הקישור לגלריה הועתק" : "הקישור הועתק, אבל צריך 3 סקווישים");
-            }}
-            className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[13px] font-medium"
-          >
-            לשתף את הגלריה
-          </button>
-          <a
-            href={`/squish/c/${profile.collection_code}?as=friend`}
-            className="flex-1 bg-white border border-[var(--line)] py-2.5 text-[13px] font-medium text-center"
-          >
-            לראות כמו חברה
-          </a>
-        </div>
+        {/* פעולה ראשית אחת. "לראות כמו חברה" ירד — חברה רואה את המסך
+            הזה בדיוק, אז לא היה שם מה לבדוק. */}
+        <button
+          onClick={() => {
+            const url = `${window.location.origin}/squish/c/${profile.collection_code}`;
+            navigator.clipboard.writeText(url);
+            showToast(ready ? "הקישור הועתק, שלחי לחברה" : "הקישור הועתק, אבל צריך 3 סקווישים");
+          }}
+          className="w-full bg-[var(--ink)] text-white py-2.5 text-[13.5px] font-medium rounded-[var(--r)] mt-3"
+        >
+          לשתף עם חברה
+        </button>
       </div>
 
       <div className="p-4 pt-4 flex flex-col gap-5">
         <CollectionSummary s={stats} />
-        {favorite && (
-          <FavoriteCard item={favorite} onOpen={() => router.push(`/squish/item/${favorite.id}`)} />
-        )}
+        {/* האהוב אינו כרטיס נפרד: הוא חלק מהמדף, עם מדבקת ♥ על הכרטיס
+            עצמו. כרטיס כפול בראש דחף את כל המדף למטה בשביל פריט שכבר
+            מופיע בו. */}
         <WishlistRow wishes={wishes} />
         <WishEditor wishes={wishes} profileId={profile.id} onChange={setWishes} onToast={showToast} />
 
         {!ready && (
-          <div className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3 text-[12.5px] leading-relaxed">
+          <div className="bg-[var(--warn-bg)] p-3 text-[12.5px] leading-relaxed rounded-[var(--r)]">
             <b>
               {items.length === MIN_ITEMS - 1
                 ? "עוד סקווישי אחד והגלריה שלך מוכנה"
@@ -301,7 +293,7 @@ export default function MyCollection() {
 
         <div className="flex items-center justify-between gap-2">
           <div className="t-label">המדף שלי</div>
-          <div className="flex border border-[var(--line)]">
+          <div className="flex border border-[var(--line)] rounded-[var(--r)] overflow-hidden">
             {(["shelf", "album"] as const).map((v) => (
               <button
                 key={v}
@@ -384,7 +376,7 @@ export default function MyCollection() {
           {style ? "לסגור את העיצוב" : "לעצב את הגלריה"}
         </button>
         {style && (
-          <div className="bg-white border border-[var(--line)] p-3">
+          <div className="bg-white p-3 rounded-[var(--r)]">
             <div className="t-label mb-1.5">רקע לקאבר</div>
             <div className="flex gap-1.5 flex-wrap">
               {COVERS.map((c) => (
@@ -418,7 +410,7 @@ export default function MyCollection() {
         )}
 
         {dirty && (
-          <button onClick={save} className="bg-[var(--ink)] text-white py-3 text-sm font-bold">
+          <button onClick={save} className="bg-[var(--ink)] text-white py-3 text-sm font-bold rounded-[var(--r)]">
             שמירת שינויים
           </button>
         )}
@@ -430,7 +422,7 @@ export default function MyCollection() {
       </div>
 
       {toast && (
-        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
+        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90] rounded-full">
           {toast}
         </div>
       )}

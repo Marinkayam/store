@@ -7,10 +7,9 @@
  * חלקים בדיוק — האוסף צריך להיראות אותו דבר משני הצדדים.
  */
 
-import { mediaUrl } from "@/lib/media";
-import { typeLabel, type SquishItem, type SquishyType, type Wish } from "@/lib/squish";
+import { typeLabel, type SquishyType, type Wish } from "@/lib/squish";
 import type { Badge } from "@/lib/squish-badges";
-import { SquishOutline, SwapGlyph, TradeBadge } from "./components";
+import { SwapGlyph } from "./components";
 
 /** ארבעה מספרים אמיתיים. לא אנליטיקס — התקדמות של אוסף. */
 export function CollectionSummary({
@@ -19,17 +18,19 @@ export function CollectionSummary({
   s: { total: number; open: number; types: number; thisMonth: number; withVideo: number };
 }) {
   const tokens = [
-    { n: s.total, label: "סקווישים", icon: <SquishOutline size={18} /> },
-    { n: s.open, label: "פתוחים לטרייד", icon: <SwapGlyph size={15} /> },
-    { n: s.types, label: "סוגים באוסף", icon: <span className="text-[13px]">🗂️</span> },
-    { n: s.thisMonth, label: "נוספו החודש", icon: <span className="text-[13px]">✨</span> },
+    { n: s.total, label: "סקווישים" },
+    { n: s.open, label: "פתוחים לטרייד" },
+    { n: s.types, label: "סוגים" },
+    { n: s.thisMonth, label: "נוספו החודש" },
   ];
+  /* בלי קופסאות: ארבע קופסאות ממוסגרות תפסו רצועה שלמה בראש המסך
+     בשביל ארבעה מספרים. המספר עצמו הוא הבולט — גדול ושמן — והתווית
+     קטנה מתחתיו. קו מפריד דק במקום מסגרות. */
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-[var(--line)]">
       {tokens.map((t) => (
-        <div key={t.label} className="bg-white border border-[var(--line)] py-2.5 px-1 text-center">
-          <div className="flex justify-center h-5 items-center">{t.icon}</div>
-          <div className="text-[17px] font-bold leading-none mt-1">{t.n}</div>
+        <div key={t.label} className="text-center px-1">
+          <div className="text-[20px] font-bold leading-none tracking-tight">{t.n}</div>
           <div className="text-[10.5px] text-[var(--muted)] leading-tight mt-1">{t.label}</div>
         </div>
       ))}
@@ -59,7 +60,7 @@ export function Breakdown({
               key={t.key}
               onClick={() => onPick?.(on ? null : t.key)}
               aria-pressed={on}
-              className={`flex items-center gap-2 px-2.5 py-2 border-[1.5px] ${
+              className={`flex items-center gap-2 px-2.5 py-2 border-[1.5px] rounded-full ${
                 on ? "border-[var(--ink)] bg-white" : "border-[var(--line)] bg-white/70"
               }`}
             >
@@ -84,7 +85,7 @@ export function SeriesRow({ series }: { series: { name: string; n: number }[] })
       <div className="t-label mb-1.5">סדרות</div>
       <div className="flex gap-2 flex-wrap">
         {series.map((s) => (
-          <span key={s.name} className="bg-white border border-[var(--line)] px-2.5 py-1.5 text-[12.5px]">
+          <span key={s.name} className="bg-white border border-[var(--line)] px-2.5 py-1.5 text-[12.5px] rounded-full">
             {s.name} · <b>{s.n}</b>
           </span>
         ))}
@@ -103,7 +104,7 @@ export function WishlistRow({ wishes }: { wishes: Wish[] }) {
         {wishes.map((w) => (
           <span
             key={w.id}
-            className="flex items-center gap-1.5 bg-[var(--cream)] border-[1.5px] border-[var(--lavender)] px-2.5 py-1.5 text-[12.5px]"
+            className="flex items-center gap-1.5 bg-[var(--cream)] border-[1.5px] border-[var(--lavender)] px-2.5 py-1.5 text-[12.5px] rounded-full"
           >
             <SwapGlyph size={12} />
             {/* התיאור שלה מוביל, והסוג והצבע אחריו — אותו סדר שבו היא
@@ -115,52 +116,6 @@ export function WishlistRow({ wishes }: { wishes: Wish[] }) {
           </span>
         ))}
       </div>
-    </section>
-  );
-}
-
-/** הסקווישי האהוב, ככרטיס גדול בראש המדף. */
-export function FavoriteCard({
-  item,
-  onOpen,
-}: {
-  item: SquishItem;
-  onOpen?: () => void;
-}) {
-  const poster = mediaUrl(item.poster_key) ?? mediaUrl(item.image_key);
-  const video = mediaUrl(item.video_key);
-  return (
-    <section>
-      <div className="t-label mb-1.5">הסקווישי האהוב עליי</div>
-      <button onClick={onOpen} className="squish-card block w-full text-start">
-        <div className="relative aspect-[4/3] bg-[var(--cream)] flex items-center justify-center overflow-hidden">
-          {video ? (
-            <video src={video} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
-          ) : poster ? (
-            <img src={poster} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <SquishOutline size={72} />
-          )}
-          <span className="absolute top-2 start-2 flex items-center gap-1.5">
-            <span
-              className="w-7 h-7 bg-white text-[15px] flex items-center justify-center shadow-sm"
-              style={{ borderRadius: "999px" }}
-              aria-label="הסקווישי האהוב"
-            >
-              ⭐
-            </span>
-            <TradeBadge status={item.trade_status} />
-          </span>
-        </div>
-        <div className="pt-2 px-0.5">
-          <div className="t-heading">{item.name}</div>
-          {item.wanted_description && (
-            <div className="t-small text-[var(--muted)] mt-0.5">
-              מחפשת בתמורה: {item.wanted_description}
-            </div>
-          )}
-        </div>
-      </button>
     </section>
   );
 }
@@ -178,19 +133,19 @@ export function Badges({ badges }: { badges: Badge[] }) {
           <span
             key={b.key}
             title={b.hint}
-            className="flex items-center gap-1.5 bg-[var(--ok-bg)] border border-[var(--ok-line)] text-[var(--ok-ink)] px-2.5 py-1.5 text-[12.5px] font-medium"
+            className="flex items-center gap-1.5 bg-[var(--ok-bg)] border border-[var(--ok-line)] text-[var(--ok-ink)] px-2.5 py-1.5 text-[12.5px] font-medium rounded-full"
           >
             ✓ {b.label}
           </span>
         ))}
       </div>
       {next && (
-        <div className="mt-2 bg-white border border-[var(--line)] p-2.5">
+        <div className="mt-2 bg-white p-2.5 rounded-[var(--r)]">
           <div className="flex items-center justify-between text-[12.5px]">
             <span className="text-[var(--muted)]">התג הבא: <b className="text-[var(--ink)]">{next.label}</b></span>
             <span className="text-[var(--muted)]">{next.have}/{next.need}</span>
           </div>
-          <div className="h-1.5 bg-[var(--sand)] mt-1.5">
+          <div className="h-1.5 bg-[var(--sand)] mt-1.5 rounded-full overflow-hidden">
             <div className="h-full bg-[var(--lavender)]" style={{ width: `${(next.have / next.need) * 100}%` }} />
           </div>
           <div className="text-[11.5px] text-[var(--muted)] mt-1">{next.hint}</div>

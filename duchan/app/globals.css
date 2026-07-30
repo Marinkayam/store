@@ -51,9 +51,10 @@
   --sub: var(--sand);
 
   /* טוקנים עיצוביים.
-     --r קיים כדי שאפשר יהיה לשנות דעה במקום אחד, אבל הערך הוא 0:
-     העיצוב בנוי על פינה ישרה. */
-  --r: 0px;
+     --r קיים כדי שאפשר יהיה לשנות דעה במקום אחד — וזה בדיוק מה שקרה:
+     הפינה הישרה של הגרסאות הראשונות קראה קשיחה מדי למוצר של ילדות,
+     ומרינה ביקשה לעגל טיפה את הכל. עיגול עדין, לא גלולה. */
+  --r: 8px;
   --shadow: none;
   --shadow-lift: none;
 
@@ -268,7 +269,7 @@ h3 {
   transition: transform 0.14s ease;
 }
 .squish-card > div:first-child {
-  border-radius: 2px;
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 1px 0 0 color-mix(in srgb, var(--wood) 22%, transparent);
 }

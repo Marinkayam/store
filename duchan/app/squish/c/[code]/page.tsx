@@ -145,9 +145,12 @@ export default async function SharedCollection({
     .neq("trade_status", "moved_to_duchan")
     .order("sort_order", { ascending: true });
 
-  const list = (items ?? []) as Partial<SquishItem>[];
-  const favorite = list.find((i) => i.id === profile.favorite_item_id) ?? null;
-  const rest = favorite ? list.filter((i) => i.id !== favorite.id) : list;
+  const all = (items ?? []) as Partial<SquishItem>[];
+  /* האהוב אינו כרטיס נפרד גם כאן: הוא ראשון במדף, עם מדבקת ♥ על
+     הכרטיס — בדיוק כמו שהבעלים רואה. שני הצדדים של הקישור חייבים
+     להראות אותו מסך. */
+  const favorite = all.find((i) => i.id === profile.favorite_item_id) ?? null;
+  const list = favorite ? [favorite, ...all.filter((i) => i.id !== favorite.id)] : all;
 
   // המבוקשים נראים רק למי שרשאית לראות את האוסף — אותו כלל בדיוק
   const { data: wishRows } = await db
@@ -188,26 +191,23 @@ export default async function SharedCollection({
       </header>
 
       <div className="px-4 pb-4 flex flex-col gap-5">
-        {favorite && (
-          <FriendFavorite item={favorite} />
-        )}
         {!!wishes.length && <WishlistRow wishes={wishes} />}
       </div>
 
       <div className="px-3 pb-10 grid grid-cols-2 gap-2.5">
-        {rest.map((it) => {
+        {list.map((it) => {
           const poster = mediaUrl(it.poster_key) ?? mediaUrl(it.image_key);
           const open = it.trade_status === "open_for_trade";
           return (
-            <div key={it.id} className="bg-white border border-[var(--line)] overflow-hidden flex flex-col">
+            <div key={it.id} className="bg-white rounded-[10px] overflow-hidden flex flex-col">
               <div className="relative aspect-square bg-[var(--cream)] flex items-center justify-center overflow-hidden">
                 {poster ? (
                   <img src={poster} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <SquishPlaceholder />
                 )}
-                <StickerCorner item={it as SquishItem} />
-                <StickerNames item={it as SquishItem} />
+                <StickerCorner item={it as SquishItem} isFavorite={it.id === profile.favorite_item_id} />
+                <StickerNames item={it as SquishItem} isFavorite={it.id === profile.favorite_item_id} />
               </div>
               <div className="p-2 flex-1 flex flex-col">
                 <div className="text-[13px] font-medium truncate">{it.name}</div>
@@ -256,38 +256,6 @@ export default async function SharedCollection({
   );
 }
 
-/** האהוב, ככרטיס גדול בראש הגלריה שחברה רואה. */
-function FriendFavorite({ item }: { item: Partial<SquishItem> }) {
-  const poster = mediaUrl(item.poster_key) ?? mediaUrl(item.image_key);
-  const video = mediaUrl(item.video_key);
-  return (
-    <section>
-      <div className="t-label mb-1.5">הסקווישי האהוב עליה</div>
-      <div className="squish-card">
-        <div className="relative aspect-[4/3] bg-[var(--cream)] flex items-center justify-center overflow-hidden">
-          {video ? (
-            <video src={video} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
-          ) : poster ? (
-            <img src={poster} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <SquishOutline size={72} />
-          )}
-          {/* האהוב מקבל את מדבקת הלב, ולא כוכב נפרד — אותה שפה בכל מקום */}
-          <StickerCorner item={item as SquishItem} isFavorite size={26} />
-          <StickerNames item={item as SquishItem} isFavorite />
-        </div>
-        <div className="pt-2 px-0.5">
-          <div className="t-heading">{item.name}</div>
-          {item.wanted_description && (
-            <div className="t-small text-[var(--muted)] mt-0.5">
-              מחפשת בתמורה: {item.wanted_description}
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
