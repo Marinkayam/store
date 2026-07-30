@@ -68,14 +68,22 @@ const gil = await newCollector(b, GIL, [
 ]);
 const noaId = await uidOf(pool, NOA.e164);
 
+/* תמונה + סוג לכל פריט הדגמה. הסוג חשוב לא פחות: שורת "כמה נידו,
+   כמה מים, כמה קרח" בראש האוסף היא ההתלהבות של אספנית, וכשהכול
+   "אחר" היא מציגה גלולה אחת עצובה. */
 const PICS = {
-  "באו גלקסי": "/demo/bao.webp", "תות": "/demo/strawberry.webp",
-  "מדוזה": "/demo/jellyfish.webp", "גבינה": "/demo/cheese.webp",
-  "קוביית קרח": "/demo/icecube.webp", "חמאה": "/demo/butter.webp",
-  "דונאט": "/demo/strawberry.webp",
+  "באו גלקסי": ["/demo/bao.webp", "needoh"],
+  "תות": ["/demo/strawberry.webp", "foam"],
+  "מדוזה": ["/demo/jellyfish.webp", "water"],
+  "גבינה": ["/demo/cheese.webp", "sand"],
+  "קוביית קרח": ["/demo/icecube.webp", "ice"],
+  "חמאה": ["/demo/butter.webp", "clay"],
+  "דונאט": ["/demo/strawberry.webp", "foam"],
 };
-for (const [name, key] of Object.entries(PICS)) {
-  await pool.query("update squish_items set image_key=$1, poster_key=null, video_key=null where name=$2", [key, name]);
+for (const [name, [key, type]] of Object.entries(PICS)) {
+  await pool.query(
+    "update squish_items set image_key=$1, squishy_type=$2, poster_key=null, video_key=null where name=$3",
+    [key, type, name]);
 }
 await pool.query(
   "update squish_profiles set favorite_item_id=(select id from squish_items where owner_user_id=$1 and name='באו גלקסי') where user_id=$1",

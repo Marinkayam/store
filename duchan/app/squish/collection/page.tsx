@@ -14,16 +14,15 @@ import {
   type SquishyType,
   type Wish,
 } from "@/lib/squish";
-import { byType, bySeries, collectionBadges, summary } from "@/lib/squish-badges";
+import { byType, bySeries, collectionBadges } from "@/lib/squish-badges";
 import {
   Badges,
   Breakdown,
-  CollectionSummary,
   SeriesRow,
   WishlistRow,
 } from "../collection-parts";
 import WishEditor from "../wish-editor";
-import { EmptyCollection, SquishyCard, SwapGlyph } from "../components";
+import { EmptyCollection, SquishyCard } from "../components";
 import Feedback from "../feedback";
 import { StickerIntro } from "../stickers";
 import { track } from "@/lib/squish-analytics";
@@ -181,7 +180,6 @@ export default function MyCollection() {
       />
     );
 
-  const openCount = items.filter((i) => i.trade_status === "open_for_trade").length;
   const ready = items.length >= MIN_ITEMS;
   const shown =
     filter === "all"
@@ -190,7 +188,6 @@ export default function MyCollection() {
         ? items.filter((i) => i.trade_status === "traded" || i.trade_status === "moved_to_duchan")
         : items.filter((i) => i.trade_status === filter);
   const visible = typeFilter ? shown.filter((i) => i.squishy_type === typeFilter) : shown;
-  const stats = summary(items);
   const types = byType(items);
   const series = bySeries(items);
   // בלי completedTrades התג "טרייד ראשון" היה נשאר נעול לנצח, גם אחרי
@@ -257,27 +254,30 @@ export default function MyCollection() {
         />
         <p className="t-small text-[var(--muted)] mt-0.5">האוסף של {profile.nickname}</p>
 
-        {/* פעולה ראשית אחת. "לראות כמו חברה" ירד — חברה רואה את המסך
-            הזה בדיוק, אז לא היה שם מה לבדוק. */}
+        {/* שיתוף — פעולה שקטה, לא הכפתור הראשי: הפעולה הראשית של
+            המסך היא להוסיף לאוסף. חברה רואה את המסך הזה בדיוק, ולכן
+            אין "לראות כמו חברה". */}
         <button
           onClick={() => {
             const url = `${window.location.origin}/squish/c/${profile.collection_code}`;
             navigator.clipboard.writeText(url);
             showToast(ready ? "הקישור הועתק, שלחי לחברה" : "הקישור הועתק, אבל צריך 3 סקווישים");
           }}
-          className="w-full bg-[var(--ink)] text-white py-2.5 text-[13.5px] font-medium rounded-[var(--r)] mt-3"
+          className="inline-flex items-center gap-1.5 mt-2.5 px-4 py-2 text-[12.5px] font-medium bg-[var(--cream)] rounded-full"
         >
-          לשתף עם חברה
+          ↗ לשתף עם חברה
         </button>
       </div>
 
-      <div className="p-4 pt-4 flex flex-col gap-5">
-        <CollectionSummary s={stats} />
-        {/* האהוב אינו כרטיס נפרד: הוא חלק מהמדף, עם מדבקת ♥ על הכרטיס
-            עצמו. כרטיס כפול בראש דחף את כל המדף למטה בשביל פריט שכבר
-            מופיע בו. */}
-        <WishlistRow wishes={wishes} />
-        <WishEditor wishes={wishes} profileId={profile.id} onChange={setWishes} onToast={showToast} />
+      {/* גאוות האוסף מיד אחרי השם: כמה נידו, כמה מים, כמה קרח.
+          זה מה שאספנית מתלהבת ממנו, וזו גם דרך הסינון של המדף.
+          המבוקשים ירדו למטה — הם שירות לטריידים, לא כרטיס הביקור. */}
+      <div className="px-5 pt-6 pb-8 flex flex-col gap-7">
+        <Breakdown types={types} active={typeFilter} onPick={setTypeFilter} />
+
+        <a href="/squish/new" className="btn btn-primary -mt-1">
+          + להוסיף סקווישי
+        </a>
 
         {!ready && (
           <div className="bg-[var(--warn-bg)] p-3 text-[12.5px] leading-relaxed rounded-[var(--r)]">
@@ -360,12 +360,13 @@ export default function MyCollection() {
           </p>
         )}
 
-        <a href="/squish/new" className="btn btn-primary mt-1">
-          + להוסיף סקווישי
-        </a>
-
-        <Breakdown types={types} active={typeFilter} onPick={setTypeFilter} />
         <SeriesRow series={series} />
+
+        <section>
+          <WishlistRow wishes={wishes} />
+          <WishEditor wishes={wishes} profileId={profile.id} onChange={setWishes} onToast={showToast} />
+        </section>
+
         <Badges badges={badges} />
 
         {/* עיצוב הגלריה — משני, נפתח בלחיצה */}

@@ -10,35 +10,15 @@
 import { typeLabel, type SquishyType, type Wish } from "@/lib/squish";
 import type { Badge } from "@/lib/squish-badges";
 import { SwapGlyph } from "./components";
+import { TypeIcon } from "./type-icons";
 
-/** ארבעה מספרים אמיתיים. לא אנליטיקס — התקדמות של אוסף. */
-export function CollectionSummary({
-  s,
-}: {
-  s: { total: number; open: number; types: number; thisMonth: number; withVideo: number };
-}) {
-  const tokens = [
-    { n: s.total, label: "סקווישים" },
-    { n: s.open, label: "פתוחים לטרייד" },
-    { n: s.types, label: "סוגים" },
-    { n: s.thisMonth, label: "נוספו החודש" },
-  ];
-  /* בלי קופסאות: ארבע קופסאות ממוסגרות תפסו רצועה שלמה בראש המסך
-     בשביל ארבעה מספרים. המספר עצמו הוא הבולט — גדול ושמן — והתווית
-     קטנה מתחתיו. קו מפריד דק במקום מסגרות. */
-  return (
-    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-[var(--line)]">
-      {tokens.map((t) => (
-        <div key={t.label} className="text-center px-1">
-          <div className="text-[20px] font-bold leading-none tracking-tight">{t.n}</div>
-          <div className="text-[10.5px] text-[var(--muted)] leading-tight mt-1">{t.label}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** "מה יש באוסף שלי" — צ'יפים לפי סוג, ולחיצה מסננת את המדף. */
+/**
+ * גאוות האוסף — כמה נידו, כמה מים, כמה קרח.
+ *
+ * זה מה שאספניות מתלהבות ממנו: לא "17 פריטים" אלא "3 נידו ו-2 מים".
+ * לכן הספירה היא לפי סוג, עם האייקון של הסוג, בגלולות צבעוניות —
+ * והיא יושבת בראש המסך, לא בתחתית. לחיצה על סוג מסננת את המדף.
+ */
 export function Breakdown({
   types,
   active,
@@ -49,30 +29,34 @@ export function Breakdown({
   onPick?: (t: SquishyType | null) => void;
 }) {
   if (!types.length) return null;
+  /* גווני המותג, מדוללים — צבע שמח בלי לצעוק. הסדר קבוע לפי מיקום
+     כדי שהצבעים לא יקפצו כשמוסיפים סקווישי. */
+  const TINTS = [
+    "color-mix(in srgb, var(--lavender) 24%, white)",
+    "color-mix(in srgb, var(--olive) 26%, white)",
+    "color-mix(in srgb, var(--blush) 65%, white)",
+    "color-mix(in srgb, var(--wood) 16%, white)",
+  ];
   return (
-    <section>
-      <div className="t-label mb-1.5">מה יש באוסף שלי</div>
-      <div className="flex gap-2 flex-wrap">
-        {types.map((t) => {
-          const on = active === t.key;
-          return (
-            <button
-              key={t.key}
-              onClick={() => onPick?.(on ? null : t.key)}
-              aria-pressed={on}
-              className={`flex items-center gap-2 px-2.5 py-2 border-[1.5px] rounded-full ${
-                on ? "border-[var(--ink)] bg-white" : "border-[var(--line)] bg-white/70"
-              }`}
-            >
-              <span className="text-[15px] font-bold">{t.n}</span>
-              <span className="text-[12.5px]">{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      <p className="text-[11.5px] text-[var(--muted)] mt-1.5">
-        לחיצה על סוג מסננת את המדף.
-      </p>
+    <section className="flex gap-2 flex-wrap justify-center" aria-label="מה יש באוסף">
+      {types.map((t, i) => {
+        const on = active === t.key;
+        return (
+          <button
+            key={t.key}
+            onClick={() => onPick?.(on ? null : t.key)}
+            aria-pressed={on}
+            className={`flex items-center gap-1.5 ps-3 pe-3.5 py-2 rounded-full border-[1.5px] ${
+              on ? "border-[var(--ink)]" : "border-transparent"
+            }`}
+            style={{ background: TINTS[i % TINTS.length] }}
+          >
+            <TypeIcon type={t.key} size={17} />
+            <span className="text-[16px] font-bold leading-none">{t.n}</span>
+            <span className="text-[12.5px] leading-none">{t.label}</span>
+          </button>
+        );
+      })}
     </section>
   );
 }
