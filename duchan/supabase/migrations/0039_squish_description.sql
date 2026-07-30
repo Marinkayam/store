@@ -34,5 +34,10 @@ begin
   return coalesce(v_ok, false);
 end $$;
 
+/* בסופרבייס יש default privileges שנותנות EXECUTE ל-anon ול-authenticated
+   על כל פונקציה חדשה — ו-revoke מ-public לא מוריד גרנט ישיר. בלי השורה
+   השנייה כל דפדפן יכול לקרוא לפונקציה דרך PostgREST ולשרוף את המכסה
+   של ילדה אחרת. נתפס ואומת מול פרודקשן. */
 revoke all on function squish_use_ai(uuid) from public;
+revoke execute on function squish_use_ai(uuid) from anon, authenticated;
 grant execute on function squish_use_ai(uuid) to service_role;

@@ -195,6 +195,27 @@ check("ועדיין נותנת למורחבת גישה מלאה כשההגדרה
 check("בעוד שהפונקציה החדשה כבר מצמצמת אותה לפתוח לטרייד בלבד",
   (await canItem(extId, items["שמור"])) === false);
 
+/* ══════ 8. פונקציות "שרת בלבד" באמת סגורות לדפדפן ══════
+   מה שנתפס בפרודקשן: פוסטגרס נותן EXECUTE ל-PUBLIC על כל פונקציה,
+   ו-revoke מ-authenticated לא מוריד אותו. הבדיקה שואלת את אותה שאלה
+   ש-PostgREST שואל — has_function_privilege — על כל פונקציה שנקראת
+   רק מהשרת, בשני התפקידים שדפדפן יכול להיות. */
+const LOCKED = [
+  "use_ai_credit(uuid)", "refund_ai_credit(uuid)",
+  "squish_use_ai(uuid)", "squish_rate_ok(uuid,text)",
+  "squish_pilot_start(uuid,text)", "squish_pilot_reset(uuid,text)",
+  "squish_claim_pilot_token(text,uuid)",
+  "squish_admin_suspend(uuid,text,text)", "squish_admin_restore(uuid,text)",
+  "squish_admin_cancel_trade(uuid,text,text)",
+];
+for (const fn of LOCKED) {
+  const { rows: [priv] } = await pool.query(
+    "select has_function_privilege('anon',$1,'execute') a, has_function_privilege('authenticated',$1,'execute') u, has_function_privilege('service_role',$1,'execute') s",
+    [fn]);
+  check(`${fn.split("(")[0]} סגורה לדפדפן ופתוחה לשרת`, !priv.a && !priv.u && priv.s,
+    `anon=${priv.a} auth=${priv.u} service=${priv.s}`);
+}
+
 check("אין שגיאות ג׳אווהסקריפט", errs.length === 0, errs.slice(0, 2).join(" | "));
 
 await b.close();
