@@ -46,8 +46,9 @@ export function StickerPicker({
     onPersonal(s.key as PersonalKey, !personal.includes(s.key));
   };
 
-  // ההערה מוצגת רק כשהמדבקה דלוקה — אחרת שתי שורות הסבר יושבות שם תמיד
-  const activeHint = STICKERS.find((s) => isOn(s) && s.hint)?.hint;
+  // ההערה מוצגת רק כשהמדבקה דלוקה — אחרת שתי שורות הסבר יושבות שם תמיד.
+  // מ-shown ולא מ-STICKERS: מדבקה מוסתרת לא משאירה אחריה הסבר.
+  const activeHint = shown.find((s) => isOn(s) && s.hint)?.hint;
 
   return (
     <div>
