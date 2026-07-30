@@ -62,6 +62,7 @@ const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
    יותר, ולכן קל יותר לאבחן אותה קודם. */
 const SQUISH = [
   "squish-landing.mjs",
+  "squish-pwa.mjs",
   "squish-collection.mjs",
   "squish-circle.mjs",
   "squish-discover.mjs",

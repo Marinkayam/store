@@ -35,6 +35,7 @@ export default function MyArea() {
     { nickname: string; code: string; items: number; open: number; context: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [showInstall, setShowInstall] = useState(false);
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -246,6 +247,67 @@ export default function MyArea() {
           </>
         )}
       </section>
+
+      {/* אפליקציה בלי חנות: מוסיפים למסך הבית. באייפון אין הצעה
+          אוטומטית להתקנה — אם לא מראים את הדרך, היא לא קיימת. */}
+      <section className="bg-white p-4 rounded-[var(--r)]">
+        <div className="t-label">סקוויש קלאב כמו אפליקציה</div>
+        <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
+          מוסיפים למסך הבית, ואז המועדון נפתח בלחיצה אחת — עם אייקון
+          משלו, בלי דפדפן מסביב.
+        </p>
+        <button
+          onClick={() => setShowInstall(true)}
+          className="btn btn-secondary mt-2 t-small w-full"
+        >
+          איך מוסיפים למסך הבית?
+        </button>
+      </section>
+
+      {showInstall && (
+        <>
+          <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setShowInstall(false)} />
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-6 max-h-[85%] overflow-y-auto rounded-t-2xl">
+            <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" style={{ borderRadius: "999px" }} />
+            <div className="flex items-start justify-between mb-1">
+              <h2 className="t-heading">הוספה למסך הבית</h2>
+              <button
+                onClick={() => setShowInstall(false)}
+                aria-label="סגירה"
+                className="w-7 h-7 shrink-0 flex items-center justify-center text-[var(--muted)]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-3">
+              <div className="t-small font-bold mb-1.5">באייפון</div>
+              <ol className="flex flex-col gap-1.5 text-[13.5px] leading-relaxed list-none">
+                <li>1 · פותחים את סקוויש קלאב ב<b>ספארי</b></li>
+                <li>2 · לוחצים על כפתור השיתוף — הריבוע עם החץ למעלה</li>
+                <li>3 · גוללים ובוחרים <b>«הוספה למסך הבית»</b></li>
+                <li>4 · לוחצים <b>הוספה</b> — וזהו, יש אייקון</li>
+              </ol>
+            </div>
+
+            <div className="mt-4">
+              <div className="t-small font-bold mb-1.5">באנדרואיד</div>
+              <ol className="flex flex-col gap-1.5 text-[13.5px] leading-relaxed list-none">
+                <li>1 · פותחים את סקוויש קלאב ב<b>כרום</b></li>
+                <li>2 · לוחצים על התפריט ⋮ למעלה</li>
+                <li>3 · בוחרים <b>«הוספה למסך הבית»</b></li>
+              </ol>
+            </div>
+
+            <button
+              onClick={() => setShowInstall(false)}
+              className="btn btn-primary w-full mt-4"
+            >
+              הבנתי
+            </button>
+          </div>
+        </>
+      )}
 
       {/* הגדרות */}
       <section className="bg-white p-4 rounded-[var(--r)]">
