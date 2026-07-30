@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import {
-  MIN_ITEMS,
   SQUISH_VISIBILITY,
   squishCode,
   INVITE_DAYS,
@@ -16,15 +15,18 @@ import { ConnectionContext, SwapGlyph } from "../components";
 import { DeleteCollection } from "../safety";
 
 /**
- * "שלי" — אזור אחד שמחזיק את הגלריה, החברות, הקבוצות, הקישורים וההגדרות.
+ * "שלי" — כאן מנהלים את המעגל: מי בפנים, איך מזמינים, ומי רואה מה.
  *
- * זו הבקשה של מרינה: במקום שישה טאבים ראשיים, ארבעה בלבד, וכאן מרוכז כל
- * מה שמסביב. כל אזור הוא כרטיס עם כותרת, כדי שאפשר לסרוק אותו בעין.
+ * המסך רזה בכוונה, אחרי שירדו ממנו שלושה דברים:
+ *
+ * - **כרטיס "הגלריה שלי"** — שכפול של טאב האוסף שיושב באותו ניווט.
+ * - **קישור הגלריה** — האוסף עצמו כבר מציע "לשתף עם חברה", ושני
+ *   מסלולי שיתוף לאותו דבר זה בדיוק הבלבול שילדה לא צריכה. הקישור
+ *   שנשאר כאן הוא קישור *ההזמנה* — הדלת היחידה למעגל.
+ * - **"קבוצות"** — הבטחה לפיצ'ר שלא קיים. כשתהיה קבוצה, יהיה מקטע.
  */
 export default function MyArea() {
   const [profile, setProfile] = useState<SquishProfile | null>(null);
-  const [count, setCount] = useState(0);
-  const [openCount, setOpenCount] = useState(0);
   const [invite, setInvite] = useState<
     { code: string; label: string | null; uses: number; max_uses: number | null; expires_at: string | null } | null
   >(null);
@@ -50,14 +52,6 @@ export default function MyArea() {
         .maybeSingle();
       setProfile((p as SquishProfile) ?? null);
       if (p) {
-        const { data: items } = await supa
-          .from("squish_items")
-          .select("trade_status")
-          .eq("owner_user_id", auth.user.id)
-          .eq("profile_id", (p as SquishProfile).id)
-          .is("deleted_at", null);
-        setCount(items?.length ?? 0);
-        setOpenCount((items ?? []).filter((i) => i.trade_status === "open_for_trade").length);
         /* רק קישור חי. קישור שבוטל נשאר בדאטהבייס למעקב, אבל אין טעם
            להציג אותו כאילו אפשר לשלוח אותו. */
         const { data: inv } = await supa
@@ -78,11 +72,6 @@ export default function MyArea() {
   const showToast = (m: string) => {
     setToast(m);
     setTimeout(() => setToast(""), 2200);
-  };
-
-  const copy = (url: string, msg: string) => {
-    navigator.clipboard.writeText(url);
-    showToast(msg);
   };
 
   /** קישור הזמנה אישי, נוצר בפעם הראשונה שמבקשים אותו */
@@ -145,148 +134,24 @@ export default function MyArea() {
     );
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const galleryUrl = `${origin}/squish/c/${profile.collection_code}`;
   const inviteUrl = invite ? `${origin}/squish/join/${invite.code}` : null;
-  const ready = count >= MIN_ITEMS;
 
   return (
-    <div className="p-3 flex flex-col gap-3">
-      <header className="px-1 pt-3">
+    <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
+      <header className="px-1 pt-2">
         <h1 className="t-heading">שלי</h1>
       </header>
 
-      {/* הגלריה שלי */}
-      <section className="bg-white border border-[var(--line)] p-3">
-        <div className="t-label">הגלריה שלי</div>
-        <div className="text-[14px] font-bold mt-1">
-          {profile.collection_title || `האוסף של ${profile.nickname}`}
-        </div>
-        <p className="t-small text-[var(--muted)] mt-0.5 flex items-center gap-2 flex-wrap">
-          <span>{count} סקווישים</span>
-          <span aria-hidden>·</span>
-          <span className="inline-flex items-center gap-1">
-            <SwapGlyph />
-            {openCount} פתוחים לטרייד
-          </span>
-        </p>
-        <a href="/squish/collection" className="btn btn-secondary mt-2.5 t-small">
-          לפתוח את הגלריה
-        </a>
-      </section>
-
-      {/* קישורים והזמנות */}
-      <section className="bg-white border border-[var(--line)] p-3">
-        <div className="t-label">קישורים והזמנות</div>
-
-        <div className="mt-2">
-          <div className="text-[13px] font-medium">הקישור לגלריה שלי</div>
-          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-            רק מי שבמעגל שלך רואה את הגלריה. מי שלא, רואה הצעה להצטרף.
-          </p>
-          {ready ? (
-            <>
-              <div className="text-[12px] text-[var(--muted)] font-mono my-1.5 break-all" dir="ltr">
-                {galleryUrl}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => copy(galleryUrl, "הקישור לגלריה הועתק")}
-                  className="flex-1 border border-[var(--line)] py-2.5 text-[12px] font-medium"
-                >
-                  העתקה
-                </button>
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`תראי את אוסף הסקווישים שלי! ${galleryUrl}`)}`}
-                  className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12px] font-medium text-center"
-                >
-                  שליחה לחברה
-                </a>
-              </div>
-            </>
-          ) : (
-            <p className="text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] p-2 mt-1.5 leading-relaxed">
-              צריך {MIN_ITEMS} סקווישים באוסף לפני ששולחים את הקישור.
-            </p>
-          )}
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-[var(--line)]">
-          <div className="text-[13px] font-medium">קישור הזמנה אישי</div>
-          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-            מי שנכנסת דרכו מצטרפת למעגל שלך, ואז אתן רואות מה יש אחת לשנייה.
-          </p>
-          {inviteUrl && invite ? (
-            <>
-              {/* השם מחליף קבוצות: "חוג ריקוד" נשלח לקבוצת הוואטסאפ
-                  הקיימת, וכל מי שנכנסת מתחברת ישירות אליה. */}
-              {invite.label && (
-                <div className="text-[13px] font-medium mt-1.5">{invite.label}</div>
-              )}
-              <div className="text-[12px] text-[var(--muted)] font-mono my-1.5 break-all" dir="ltr">
-                {inviteUrl}
-              </div>
-              <p className="text-[12px] text-[var(--muted)] mb-1.5">
-                {invite.max_uses
-                  ? `הצטרפו ${invite.uses} מתוך ${invite.max_uses}`
-                  : `הצטרפו ${invite.uses}`}
-                {invite.expires_at &&
-                  ` · פג ב-${new Date(invite.expires_at).toLocaleDateString("he-IL")}`}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => copy(inviteUrl, "קישור ההזמנה הועתק")}
-                  className="flex-1 border border-[var(--line)] py-2.5 text-[12px] font-medium"
-                >
-                  העתקה
-                </button>
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(
-                    `${profile.nickname} פתחה אוסף בסקוויש קלאב והזמינה אותך למעגל שלה. הצטרפי כדי לראות אם יש לכן סקווישים שמתאימים לטרייד: ${inviteUrl}`
-                  )}`}
-                  className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12px] font-medium text-center"
-                >
-                  להזמין חברה
-                </a>
-              </div>
-              <button
-                onClick={revokeInvite}
-                className="t-small text-[var(--muted)] underline mt-2"
-              >
-                לבטל את הקישור
-              </button>
-            </>
-          ) : (
-            <>
-              <input
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="שם לקישור (לא חובה): חוג ריקוד"
-                aria-label="שם לקישור"
-                maxLength={30}
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] mt-1.5"
-              />
-              <button onClick={makeInvite} className="btn btn-secondary mt-1.5 t-small">
-                ליצור קישור הזמנה
-              </button>
-              <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
-                הקישור פעיל {INVITE_DAYS} יום ועד {INVITE_MAX_USES} חברות. אפשר ליצור
-                חדש בכל רגע.
-              </p>
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* הגלריות של החברות שלי */}
-      <section className="bg-white border border-[var(--line)] p-3">
-        <div className="t-label">הגלריות של החברות שלי</div>
+      {/* החברות קודם: הן הסיבה שהמסך קיים */}
+      <section className="bg-white p-4 rounded-[var(--r)]">
+        <div className="t-label">החברות במעגל שלי</div>
         {friends.length ? (
-          <div className="flex flex-col gap-1.5 mt-2">
+          <div className="flex flex-col gap-2 mt-2.5">
             {friends.map((f) => (
               <a
                 key={f.code}
                 href={`/squish/c/${f.code}`}
-                className="flex items-center gap-3 border border-[var(--line)] px-3 py-2.5"
+                className="flex items-center gap-3 bg-[var(--canvas)] px-3 py-2.5 rounded-[var(--r)]"
               >
                 <span className="w-9 h-9 shrink-0 bg-[var(--cream)] flex items-center justify-center"
                   style={{ borderRadius: "999px" }}>
@@ -306,37 +171,93 @@ export default function MyArea() {
             ))}
           </div>
         ) : (
+          <p className="t-small text-[var(--muted)] leading-relaxed mt-1.5">
+            עדיין אין חברות במעגל שלך. שלחי קישור הזמנה — כשחברה תצטרף,
+            הגלריה שלה תופיע כאן.
+          </p>
+        )}
+      </section>
+
+      {/* הדלת היחידה למעגל */}
+      <section className="bg-white p-4 rounded-[var(--r)]">
+        <div className="t-label">להזמין חברה למעגל</div>
+        <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
+          מי שנכנסת דרך הקישור מצטרפת למעגל שלך, ואז אתן רואות מה יש
+          אחת לשנייה ויכולות להציע טריידים.
+        </p>
+        {inviteUrl && invite ? (
           <>
-            <p className="t-small text-[var(--muted)] leading-relaxed mt-1.5">
-              עדיין אין חברות במעגל שלך. כשחברה תצטרף דרך הקישור, הגלריה שלה
-              תופיע כאן.
-            </p>
-            <div className="mt-2">
-              <ConnectionContext text="כל חיבור מסביר למה הוא קיים, בלי מספרי טלפון" />
+            {invite.label && (
+              <div className="text-[13px] font-medium mt-2">{invite.label}</div>
+            )}
+            <div className="text-[12px] text-[var(--muted)] font-mono my-1.5 break-all" dir="ltr">
+              {inviteUrl}
             </div>
+            <p className="text-[12px] text-[var(--muted)] mb-2">
+              {invite.max_uses
+                ? `הצטרפו ${invite.uses} מתוך ${invite.max_uses}`
+                : `הצטרפו ${invite.uses}`}
+              {invite.expires_at &&
+                ` · פג ב-${new Date(invite.expires_at).toLocaleDateString("he-IL")}`}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(inviteUrl);
+                  showToast("קישור ההזמנה הועתק");
+                }}
+                className="flex-1 border border-[var(--line)] py-2.5 text-[12px] font-medium rounded-[var(--r)]"
+              >
+                העתקה
+              </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `${profile.nickname} פתחה אוסף בסקוויש קלאב והזמינה אותך למעגל שלה. הצטרפי כדי לראות אם יש לכן סקווישים שמתאימים לטרייד: ${inviteUrl}`
+                )}`}
+                className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12px] font-medium text-center rounded-[var(--r)]"
+              >
+                להזמין חברה
+              </a>
+            </div>
+            <button
+              onClick={revokeInvite}
+              className="t-small text-[var(--muted)] underline mt-2.5"
+            >
+              לבטל את הקישור
+            </button>
+          </>
+        ) : (
+          <>
+            <input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="שם לקישור (לא חובה): חוג ריקוד"
+              aria-label="שם לקישור"
+              maxLength={30}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] mt-2 rounded-[var(--r)]"
+            />
+            <button onClick={makeInvite} className="btn btn-secondary mt-2 t-small w-full">
+              ליצור קישור הזמנה
+            </button>
+            <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2">
+              הקישור פעיל {INVITE_DAYS} יום ועד {INVITE_MAX_USES} חברות. אפשר ליצור
+              חדש בכל רגע.
+            </p>
           </>
         )}
       </section>
 
-      {/* קבוצות */}
-      <section className="bg-white border border-[var(--line)] p-3">
-        <div className="t-label">קבוצות</div>
-        <p className="t-small text-[var(--muted)] leading-relaxed mt-1.5">
-          קבוצה פרטית נפתחת אחרי שיש שלוש חברות במעגל שלך. הכניסה בהזמנה בלבד.
-        </p>
-      </section>
-
       {/* הגדרות */}
-      <section className="bg-white border border-[var(--line)] p-3">
+      <section className="bg-white p-4 rounded-[var(--r)]">
         <div className="t-label">הגדרות</div>
         <div className="text-[13px] font-medium mt-1.5">מי רואה את הגלריה שלי</div>
-        <div className="flex flex-col gap-1.5 mt-1.5">
+        <div className="flex flex-col gap-1.5 mt-2">
           {SQUISH_VISIBILITY.map((v) => (
             <button
               key={v.key}
               onClick={() => setVisibility(v.key)}
               aria-pressed={profile.collection_visibility === v.key}
-              className={`flex items-center gap-2.5 border-[1.5px] px-3 py-2.5 text-start ${
+              className={`flex items-center gap-2.5 border-[1.5px] px-3 py-2.5 text-start rounded-[var(--r)] ${
                 profile.collection_visibility === v.key
                   ? "border-[var(--ink)] bg-[var(--canvas)]"
                   : "border-[var(--line)]"
@@ -348,6 +269,7 @@ export default function MyArea() {
                     ? "bg-[var(--ink)] text-white"
                     : "border border-[#D3D5DC]"
                 }`}
+                style={{ borderRadius: "999px" }}
               >
                 {profile.collection_visibility === v.key ? "✓" : ""}
               </span>
@@ -356,7 +278,7 @@ export default function MyArea() {
             </button>
           ))}
         </div>
-        <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2">
+        <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2.5">
           הגלריה לא מופיעה בגוגל ואי אפשר לחפש אותה. קישור לבדו לא פותח אותה
           למי שלא במעגל.
         </p>
@@ -372,7 +294,7 @@ export default function MyArea() {
       </section>
 
       {toast && (
-        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
+        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90] rounded-full">
           {toast}
         </div>
       )}

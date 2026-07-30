@@ -73,7 +73,7 @@ export default function SquishLanding() {
           אנחנו יודעים שיש לכם אוסף סקווישים מטורף
         </p>
         <p className="text-[15px] leading-relaxed max-w-[19rem] text-[var(--ink)] -mt-3">
-          תעלו את האוסף שלכם, תשתתפו באתגרים, תעשו טריידים ובעיקר תשוויצו
+          תעלו את האוסף שלכם, תעשו טריידים ובעיקר תשוויצו
         </p>
 
         <div className="w-full max-w-sm flex flex-col gap-2.5">
