@@ -25,10 +25,12 @@ import { TypeDot, TypeIcon } from "../type-icons";
 /**
  * בניית האוסף — בונים לפני שנרשמים.
  *
- * הטיוטה חיה ב-sessionStorage עד שיש חשבון, בדיוק כמו בהקמת דוכן. התמונות
- * נשמרות בטיוטה כ-data URL ב-600 פיקסל: sessionStorage מוגבל, ושלוש תמונות
- * בגודל מלא מפוצצות אותו. סרטון לא נכנס לטיוטה בכלל — הוא נוסף אחרי שיש
- * אוסף, מתוך מסך האוסף, שם אפשר להעלות אותו ישר לאחסון.
+ * הטיוטה חיה ב-localStorage עד שיש חשבון. היה sessionStorage — וים (8)
+ * איבדה ככה עבודה פעמיים: ספארי באייפון מוחק sessionStorage כשהטאב
+ * "נרדם" ברקע, וילדה שקופצת לוואטסאפ וחוזרת מתחילה מאפס. גם הפריט
+ * שבאמצע השיחה נשמר (EDIT_KEY), לא רק מה שכבר נכנס לגלריה. התמונות
+ * נשמרות כ-data URL ב-600 פיקסל כדי לא למלא את המכסה; סרטון לא נכנס
+ * לטיוטה בכלל — הוא חי בזיכרון, וזה כתוב במסך.
  *
  * המספר נשאל רק בשלב האחרון, ורק כי בלעדיו אין למי לשמור את האוסף.
  */
@@ -67,6 +69,16 @@ interface Draft {
 }
 
 const KEY = "squish-draft";
+/** הפריט שבאמצע השיחה — נשמר בנפרד על כל שינוי, ומשוחזר אחרי רענון */
+const EDIT_KEY = "squish-draft-item";
+
+/* localStorage עם נפילה שקטה: במצב פרטי באייפון ישן הכתיבה זורקת,
+   והטיוטה פשוט לא תשרוד רענון — אבל ההעלאה עצמה ממשיכה לעבוד. */
+const store = {
+  get: (k: string) => { try { return localStorage.getItem(k) ?? sessionStorage.getItem(k); } catch { return null; } },
+  set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch {} },
+  del: (k: string) => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch {} },
+};
 
 /* סדר השיחה. כל שלב הוא שאלה אחת. */
 const STAGES = ["media", "name", "type", "size", "condition", "trade", "extras"] as const;
@@ -119,6 +131,7 @@ export default function NewCollection() {
     setStage("media");
     setReachedIdx(0);
     setPhotoErr("");
+    setRestoredNote("");
   };
   const startEdit = (it: DraftItem, i: number) => {
     setEditing(it);
@@ -158,20 +171,58 @@ export default function NewCollection() {
   const [photoErr, setPhotoErr] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
+  /** נהיה true אחרי שניסינו לשחזר — לפני זה אסור לאפקט השמירה לרוץ,
+      אחרת הוא מוחק את מה שבאנו לשחזר. */
+  const hydratedRef = useRef(false);
+  const [restoredNote, setRestoredNote] = useState("");
+
   useEffect(() => {
     supabaseBrowser().auth.getUser().then(({ data }) => setHasAccount(!!data.user));
-    const raw = sessionStorage.getItem(KEY);
+    const raw = store.get(KEY);
     const d: Draft = raw
       ? JSON.parse(raw)
       : { step: 1, items: [], collectionTitle: "", nickname: "", city: "", parentAware: false };
     setDraft(d);
+
+    /* פריט שנקטע באמצע השיחה חוזר בדיוק לאותה שאלה */
+    try {
+      const savedEdit = store.get(EDIT_KEY);
+      if (savedEdit) {
+        const e: { item: DraftItem; index: number | null; stage: Stage; reachedIdx: number } = JSON.parse(savedEdit);
+        if (e?.item && (e.item.imageData || e.item.name)) {
+          if (e.item.videoId && !draftVideos.has(e.item.videoId)) {
+            /* הסרטון חי בזיכרון ולא שרד את הרענון. לא הופכים אותו
+               בשקט לתמונה — אומרים, ומשאירים את הפוסטר. */
+            e.item = { ...e.item, videoId: null };
+            setRestoredNote("שמרנו את מה שהתחלת. רק את הסרטון צריך לצלם שוב.");
+          } else {
+            setRestoredNote("שמרנו את מה שהתחלת ✨");
+          }
+          setEditing(e.item);
+          setEditIndex(e.index);
+          setStage(e.stage ?? "media");
+          setReachedIdx(e.reachedIdx ?? 0);
+        }
+      }
+    } catch { /* טיוטה פגומה לא חוסמת התחלה חדשה */ }
+    hydratedRef.current = true;
   }, []);
+
+  /* כל שינוי בפריט הפתוח נשמר מיד — רענון באמצע שאלה לא מוחק כלום */
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    if (editing) {
+      store.set(EDIT_KEY, JSON.stringify({ item: editing, index: editIndex, stage, reachedIdx }));
+    } else {
+      store.del(EDIT_KEY);
+    }
+  }, [editing, editIndex, stage, reachedIdx]);
 
   const set = (patch: Partial<Draft>) =>
     setDraft((d) => {
       if (!d) return d;
       const next = { ...d, ...patch };
-      sessionStorage.setItem(KEY, JSON.stringify(next));
+      store.set(KEY, JSON.stringify(next));
       return next;
     });
 
@@ -371,7 +422,8 @@ export default function NewCollection() {
       await supa.from("squish_profiles").update({ favorite_item_id: lovedId }).eq("id", profileId);
     }
 
-    sessionStorage.removeItem(KEY);
+    store.del(KEY);
+    store.del(EDIT_KEY);
     track("squish_collection_created");
 
     /* שדה אופציונלי שהדאטהבייס לא הכיר — הפריט נשמר בלעדיו, וזה נאמר
@@ -474,6 +526,12 @@ export default function NewCollection() {
             ביטול
           </button>
         </div>
+
+        {restoredNote && (
+          <p data-testid="draft-restored" className="text-[13px] text-[var(--muted)] text-center bg-white rounded-full py-2 px-4">
+            {restoredNote}
+          </p>
+        )}
 
         {/* הריבוע נעוץ למעלה מהרגע הראשון — הכרטיס שנבנה. אותו רוחב
             בדיוק כמו הכרטיסים שמתחתיו: עמודה אחת נקייה, לא שני

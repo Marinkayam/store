@@ -199,6 +199,18 @@ await p.click("button[aria-label='מים']");
 await p.waitForTimeout(300);
 check("אחרי בחירה — מתקדמים לגודל", (await p.textContent("body")).includes("באיזה גודל הוא?"));
 
+/* ── רענון באמצע השיחה לא מוחק כלום ──
+   ים (8) העלתה תמונות, ספארי רענן ברקע, והיא התחילה מאפס. הפריט
+   הפתוח נשמר עכשיו על כל שינוי ומשוחזר לאותה שאלה בדיוק. */
+await p.reload();
+await p.waitForTimeout(1500);
+const restored = await p.textContent("body");
+check("אחרי רענון מופיעה שורת השחזור",
+  (await p.locator("[data-testid=draft-restored]").count()) === 1);
+check("השם ששרד את הרענון מוצג", restored.includes("בלי סוג"));
+check("וחוזרים לאותה שאלה — גודל", restored.includes("באיזה גודל הוא?"));
+check("והתמונה שם", (await p.locator("main img").count()) >= 1);
+
 check("אין שגיאות ג׳אווהסקריפט", errs.length === 0, errs.slice(0, 2).join(" | "));
 
 const bad = r.filter((x) => !x).length;
