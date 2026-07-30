@@ -472,38 +472,53 @@ export default function NewCollection() {
           </button>
         </div>
 
-        {/* התמונה נעוצה למעלה מרגע שיש אחת — הכרטיס שנבנה */}
-        {editing.imageData && (
-          <div className="flex flex-col items-center gap-1 pb-1">
-            <div className="relative w-[210px] aspect-square rounded-[14px] overflow-hidden bg-[var(--cream)]">
+        {/* הריבוע נעוץ למעלה מהרגע הראשון — הכרטיס שנבנה. לפני שיש
+            תמונה יושב בו הקמע כפלייסהולדר, שיהיה ברור מה הולך למלא
+            את המקום הזה. */}
+        <div className="flex flex-col items-center gap-1 pb-1">
+          <div className="relative w-[210px] aspect-square rounded-[14px] overflow-hidden bg-[var(--cream)]">
+            {editing.imageData ? (
               <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
-              {editing.videoId && (
-                <span className="absolute bottom-1.5 end-1.5 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded-full">
-                  סרטון ✓
-                </span>
-              )}
-              <span className="absolute top-1.5 start-1.5 flex gap-1" aria-hidden>
-                {overlays.map((o) => (
-                  <span
-                    key={o.key}
-                    data-overlay={o.key}
-                    className="w-6 h-6 flex items-center justify-center text-white text-[13px]"
-                    style={{ background: o.bg, borderRadius: "999px", boxShadow: "0 0 0 1.5px rgba(255,255,255,.85)" }}
-                  >
-                    {o.glyph}
-                  </span>
-                ))}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center opacity-50" aria-hidden>
+                <SquishPlaceholder size={120} />
+              </div>
+            )}
+            {editing.videoId && (
+              <span className="absolute bottom-1.5 end-1.5 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded-full">
+                סרטון ✓
               </span>
-            </div>
+            )}
+            <span className="absolute top-1.5 start-1.5 flex gap-1" aria-hidden>
+              {overlays.map((o) => (
+                <span
+                  key={o.key}
+                  data-overlay={o.key}
+                  className="w-6 h-6 flex items-center justify-center text-white text-[13px]"
+                  style={{ background: o.bg, borderRadius: "999px", boxShadow: "0 0 0 1.5px rgba(255,255,255,.85)" }}
+                >
+                  {o.glyph}
+                </span>
+              ))}
+            </span>
+          </div>
+          {editing.imageData ? (
             <button onClick={() => setStage("media")} className="text-[12px] text-[var(--muted)] underline">
               להחליף תמונה
             </button>
-          </div>
-        )}
+          ) : (
+            <p className="text-[12px] text-[var(--muted)]">כאן תופיע התמונה שלו</p>
+          )}
+        </div>
 
         {/* ── השיחה ── */}
         {stage === "media" && (
-          <Ask q={editing.imageData ? "רוצה תמונה אחרת?" : "קודם כל — בואי נראה אותו"}>
+          <Ask q={editing.imageData ? "רוצה תמונה אחרת?" : "מוסיפים סקווישי לאוסף שלך"}>
+            {!editing.imageData && (
+              <p className="text-[13px] text-[var(--muted)] leading-relaxed -mt-1">
+                כדי שהוא ייכנס לאוסף צריך לצלם אותו — סרטון או תמונה.
+              </p>
+            )}
             <button onClick={() => videoRef.current?.click()} className="btn btn-primary">
               🎥 לצלם סרטון
             </button>
