@@ -44,15 +44,21 @@ await guest.click("[data-testid=to-preview]");
 await guest.waitForSelector("[data-testid=squish-preview]");
 await shot(guest, "02-פתיחה-מסך-2");
 
+/* ההוספה היא שיחה: תמונה ← שם ← סוג ← גודל ← מצב ← טרייד ← תוספות */
 await guest.goto(`${BASE}/squish/new`, { waitUntil: "networkidle" });
 await guest.click("button:has-text('להוסיף את הראשון')");
 await guest.setInputFiles("input[type=file][accept='image/*'] >> nth=0", "e2e/fixtures/square.png");
-await guest.waitForTimeout(600);
+await guest.waitForSelector("input[aria-label='שם הסקווישי']");
 await guest.fill("input[aria-label='שם הסקווישי']", "באו גלקסי");
-await guest.click("button[aria-label='נידו']");
-await shot(guest, "03-הוספה-שלב-1");
+await shot(guest, "03-הוספה-שאלת-שם");
 await guest.click("button:has-text('הלאה')");
-await shot(guest, "04-הוספה-שלב-2");
+await shot(guest, "04-הוספה-שאלת-סוג");
+await guest.click("button[aria-label='נידו']");
+await guest.click("button:has-text('בינוני')");
+await guest.click("button:has-text('מצב טוב')");
+await shot(guest, "04ב-הוספה-שאלת-טרייד");
+await guest.click("button:has-text('כן, פתוח לטרייד')");
+await shot(guest, "04ג-הוספה-תוספות");
 await guest.context().close();
 
 /* ── שתי אספניות אמיתיות ── */
@@ -89,6 +95,11 @@ for (const [name, [key, type]] of Object.entries(PICS)) {
 await pool.query(
   "update squish_profiles set favorite_item_id=(select id from squish_items where owner_user_id=$1 and name='באו גלקסי') where user_id=$1",
   [noaId]);
+/* שם לאוסף לא נשאל באונבורדינג — לצילומים נותנים אותו כמו שילדה הייתה
+   נותנת אחר כך ממסך האוסף */
+await pool.query("update squish_profiles set collection_title=$2 where user_id=$1", [noaId, NOA.title]);
+const gilId = await uidOf(pool, GIL.e164);
+await pool.query("update squish_profiles set collection_title=$2 where user_id=$1", [gilId, GIL.title]);
 
 /* ── מעגל ──
    קישור אחד בלבד פעיל בכל רגע, ולכן מסך ההצטרפות מצולם *לפני* שגילי

@@ -7,7 +7,7 @@
 import { chromium } from "playwright";
 import pg from "pg";
 import { mkdirSync, writeFileSync } from "fs";
-import { clickUntil, verifyPhone, closeHelper } from "./helpers/index.mjs";
+import { addSquishy, clickUntil, verifyPhone, closeHelper } from "./helpers/index.mjs";
 
 const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
 const OUT = process.env.E2E_OUT ?? "/tmp/e2e-invite";
@@ -48,17 +48,8 @@ async function newUser(user, names) {
   await page.click("a[href='/squish/new']");
   await page.waitForURL("**/squish/new");
   for (const [i, nm] of names.entries()) {
-    await page.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-    await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-    await page.waitForTimeout(600);
-    await page.fill("input[aria-label='שם הסקווישי']", nm);
-    await page.click("button[aria-label='נידו']");
-    await page.click("button:has-text('הלאה')");
-    await page.waitForTimeout(200);
-    await page.click("button:has-text('להוסיף לאוסף')");
-    await page.waitForTimeout(400);
+    await addSquishy(page, nm, i === 0);
   }
-  await page.fill("input[aria-label='שם האוסף']", user.title);
   await page.click("button:has-text('לשמור את האוסף')");
   await page.fill("input[aria-label='כינוי']", user.nick);
   await page.check("input[aria-label='ההורים שלי יודעים']");

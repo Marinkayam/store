@@ -9,7 +9,7 @@
  * חריגה, לא אחרי ניווט, ולא "כמעט".
  */
 import {
-  BASE, IMG, checker, closeHelper, db, launch, uidOf, verifyPhone, wipe,
+  BASE, addSquishy, checker, closeHelper, db, launch, uidOf, verifyPhone, wipe,
 } from "./helpers/index.mjs";
 
 const U = { fay: { num: "0521130701", e164: "972521130701", nick: "FayW", title: "מדף כישלון" } };
@@ -30,17 +30,8 @@ async function buildDraft(names) {
   await page.click("a[href='/squish/new']");
   await page.waitForURL("**/squish/new");
   for (const [i, name] of names.entries()) {
-    await page.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-    await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-    await page.waitForTimeout(600);
-    await page.fill("input[aria-label='שם הסקווישי']", name);
-    await page.click("button[aria-label='נידו']");
-    await page.click("button:has-text('הלאה')");
-    await page.waitForTimeout(250);
-    await page.click("button:has-text('להוסיף לאוסף')");
-    await page.waitForTimeout(400);
+    await addSquishy(page, name, i === 0);
   }
-  await page.fill("input[aria-label='שם האוסף']", U.fay.title);
   await page.click("button:has-text('לשמור את האוסף')");
   await page.fill("input[aria-label='כינוי']", U.fay.nick);
   await page.check("input[aria-label='ההורים שלי יודעים']");
@@ -120,17 +111,8 @@ await (async () => {
   await p.click("a[href='/squish/new']");
   await p.waitForURL("**/squish/new");
   for (const [i, name] of ["ח1", "ח2", "ח3"].entries()) {
-    await p.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-    await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-    await p.waitForTimeout(600);
-    await p.fill("input[aria-label='שם הסקווישי']", name);
-    await p.click("button[aria-label='נידו']");
-    await p.click("button:has-text('הלאה')");
-    await p.waitForTimeout(250);
-    await p.click("button:has-text('להוסיף לאוסף')");
-    await p.waitForTimeout(400);
+    await addSquishy(p, name, i === 0);
   }
-  await p.fill("input[aria-label='שם האוסף']", "מדף חלקי");
   await p.click("button:has-text('לשמור את האוסף')");
   await p.fill("input[aria-label='כינוי']", U.fay.nick);
   await p.check("input[aria-label='ההורים שלי יודעים']");

@@ -25,6 +25,7 @@ export function StickerPicker({
   onPersonal,
   onTrade,
   onLoved,
+  hideTrade = false,
 }: {
   personal: string[];
   openForTrade: boolean;
@@ -32,7 +33,10 @@ export function StickerPicker({
   onPersonal: (k: PersonalKey, on: boolean) => void;
   onTrade: (on: boolean) => void;
   onLoved: (on: boolean) => void;
+  /* בזרימה השיחתית לטרייד יש שאלה משלו — המדבקה כאן תכפיל אותה */
+  hideTrade?: boolean;
 }) {
+  const shown = hideTrade ? STICKERS.filter((s) => s.key !== "trade") : STICKERS;
   const isOn = (s: Sticker) =>
     s.key === "trade" ? openForTrade : s.key === "loved" ? loved : personal.includes(s.key);
 
@@ -52,7 +56,7 @@ export function StickerPicker({
         מדבקות עוזרות לספר מה מיוחד בסקווישי שלך.
       </p>
       <div className="grid grid-cols-2 gap-2 mt-2">
-        {STICKERS.map((s) => {
+        {shown.map((s) => {
           const on = isOn(s);
           return (
             <button

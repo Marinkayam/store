@@ -29,7 +29,7 @@ export interface SchemaExpectation {
  * שתיהן הפריט עדיין הפריט. שם, תמונה, בעלות ומצב טרייד — לא כאן,
  * ולעולם לא יוסרו כדי "להצליח".
  */
-export const OPTIONAL_ITEM_FIELDS = ["stickers", "series"] as const;
+export const OPTIONAL_ITEM_FIELDS = ["stickers", "series", "description"] as const;
 export type OptionalItemField = (typeof OPTIONAL_ITEM_FIELDS)[number];
 
 export const SQUISH_SCHEMA: SchemaExpectation = {

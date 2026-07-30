@@ -110,7 +110,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     if (!item) return;
     setMediaBusy("מעלים תמונה…");
     try {
-      const blob = await squareImage(file, 900);
+      /* contain כמו בהוספה — שלא ייחתך לסקווישי הראש */
+      const blob = await squareImage(file, 900, "contain");
       const up = await uploadBlob("squish", blob);
       if ("error" in up) throw new Error(up.error);
       const supa = supabaseBrowser();

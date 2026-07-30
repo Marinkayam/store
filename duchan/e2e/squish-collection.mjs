@@ -41,7 +41,18 @@ check("ופריט רגיל כן פתוח",
   items.find((i) => i.name === "ענן פסטל")?.trade_status === "open_for_trade");
 
 const { rows: [prof] } = await pool.query("select * from squish_profiles where user_id=$1", [anaId]);
-check("שם האוסף נשמר", prof.collection_title === U.ana.title, prof.collection_title);
+/* שם לאוסף לא נשאל באונבורדינג יותר — נותנים אותו מתוך מסך האוסף */
+check("האוסף נולד בלי שם", !prof.collection_title, String(prof.collection_title));
+await ana.goto(`${BASE}/squish/collection`, { waitUntil: "networkidle" });
+await ana.waitForTimeout(1200);
+check("ובלי שם מוצג 'האוסף של {כינוי}'",
+  (await ana.textContent("body")).includes(`האוסף של ${U.ana.nick}`));
+await ana.fill("input[aria-label='שם האוסף']", U.ana.title);
+await ana.click("button:has-text('שמירת שינויים')");
+await ana.waitForTimeout(1500);
+const { rows: [named] } = await pool.query(
+  "select collection_title from squish_profiles where user_id=$1", [anaId]);
+check("שם שניתן ממסך האוסף נשמר", named.collection_title === U.ana.title, String(named.collection_title));
 check("ברירת המחדל לצפייה היא חברות ישירות",
   prof.collection_visibility === "direct_friends", prof.collection_visibility);
 check("קוד הגלריה אינו ניתן לניחוש",

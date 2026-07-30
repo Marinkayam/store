@@ -41,10 +41,23 @@ const NAMES = ["ענן נדיר", "לב אהוב", "כוכב חדש"];
 for (const [i, nm] of NAMES.entries()) {
   await p.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
   await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-  await p.waitForTimeout(600);
+  await p.waitForSelector("input[aria-label='שם הסקווישי']");
   await p.fill("input[aria-label='שם הסקווישי']", nm);
-  await p.click("button[aria-label='נידו']");
   await p.click("button:has-text('הלאה')");
+  await p.click("button[aria-label='נידו']");
+  await p.click("button:has-text('בינוני')");
+  await p.click("button:has-text('מצב טוב')");
+  await p.waitForTimeout(300);
+
+  if (i === 0) {
+    /* הטרייד הוא שאלה בשיחה, לא מדבקה בבחירה */
+    const atTrade = await p.textContent("body");
+    check("שאלת הטרייד מופיעה עם הסבר", atTrade.includes("לפתוח אותו לטרייד?"));
+    check("וההסבר אומר מה יקרה", atTrade.includes("חברות מהמעגל שלך יוכלו להציע עליו החלפה"));
+  }
+  await p.click(nm === "כוכב חדש"
+    ? "button:has-text('לא, הוא נשאר רק אצלי')"
+    : "button:has-text('כן, פתוח לטרייד')");
   await p.waitForTimeout(300);
 
   if (i === 0) {
@@ -52,28 +65,23 @@ for (const [i, nm] of NAMES.entries()) {
     const body = await p.textContent("body");
     check("שורת המדבקות מופיעה בהוספה", body.includes("תוסיפי לו מדבקה"));
     check("וההסבר הקצר לצידה", body.includes("מדבקות עוזרות לספר מה מיוחד"));
-    for (const label of ["נדיר בעיניי", "אהוב עליי", "חדש באוסף", "פתוח לטרייד"]) {
+    for (const label of ["נדיר בעיניי", "אהוב עליי", "חדש באוסף"]) {
       check(`יש כרטיסיה "${label}"`, (await p.locator(`button[aria-label='${label}']`).count()) === 1);
     }
-    check('"פתוח לטרייד" דלוק כברירת מחדל',
-      (await p.getAttribute("button[aria-label='פתוח לטרייד']", "aria-pressed")) === "true");
-    check("וההסבר שלו מופיע רק כשהוא דלוק",
-      (await p.textContent("body")).includes("חברות מהמעגל שלך יוכלו להציע עליו טרייד"));
+    check('"פתוח לטרייד" אינו מדבקה בעורך — הוא נשאל כשאלה',
+      (await p.locator("button[aria-label='פתוח לטרייד']").count()) === 0);
+    check("מדבקת הטרייד מופיעה מיד על התמונה אחרי התשובה",
+      (await p.locator("[data-overlay=trade]").count()) === 1);
     await p.screenshot({ path: `${OUT}/01-picker.png`, fullPage: true });
     await p.click("button[aria-label='נדיר בעיניי']");
   }
   if (i === 1) await p.click("button[aria-label='אהוב עליי']");
-  if (i === 2) {
-    await p.click("button[aria-label='חדש באוסף']");
-    // כיבוי "פתוח לטרייד" — הוא מדבקת פעולה ולא דעה
-    await p.click("button[aria-label='פתוח לטרייד']");
-  }
+  if (i === 2) await p.click("button[aria-label='חדש באוסף']");
   await p.waitForTimeout(200);
   await p.click("button:has-text('להוסיף לאוסף')");
   await p.waitForTimeout(400);
 }
 
-await p.fill("input[aria-label='שם האוסף']", U.title);
 await p.click("button:has-text('לשמור את האוסף')");
 await p.fill("input[aria-label='כינוי']", U.nick);
 await p.check("input[aria-label='ההורים שלי יודעים']");
@@ -167,8 +175,8 @@ check("פריט שנעול בטרייד לא מוצג כפתוח לטרייד",
   locked.slice(0, 120));
 
 /* ── סוג הוא בחירה, לא ברירת מחדל ──
-   "אחר" שסומן מראש השאיר אוספים שלמים אפורים. עכשיו אי אפשר להתקדם
-   בלי לבחור, והשגיאה אומרת מה חסר. */
+   "אחר" שסומן מראש השאיר אוספים שלמים אפורים. בשיחה זה מבני: שאלת
+   הסוג היא תחנה שאי אפשר לעבור בלי ללחוץ על סוג — אין בה "הלאה". */
 await p.goto(`${BASE}/squish/collection`, { waitUntil: "networkidle" });
 await p.waitForTimeout(700);
 await p.click("a:has-text('להוסיף סקווישי')");
@@ -178,17 +186,18 @@ await p.waitForTimeout(600);
 const firstBtn = await p.locator("button:has-text('להוסיף את הראשון')").count();
 await p.click(firstBtn ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
 await p.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-await p.waitForTimeout(600);
+await p.waitForSelector("input[aria-label='שם הסקווישי']");
 await p.fill("input[aria-label='שם הסקווישי']", "בלי סוג");
+await p.click("button:has-text('הלאה')");
+await p.waitForTimeout(300);
+check("שאלת הסוג נפתחת אחרי השם", (await p.textContent("body")).includes("איזה סוג הוא?"));
 check("שום סוג לא מסומן מראש",
   (await p.locator("[role=radio][aria-checked=true]").count()) === 0);
-await p.click("button:has-text('הלאה')");
-await p.waitForTimeout(400);
-check("בלי סוג אי אפשר להתקדם", (await p.textContent("body")).includes("בחרי מהרשימה"));
+check("ואין דרך לדלג — אין 'הלאה' בשאלת הסוג",
+  (await p.locator("button:has-text('הלאה')").count()) === 0);
 await p.click("button[aria-label='מים']");
-await p.click("button:has-text('הלאה')");
-await p.waitForTimeout(400);
-check("אחרי בחירה — מתקדמים", (await p.textContent("body")).includes("תוסיפי לו מדבקה"));
+await p.waitForTimeout(300);
+check("אחרי בחירה — מתקדמים לגודל", (await p.textContent("body")).includes("באיזה גודל הוא?"));
 
 check("אין שגיאות ג׳אווהסקריפט", errs.length === 0, errs.slice(0, 2).join(" | "));
 

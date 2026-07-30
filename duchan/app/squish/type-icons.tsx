@@ -3,6 +3,39 @@
 import type { SquishyType } from "@/lib/squish";
 
 /**
+ * צבע לכל סוג — עיגול רקע בהיר וקו כהה, קבועים פר סוג בכל המערכת.
+ *
+ * ההערה של מרינה מהישיבה עם ים: "האייקונים יפים אבל חסר בהם צבע".
+ * הצבעים חיים כאן, ליד הצורות, כדי שסוג חדש יקבל את שניהם במקום אחד.
+ */
+export const TYPE_COLORS: Record<SquishyType, { fg: string; bg: string }> = {
+  needoh:         { fg: "#7C5E9E", bg: "#EFE7F6" },
+  water:          { fg: "#3D7FA6", bg: "#E1EFF7" },
+  sand:           { fg: "#A87B3F", bg: "#F6EBDA" },
+  ice:            { fg: "#3D96A6", bg: "#DFF2F4" },
+  bubble_blowing: { fg: "#C25E8F", bg: "#F9E4EE" },
+  eye_popping:    { fg: "#5F9950", bg: "#E7F2E2" },
+  taba:           { fg: "#C77E35", bg: "#F9EADA" },
+  clay:           { fg: "#B25B45", bg: "#F7E2DC" },
+  foam:           { fg: "#A38D2E", bg: "#F6F0D6" },
+  other:          { fg: "#6B6B6B", bg: "#EEECE9" },
+};
+
+/** האייקון בתוך עיגול צבעוני — הצורה שילדה מזהה מרחוק. */
+export function TypeDot({ type, size = 36 }: { type: SquishyType; size?: number }) {
+  const c = TYPE_COLORS[type] ?? TYPE_COLORS.other;
+  return (
+    <span
+      className="inline-flex items-center justify-center shrink-0"
+      style={{ width: size, height: size, background: c.bg, color: c.fg, borderRadius: "999px" }}
+      aria-hidden
+    >
+      <TypeIcon type={type} size={Math.round(size * 0.58)} />
+    </span>
+  );
+}
+
+/**
  * אייקון לכל סוג סקווישי.
  *
  * וקטור ולא אימוג'י, כמו כל שאר הסימנים במועדון: אימוג'י נראה אחרת

@@ -9,7 +9,6 @@ import { squareImage, MediaError, validateGalleryVideo, posterFrom } from "@/lib
 import { uploadBlob } from "@/lib/upload-client";
 import PhoneVerify from "@/app/phone-verify";
 import {
-  GALLERY_NAME_HINTS,
   MIN_ITEMS,
   PARENT_AWARENESS_COPY,
   PARENT_AWARENESS_VERSION,
@@ -21,7 +20,7 @@ import {
   type SquishyType,
 } from "@/lib/squish";
 import { SavingDumplings, SquishOutline, SquishPlaceholder, SwapGlyph } from "../components";
-import { TypeIcon } from "../type-icons";
+import { TypeDot, TypeIcon } from "../type-icons";
 
 /**
  * בניית האוסף — בונים לפני שנרשמים.
@@ -44,6 +43,8 @@ interface DraftItem {
   condition_note: string;
   wanted_description: string;
   series: string;
+  /** תיאור — נכתב ביד או מוצע על ידי ה-AI ונערך */
+  description: string;
   open_for_trade: boolean;
   /** מדבקות אישיות — rare / new */
   stickers: string[];
@@ -67,6 +68,10 @@ interface Draft {
 
 const KEY = "squish-draft";
 
+/* סדר השיחה. כל שלב הוא שאלה אחת. */
+const STAGES = ["media", "name", "type", "size", "condition", "trade", "extras"] as const;
+type Stage = (typeof STAGES)[number];
+
 /**
  * סרטוני הטיוטה חיים בזיכרון ולא ב-sessionStorage — שם נכנס רק טקסט
  * ותמונות קטנות, וסרטון של חמש שניות מפוצץ אותו מיד. המשמעות: רענון
@@ -83,6 +88,7 @@ const blank = (): DraftItem => ({
   condition_note: "",
   wanted_description: "",
   series: "",
+  description: "",
   open_for_trade: true,
   stickers: [],
   loved: false,
@@ -95,9 +101,45 @@ export default function NewCollection() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [editing, setEditing] = useState<DraftItem | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  // הטופס מפוצל לשניים: קודם מצלמים ונותנים שם, ואז הפרטים. שדה אחד
-  // ארוך גרם לזה להרגיש כמו מילוי טופס במקום כמו הוספת סקווישי.
-  const [editStep, setEditStep] = useState<1 | 2>(1);
+  /* ── שיחה, לא טופס ──
+     מרינה ישבה עם ים (8): מסך עם עשרה שדות גרם לה ללחוץ על דברים
+     לא לפי הסדר. עכשיו שאלה אחת פתוחה בכל רגע, כמו צ'אט — עונים,
+     והשאלה הבאה מופיעה. מה שנענה מצטבר למעלה ואפשר לחזור אליו
+     בלחיצה. */
+  const [stage, setStage] = useState<Stage>("media");
+  const [reachedIdx, setReachedIdx] = useState(0);
+  const go = (t: Stage) => {
+    const i = STAGES.indexOf(t);
+    setStage(t);
+    setReachedIdx((r) => Math.max(r, i));
+  };
+  const startNew = () => {
+    setEditing(blank());
+    setEditIndex(null);
+    setStage("media");
+    setReachedIdx(0);
+    setPhotoErr("");
+  };
+  const startEdit = (it: DraftItem, i: number) => {
+    setEditing(it);
+    setEditIndex(i);
+    setStage("extras");
+    setReachedIdx(STAGES.length - 1);
+    setPhotoErr("");
+  };
+  const closeEditor = () => {
+    setEditing(null);
+    setEditIndex(null);
+    setStage("media");
+    setReachedIdx(0);
+  };
+  const [hasAccount, setHasAccount] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiErr, setAiErr] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [stage]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   /**
@@ -119,6 +161,7 @@ export default function NewCollection() {
   const photoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    supabaseBrowser().auth.getUser().then(({ data }) => setHasAccount(!!data.user));
     const raw = sessionStorage.getItem(KEY);
     const d: Draft = raw
       ? JSON.parse(raw)
@@ -146,19 +189,28 @@ export default function NewCollection() {
     // פוסטר מיידי, כדי שהכרטיס לא יהיה ריבוע שחור בזמן הבנייה
     const poster = await posterFrom(URL.createObjectURL(file));
     const reader = new FileReader();
-    reader.onload = () =>
+    reader.onload = () => {
       setEditing((e) => (e ? { ...e, videoId: id, imageData: reader.result as string } : e));
+      go("name");
+    };
     if (poster) reader.readAsDataURL(poster);
-    else setEditing((e) => (e ? { ...e, videoId: id } : e));
+    else {
+      setEditing((e) => (e ? { ...e, videoId: id } : e));
+      go("name");
+    }
   }
 
   async function pickPhoto(file: File) {
     setPhotoErr("");
     try {
-      const blob = await squareImage(file, 600);
+      /* contain ולא cover: תמונה מהטלפון היא מלבנית, וחיתוך למרכז היה
+         גוזר לסקווישי את הראש. הריבוע מושלם בשוליים בצבע הרקע. */
+      const blob = await squareImage(file, 600, "contain");
       const reader = new FileReader();
-      reader.onload = () =>
+      reader.onload = () => {
         setEditing((e) => (e ? { ...e, imageData: reader.result as string, videoId: null } : e));
+        go("name");
+      };
       reader.readAsDataURL(blob);
     } catch (e) {
       setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
@@ -283,6 +335,7 @@ export default function NewCollection() {
           item: {
             name: it.name,
             squishy_type: it.squishy_type,
+            description: it.description?.trim() || null,
             custom_type: it.custom_type.trim() || null,
             size: it.size,
             condition: it.condition,
@@ -340,240 +393,374 @@ export default function NewCollection() {
 
   if (!draft) return <div className="p-6 t-small text-[var(--muted)]">רגע…</div>;
 
-  /* ── עורך פריט ── */
+  /* ── עורך פריט: שיחה ──
+     שאלה אחת פתוחה בכל רגע. מה שנענה הופך לשורה מקופלת שאפשר ללחוץ
+     עליה ולתקן. התמונה נעוצה למעלה, והמדבקות מופיעות עליה ברגע
+     שבוחרים — רואים את הכרטיס נבנה מול העיניים. */
   if (editing) {
-    const isOther = editing.squishy_type === "other";
+    const typeMeta = editing.squishy_type
+      ? SQUISH_TYPES.find((t) => t.key === editing.squishy_type)
+      : null;
+    const sizeMeta = SQUISH_SIZES.find((o) => o.key === editing.size);
+    const condMeta = SQUISH_CONDITIONS.find((o) => o.key === editing.condition);
+    const show = (t: Stage) => STAGES.indexOf(t) <= reachedIdx;
+    const Done = ({ t, q, children }: { t: Stage; q: string; children: React.ReactNode }) => (
+      <button
+        onClick={() => setStage(t)}
+        className="w-full flex items-center gap-2.5 bg-white rounded-[var(--r)] px-3.5 py-2.5 text-start"
+        aria-label={`לשנות: ${q}`}
+      >
+        <span className="text-[12px] text-[var(--muted)] shrink-0">{q}</span>
+        <span className="flex-1 flex items-center justify-end gap-1.5 text-[13.5px] font-medium">{children}</span>
+      </button>
+    );
+    const Ask = ({ q, children }: { q: string; children: React.ReactNode }) => (
+      <div className="bg-white rounded-[calc(var(--r)+4px)] p-4 flex flex-col gap-2.5">
+        <div className="t-body font-medium">{q}</div>
+        {children}
+      </div>
+    );
+    const overlays: { key: string; glyph: React.ReactNode; bg: string }[] = [];
+    if (editing.open_for_trade && show("extras")) overlays.push({ key: "trade", glyph: <SwapGlyph size={12} />, bg: "#8B7BC8" });
+    if (editing.loved) overlays.push({ key: "loved", glyph: "♥", bg: "#E79AAE" });
+    if (editing.stickers.includes("rare")) overlays.push({ key: "rare", glyph: "★", bg: "#E8B44A" });
+    if (editing.stickers.includes("new")) overlays.push({ key: "new", glyph: "✦", bg: "#8FBF9F" });
+
+    async function suggestDescription() {
+      if (!editing?.imageData) return;
+      setAiErr("");
+      setAiBusy(true);
+      try {
+        const [head, data] = editing.imageData.split(",");
+        const mediaType = head.match(/data:(image\/[a-z]+);/)?.[1] ?? "image/webp";
+        const res = await fetch("/api/squish/describe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageBase64: data,
+            mediaType,
+            name: editing.name,
+            typeLabel: typeMeta?.label,
+          }),
+        });
+        const out = await res.json();
+        if (!res.ok) {
+          setAiErr(out.error ?? "הכתיבה נכשלה, לנסות שוב");
+          return;
+        }
+        setEditing((e) => (e ? { ...e, description: out.description } : e));
+      } catch {
+        setAiErr("אין חיבור, לנסות שוב");
+      } finally {
+        setAiBusy(false);
+      }
+    }
+
     return (
-      <main className="px-4 py-5 flex flex-col gap-3">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])}
-        />
-        <input
-          ref={videoRef}
-          type="file"
-          accept="video/*"
-          capture="environment"
-          hidden
-          onChange={(e) => e.target.files?.[0] && pickVideo(e.target.files[0])}
-        />
-        <input
-          ref={photoRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          hidden
-          onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])}
-        />
+      <main className="px-4 py-5 flex flex-col gap-2.5 max-w-md mx-auto">
+        <input ref={fileRef} type="file" accept="image/*" hidden
+          onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
+        <input ref={videoRef} type="file" accept="video/*" capture="environment" hidden
+          onChange={(e) => e.target.files?.[0] && pickVideo(e.target.files[0])} />
+        <input ref={photoRef} type="file" accept="image/*" capture="environment" hidden
+          onChange={(e) => e.target.files?.[0] && pickPhoto(e.target.files[0])} />
+
         <div className="flex items-center justify-between">
           <h1 className="t-title">{editIndex === null ? "סקווישי חדש" : "עריכה"}</h1>
-          <span className="t-label">{editStep} מתוך 2</span>
-        </div>
-
-        {editStep === 1 && (
-        <>
-        <div className="h-52 border-[1.5px] border-dashed border-[var(--line)] bg-white flex items-center justify-center overflow-hidden relative">
-          {editing.imageData ? (
-            <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <span className="flex flex-col items-center gap-2 text-[var(--muted)]">
-              <SquishPlaceholder size={64} />
-              <span className="t-small">סרטון או תמונה</span>
-            </span>
-          )}
-          {editing.videoId && (
-            <span className="absolute bottom-2 start-2 bg-black/60 text-white text-[11px] px-2 py-1">
-              סרטון ✓
-            </span>
-          )}
-        </div>
-        {/* הסרטון מומלץ ויזואלית אבל לא חובה: יש ילדות שלא ירצו לצלם
-            וידאו, ויש מכשירים שבהם ההעלאה כבדה. תמונה היא אפשרות שווה. */}
-        <div className="t-small">איך תרצי להראות את הסקווישי?</div>
-        <button onClick={() => videoRef.current?.click()} className="btn btn-primary">
-          🎥 לצלם סרטון
-        </button>
-        <p className="text-[12px] text-[var(--muted)] text-center -mt-1">
-          סרטון קצר הכי טוב כדי לראות איך הוא נמעך
-        </p>
-        <div className="flex gap-2">
-          <button onClick={() => photoRef.current?.click()} className="btn btn-secondary flex-1 t-small">
-            לצלם תמונה
-          </button>
-          <button onClick={() => fileRef.current?.click()} className="btn btn-secondary flex-1 t-small">
-            לבחור מהגלריה
+          <button onClick={closeEditor} className="t-small text-[var(--muted)] underline">
+            ביטול
           </button>
         </div>
-        <p className="text-[12px] text-[var(--muted)] leading-relaxed">
-          סרטון עד 5 שניות, בלי קול. אם תצאי מהמסך לפני שנשמור את האוסף,
-          יהיה צריך לבחור את הסרטון שוב — התמונות כן נשמרות.
-        </p>
-        {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
 
-        <label className="t-small">
-          איך קוראים לסקווישי?
-          <input
-            value={editing.name}
-            maxLength={40}
-            aria-label="שם הסקווישי"
-            placeholder="למשל: צפרדע ירוקה"
-            onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-            className="field w-full px-3 py-3 mt-1 t-small"
-          />
-        </label>
-
-        {/* פרוס ולא נפתח. עשרה סוגים בתפריט נפתח דורשים לפתוח, לגלול
-            ולקרוא עשר מילים כדי לגלות שיש בכלל "מפריח בועה" — והשמות
-            האלה הם חצי מהכיף. פרוס עם אייקון, הבחירה היא הצצה ולחיצה,
-            ומי שלא מכירה סוג לומדת אותו בלי לחפש אותו. */}
-        <div className="t-small">
-          איזה סוג סקווישי זה?
-          <div role="radiogroup" aria-label="סוג הסקווישי" className="grid grid-cols-3 gap-1.5 mt-1.5">
-            {SQUISH_TYPES.map((t) => {
-              const on = editing.squishy_type === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  aria-label={t.label}
-                  onClick={() => { setPhotoErr(""); setEditing({ ...editing, squishy_type: t.key }); }}
-                  className={`flex flex-col items-center justify-center gap-1 py-2.5 px-1 border-[1.5px] text-[11.5px] leading-tight text-center ${
-                    on
-                      ? "border-[var(--ink)] bg-white font-medium"
-                      : "border-[var(--line)] text-[var(--muted)]"
-                  }`}
-                >
-                  <TypeIcon type={t.key} size={22} />
-                  {t.label}
-                </button>
-              );
-            })}
+        {/* התמונה נעוצה למעלה מרגע שיש אחת — הכרטיס שנבנה */}
+        {editing.imageData && (
+          <div className="flex flex-col items-center gap-1 pb-1">
+            <div className="relative w-[210px] aspect-square rounded-[14px] overflow-hidden bg-[var(--cream)]">
+              <img src={editing.imageData} alt="" className="w-full h-full object-cover" />
+              {editing.videoId && (
+                <span className="absolute bottom-1.5 end-1.5 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded-full">
+                  סרטון ✓
+                </span>
+              )}
+              <span className="absolute top-1.5 start-1.5 flex gap-1" aria-hidden>
+                {overlays.map((o) => (
+                  <span
+                    key={o.key}
+                    data-overlay={o.key}
+                    className="w-6 h-6 flex items-center justify-center text-white text-[13px]"
+                    style={{ background: o.bg, borderRadius: "999px", boxShadow: "0 0 0 1.5px rgba(255,255,255,.85)" }}
+                  >
+                    {o.glyph}
+                  </span>
+                ))}
+              </span>
+            </div>
+            <button onClick={() => setStage("media")} className="text-[12px] text-[var(--muted)] underline">
+              להחליף תמונה
+            </button>
           </div>
-        </div>
-        {isOther && (
-          <input
-            value={editing.custom_type}
-            maxLength={30}
-            aria-label="איזה סוג"
-            placeholder="איזה סוג?"
-            onChange={(e) => setEditing({ ...editing, custom_type: e.target.value })}
-            className="field w-full px-3 py-3 t-small"
-          />
         )}
 
-        {editStep === 1 ? (
-          <div className="flex gap-2 mt-1">
+        {/* ── השיחה ── */}
+        {stage === "media" && (
+          <Ask q={editing.imageData ? "רוצה תמונה אחרת?" : "קודם כל — בואי נראה אותו"}>
+            <button onClick={() => videoRef.current?.click()} className="btn btn-primary">
+              🎥 לצלם סרטון
+            </button>
+            <p className="text-[12px] text-[var(--muted)] text-center -mt-1">
+              סרטון קצר הכי טוב כדי לראות איך הוא נמעך
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => photoRef.current?.click()} className="btn btn-secondary flex-1 t-small">
+                לצלם תמונה
+              </button>
+              <button onClick={() => fileRef.current?.click()} className="btn btn-secondary flex-1 t-small">
+                לבחור מהגלריה
+              </button>
+            </div>
+            {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
+          </Ask>
+        )}
+
+        {show("name") && (stage === "name" ? (
+          <Ask q="איך קוראים לו?">
+            <input
+              value={editing.name}
+              maxLength={40}
+              autoFocus
+              aria-label="שם הסקווישי"
+              placeholder="למשל: צפרדע ירוקה"
+              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && editing.name.trim() && go("type")}
+              className="field w-full px-3 py-3 t-small"
+            />
             <button
-              onClick={() => {
-                if (!editing.imageData && !editing.videoId) { setPhotoErr("צריך סרטון או תמונה"); return; }
-                /* סוג הוא בחירה, לא ברירת מחדל: "אחר" מסומן מראש השאיר
-                   אוספים שלמים בלי הקשת של "כמה נידו, כמה מים". */
-                if (!editing.squishy_type) { setPhotoErr("איזה סוג הסקווישי? בחרי מהרשימה"); return; }
-                setPhotoErr("");
-                setEditStep(2);
-              }}
-              className="btn btn-primary flex-1"
+              onClick={() => go("type")}
+              disabled={!editing.name.trim()}
+              className="btn btn-primary disabled:opacity-40"
             >
               הלאה ←
             </button>
+          </Ask>
+        ) : (
+          <Done t="name" q="קוראים לו">{editing.name || "—"}</Done>
+        ))}
+
+        {show("type") && (stage === "type" ? (
+          <Ask q="איזה סוג הוא?">
+            <div role="radiogroup" aria-label="סוג הסקווישי" className="grid grid-cols-3 gap-1.5">
+              {SQUISH_TYPES.map((t) => {
+                const on = editing.squishy_type === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    aria-label={t.label}
+                    onClick={() => {
+                      setPhotoErr("");
+                      setEditing({ ...editing, squishy_type: t.key });
+                      /* לחיצה היא התשובה — חוץ מ"אחר", ששואל מה כן */
+                      if (t.key !== "other") go("size");
+                    }}
+                    className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-[var(--r)] border-[1.5px] text-[11.5px] leading-tight text-center ${
+                      on ? "border-[var(--ink)] bg-white font-medium" : "border-transparent bg-white text-[var(--muted)]"
+                    }`}
+                  >
+                    <TypeDot type={t.key} size={34} />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            {editing.squishy_type === "other" && (
+              <>
+                <input
+                  value={editing.custom_type}
+                  maxLength={30}
+                  aria-label="איזה סוג"
+                  placeholder="איזה סוג?"
+                  onChange={(e) => setEditing({ ...editing, custom_type: e.target.value })}
+                  className="field w-full px-3 py-3 t-small"
+                />
+                <button onClick={() => go("size")} className="btn btn-primary">הלאה ←</button>
+              </>
+            )}
+          </Ask>
+        ) : (
+          <Done t="type" q="הסוג">
+            {typeMeta && <TypeDot type={typeMeta.key} size={22} />}
+            {typeMeta?.key === "other" ? editing.custom_type || "אחר" : typeMeta?.label ?? "—"}
+          </Done>
+        ))}
+
+        {show("size") && (stage === "size" ? (
+          <Ask q="באיזה גודל הוא?">
+            <div className="flex gap-1.5 flex-wrap">
+              {SQUISH_SIZES.map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => { setEditing({ ...editing, size: o.key }); go("condition"); }}
+                  aria-pressed={editing.size === o.key}
+                  className={`px-3.5 py-2.5 text-[13px] rounded-full border-[1.5px] ${
+                    editing.size === o.key ? "border-[var(--ink)] bg-white font-medium" : "border-transparent bg-white text-[var(--muted)]"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </Ask>
+        ) : (
+          <Done t="size" q="גודל">{sizeMeta?.label ?? "—"}</Done>
+        ))}
+
+        {show("condition") && (stage === "condition" ? (
+          <Ask q="באיזה מצב הוא?">
+            <div className="flex gap-1.5 flex-wrap">
+              {SQUISH_CONDITIONS.map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => {
+                    setEditing({ ...editing, condition: o.key });
+                    if (o.key !== "flawed") go("trade");
+                  }}
+                  aria-pressed={editing.condition === o.key}
+                  className={`px-3.5 py-2.5 text-[13px] rounded-full border-[1.5px] ${
+                    editing.condition === o.key ? "border-[var(--ink)] bg-white font-medium" : "border-transparent bg-white text-[var(--muted)]"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            {editing.condition === "flawed" && (
+              <>
+                <input
+                  value={editing.condition_note}
+                  maxLength={80}
+                  aria-label="מה חשוב לדעת"
+                  placeholder="ספרי מה חשוב לדעת"
+                  onChange={(e) => setEditing({ ...editing, condition_note: e.target.value })}
+                  className="field w-full px-3 py-3 t-small"
+                />
+                <button onClick={() => go("trade")} className="btn btn-primary">הלאה ←</button>
+              </>
+            )}
+          </Ask>
+        ) : (
+          <Done t="condition" q="מצב">{condMeta?.label ?? "—"}</Done>
+        ))}
+
+        {show("trade") && (stage === "trade" ? (
+          <Ask q="לפתוח אותו לטרייד?">
+            <p className="text-[12.5px] text-[var(--muted)] leading-relaxed -mt-1">
+              חברות מהמעגל שלך יוכלו להציע עליו החלפה. אפשר לשנות מתי
+              שרוצים, וכלום לא קורה בלי שתאשרי.
+            </p>
             <button
-              onClick={() => { setEditing(null); setEditIndex(null); setEditStep(1); }}
-              className="btn btn-secondary px-5"
+              onClick={() => { setEditing({ ...editing, open_for_trade: true }); go("extras"); }}
+              className="btn btn-primary"
             >
-              ביטול
+              כן, פתוח לטרייד ⇄
             </button>
-          </div>
-        ) : null}
-        </>
+            <button
+              onClick={() => { setEditing({ ...editing, open_for_trade: false }); go("extras"); }}
+              className="btn btn-secondary"
+            >
+              לא, הוא נשאר רק אצלי
+            </button>
+          </Ask>
+        ) : (
+          <Done t="trade" q="טרייד">
+            {editing.open_for_trade ? "פתוח לטרייד ⇄" : "נשאר אצלי"}
+          </Done>
+        ))}
+
+        {show("extras") && stage === "extras" && (
+          <Ask q="עוד רגע סיימנו — רוצה להוסיף עליו משהו?">
+            {/* ה-AI זמין רק אחרי שיש חשבון: כתיבה אוטומטית לאורחת היא
+                דלת פתוחה לניצול המפתח. באונבורדינג הראשון פשוט אין את
+                הכפתור, ומהאוסף — יש. */}
+            {hasAccount && editing.imageData && (
+              <div className="bg-[var(--canvas)] rounded-[var(--r)] p-3 flex flex-col gap-2">
+                <div className="t-small font-medium">✨ שנכתוב עליו משהו?</div>
+                {editing.description ? (
+                  <>
+                    <textarea
+                      value={editing.description}
+                      maxLength={120}
+                      rows={2}
+                      aria-label="תיאור הסקווישי"
+                      onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                      className="field w-full px-3 py-2.5 t-small resize-none"
+                    />
+                    <button onClick={suggestDescription} disabled={aiBusy}
+                      className="t-small text-[var(--muted)] underline text-start disabled:opacity-40">
+                      {aiBusy ? "כותבים…" : "עוד ניסיון"}
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={suggestDescription} disabled={aiBusy}
+                    className="btn btn-secondary t-small">
+                    {aiBusy ? "כותבים…" : "כן, תציעו תיאור"}
+                  </button>
+                )}
+                {aiErr && <p className="text-[12px] text-[var(--danger)]">{aiErr}</p>}
+              </div>
+            )}
+
+            <StickerPicker
+              hideTrade
+              personal={editing.stickers}
+              openForTrade={editing.open_for_trade}
+              loved={editing.loved}
+              onPersonal={(k, on) =>
+                setEditing({
+                  ...editing,
+                  stickers: on ? [...editing.stickers, k] : editing.stickers.filter((x) => x !== k),
+                })
+              }
+              onTrade={(on) => setEditing({ ...editing, open_for_trade: on })}
+              onLoved={(on) => setEditing({ ...editing, loved: on })}
+            />
+
+            <label className="t-small text-[var(--muted)]">
+              סדרה (לא חובה)
+              <input
+                value={editing.series}
+                maxLength={30}
+                aria-label="סדרה"
+                placeholder='למשל: "סדרת הממתקים"'
+                onChange={(e) => setEditing({ ...editing, series: e.target.value })}
+                className="field w-full px-3 py-2.5 mt-1 t-small"
+              />
+            </label>
+
+            {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}
+
+            <button onClick={saveItem} className="btn btn-primary mt-1">
+              {editIndex === null ? "להוסיף לאוסף ←" : "לשמור שינויים"}
+            </button>
+            {editIndex !== null && (
+              /* מילים, לא אייקון: ילדה בת 8 לא יודעת שפח זה למחוק */
+              <button
+                onClick={() => {
+                  if (!window.confirm(`למחוק את ${editing.name || "הסקווישי"} מהאוסף?`)) return;
+                  const items = draft.items.filter((_, i) => i !== editIndex);
+                  set({ items, step: items.length ? draft.step : 2 });
+                  closeEditor();
+                }}
+                className="t-small text-[var(--danger)] underline text-center py-1"
+              >
+                למחוק את הסקווישי הזה
+              </button>
+            )}
+          </Ask>
         )}
 
-        {editStep === 2 && (
-        <>
-        <Chips
-          label="גודל"
-          options={SQUISH_SIZES}
-          value={editing.size}
-          onChange={(v) => setEditing({ ...editing, size: v })}
-        />
-        <Chips
-          label="מצב"
-          options={SQUISH_CONDITIONS}
-          value={editing.condition}
-          onChange={(v) => setEditing({ ...editing, condition: v })}
-        />
-        {editing.condition === "flawed" && (
-          <input
-            value={editing.condition_note}
-            maxLength={80}
-            aria-label="מה חשוב לדעת"
-            placeholder="ספרי מה חשוב לדעת"
-            onChange={(e) => setEditing({ ...editing, condition_note: e.target.value })}
-            className="field w-full px-3 py-3 t-small"
-          />
-        )}
-
-        <label className="t-small">
-          סדרה (לא חובה)
-          <input
-            value={editing.series}
-            maxLength={30}
-            aria-label="סדרה"
-            placeholder='למשל: "סדרת הממתקים"'
-            onChange={(e) => setEditing({ ...editing, series: e.target.value })}
-            className="field w-full px-3 py-3 mt-1 t-small"
-          />
-          <span className="block text-[12px] text-[var(--muted)] mt-1">
-            סקווישים מאותה סדרה נספרים יחד בגלריה.
-          </span>
-        </label>
-
-        <label className="t-small">
-          מה תרצי לקבל בתמורה?
-          <input
-            value={editing.wanted_description}
-            maxLength={120}
-            aria-label="מה מחפשים בתמורה"
-            placeholder="למשל: סקווישים בצבעי פסטל, או פתוחה להצעות"
-            onChange={(e) => setEditing({ ...editing, wanted_description: e.target.value })}
-            className="field w-full px-3 py-3 mt-1 t-small"
-          />
-        </label>
-
-        {/* המדבקות החליפו כאן תיבת סימון שתפסה שורה שלמה בשביל דבר אחד.
-            עכשיו זה נראה כמו אוסף, והילדה מכירה את הסמלים כבר בהוספה
-            הראשונה — אותם סמלים בדיוק יופיעו אחר כך על הכרטיסים. */}
-        <StickerPicker
-          personal={editing.stickers}
-          openForTrade={editing.open_for_trade}
-          loved={editing.loved}
-          onPersonal={(k, on) =>
-            setEditing({
-              ...editing,
-              stickers: on ? [...editing.stickers, k] : editing.stickers.filter((x) => x !== k),
-            })
-          }
-          onTrade={(on) => setEditing({ ...editing, open_for_trade: on })}
-          onLoved={(on) => setEditing({ ...editing, loved: on })}
-        />
-
-        <div className="flex gap-2 mt-1">
-          <button
-            onClick={() => { saveItem(); setEditStep(1); }}
-            className="btn btn-primary flex-1"
-          >
-            להוסיף לאוסף
-          </button>
-          <button onClick={() => setEditStep(1)} className="btn btn-secondary px-5">
-            → חזרה
-          </button>
-        </div>
-        </>
-        )}
+        <div ref={chatEndRef} />
       </main>
     );
   }
@@ -703,24 +890,9 @@ export default function NewCollection() {
         </p>
       </div>
 
-      {ready && (
-        /* השם נשאל כאן ולא בהתחלה: עכשיו יש מה לקרוא לו בשם, והילדה
-           כבר רואה את האוסף מולה. הכינוי שייך לה, השם שייך לאוסף. */
-        <label className="t-small">
-          איך יקראו לאוסף שלך?
-          <input
-            value={draft.collectionTitle}
-            maxLength={40}
-            aria-label="שם האוסף"
-            placeholder={GALLERY_NAME_HINTS[0]}
-            onChange={(e) => set({ collectionTitle: e.target.value })}
-            className="field w-full px-3 py-3 mt-1 t-body font-medium"
-          />
-          <span className="block text-[12px] text-[var(--muted)] mt-1 leading-relaxed">
-            למשל: {GALLERY_NAME_HINTS.slice(1, 4).join(" · ")}
-          </span>
-        </label>
-      )}
+      {/* שם לאוסף לא נשאל כאן יותר — ים (8) נתקעה עליו ("שם של מה?").
+          בלי שם האוסף נקרא "האוסף של {כינוי}", ואפשר לתת לו שם מתוך
+          מסך האוסף כשמתחשק. */}
 
       <div className="grid grid-cols-2 gap-2.5">
         {draft.items.map((it, i) => (

@@ -72,19 +72,10 @@ const kid = await kidCtx.newPage();
 await kid.goto(`${BASE}/squish/pilot/${toks[0].token}`, { waitUntil: "networkidle" });
 await kid.click("a[href='/squish/new']");
 await kid.waitForURL("**/squish/new");
-const { IMG } = await import("./helpers/index.mjs");
+const { addSquishy } = await import("./helpers/index.mjs");
 for (const [i, name] of ["מ1", "מ2", "מ3"].entries()) {
-  await kid.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-  await kid.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-  await kid.waitForTimeout(600);
-  await kid.fill("input[aria-label='שם הסקווישי']", name);
-  await kid.click("button[aria-label='נידו']");
-  await kid.click("button:has-text('הלאה')");
-  await kid.waitForTimeout(250);
-  await kid.click("button:has-text('להוסיף לאוסף')");
-  await kid.waitForTimeout(400);
+  await addSquishy(kid, name, i === 0);
 }
-await kid.fill("input[aria-label='שם האוסף']", U.kid.title);
 await kid.click("button:has-text('לשמור את האוסף')");
 await kid.fill("input[aria-label='כינוי']", U.kid.nick);
 await kid.check("input[aria-label='ההורים שלי יודעים']");

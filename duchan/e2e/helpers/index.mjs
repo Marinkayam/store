@@ -91,6 +91,31 @@ export async function asUser(pool, userId, sql, params = []) {
   }
 }
 
+/**
+ * מוסיף סקווישי אחד דרך העורך השיחתי — שאלה אחרי שאלה, כמו שילדה עוברת.
+ *
+ * הסדר כאן הוא הסדר של המסך: תמונה ← שם ← סוג ← גודל ← מצב ← טרייד ←
+ * תוספות. בחירה בסוג/גודל/מצב מקדמת לבד; שם וטרייד דורשים לחיצה.
+ * `it.keep` עונה "לא" בשאלת הטרייד — בעורך אין יותר מדבקת טרייד.
+ */
+export async function addSquishy(page, item, isFirst = false) {
+  const it = typeof item === "string" ? { name: item } : item;
+  await page.click(isFirst ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
+  await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
+  await page.waitForSelector("input[aria-label='שם הסקווישי']");
+  await page.fill("input[aria-label='שם הסקווישי']", it.name);
+  await page.click("button:has-text('הלאה')");
+  await page.click(`button[aria-label='${it.type ?? "נידו"}']`);
+  await page.click(`button:has-text('${it.size ?? "בינוני"}')`);
+  await page.click(`button:has-text('${it.condition ?? "מצב טוב"}')`);
+  await page.click(it.keep
+    ? "button:has-text('לא, הוא נשאר רק אצלי')"
+    : "button:has-text('כן, פתוח לטרייד')");
+  if (it.sticker) await page.click(`button[aria-label='${it.sticker}']`);
+  await page.click("button:has-text('להוסיף לאוסף')");
+  await page.waitForTimeout(400);
+}
+
 /** נוחת, בונה אוסף עם הפריטים שניתנו, ונרשם. מחזיר את הדף. */
 export async function newCollector(browser, user, names, errs = []) {
   const page = await (
@@ -104,22 +129,10 @@ export async function newCollector(browser, user, names, errs = []) {
   await page.waitForURL("**/squish/new");
 
   for (const [i, item] of names.entries()) {
-    const it = typeof item === "string" ? { name: item } : item;
-    await page.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-    await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-    await page.waitForTimeout(600);
-    await page.fill("input[aria-label='שם הסקווישי']", it.name);
-    /* סוג הוא שדה חובה מאז שירדה ברירת המחדל "אחר" */
-    await page.click(`button[aria-label='${it.type ?? "נידו"}']`);
-    await page.click("button:has-text('הלאה')");
-    await page.waitForTimeout(250);
-    if (it.sticker) await page.click(`button[aria-label='${it.sticker}']`);
-    if (it.keep) await page.click("button[aria-label='פתוח לטרייד']"); // כבוי
-    await page.click("button:has-text('להוסיף לאוסף')");
-    await page.waitForTimeout(400);
+    await addSquishy(page, item, i === 0);
   }
 
-  await page.fill("input[aria-label='שם האוסף']", user.title);
+  /* שם לאוסף לא נשאל יותר באונבורדינג — נותנים שם מתוך מסך האוסף */
   await page.click("button:has-text('לשמור את האוסף')");
   await page.fill("input[aria-label='כינוי']", user.nick);
   await page.check("input[aria-label='ההורים שלי יודעים']");

@@ -14,7 +14,7 @@
  *    הוא הצהרה שלה; רק הטוקן בסמס הוא אישור של הורה.
  */
 import {
-  BASE, IMG, asUser, checker, closeHelper, db, launch, newCollector, stranger, uidOf, wipe,
+  BASE, addSquishy, asUser, checker, closeHelper, db, launch, newCollector, stranger, uidOf, wipe,
   verifyPhone,
 } from "./helpers/index.mjs";
 
@@ -33,19 +33,8 @@ async function buildCollection(page, user, names) {
   await page.click("a[href='/squish/new']");
   await page.waitForURL("**/squish/new");
   for (const [i, it] of names.entries()) {
-    await page.click(i === 0 ? "button:has-text('להוסיף את הראשון')" : "button:has-text('להוסיף סקווישי')");
-    await page.setInputFiles("input[type=file][accept='image/*'] >> nth=0", IMG);
-    await page.waitForTimeout(600);
-    await page.fill("input[aria-label='שם הסקווישי']", it.name);
-    await page.click("button[aria-label='נידו']");
-    await page.click("button:has-text('הלאה')");
-    await page.waitForTimeout(250);
-    if (it.sticker) await page.click(`button[aria-label='${it.sticker}']`);
-    if (it.keep) await page.click("button[aria-label='פתוח לטרייד']");
-    await page.click("button:has-text('להוסיף לאוסף')");
-    await page.waitForTimeout(400);
+    await addSquishy(page, it, i === 0);
   }
-  await page.fill("input[aria-label='שם האוסף']", user.title);
   await page.click("button:has-text('לשמור את האוסף')");
   await page.fill("input[aria-label='כינוי']", user.nick);
   await page.check("input[aria-label='ההורים שלי יודעים']");
