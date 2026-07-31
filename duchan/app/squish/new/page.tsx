@@ -937,6 +937,19 @@ export default function NewCollection() {
           <p className="t-small text-[var(--muted)] text-center">
             קודם מסמנים שההורה יודע ↑
           </p>
+        ) : hasAccount ? (
+          /* כבר מחוברת — למשל דרך קישור כניסה מהחמ"ל, כשהסמס לא הגיע.
+             אין מה לאמת שוב: שומרים ישר לאותו חשבון. */
+          busy ? (
+            <SavingDumplings />
+          ) : (
+            <>
+              <button onClick={create} data-testid="save-no-sms" className="pill pill-primary">
+                לשמור את האוסף ←
+              </button>
+              {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
+            </>
+          )
         ) : (
           <SaveStep busy={busy} err={err} onVerified={create} />
         )}

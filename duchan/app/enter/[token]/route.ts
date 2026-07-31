@@ -50,7 +50,7 @@ export async function GET(
     .eq("token", token)
     .is("used_at", null)
     .gt("expires_at", new Date().toISOString())
-    .select("phone")
+    .select("phone, pilot_token")
     .maybeSingle();
 
   if (!link?.phone) {
@@ -119,6 +119,15 @@ export async function GET(
     if (updErr) return failPage("לא הצלחנו להיכנס", "נסי שוב בעוד רגע.");
     const { error: signInErr } = await supa.auth.signInWithPassword({ email, password });
     if (signInErr) return failPage("לא הצלחנו להיכנס", "נסי שוב בעוד רגע.");
+  }
+
+  /* ── סימון פיילוט לילדה חדשה — אותו מנגנון כמו במסלול הסמס ── */
+  if (link.pilot_token) {
+    const { data: claimed } = await db.rpc("squish_claim_pilot_token", {
+      p_token: link.pilot_token,
+      p_user: userId,
+    });
+    if (claimed !== true) console.error(JSON.stringify({ op: "enter.pilot.claim", result: "rejected" }));
   }
 
   /* ── לאן: חנות ← דשבורד; אוסף ← האוסף; כלום ← סקוויש ── */

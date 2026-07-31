@@ -32,11 +32,32 @@ export async function POST(req: NextRequest) {
   /* base64url של 24 בייטים אקראיים — 32 תווים, לא ניתן לניחוש */
   const token = randomBytes(24).toString("base64url");
   const db = supabaseAdmin();
+
+  /* ילדה שעוד אין לה פרופיל סקוויש = ילדה שמנסה את המוצר. מצמידים
+     לקישור טוקן פיילוט, כדי שברגע שתיכנס היא תסומן — תופיע בחמ"ל,
+     ואישור ההורה יחול עליה — בדיוק כמו במסלול קישור-פיילוט + סמס. */
+  let pilotToken: string | null = null;
+  const { data: acct } = await db.from("phone_accounts").select("user_id").eq("phone", phone).maybeSingle();
+  const { data: prof } = acct
+    ? await db.from("squish_profiles").select("id").eq("user_id", acct.user_id).maybeSingle()
+    : { data: null };
+  if (!prof) {
+    pilotToken = "trial-" + randomBytes(12).toString("base64url");
+    const { error: ptErr } = await db.from("squish_pilot_tokens").insert({
+      token: pilotToken,
+      label: `כניסה בלי סמס · ${phone.slice(-4)}`,
+      created_by: admin.email,
+    });
+    /* אם טבלת הפיילוט חסרה — הקישור עדיין נוצר, רק בלי הסימון */
+    if (ptErr) pilotToken = null;
+  }
+
   const { error } = await db.from("login_links").insert({
     token,
     phone,
     created_by: admin.email,
     expires_at: new Date(Date.now() + LINK_TTL_HOURS * 60 * 60 * 1000).toISOString(),
+    ...(pilotToken ? { pilot_token: pilotToken } : {}),
   });
   if (error) {
     // הטבלה עוד לא קיימת בפרודקשן? אומרים למנהלת מה להריץ, לא "שגיאה"

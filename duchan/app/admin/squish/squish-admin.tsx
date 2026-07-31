@@ -231,10 +231,11 @@ export default function SquishAdmin() {
 
       {/* ── כניסה בלי סמס ── */}
       <div className="bg-white border border-[var(--line)] p-3.5">
-        <div className="text-[13px] font-bold">כניסה בלי סמס</div>
+        <div className="text-[13px] font-bold">קישור לילדה — כניסה וניסיון בלי סמס</div>
         <p className="t-small text-[var(--muted)] mt-0.5 leading-relaxed">
-          כשהקוד לא מגיע לילדה — מקלידים את המספר שלה, יוצרים קישור ושולחים לה בוואטסאפ.
-          הקישור נכנס לאותו חשבון, חד-פעמי, תקף 24 שעות.
+          מקלידים את המספר שלה, יוצרים קישור ושולחים בוואטסאפ. ילדה חדשה נכנסת, בונה אוסף
+          ונשמרת בלי שום קוד — ומסומנת אוטומטית כפיילוט כאן בחמ"ל. ילדה קיימת פשוט נכנסת
+          לאותו חשבון. חד-פעמי, תקף 24 שעות.
         </p>
         <div className="flex gap-2 mt-2">
           <input
