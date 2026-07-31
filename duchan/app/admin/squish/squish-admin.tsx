@@ -126,6 +126,42 @@ export default function SquishAdmin() {
     }
   }
 
+  /* ── כניסה בלי סמס ──
+     כשקוד האימות לא מגיע (סינון תכנים בחבילות של ילדים בולע סמסים),
+     המנהלת מייצרת כאן קישור כניסה חד-פעמי ושולחת לילדה בוואטסאפ.
+     הקישור נכנס לאותו חשבון טלפון — שום דבר לא נמחק. */
+  const [linkPhone, setLinkPhone] = useState("");
+  const [loginLink, setLoginLink] = useState("");
+  async function mintLoginLink() {
+    setBusy("login-link");
+    setLoginLink("");
+    try {
+      const res = await fetch("/api/admin/login-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: linkPhone }),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok || !d?.url) {
+        show(d?.error ?? "יצירת הקישור נכשלה");
+        return;
+      }
+      setLoginLink(d.url);
+      navigator.clipboard?.writeText(d.url).catch(() => {});
+      show("קישור הכניסה הועתק");
+    } finally {
+      setBusy("");
+    }
+  }
+  /** וואטסאפ לילדה עם הקישור וההסבר, מוכן לשליחה */
+  const loginLinkWhatsapp = () => {
+    const local = linkPhone.replace(/\D/g, "").replace(/^0/, "972");
+    const text = encodeURIComponent(
+      `היי! הנה קישור כניסה לדוכן/סקוויש קלאב 💜\n${loginLink}\nלוחצים עליו פעם אחת ונכנסים — בלי קוד. הוא עובד ל-24 שעות.`
+    );
+    window.open(`https://wa.me/${local}?text=${text}`, "_blank");
+  };
+
   const copy = (text: string, msg: string) => {
     navigator.clipboard?.writeText(text).catch(() => {});
     show(msg);
@@ -192,6 +228,47 @@ export default function SquishAdmin() {
           </div>
         </div>
       )}
+
+      {/* ── כניסה בלי סמס ── */}
+      <div className="bg-white border border-[var(--line)] p-3.5">
+        <div className="text-[13px] font-bold">כניסה בלי סמס</div>
+        <p className="t-small text-[var(--muted)] mt-0.5 leading-relaxed">
+          כשהקוד לא מגיע לילדה — מקלידים את המספר שלה, יוצרים קישור ושולחים לה בוואטסאפ.
+          הקישור נכנס לאותו חשבון, חד-פעמי, תקף 24 שעות.
+        </p>
+        <div className="flex gap-2 mt-2">
+          <input
+            value={linkPhone}
+            onChange={(e) => setLinkPhone(e.target.value)}
+            aria-label="מספר הטלפון של הילדה"
+            placeholder="05X-XXXXXXX"
+            inputMode="tel"
+            dir="ltr"
+            className="field flex-1 px-3 py-2 text-[13.5px]"
+          />
+          <button
+            onClick={mintLoginLink}
+            disabled={busy === "login-link" || linkPhone.replace(/\D/g, "").length < 9}
+            data-testid="login-link"
+            className="bg-[var(--lavender)] text-white px-3.5 py-2 text-[12.5px] font-bold disabled:opacity-50"
+          >
+            {busy === "login-link" ? "רגע…" : "ליצור קישור כניסה"}
+          </button>
+        </div>
+        {loginLink && (
+          <div data-testid="login-link-result" className="mt-2 border-t border-[var(--line)] pt-2">
+            <div className="text-[11.5px] text-[var(--muted)] break-all" dir="ltr">{loginLink}</div>
+            <div className="flex gap-2 mt-2">
+              <button onClick={loginLinkWhatsapp} className="bg-[var(--whatsapp,#25d366)] text-white px-3 py-1.5 text-[12.5px] font-bold">
+                לשלוח לה בוואטסאפ
+              </button>
+              <button onClick={() => copy(loginLink, "הועתק")} className="border border-[var(--line)] bg-white px-3 py-1.5 text-[12.5px]">
+                להעתיק שוב
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ── מספרים ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">

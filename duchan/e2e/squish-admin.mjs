@@ -116,6 +116,41 @@ await admin.click("button[aria-label=רענון]");
 await admin.waitForTimeout(2500);
 check("אחרי אישור הורה המצב 'מאושר'", (await admin.textContent("body")).includes("מאושר"));
 
+/* ── 7ב. כניסה בלי סמס: קישור מהחמ"ל ──
+   הסיבה שהפיצ'ר קיים: סינון תכנים בחבילות של ילדים בולע את קודי
+   האימות. הקישור חייב להיכנס לאותו חשבון טלפון — לא לפתוח חדש. */
+await admin.fill("input[aria-label='מספר הטלפון של הילדה']", U.kid.num);
+await clickUntil(admin, "[data-testid=login-link]", "[data-testid=login-link-result]");
+const llBody = await admin.textContent("[data-testid=login-link-result]");
+const llUrl = llBody.match(/https?:\/\/[^\s]+?\/enter\/[A-Za-z0-9_-]+/)?.[0];
+check("נוצר קישור כניסה", !!llUrl, llBody.slice(0, 80));
+const { rows: [llRow] } = await pool.query(
+  "select phone, used_at, created_by from login_links order by created_at desc limit 1");
+check("הקישור נרשם עם המספר הנכון", llRow?.phone === U.kid.e164, llRow?.phone);
+check("ועם מי שיצרה אותו", !!llRow?.created_by);
+
+const linkCtx = await b.newContext({ viewport: { width: 390, height: 900 } });
+const linkPage = await linkCtx.newPage();
+await linkPage.goto(llUrl, { waitUntil: "networkidle" });
+await linkPage.waitForTimeout(1500);
+check("לחיצה על הקישור נוחתת באוסף — בלי סמס",
+  linkPage.url().includes("/squish/collection"), linkPage.url());
+const { rows: [llUsed] } = await pool.query(
+  "select used_at from login_links where phone=$1 order by created_at desc limit 1", [U.kid.e164]);
+check("הטוקן נשרף בשימוש", !!llUsed?.used_at);
+/* אותו חשבון, לא חדש: הפריטים שהיא בנתה קודם מופיעים */
+const llCollection = await linkPage.textContent("body");
+check("וזה אותו חשבון — האוסף שלה שם", llCollection.includes("מ1") || llCollection.includes("סקווישים"),
+  llCollection.slice(0, 60));
+
+/* שימוש שני — נדחה עם הסבר, לא סשן */
+const reuse = await (await b.newContext()).newPage();
+await reuse.goto(llUrl, { waitUntil: "networkidle" });
+check("שימוש שני בקישור נדחה", (await reuse.textContent("body")).includes("כבר נוצל או שפג"));
+check("ובלי סשן — מפנה לכניסה רגילה", (await reuse.locator("a[href='/login']").count()) === 1);
+await reuse.context().close();
+await linkCtx.close();
+
 /* ── 8. איפוס פיילוט ── */
 admin.on("dialog", (d) => d.accept());
 await admin.click("button:has-text('איפוס פיילוט')");
