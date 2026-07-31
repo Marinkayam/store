@@ -95,8 +95,17 @@ const priceText = (await girl.textContent("[data-testid=activation-price]")).rep
 const shown = priceText.match(/₪(\d+)/g)?.map((s) => Number(s.slice(1))) ?? [];
 const expectedPrice = shown[0];
 check("מסך ההפעלה מציג מחיר חד-פעמי", shown.length >= 1 && expectedPrice > 0, priceText);
-check("ולצידו מחיר מלא גבוה יותר, כדי שיהיה ברור שזו הנחת השקה",
-  shown.length === 2 && shown[1] > expectedPrice, priceText);
+/* מחיר ההשקה הוא פצצת זמן מכוונת: אחרי NEXT_PUBLIC_LAUNCH_UNTIL המסך
+   חוזר לבד למחיר המלא, בלי קו חתוך. הבדיקה עוקבת אחרי אותו שעון —
+   ב-30.7.2026 בערב היא נפלה בדיוק בגלל שהניחה שתמיד יש מבצע. */
+const launchUntil = new Date(process.env.NEXT_PUBLIC_LAUNCH_UNTIL ?? "2026-07-30T20:59:59Z");
+if (Date.now() <= launchUntil.getTime()) {
+  check("ולצידו מחיר מלא גבוה יותר, כדי שיהיה ברור שזו הנחת השקה",
+    shown.length === 2 && shown[1] > expectedPrice, priceText);
+} else {
+  check("מבצע ההשקה נגמר — מוצג מחיר אחד, בלי קו חתוך",
+    shown.length === 1, priceText);
+}
 
 check("ההסבר להורה מקופל כברירת מחדל",
   (await girl.locator("[data-testid=parent-explainer]").count()) === 0);
