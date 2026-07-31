@@ -180,11 +180,17 @@ export async function POST(
     if (claimed !== true) console.error(JSON.stringify({ op: "enter.pilot.claim", result: "rejected" }));
   }
 
-  /* ── לאן: חנות ← דשבורד; אוסף ← האוסף; כלום ← סקוויש ── */
+  /* ── לאן ──
+     סקוויש קודם: הקישור נוצר בחמ"ל של סקוויש כדי שילדה תנסה את
+     המועדון — גם אם במקרה יש לה דוכן על אותו מספר. ים נחתה ככה
+     בדשבורד של דוכן במקום בסקווישים. הדוכן אחרון, לא ראשון. */
   const [{ data: store }, { data: profile }] = await Promise.all([
     db.from("stores").select("id").eq("owner_id", userId).limit(1).maybeSingle(),
     db.from("squish_profiles").select("id").eq("user_id", userId).limit(1).maybeSingle(),
   ]);
-  const dest = store ? "/dashboard" : profile ? "/squish/collection" : "/squish";
+  const dest = profile ? "/squish/collection"
+    : link.pilot_token ? "/squish"
+    : store ? "/dashboard"
+    : "/squish";
   return NextResponse.redirect(new URL(dest, _req.nextUrl.origin), 303);
 }

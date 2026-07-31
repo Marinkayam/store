@@ -157,7 +157,7 @@ export default function SquishAdmin() {
   const loginLinkWhatsapp = () => {
     const local = linkPhone.replace(/\D/g, "").replace(/^0/, "972");
     const text = encodeURIComponent(
-      `היי! הנה קישור כניסה לדוכן/סקוויש קלאב 💜\n${loginLink}\nלוחצים עליו פעם אחת ונכנסים — בלי קוד. הוא עובד ל-24 שעות.`
+      `היי! הנה הקישור שלך לסקוויש קלאב 🧸💜\n${loginLink}\nלוחצים עליו ואז על "להיכנס" — בלי קוד. הוא עובד ל-24 שעות.`
     );
     window.open(`https://wa.me/${local}?text=${text}`, "_blank");
   };
