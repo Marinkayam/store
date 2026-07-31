@@ -20,6 +20,7 @@ const U = {
 const pool = db();
 await wipe(pool, Object.values(U).map((u) => u.e164));
 await pool.query("delete from squish_pilot_tokens");
+await pool.query("delete from login_links");
 
 const { check, done } = checker("בדיקות חמ״ל");
 const errs = [];
@@ -150,6 +151,54 @@ check("שימוש שני בקישור נדחה", (await reuse.textContent("body"
 check("ובלי סשן — מפנה לכניסה רגילה", (await reuse.locator("a[href='/login']").count()) === 1);
 await reuse.context().close();
 await linkCtx.close();
+
+/* ── 7ג. קישור ניסיון לילדה חדשה: הפלואו המלא בלי אף סמס ──
+   "אשלח לינק לים או לחברות שלה לנסות את המוצר": המספר חדש לגמרי,
+   הקישור פותח חשבון, האונבורדינג נשמר בלי אימות, והיא מסומנת פיילוט. */
+const TRIAL = { num: "0521130902", e164: "972521130902", nick: "TrialKid" };
+await wipe(pool, [TRIAL.e164]);
+await admin.fill("input[aria-label='מספר הטלפון של הילדה']", TRIAL.num);
+await clickUntil(admin, "[data-testid=login-link]", "[data-testid=login-link-result]");
+const trialUrl = (await admin.textContent("[data-testid=login-link-result]"))
+  .match(/https?:\/\/[^\s]+?\/enter\/[A-Za-z0-9_-]+/)?.[0];
+check("נוצר קישור ניסיון למספר חדש", !!trialUrl);
+const { rows: [trialLink] } = await pool.query(
+  "select pilot_token from login_links where phone=$1 order by created_at desc limit 1", [TRIAL.e164]);
+check("ולילדה חדשה מוצמד טוקן פיילוט", !!trialLink?.pilot_token);
+
+const trialCtx = await b.newContext({ viewport: { width: 390, height: 900 } });
+const trial = await trialCtx.newPage();
+await trial.goto(trialUrl, { waitUntil: "networkidle" });
+await trial.waitForTimeout(1200);
+check("מספר חדש נוחת בסקוויש", trial.url().endsWith("/squish"), trial.url());
+const trialId = await uidOf(pool, TRIAL.e164);
+check("ונפתח לה חשבון לפי הטלפון", !!trialId);
+const { rows: [claimedTok] } = await pool.query(
+  "select claimed_by_user_id from squish_pilot_tokens where token=$1", [trialLink.pilot_token]);
+check("טוקן הפיילוט נצמד לחשבון שלה", claimedTok?.claimed_by_user_id === trialId);
+
+/* בונה אוסף — והשמירה לא מבקשת קוד */
+await trial.click("a[href='/squish/new']");
+await trial.waitForURL("**/squish/new");
+for (const [i, name] of ["ט1", "ט2", "ט3"].entries()) {
+  await addSquishy(trial, name, i === 0);
+}
+await trial.click("button:has-text('לשמור את האוסף')");
+await trial.fill("input[aria-label='כינוי']", TRIAL.nick);
+await trial.check("input[aria-label='ההורים שלי יודעים']");
+await trial.waitForTimeout(300);
+check("מחוברת דרך קישור — אין מסך אימות סמס",
+  (await trial.locator("[data-testid=save-no-sms]").count()) === 1
+  && (await trial.locator("input[aria-label='מספר טלפון']").count()) === 0);
+await trial.click("[data-testid=save-no-sms]");
+await trial.waitForURL("**/squish/collection", { timeout: 40000 });
+const { rows: [trialProf] } = await pool.query(
+  "select pilot_user from squish_profiles where user_id=$1", [trialId]);
+check("האוסף נשמר לאותו חשבון והיא מסומנת פיילוט", trialProf?.pilot_user === true,
+  JSON.stringify(trialProf));
+await trialCtx.close();
+/* מנקים את ילדת הניסיון — מקטע האיפוס בודק שהמסך חוזר ריק */
+await wipe(pool, [TRIAL.e164]);
 
 /* ── 8. איפוס פיילוט ── */
 admin.on("dialog", (d) => d.accept());
