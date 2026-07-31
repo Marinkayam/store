@@ -130,11 +130,22 @@ const { rows: [llRow] } = await pool.query(
 check("הקישור נרשם עם המספר הנכון", llRow?.phone === U.kid.e164, llRow?.phone);
 check("ועם מי שיצרה אותו", !!llRow?.created_by);
 
+/* התצוגה המקדימה של וואטסאפ עושה GET לפני שהילדה לוחצת — היא לא
+   שורפת את הקישור. זה הבאג שנתפס בשליחה האמיתית הראשונה. */
+const preview = await fetch(llUrl);
+check("תצוגה מקדימה (GET) לא שורפת את הקישור",
+  preview.ok && !(await pool.query(
+    "select used_at from login_links where phone=$1 order by created_at desc limit 1",
+    [U.kid.e164])).rows[0]?.used_at);
+
 const linkCtx = await b.newContext({ viewport: { width: 390, height: 900 } });
 const linkPage = await linkCtx.newPage();
 await linkPage.goto(llUrl, { waitUntil: "networkidle" });
-await linkPage.waitForTimeout(1500);
-check("לחיצה על הקישור נוחתת באוסף — בלי סמס",
+check("הקישור מציג מסך כניסה עם כפתור",
+  (await linkPage.textContent("body")).includes("הקישור שלך מוכן"));
+await linkPage.click("button:has-text('להיכנס')");
+await linkPage.waitForURL("**/squish/collection", { timeout: 20000 });
+check("לחיצה על הכפתור נכנסת לאוסף — בלי סמס",
   linkPage.url().includes("/squish/collection"), linkPage.url());
 const { rows: [llUsed] } = await pool.query(
   "select used_at from login_links where phone=$1 order by created_at desc limit 1", [U.kid.e164]);
@@ -169,7 +180,9 @@ check("ולילדה חדשה מוצמד טוקן פיילוט", !!trialLink?.pil
 const trialCtx = await b.newContext({ viewport: { width: 390, height: 900 } });
 const trial = await trialCtx.newPage();
 await trial.goto(trialUrl, { waitUntil: "networkidle" });
-await trial.waitForTimeout(1200);
+await trial.click("button:has-text('להיכנס')");
+await trial.waitForURL("**/squish", { timeout: 20000 });
+await trial.waitForTimeout(600);
 check("מספר חדש נוחת בסקוויש", trial.url().endsWith("/squish"), trial.url());
 const trialId = await uidOf(pool, TRIAL.e164);
 check("ונפתח לה חשבון לפי הטלפון", !!trialId);

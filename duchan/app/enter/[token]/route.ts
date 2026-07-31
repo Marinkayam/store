@@ -3,12 +3,17 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import { randomPassword } from "@/lib/otp";
 
-// GET /enter/[token] — כניסה בקישור חד-פעמי, בלי סמס.
+// /enter/[token] — כניסה בקישור חד-פעמי, בלי סמס.
 //
-// הילדה מקבלת את הקישור בוואטסאפ מהמנהלת ולוחצת. הטוקן נשרף מיד
-// (עדכון אטומי — שתי לחיצות במקביל לא פותחות שני סשנים), ואז נפתח
-// סשן לאותו חשבון טלפון בדיוק כמו בכניסת סמס: אותה משתמשת, אותו
-// אוסף, אותה חנות. שום דבר לא נמחק ולא נוצר כפול.
+// **שני צעדים, לא אחד — בגלל וואטסאפ.** כששולחים קישור בוואטסאפ,
+// השרתים שלו פותחים אותו (GET) כדי לייצר תצוגה מקדימה — ובגרסה
+// הראשונה זה שרף את הטוקן לפני שהילדה בכלל לחצה. לכן:
+//   GET  — רק בודק שהקישור בתוקף ומציג כפתור "להיכנס". לא שורף.
+//   POST — הלחיצה על הכפתור. שורף אטומית ופותח סשן.
+// בוטים של תצוגה מקדימה עושים GET ולא לוחצים על כפתורים.
+//
+// הסשן נפתח לאותו חשבון טלפון בדיוק כמו בכניסת סמס: אותה משתמשת,
+// אותו אוסף, אותה חנות. שום דבר לא נמחק ולא נוצר כפול.
 //
 // זיהוי המשתמשת ופתיחת הסשן משוכפלים בכוונה מ-/api/auth/sms/verify
 // ולא חולצו לפונקציה משותפת: מסלול הכניסה בסמס הוא הקריטי במערכת,
@@ -32,7 +37,52 @@ border-radius:999px;background:#756192;color:#fff;text-decoration:none;font-weig
   );
 }
 
+/** מסך הכניסה: כפתור אחד. קיים כדי שרק לחיצה אנושית תשרוף את הטוקן. */
+function welcomePage(token: string) {
+  return new NextResponse(
+    `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><title>סקוויש קלאב · דוכן</title>
+<style>body{font-family:Heebo,system-ui,sans-serif;background:#fbf8f3;color:#262626;
+display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center}
+.c{max-width:22rem}.m{font-size:56px;margin-bottom:4px}h1{font-size:1.3rem;margin:0 0 8px}
+p{color:#5b564e;line-height:1.7;margin:0 0 22px}
+button{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 34px;
+border-radius:999px;background:#756192;color:#fff;border:0;font:inherit;font-weight:500;font-size:1rem;cursor:pointer;width:100%}
+button:active{transform:translateY(1px)}</style></head>
+<body><div class="c"><div class="m">🧸</div><h1>הקישור שלך מוכן</h1>
+<p>לוחצים פעם אחת — ונכנסים. בלי קוד ובלי סיסמה.</p>
+<form method="post"><button type="submit">להיכנס ←</button></form></div></body></html>`,
+    { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } }
+  );
+}
+
 export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params;
+  if (!token || token.length < 16) {
+    return failPage("הקישור לא תקין", "נראה שהקישור הגיע חתוך. בקשי קישור חדש ממי ששלחה לך אותו.");
+  }
+
+  /* קריאה בלבד — תצוגה מקדימה של וואטסאפ מגיעה לכאן ולא שורפת כלום */
+  const db = supabaseAdmin();
+  const { data: peek } = await db
+    .from("login_links")
+    .select("used_at, expires_at")
+    .eq("token", token)
+    .maybeSingle();
+  if (!peek || peek.used_at || new Date(peek.expires_at).getTime() < Date.now()) {
+    return failPage(
+      "הקישור כבר נוצל או שפג תוקפו",
+      "קישור כניסה עובד פעם אחת בלבד, ל-24 שעות. בקשי חדש ממי ששלחה לך אותו."
+    );
+  }
+  return welcomePage(token);
+}
+
+export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
@@ -136,5 +186,5 @@ export async function GET(
     db.from("squish_profiles").select("id").eq("user_id", userId).limit(1).maybeSingle(),
   ]);
   const dest = store ? "/dashboard" : profile ? "/squish/collection" : "/squish";
-  return NextResponse.redirect(new URL(dest, _req.nextUrl.origin));
+  return NextResponse.redirect(new URL(dest, _req.nextUrl.origin), 303);
 }
