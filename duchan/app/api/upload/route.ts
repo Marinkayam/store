@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { presignedUpload } from "@/lib/r2";
+import { recountStoreMedia, recountSquishMedia } from "@/lib/media-usage";
 import { QUOTAS } from "@/lib/quotas";
 
 // POST /api/upload  { kind: 'image'|'video'|'poster'|'cover', contentType, bytes }
@@ -93,10 +94,16 @@ export async function POST(req: NextRequest) {
     const profile = profiles?.[0];
     if (!profile) return NextResponse.json({ error: "עוד אין לך אוסף" }, { status: 404 });
     if (profile.media_bytes + bytes > QUOTAS.mediaBytesPerStore) {
-      return NextResponse.json(
-        { error: "נגמר המקום באוסף, אפשר למחוק סרטון ישן כדי לפנות" },
-        { status: 413 }
-      );
+      /* המונה רק עולה בהעלאות — החלפות ומחיקות לא הורידו אותו, והמכסה
+         "נסתמה" מרוח. לפני שמסרבים, סופרים את האמת מהאחסון עצמו. */
+      const fresh = await recountSquishMedia(db, profile.id, user.id);
+      if (fresh === null || fresh + bytes > QUOTAS.mediaBytesPerStore) {
+        return NextResponse.json(
+          { error: "נגמר המקום באוסף, אפשר למחוק סרטון ישן כדי לפנות" },
+          { status: 413 }
+        );
+      }
+      profile.media_bytes = fresh;
     }
     const squishKey = `squish/items/${profile.id}/${randomUUID()}.${EXT[contentType]}`;
     const squishUrl = await presignedUpload(squishKey, contentType, bytes);
@@ -116,10 +123,17 @@ export async function POST(req: NextRequest) {
   if (!store) return NextResponse.json({ error: "אין לך חנות עדיין" }, { status: 404 });
 
   if (store.media_bytes + bytes > QUOTAS.mediaBytesPerStore) {
-    return NextResponse.json(
-      { error: "נגמר המקום בחנות, אפשר למחוק סרטון ישן כדי לפנות" },
-      { status: 413 }
-    );
+    /* המונה רק עולה בהעלאות — החלפת תמונה נספרה פעמיים ומחיקת מוצר לא
+       פינתה כלום, עד ש"נגמר המקום" בחנות שרובה רוח (קרה לים). לפני
+       שמסרבים, סופרים את האמת מהאחסון: רק מדיה של מוצרים חיים והקאבר. */
+    const fresh = await recountStoreMedia(db, store.id);
+    if (fresh === null || fresh + bytes > QUOTAS.mediaBytesPerStore) {
+      return NextResponse.json(
+        { error: "נגמר המקום בחנות, אפשר למחוק סרטון ישן כדי לפנות" },
+        { status: 413 }
+      );
+    }
+    store.media_bytes = fresh;
   }
 
   const key =
