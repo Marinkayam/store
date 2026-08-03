@@ -82,22 +82,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "תמונות חייבות לעבור עיבוד באפליקציה" }, { status: 400 });
     }
 
-    const { data: profiles, error } = await db
+    /* העמודה החדשה עשויה עוד לא להיות בפרודקשן — עמודה חסרה לא מפילה העלאות */
+    type QuotaRow = { id: string; media_bytes: number; media_quota_bytes?: number | null };
+    type QuotaResult = { data: QuotaRow[] | null; error: { message: string } | null };
+    let { data: profiles, error } = (await db
       .from("squish_profiles")
-      .select("id, media_bytes")
+      .select("id, media_bytes, media_quota_bytes")
       .eq("user_id", user.id)
-      .limit(1);
+      .limit(1)) as unknown as QuotaResult;
+    if (error) {
+      ({ data: profiles, error } = (await db
+        .from("squish_profiles")
+        .select("id, media_bytes")
+        .eq("user_id", user.id)
+        .limit(1)) as unknown as QuotaResult);
+    }
     if (error) {
       console.error("[upload] squish profile lookup failed:", error.message);
       return NextResponse.json({ error: "לא הצלחנו לאמת את האוסף" }, { status: 500 });
     }
     const profile = profiles?.[0];
     if (!profile) return NextResponse.json({ error: "עוד אין לך אוסף" }, { status: 404 });
-    if (profile.media_bytes + bytes > QUOTAS.mediaBytesPerStore) {
+    /* תקרה פר-אוסף כשהמנהלת הגדילה, אחרת הגלובלית */
+    const squishCap = profile.media_quota_bytes ?? QUOTAS.mediaBytesPerStore;
+    if (profile.media_bytes + bytes > squishCap) {
       /* המונה רק עולה בהעלאות — החלפות ומחיקות לא הורידו אותו, והמכסה
          "נסתמה" מרוח. לפני שמסרבים, סופרים את האמת מהאחסון עצמו. */
       const fresh = await recountSquishMedia(db, profile.id, user.id);
-      if (fresh === null || fresh + bytes > QUOTAS.mediaBytesPerStore) {
+      if (fresh === null || fresh + bytes > squishCap) {
         return NextResponse.json(
           { error: "נגמר המקום באוסף, אפשר למחוק סרטון ישן כדי לפנות" },
           { status: 413 }
@@ -116,18 +128,26 @@ export async function POST(req: NextRequest) {
 
   // storeId מפורש כשיש יותר מחנות אחת לחשבון — אחרת ההעלאה נוחתת בחנות הלא נכונה.
   // הבעלות נאכפת כאן בכל מקרה.
-  let query = db.from("stores").select("id, media_bytes").eq("owner_id", user.id);
-  query = storeId ? query.eq("id", storeId) : query.order("created_at", { ascending: true });
-  const { data: stores } = await query.limit(1);
+  type StoreRow = { id: string; media_bytes: number; media_quota_bytes?: number | null };
+  const storeSelect = async (cols: string) => {
+    let q = db.from("stores").select(cols).eq("owner_id", user.id);
+    q = storeId ? q.eq("id", storeId) : q.order("created_at", { ascending: true });
+    return (await q.limit(1)) as unknown as { data: StoreRow[] | null; error: { message: string } | null };
+  };
+  /* העמודה החדשה עשויה עוד לא להיות בפרודקשן — עמודה חסרה לא מפילה העלאות */
+  let { data: stores, error: storesErr } = await storeSelect("id, media_bytes, media_quota_bytes");
+  if (storesErr) ({ data: stores } = await storeSelect("id, media_bytes"));
   const store = stores?.[0];
   if (!store) return NextResponse.json({ error: "אין לך חנות עדיין" }, { status: 404 });
 
-  if (store.media_bytes + bytes > QUOTAS.mediaBytesPerStore) {
+  /* תקרה פר-חנות כשהמנהלת הגדילה, אחרת הגלובלית */
+  const storeCap = store.media_quota_bytes ?? QUOTAS.mediaBytesPerStore;
+  if (store.media_bytes + bytes > storeCap) {
     /* המונה רק עולה בהעלאות — החלפת תמונה נספרה פעמיים ומחיקת מוצר לא
        פינתה כלום, עד ש"נגמר המקום" בחנות שרובה רוח (קרה לים). לפני
        שמסרבים, סופרים את האמת מהאחסון: רק מדיה של מוצרים חיים והקאבר. */
     const fresh = await recountStoreMedia(db, store.id);
-    if (fresh === null || fresh + bytes > QUOTAS.mediaBytesPerStore) {
+    if (fresh === null || fresh + bytes > storeCap) {
       return NextResponse.json(
         { error: "נגמר המקום בחנות, אפשר למחוק סרטון ישן כדי לפנות" },
         { status: 413 }

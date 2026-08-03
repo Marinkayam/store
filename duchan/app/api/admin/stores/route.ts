@@ -70,6 +70,8 @@ export async function PATCH(req: NextRequest) {
     paymentAmount?: number;
     smsUnlimited?: boolean;
     resetSmsQuota?: boolean;
+    /** תקרת מדיה ב-MB. null = חזרה לברירת המחדל (25MB). */
+    mediaQuotaMb?: number | null;
   };
   try {
     body = await req.json();
@@ -110,6 +112,17 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "סטטוס לא תקין" }, { status: 400 });
     }
     patch.status = body.status;
+  }
+  /* הגדלת אחסון לחנות ספציפית. תחום 25–500MB כדי שטעות הקלדה לא
+     תפתח תקרה אינסופית; null מחזיר לברירת המחדל. */
+  if (body.mediaQuotaMb !== undefined) {
+    if (body.mediaQuotaMb === null) {
+      patch.media_quota_bytes = null;
+    } else if (Number.isFinite(body.mediaQuotaMb) && body.mediaQuotaMb >= 25 && body.mediaQuotaMb <= 500) {
+      patch.media_quota_bytes = Math.floor(body.mediaQuotaMb) * 1024 * 1024;
+    } else {
+      return NextResponse.json({ error: "מכסה בין 25 ל-500MB" }, { status: 400 });
+    }
   }
   if (body.aiEnabled !== undefined) patch.ai_enabled = body.aiEnabled;
   if (body.aiCredits !== undefined) {

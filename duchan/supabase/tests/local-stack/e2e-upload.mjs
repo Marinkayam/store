@@ -54,6 +54,17 @@ const { rows: [afterHeal] } = await db.query("select media_bytes from stores whe
 check("and the counter returns to the truth, well under the cap",
   Number(afterHeal.media_bytes) < 25 * 1024 * 1024, String(afterHeal.media_bytes));
 
+/* ── 1ג. מכסה מוגדלת מהחמ"ל מכובדת ──
+   המנהלת הגדילה חנות ל-50MB; שימוש אמיתי של 30MB — מעל ברירת המחדל —
+   חייב להמשיך לקבל העלאות בלי ספירה מחדש ובלי סירוב. */
+await db.query("update stores set media_quota_bytes=$1, media_bytes=$2 where id=$3",
+  [50 * 1024 * 1024, 30 * 1024 * 1024, store.id]);
+const overCap = await ask(p, "image", "image/webp", 4096);
+check("a store the admin raised to 50MB accepts uploads beyond the 25MB default",
+  overCap.status === 200, `status=${overCap.status}`);
+await db.query("update stores set media_quota_bytes=null, media_bytes=$1 where id=$2",
+  [Number(afterHeal.media_bytes), store.id]);
+
 /* ── 2. הלקוח ממיר לבד: אותו סרטון, דרך המסלול האמיתי ── */
 const viaClient = await p.evaluate(async (storeId) => {
   // מדמים בדיוק את מה ש-uploadBlob עושה: מנרמלים ואז מבקשים חתימה
