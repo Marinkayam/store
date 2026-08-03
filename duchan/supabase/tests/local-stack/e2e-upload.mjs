@@ -46,21 +46,21 @@ check("a normalised mp4 is accepted", mp4.status === 200, `status=${mp4.status}`
    media_bytes רק עלה: החלפת תמונה נספרה פעמיים ומחיקה לא פינתה.
    מדמים את המצב של ים — מונה על התקרה בלי קבצים אמיתיים מאחוריו —
    ומוודאים שהשרת סופר מחדש מהאחסון במקום לסרב על סמך רוח. */
-await db.query("update stores set media_bytes=$1 where id=$2", [25 * 1024 * 1024, store.id]);
+await db.query("update stores set media_bytes=$1 where id=$2", [50 * 1024 * 1024, store.id]);
 const healed = await ask(p, "image", "image/webp", 4096);
 check("a quota inflated by ghosts self-heals from storage and the upload passes",
   healed.status === 200, `status=${healed.status}`);
 const { rows: [afterHeal] } = await db.query("select media_bytes from stores where id=$1", [store.id]);
 check("and the counter returns to the truth, well under the cap",
-  Number(afterHeal.media_bytes) < 25 * 1024 * 1024, String(afterHeal.media_bytes));
+  Number(afterHeal.media_bytes) < 50 * 1024 * 1024, String(afterHeal.media_bytes));
 
 /* ── 1ג. מכסה מוגדלת מהחמ"ל מכובדת ──
-   המנהלת הגדילה חנות ל-50MB; שימוש אמיתי של 30MB — מעל ברירת המחדל —
-   חייב להמשיך לקבל העלאות בלי ספירה מחדש ובלי סירוב. */
+   המנהלת הגדילה חנות ל-100MB; שימוש אמיתי של 60MB — מעל ברירת המחדל
+   (50MB) — חייב להמשיך לקבל העלאות בלי ספירה מחדש ובלי סירוב. */
 await db.query("update stores set media_quota_bytes=$1, media_bytes=$2 where id=$3",
-  [50 * 1024 * 1024, 30 * 1024 * 1024, store.id]);
+  [100 * 1024 * 1024, 60 * 1024 * 1024, store.id]);
 const overCap = await ask(p, "image", "image/webp", 4096);
-check("a store the admin raised to 50MB accepts uploads beyond the 25MB default",
+check("a store the admin raised to 100MB accepts uploads beyond the 50MB default",
   overCap.status === 200, `status=${overCap.status}`);
 await db.query("update stores set media_quota_bytes=null, media_bytes=$1 where id=$2",
   [Number(afterHeal.media_bytes), store.id]);

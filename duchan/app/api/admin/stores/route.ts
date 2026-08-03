@@ -70,7 +70,7 @@ export async function PATCH(req: NextRequest) {
     paymentAmount?: number;
     smsUnlimited?: boolean;
     resetSmsQuota?: boolean;
-    /** תקרת מדיה ב-MB. null = חזרה לברירת המחדל (25MB). */
+    /** תקרת מדיה ב-MB. null = חזרה לברירת המחדל (50MB, lib/quotas.ts). */
     mediaQuotaMb?: number | null;
   };
   try {

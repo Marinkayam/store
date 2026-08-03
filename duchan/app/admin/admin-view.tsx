@@ -9,6 +9,7 @@ import { displayPhone, normalizePhone } from "@/lib/phone";
 import { milestones, reachedCount } from "@/lib/milestones";
 import { payoutSummary } from "@/lib/payouts";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
+import { QUOTAS } from "@/lib/quotas";
 
 /* ---------- types ---------- */
 
@@ -233,7 +234,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     showToast(smsUnlimited ? "סמס ללא הגבלה למספר הזה" : "בוטל, חוזרת למכסה הרגילה");
   }
 
-  // הגדלת אחסון לחנות ספציפית — 25MB הם ברירת המחדל של כולן;
+  // הגדלת אחסון לחנות ספציפית — 50MB הם ברירת המחדל של כולן (lib/quotas.ts);
   // חנות עם הרבה סרטונים מקבלת כאן יותר, בלי לפתוח את התקרה לכולן.
   async function setMediaQuota(storeId: string, mediaQuotaMb: number | null) {
     await fetch("/api/admin/stores", {
@@ -929,11 +930,11 @@ function SchemaWarning() {
                   📦 אחסון מדיה
                   <span className="text-[var(--muted)]">
                     {" · "}{(detail.store.media_bytes / 1024 / 1024).toFixed(1)}MB מתוך{" "}
-                    {((detail.store.media_quota_bytes ?? 25 * 1024 * 1024) / 1024 / 1024).toFixed(0)}MB
+                    {((detail.store.media_quota_bytes ?? QUOTAS.mediaBytesPerStore) / 1024 / 1024).toFixed(0)}MB
                     {detail.store.media_quota_bytes ? " (מוגדל)" : ""}
                   </span>
                 </span>
-                {[50, 100].map((mb) => (
+                {[100, 200].map((mb) => (
                   <button
                     key={mb}
                     onClick={() => setMediaQuota(detail.store.id, mb)}
