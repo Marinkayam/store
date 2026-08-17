@@ -884,10 +884,20 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {/* הכפתור ישב פעם בתחתית הדף הארוך — מי ששינתה את השם למעלה לא
+            ידעה שיש בכלל מה ללחוץ, ריעננה, והשינוי נעלם. עכשיו הוא צף
+            מעל שורת הניווט ברגע שיש שינוי, תמיד על המסך. */}
+        {dirty && <div className="h-12" aria-hidden />}
         {dirty && (
-          <button data-testid="save-settings" onClick={save} className="bg-[var(--ink)] text-white py-3 text-sm font-bold">
-            שמירת שינויים
-          </button>
+          <div className="fixed bottom-[64px] inset-x-0 max-w-md mx-auto px-3 z-40">
+            <button
+              data-testid="save-settings"
+              onClick={save}
+              className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold shadow-[0_4px_16px_rgba(31,27,45,0.25)]"
+            >
+              שמירת שינויים
+            </button>
+          </div>
         )}
 
         {/* הקופסה הזו הייתה כתובת אינטרנט ערומה ושני כפתורים, ולילד זה לא
