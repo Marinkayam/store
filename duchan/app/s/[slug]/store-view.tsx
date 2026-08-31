@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { deliveryLine, payMethods, payoutLine, payoutLink, payoutSummary, type PayMethod } from "@/lib/payouts";
+import { deliveryLine, payMethods, paymentLinkLine, payoutLine, payoutLink, payoutSummary, type PayMethod } from "@/lib/payouts";
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { coverCss } from "@/lib/covers";
@@ -248,6 +248,9 @@ export default function StoreView({
       // מציע. בעלת הדוכן כבר יודעת מה היא מקבלת ואיך היא מוסרת; מה שהיא
       // צריכה מההודעה זה מה נבחר בפועל בהזמנה הזו.
       const pay = payoutLine(store, chosenPay);
+      // הקישור של הילדה נשלח מיד עם ההזמנה — הקונה משלמת בלי לחכות
+      // שהילדה תשלח אותו בחזרה. רק כשהוא תואם את אמצעי התשלום שנבחר.
+      const payLinkMsg = paymentLinkLine(store, chosenPay);
       const ship = deliveryLine({
         ships: store.ships,
         wantsShipping,
@@ -270,7 +273,8 @@ export default function StoreView({
         `סה"כ: ₪${data.total}` +
         (note.trim() ? `\nהערה: ${note.trim()}` : "") +
         shipLine +
-        (pay ? `\n${pay}` : "");
+        (pay ? `\n${pay}` : "") +
+        (payLinkMsg ? `\n${payLinkMsg}` : "");
 
       setCart([]);
       setNote("");
