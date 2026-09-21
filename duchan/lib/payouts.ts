@@ -19,8 +19,10 @@ export interface PayoutPrefs {
   payout_link?: string | null;
 }
 
-/** רק ביט ופייבוקס. אותה רשימה בדיוק כמו בטריגר שבמיגרציה 0018. */
-const PAY_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(paybox\.co\.il|payboxapp\.com|bitpay\.co\.il)(\/|$)/i;
+/** רק ביט ופייבוקס. אותה רשימה בדיוק כמו בטריגר (0018, עודכן ב-0044).
+    payboxapp.page.link נוסף אחרי תלונה מהשטח: זה הפורמט שאפליקציית
+    פייבוקס באמת מעתיקה ללוח, והוא נדחה — אז אף ילדה לא הצליחה לשמור. */
+const PAY_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(paybox\.co\.il|payboxapp\.com|payboxapp\.page\.link|bitpay\.co\.il)(\/|$)/i;
 
 export function isPayoutLink(url: string): boolean {
   return PAY_HOSTS.test(url.trim());
