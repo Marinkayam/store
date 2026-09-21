@@ -970,11 +970,8 @@ export default function StoreView({
             placeholder="איך קוראים לך?"
             aria-label="השם שלך"
             maxLength={24}
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mt-3"
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mt-3 mb-2"
           />
-          <p className="opacity-60 text-[12px] mb-2 mt-1">
-            כדי שהיא תדע איזו הזמנה שלך. רק שם פרטי.
-          </p>
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -991,11 +988,8 @@ export default function StoreView({
             inputMode="tel"
             maxLength={20}
             aria-label="מספר טלפון"
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mb-3"
           />
-          <p className="opacity-60 text-[12px] mb-3 mt-1">
-            כדי שהמוכרת תוכל לחזור אלייך על ההזמנה.
-          </p>
           {(paySummary || payLink) && (
             <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
               {/* הקונה בוחרת איך היא משלמת, וההודעה נושאת את ההוראות לאותו
@@ -1024,9 +1018,6 @@ export default function StoreView({
                       );
                     })}
                   </div>
-                  <p className="opacity-60 text-[12.5px]">
-                    המוכרת תראה במה בחרת, ולינק התשלום יופיע באישור.
-                  </p>
                 </>
               )}
               {!methods.length && paySummary && (
