@@ -882,84 +882,89 @@ export default function StoreView({
       )}
       {orderOpen && (
         <div
-          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-7 max-h-[88%] overflow-y-auto"
+          className="fixed bottom-0 inset-x-0 z-50 max-h-[92%] flex flex-col"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
-          <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-4" />
-          <h2 className="text-base font-bold mb-2.5">ההזמנה שלך</h2>
+          {/* אזור גלילה — הסיכום והכפתור יושבים קבועים מתחתיו */}
+          <div className="overflow-y-auto overscroll-contain px-5 pt-3 pb-4">
+          <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-5" />
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="text-[19px] font-bold">ההזמנה שלך</h2>
+            <span className="text-[12.5px] opacity-55">
+              {cartCount === 1 ? "פריט אחד" : `${cartCount} פריטים`}
+            </span>
+          </div>
           {/* כל שורה ניתנת לעריכה כאן. קונה שרוצה שניים במקום אחד לא אמורה
               לצאת, לנקות את הסל ולהתחיל מחדש — היא פשוט תוותר. */}
+          <div className="flex flex-col">
           {cart.map((l) => {
             const max = lineMax(l);
             return (
               <div
                 key={lineKey(l.id, l.option)}
                 data-cart-line=""
-                className="flex items-center gap-2 text-[13px] py-2 border-b border-black/5"
+                className="flex items-center gap-3 text-[13.5px] py-3 border-b border-black/5"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="truncate" data-line-name="">
+                  <div className="truncate font-medium" data-line-name="">
                     {l.name}
                     {l.option ? ` (${l.option})` : ""}
                   </div>
-                  <div className="opacity-55 text-[12.5px]">₪{l.price} ליחידה</div>
+                  <div className="opacity-50 text-[12px] mt-0.5">₪{l.price} ליחידה</div>
                 </div>
 
-                <div className="flex items-center border-[1.5px] border-black/15">
+                <div className="flex items-center border-[1.5px] border-black/10">
                   <button
                     onClick={() => setLineQty(l.id, l.option, l.qty - 1)}
                     aria-label={`פחות, ${l.name}`}
-                    className="w-8 h-8 text-base leading-none"
+                    className="w-9 h-9 text-base leading-none active:opacity-60"
                   >
                     −
                   </button>
-                  <span className="w-7 text-center text-[13px] font-bold">{l.qty}</span>
+                  <span className="w-7 text-center text-[13.5px] font-bold">{l.qty}</span>
                   <button
                     onClick={() => setLineQty(l.id, l.option, Math.min(max, l.qty + 1))}
                     disabled={l.qty >= max}
                     aria-label={`עוד, ${l.name}`}
-                    className="w-8 h-8 text-base leading-none disabled:opacity-25"
+                    className="w-9 h-9 text-base leading-none disabled:opacity-25 active:opacity-60"
                   >
                     +
                   </button>
                 </div>
 
-                <span className="w-14 text-left font-medium">₪{l.price * l.qty}</span>
+                <span className="w-12 text-left font-bold text-[13.5px]">₪{l.price * l.qty}</span>
                 <button
                   onClick={() => setLineQty(l.id, l.option, 0)}
                   aria-label={`הסרה, ${l.name}`}
-                  className="w-7 h-8 opacity-45 text-[15px]"
+                  className="w-8 h-9 opacity-35 text-[16px] active:opacity-70"
                 >
                   ×
                 </button>
               </div>
             );
           })}
+          </div>
 
           {cart.length === 0 && (
-            <p className="text-[13px] opacity-60 py-6 text-center">
+            <p className="text-[13px] opacity-60 py-8 text-center">
               הסל ריק. אפשר לסגור ולהמשיך לבחור.
             </p>
           )}
-          <div className="flex justify-between text-sm font-bold border-t border-black/10 mt-2 pt-2.5">
-            <span>סה"כ</span>
-            <span>₪{cartTotal}</span>
-          </div>
 
           {/* בחירה לכל הזמנה, לא רק הגדרת ברירת מחדל של החנות — קונה שרוצה
               לאסוף בעצמה לא צריכה "לקבל" משלוח שהיא לא ביקשה. */}
           {store.ships && (
-            <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mt-3">
-              <div className="font-bold mb-1.5">איך לקבל?</div>
-              <div className="flex gap-1.5">
+            <section className="mt-5">
+              <h3 className="text-[13.5px] font-bold mb-2.5">📦 איך תרצי לקבל?</h3>
+              <div className="flex gap-2">
                 <button
                   onClick={() => setWantsShipping(true)}
                   aria-pressed={wantsShipping}
-                  className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                  className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
                   style={
                     wantsShipping
                       ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                      : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
                   }
                 >
                   משלוח
@@ -967,18 +972,18 @@ export default function StoreView({
                 <button
                   onClick={() => setWantsShipping(false)}
                   aria-pressed={!wantsShipping}
-                  className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                  className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
                   style={
                     !wantsShipping
                       ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                      : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
                   }
                 >
                   מסירה אישית
                 </button>
               </div>
               {wantsShipping && (
-                <p className="opacity-60 text-[12.5px] mt-1.5">
+                <p className="opacity-55 text-[12.5px] mt-2 leading-relaxed">
                   {store.shipping_note || "בתיאום"}
                   {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
                 </p>
@@ -986,24 +991,32 @@ export default function StoreView({
               {/* משלוח אמיתי צריך יעד מפורק — מה שהשליח באמת שואל.
                   הכל נראה רק למוכרת, לא נכנס לשום דף פומבי. */}
               {wantsShipping && (
-                <div className="mt-2 flex flex-col gap-1.5">
-                  <input
-                    value={shipCity}
-                    onChange={(e) => setShipCity(e.target.value)}
-                    placeholder="עיר *"
-                    aria-label="עיר למשלוח"
-                    maxLength={40}
-                    className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
-                  />
-                  <input
-                    value={shipStreet}
-                    onChange={(e) => setShipStreet(e.target.value)}
-                    placeholder="רחוב ומספר בית *"
-                    aria-label="רחוב למשלוח"
-                    maxLength={80}
-                    className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
-                  />
-                  <div className="flex gap-1.5">
+                <div className="mt-3 flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <label className="flex-1 min-w-0 block">
+                      <span className="block text-[11.5px] opacity-60 mb-1">עיר *</span>
+                      <input
+                        value={shipCity}
+                        onChange={(e) => setShipCity(e.target.value)}
+                        placeholder="למשל: רמת גן"
+                        aria-label="עיר למשלוח"
+                        maxLength={40}
+                        className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                      />
+                    </label>
+                    <label className="flex-1 min-w-0 block">
+                      <span className="block text-[11.5px] opacity-60 mb-1">רחוב ומספר *</span>
+                      <input
+                        value={shipStreet}
+                        onChange={(e) => setShipStreet(e.target.value)}
+                        placeholder="למשל: הרצל 12"
+                        aria-label="רחוב למשלוח"
+                        maxLength={80}
+                        className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex gap-2">
                     {([["building", "בניין"], ["private", "בית פרטי"]] as const).map(([k, label]) => {
                       const on = homeType === k;
                       return (
@@ -1012,11 +1025,11 @@ export default function StoreView({
                           onClick={() => setHomeType(k)}
                           aria-pressed={on}
                           aria-label={label}
-                          className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                          className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
                           style={
                             on
                               ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                              : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
                           }
                         >
                           {label}
@@ -1025,80 +1038,99 @@ export default function StoreView({
                     })}
                   </div>
                   {homeType === "building" && (
-                    <>
-                      <div className="flex gap-1.5">
+                    <div className="flex gap-2">
+                      <label className="flex-1 min-w-0 block">
+                        <span className="block text-[11.5px] opacity-60 mb-1">קומה *</span>
                         <input
                           value={shipFloor}
                           onChange={(e) => setShipFloor(e.target.value)}
-                          placeholder="קומה *"
+                          placeholder="3"
                           aria-label="קומה"
                           inputMode="numeric"
                           maxLength={6}
-                          className="flex-1 min-w-0 border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                          className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
                         />
+                      </label>
+                      <label className="flex-1 min-w-0 block">
+                        <span className="block text-[11.5px] opacity-60 mb-1">דירה *</span>
                         <input
                           value={shipApartment}
                           onChange={(e) => setShipApartment(e.target.value)}
-                          placeholder="דירה *"
+                          placeholder="8"
                           aria-label="מספר דירה"
                           inputMode="numeric"
                           maxLength={6}
-                          className="flex-1 min-w-0 border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                          className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
                         />
-                      </div>
-                      <input
-                        value={shipEntryCode}
-                        onChange={(e) => setShipEntryCode(e.target.value)}
-                        placeholder="קוד כניסה לבניין (אם יש)"
-                        aria-label="קוד כניסה"
-                        maxLength={12}
-                        className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
-                      />
-                    </>
+                      </label>
+                      <label className="flex-1 min-w-0 block">
+                        <span className="block text-[11.5px] opacity-60 mb-1">קוד כניסה</span>
+                        <input
+                          value={shipEntryCode}
+                          onChange={(e) => setShipEntryCode(e.target.value)}
+                          placeholder="אם יש"
+                          aria-label="קוד כניסה"
+                          maxLength={12}
+                          className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                        />
+                      </label>
+                    </div>
                   )}
                 </div>
               )}
-            </div>
+            </section>
           )}
 
-          {/* השדה היחיד שהוא חובה בקופה.
-              בלעדיו כל ההזמנות אצלה נראות אותו דבר — מספר, מוצרים וסכום —
-              והיא צריכה לפתוח צ'אט אחרי צ'אט בוואטסאפ כדי לדעת מי הזמינה
-              מה. שם פרטי בלבד; אין כאן שם משפחה, כתובת או גיל. */}
-          <input
-            value={buyerName}
-            onChange={(e) => setBuyerName(e.target.value)}
-            placeholder="איך קוראים לך?"
-            aria-label="השם שלך"
-            maxLength={24}
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mt-3 mb-2"
-          />
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="הערה (לא חובה): אפשר בורוד?"
-            maxLength={200}
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mb-2"
-          />
-          {/* חובה (2026-09): ההזמנה כבר לא עוברת בוואטסאפ, והמספר הוא
-              הדרך היחידה של המוכרת לחזור לקונה. */}
-          <input
-            value={buyerPhone}
-            onChange={(e) => setBuyerPhone(e.target.value)}
-            placeholder="מספר טלפון שלך *"
-            inputMode="tel"
-            maxLength={20}
-            aria-label="מספר טלפון"
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mb-3"
-          />
+          {/* שם פרטי בלבד — אין כאן שם משפחה או גיל. הטלפון חובה מאז
+              שההזמנה נקלטת במערכת: זו הדרך של המוכרת לחזור לקונה. */}
+          <section className="mt-5">
+            <h3 className="text-[13.5px] font-bold mb-2.5">👋 הפרטים שלך</h3>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2">
+                <label className="flex-1 min-w-0 block">
+                  <span className="block text-[11.5px] opacity-60 mb-1">איך קוראים לך? *</span>
+                  <input
+                    value={buyerName}
+                    onChange={(e) => setBuyerName(e.target.value)}
+                    placeholder="שם פרטי"
+                    aria-label="השם שלך"
+                    maxLength={24}
+                    className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                  />
+                </label>
+                <label className="flex-1 min-w-0 block">
+                  <span className="block text-[11.5px] opacity-60 mb-1">מספר טלפון *</span>
+                  <input
+                    value={buyerPhone}
+                    onChange={(e) => setBuyerPhone(e.target.value)}
+                    placeholder="050-0000000"
+                    inputMode="tel"
+                    maxLength={20}
+                    aria-label="מספר טלפון"
+                    className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                  />
+                </label>
+              </div>
+              <label className="block">
+                <span className="block text-[11.5px] opacity-60 mb-1">הערה למוכרת (לא חובה)</span>
+                <input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="למשל: אפשר בורוד?"
+                  maxLength={200}
+                  className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                />
+              </label>
+            </div>
+          </section>
           {(paySummary || payLink) && (
-            <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
-              {/* הקונה בוחרת איך היא משלמת, וההודעה נושאת את ההוראות לאותו
-                  אמצעי. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?" בוואטסאפ. */}
+            <section className="mt-5">
+              {/* הקונה בוחרת איך היא משלמת, והמוכרת רואה את הבחירה על
+                  ההזמנה. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?". */}
               {methods.length > 0 && (
                 <>
-                  <div className="font-bold mb-1.5">איך תשלמי?</div>
-                  <div className="flex gap-1.5 mb-1">
+                  <h3 className="text-[13.5px] font-bold mb-2.5">💜 איך תשלמי?</h3>
+                  <div className="flex gap-2">
                     {methods.map((m) => {
                       const on = chosenPay === m.key;
                       return (
@@ -1107,11 +1139,11 @@ export default function StoreView({
                           onClick={() => setPayWith(m.key)}
                           aria-pressed={on}
                           aria-label={`תשלום ב${m.label}`}
-                          className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                          className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
                           style={
                             on
                               ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                              : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
                           }
                         >
                           {m.label}
@@ -1122,11 +1154,13 @@ export default function StoreView({
                 </>
               )}
               {!methods.length && paySummary && (
-                <>
+                <p className="text-[13px]">
                   <span className="font-bold">אפשר לשלם ב:</span> {paySummary}
-                </>
+                </p>
               )}
-              {store.payout_note && <div className="opacity-70 mt-0.5">{store.payout_note}</div>}
+              {store.payout_note && (
+                <p className="opacity-60 text-[12.5px] mt-2">{store.payout_note}</p>
+              )}
               {/* לינק התשלום נפתח בלשונית חדשה: הסל והטופס נשארים כאן,
                   והקונה חוזרת לשלוח את ההזמנה אחרי ששילמה. */}
               {payLink && (
@@ -1134,29 +1168,39 @@ export default function StoreView({
                   href={payLink.url}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
-                  className="mt-2 block text-center py-2.5 text-[13px] font-bold"
+                  className="mt-3 block text-center py-3 text-[13.5px] font-bold"
                   style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
                 >
                   {payLink.label} ←
                 </a>
               )}
-            </div>
+            </section>
           )}
-          <p className="text-[12px] opacity-60 text-center mb-3 leading-relaxed">
-            ההזמנה תישלח ישר למוכרת.
-            <br />
-            מיד אחרי זה יופיע אישור עם כל הפרטים.
-          </p>
-          <button
-            onClick={sendOrder}
-            disabled={sending}
-            className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40"
-            /* צבע הערכה ולא ירוק וואטסאפ: ההזמנה כבר לא יוצאת מהאתר —
-               היא נקלטת כאן, בחנות של הילדה. */
-            style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+          </div>
+
+          {/* ── הסיכום והשליחה — קבועים בתחתית, לא נעלמים בגלילה ── */}
+          <div
+            className="px-5 pt-3 pb-6 border-t border-black/10"
+            style={{ background: "var(--s-surface)" }}
           >
-            {sending ? "רגע…" : "שליחת ההזמנה"}
-          </button>
+            <div className="flex justify-between items-baseline mb-2.5">
+              <span className="text-[13.5px] font-bold">סה"כ לתשלום</span>
+              <span className="text-[19px] font-bold">₪{cartTotal}</span>
+            </div>
+            <button
+              onClick={sendOrder}
+              disabled={sending || cart.length === 0}
+              className="w-full py-4 text-[15.5px] font-bold disabled:opacity-40 active:translate-y-px"
+              /* צבע הערכה ולא ירוק וואטסאפ: ההזמנה כבר לא יוצאת מהאתר —
+                 היא נקלטת כאן, בחנות של הילדה. */
+              style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+            >
+              {sending ? "רגע…" : "שליחת ההזמנה"}
+            </button>
+            <p className="text-[11.5px] opacity-50 text-center mt-2">
+              ההזמנה נשלחת ישר למוכרת, והאישור יופיע כאן.
+            </p>
+          </div>
         </div>
       )}
 
