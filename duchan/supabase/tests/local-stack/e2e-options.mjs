@@ -111,15 +111,17 @@ check("the two colours are two separate cart lines",
   lines.join(" | "));
 await buyer.screenshot({ path: `${shots}/63-cart-two-options.png`, fullPage: true });
 
-/* ── 4. הבחירה נכנסת להזמנה ולהודעת הוואטסאפ ── */
-let waUrl = "";
-await buyer.route("https://wa.me/**", (r) => { waUrl = r.request().url(); r.abort(); });
-// השם נדרש בקופה: בלעדיו הילדה לא יודעת איזו שיחה שייכת לאיזו הזמנה
+/* ── 4. הבחירה נכנסת להזמנה ולהודעת הקשר ── */
+// השם והטלפון נדרשים בקופה: ההזמנה נקלטת במערכת והמוכרת חוזרת לקונה
 await buyer.fill("input[aria-label='השם שלך']", "רוני");
-await buyer.locator("button:text-is('שליחה בוואטסאפ')").click();
-await buyer.waitForTimeout(3000);
+await buyer.fill("input[aria-label='מספר טלפון']", "0520001111");
+await buyer.locator("button:text-is('שליחת ההזמנה')").click();
+await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
+const waUrl = await buyer
+  .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")
+  .getAttribute("href") ?? "";
 const msg = decodeURIComponent(waUrl);
-check("the chosen colour is in the whatsapp message", msg.includes("כחול") && msg.includes("ורוד"), waUrl ? "ok" : "no wa.me navigation");
+check("the chosen colour is in the contact message", msg.includes("כחול") && msg.includes("ורוד"), waUrl ? "ok" : "no contact link");
 
 const { rows: [order] } = await db.query(
   "select * from orders where store_id=$1 order by created_at desc limit 1", [store.id]

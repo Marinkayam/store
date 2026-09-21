@@ -37,11 +37,11 @@ export type PublicStoreResult =
  */
 const STORE_BASE =
   "id, slug, display_name, emoji, tagline, theme, cover_key, avatar_key, status, activated_at";
-const STORE_FULL = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payout_cash, payout_note, payout_link, about, city, ships, shipping_note, shipping_price, order_intro, order_outro, promo_on, promo_title, promo_text`;
+const STORE_FULL = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payout_cash, payout_note, payout_link, about, city, ships, shipping_note, shipping_price, order_intro, order_outro, promo_on, promo_title, promo_text, categories`;
 
 const PRODUCT_BASE =
   "id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, created_at";
-const PRODUCT_FULL = `${PRODUCT_BASE}, option_label, options, badge`;
+const PRODUCT_FULL = `${PRODUCT_BASE}, option_label, options, badge, category`;
 
 export const getPublicStore = cache(async (slug: string): Promise<PublicStoreResult> => {
   const db = supabaseAdmin();
@@ -112,6 +112,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     promo_on: false,
     promo_title: null,
     promo_text: null,
+    categories: null,
     ...rest,
   } as unknown as PublicStore;
 

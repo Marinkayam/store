@@ -89,13 +89,9 @@ const quickStock = (await db.query("select stock from products where id=$1", [pr
 check("quick stock +/- persists (1 → 4)", quickStock === 4, `stock=${quickStock}`);
 await page.screenshot({ path: `${shots}/10b-products.png` });
 
-/* ── שלב 3: קונה אנונימית — חנות, סל, הזמנה, וואטסאפ ── */
+/* ── שלב 3: קונה אנונימית — חנות, סל, הזמנה במערכת (2026-09: בלי מעבר
+   לוואטסאפ; ההודעה המוכנה חיה בכפתור הקשר שבמסך האישור) ── */
 const buyer = await (await browser.newContext({ viewport: { width: 390, height: 780 } })).newPage();
-let waUrl = null;
-await buyer.route("https://wa.me/**", (route) => {
-  waUrl = route.request().url();
-  route.abort();
-});
 await buyer.goto(`${BASE}/s/${slug}`);
 await buyer.waitForSelector("text=החנות של תמר");
 await buyer.screenshot({ path: `${shots}/11-storefront.png` });
@@ -109,12 +105,17 @@ await buyer.waitForTimeout(800);
 await buyer.click("[data-testid=cart-bar]");
 await buyer.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
 await buyer.fill("input[aria-label='השם שלך']", "רוני");
+await buyer.fill("input[aria-label='מספר טלפון']", "052-000-1111");
 await buyer.fill("input[placeholder*='הערה']", "אפשר בורוד?");
 await buyer.screenshot({ path: `${shots}/12-order-sheet.png` });
-await buyer.click("button:has-text('שליחה בוואטסאפ')");
-await buyer.waitForTimeout(3000);
+await buyer.click("button:has-text('שליחת ההזמנה')");
+await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
+await buyer.screenshot({ path: `${shots}/12b-confirmed.png` });
+const waUrl = await buyer
+  .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")
+  .getAttribute("href");
 
-check("wa.me opened only after server confirmed", !!waUrl);
+check("order confirmed in-app, whatsapp only as contact link", !!waUrl);
 if (waUrl) {
   const msg = decodeURIComponent(new URL(waUrl).searchParams.get("text") ?? "");
   check("whatsapp targets normalized phone", waUrl.includes("wa.me/972501234567"));

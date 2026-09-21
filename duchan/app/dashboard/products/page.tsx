@@ -35,6 +35,7 @@ interface EditState {
   // כזה. המוצר תומך בציר בחירה אחד, ולכן הם מוציאים זה את זה.
   optionKind: "none" | "color" | "size";
   optionList: string[]; // ["ורוד", "כחול"], שדה נפרד לכל ערך, לא פסיקים
+  category: string | null; // קטגוריה מתוך stores.categories
   badge: "rare" | "sale" | null;
   imageKey: string | null;
   videoKey: string | null;
@@ -61,6 +62,7 @@ const EMPTY_EDIT: EditState = {
   isVisible: true,
   optionKind: "none",
   optionList: [""],
+  category: null,
   badge: null,
   imageKey: null,
   videoKey: null,
@@ -75,8 +77,9 @@ const EMPTY_EDIT: EditState = {
 };
 
 export default function ProductsPage() {
-  const { store, loading } = useStore();
+  const { store, setStore, loading } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
+  const [newCategory, setNewCategory] = useState("");
   const [edit, setEdit] = useState<EditState | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
@@ -116,7 +119,8 @@ export default function ProductsPage() {
    * לשבבים בעורך וגם לשמירה — אחרת היא רואה שלוש בחירות ובחנות מופיעות שתיים.
    */
   const optionValues = useMemo(
-    () => [...new Set((edit?.optionList ?? []).map((o) => o.trim()).filter(Boolean))].slice(0, 12),
+    // התקרה עלתה מ-12 ל-30 (2026-09): יש מוכרות עם עשרות וריאציות אמיתיות
+    () => [...new Set((edit?.optionList ?? []).map((o) => o.trim()).filter(Boolean))].slice(0, 30),
     [edit?.optionList]
   );
 
@@ -204,6 +208,27 @@ export default function ProductsPage() {
     window.history.replaceState({}, "", "/dashboard/products");
   }, [store, autoOpened]);
 
+  /* ---------- קטגוריות של החנות ---------- */
+  async function saveCategories(next: string[]) {
+    if (!store) return;
+    const cleaned = [...new Set(next.map((c) => c.trim()).filter(Boolean))].slice(0, 20);
+    const supa = supabaseBrowser();
+    const { error } = await supa.from("stores").update({ categories: cleaned }).eq("id", store.id);
+    if (error) {
+      // העמודה עוד לא בדאטהבייס — אומרים את זה במקום להיכשל בשקט
+      showToast("הקטגוריות עוד לא זמינות, נסי שוב מאוחר יותר");
+      return;
+    }
+    setStore({ ...store, categories: cleaned });
+  }
+
+  function addCategory() {
+    const parts = newCategory.split(/[,\n]/).map((p) => p.trim()).filter(Boolean);
+    if (!parts.length) return;
+    setNewCategory("");
+    saveCategories([...(store?.categories ?? []), ...parts]);
+  }
+
   /* ---------- טיוטות ---------- */
   const draftKey = (id: string | null) => `duchan-product-draft-${id ?? "new"}`;
 
@@ -221,6 +246,7 @@ export default function ProductsPage() {
         // כ"צבע" — היא יכולה פשוט לעבור למידה אם זה מה שהתכוונו אליו
         optionKind: !p.options?.length ? "none" : p.option_label === "מידה" ? "size" : "color",
         optionList: p.options?.length ? p.options : [""],
+        category: p.category ?? null,
         badge: p.badge ?? null,
         stock: p.stock,
         isVisible: p.is_visible !== false,
@@ -447,13 +473,14 @@ export default function ProductsPage() {
         }
       }
 
-      const row = {
+      const row: Record<string, unknown> = {
         name: edit.name.trim() || "מוצר",
         description: edit.description.trim() || null,
         price: Math.max(0, Math.floor(Number(edit.price) || 0)),
         track_stock: edit.trackStock,
         option_label: optionValues.length ? (edit.optionKind === "size" ? "מידה" : "צבע") : null,
         options: optionValues.length ? optionValues : null,
+        category: edit.category,
         badge: edit.badge,
         stock: Math.max(0, edit.stock),
         is_visible: edit.isVisible,
@@ -462,11 +489,17 @@ export default function ProductsPage() {
         poster_key: posterKey,
       };
 
-      let error;
-      if (edit.id) {
-        ({ error } = await supa.from("products").update(row).eq("id", edit.id));
-      } else {
-        ({ error } = await supa.from("products").insert({ ...row, store_id: store.id }));
+      const write = (r: Record<string, unknown>) =>
+        edit.id
+          ? supa.from("products").update(r).eq("id", edit.id)
+          : supa.from("products").insert({ ...r, store_id: store.id });
+
+      let { error } = await write(row);
+      if (error) {
+        // עמודת category אולי עוד לא בפרודקשן — שומרים בלעדיה במקום להפיל
+        // את כל השמירה (אותו דפוס כמו בקריאות הציבוריות)
+        const { category: _c, ...noCategory } = row;
+        ({ error } = await write(noCategory));
       }
       if (error) {
         showToast("השמירה נכשלה, לנסות שוב");
@@ -514,6 +547,7 @@ export default function ProductsPage() {
       track_stock: src.track_stock,
       option_label: src.option_label,
       options: src.options,
+      ...(src.category != null ? { category: src.category } : {}),
       badge: src.badge,
       stock: src.stock,
       is_visible: src.is_visible,
@@ -606,6 +640,42 @@ export default function ProductsPage() {
       </header>
 
       <div className="p-3 flex flex-col gap-2">
+        {/* ── קטגוריות של החנות ──
+            המוכרת מגדירה כאן רשימה משלה (נידו, מים, קרח...), מתייגת
+            מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות. */}
+        {products.length > 0 && (
+          <div className="bg-white border border-[var(--line)] p-3 mb-1" data-testid="categories-box">
+            <div className="text-[13px] font-bold mb-0.5">קטגוריות בחנות</div>
+            <p className="text-[11.5px] text-[var(--faint)] mb-2">
+              הקונות יוכלו לסנן לפי זה. אחרי שמגדירים — בוחרים קטגוריה לכל מוצר בעריכה שלו.
+            </p>
+            <div className="flex gap-1.5 flex-wrap">
+              {(store?.categories ?? []).map((c) => (
+                <span key={c} className="inline-flex items-center gap-1 border border-[var(--line)] bg-[var(--canvas)] px-2.5 py-1.5 text-[12.5px]">
+                  {c}
+                  <button
+                    onClick={() => saveCategories((store?.categories ?? []).filter((x) => x !== c))}
+                    aria-label={`הסרת הקטגוריה ${c}`}
+                    className="text-[var(--muted)] text-[14px] leading-none"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <input
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addCategory()}
+                onBlur={addCategory}
+                placeholder={(store?.categories?.length ?? 0) === 0 ? "למשל: נידו, מים, קרח" : "+ עוד קטגוריה"}
+                aria-label="קטגוריה חדשה"
+                maxLength={20}
+                className="flex-1 min-w-28 border border-dashed border-[#D3D5DC] px-2.5 py-1.5 text-[12.5px]"
+              />
+            </div>
+          </div>
+        )}
+
         {/* דוכן ריק זה לא מסך שגיאה — זו הזמנה. הכפתור יושב כאן וגם למעלה,
             כי מסך ריק שמפנה ל-"+" קטן בפינה משאיר אותה לחפש. */}
         {products.length === 0 && (
@@ -891,15 +961,22 @@ export default function ProductsPage() {
                     <div key={i} className="flex gap-1.5">
                       <input
                         value={v}
-                        maxLength={20}
                         placeholder={edit.optionKind === "color" ? `למשל: ${["ורוד", "לבן", "כחול"][i % 3]}` : `למשל: ${["S", "M", "L"][i % 3]}`}
                         aria-label={`${edit.optionKind === "color" ? "צבע" : "מידה"} ${i + 1}`}
                         onChange={(e) =>
                           setEdit((s) => {
                             if (!s) return s;
                             const list = [...s.optionList];
-                            list[i] = e.target.value;
-                            return { ...s, optionList: list };
+                            // הדבקה של רשימה שלמה ("ורוד, כחול, צהוב" או
+                            // שורות) מתפצלת לשדות — ככה מזינים 30 וריאציות
+                            // בהדבקה אחת במקום שלושים הקלדות.
+                            const parts = e.target.value.split(/[,\n]/).map((p) => p.trim().slice(0, 20));
+                            if (parts.length > 1) {
+                              list.splice(i, 1, ...parts.filter(Boolean).slice(0, 30));
+                            } else {
+                              list[i] = e.target.value.slice(0, 20);
+                            }
+                            return { ...s, optionList: list.slice(0, 30) };
                           })
                         }
                         className="flex-1 border border-[var(--line)] px-3 py-2.5 text-sm"
@@ -918,7 +995,7 @@ export default function ProductsPage() {
                     </div>
                   ))}
                 </div>
-                {edit.optionList.length < 12 && (
+                {edit.optionList.length < 30 && (
                   <button
                     onClick={() => setEdit((s) => s && { ...s, optionList: [...s.optionList, ""] })}
                     className="w-full border border-dashed border-[#D3D5DC] py-2.5 text-[12.5px] text-[var(--muted)] mb-3"
@@ -926,6 +1003,32 @@ export default function ProductsPage() {
                     + עוד {edit.optionKind === "color" ? "צבע" : "מידה"}
                   </button>
                 )}
+              </>
+            )}
+
+            {/* קטגוריה — מתוך הרשימה שהמוכרת הגדירה למעלה. מוצר בלי
+                קטגוריה תקין לגמרי; הצ'יפים בחנות פשוט לא יסננו אותו. */}
+            {!!store?.categories?.length && (
+              <>
+                <label className="block text-[12px] text-[var(--muted)] mb-1">קטגוריה (לא חובה)</label>
+                <div className="flex gap-1.5 flex-wrap mb-3">
+                  {store.categories.map((c) => {
+                    const on = edit.category === c;
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => setEdit((s) => s && { ...s, category: on ? null : c })}
+                        aria-pressed={on}
+                        aria-label={`קטגוריה ${c}`}
+                        className={`border-[1.5px] px-3 py-2 text-[12.5px] font-semibold ${
+                          on ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
               </>
             )}
 

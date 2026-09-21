@@ -15,6 +15,11 @@ interface Body {
   note?: string;
   buyerPhone?: string;
   buyerName?: string;
+  /** true = משלוח (ואז כתובת ועיר חובה), false = מסירה אישית */
+  wantsShipping?: boolean;
+  shipAddress?: string;
+  shipCity?: string;
+  payMethod?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -25,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { slug, items, note, buyerPhone, buyerName } = body;
+  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, payMethod } = body;
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
@@ -106,6 +111,30 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // הטלפון הפך חובה (2026-09): ההזמנה כבר לא עוברת בוואטסאפ, ולכן בלי
+  // מספר אין למוכרת שום דרך לחזור לקונה. מאומת בשרת ולא רק בטופס.
+  const phone = normalizePhone(buyerPhone ?? "");
+  if (!phone) {
+    return NextResponse.json(
+      { error: "צריך מספר טלפון תקין, כדי שהמוכרת תוכל לחזור אלייך" },
+      { status: 400 }
+    );
+  }
+
+  // אמצעי תשלום — רק מהרשימה המוכרת; ערך זר לא נכנס להזמנה.
+  const pay = ["bit", "paybox", "cash"].includes(payMethod ?? "") ? payMethod! : null;
+
+  // משלוח דורש כתובת ועיר. הכתובת של הקונה, נראית רק למוכרת.
+  const ships = wantsShipping === true;
+  const address = shipAddress?.trim().replace(/\s+/g, " ").slice(0, 120) ?? "";
+  const city = shipCity?.trim().replace(/\s+/g, " ").slice(0, 40) ?? "";
+  if (ships && (address.length < 4 || city.length < 2)) {
+    return NextResponse.json(
+      { error: "למשלוח צריך כתובת ועיר, כדי שהחבילה תדע לאן להגיע" },
+      { status: 400 }
+    );
+  }
+
   // מספור + כתיבה בטרנזקציה אחת — שתי קונות בו-זמניות מקבלות מספרים שונים.
   //
   // p_buyer_phone נוסף במיגרציה 0020 ו-p_buyer_name ב-0029. אם הקוד עולה
@@ -120,8 +149,12 @@ export async function POST(req: NextRequest) {
     p_note: note?.slice(0, 200) || null,
     p_ip_hash: ipHash,
   };
-  const phone = buyerPhone ? normalizePhone(buyerPhone) : null;
   const attempts: Record<string, unknown>[] = [
+    {
+      ...base, p_buyer_phone: phone, p_buyer_name: name,
+      p_ship_address: ships ? address : null, p_ship_city: ships ? city : null,
+      p_pay_method: pay, p_wants_shipping: wantsShipping ?? null,
+    },
     { ...base, p_buyer_phone: phone, p_buyer_name: name },
     { ...base, p_buyer_phone: phone },
     base,

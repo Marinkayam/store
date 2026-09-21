@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { normalizePhone } from "@/lib/phone";
+import { displayPhone, normalizePhone } from "@/lib/phone";
 import { useStore, confettiBurst } from "./use-store";
 import WhatsNew from "./whats-new";
 import InstallCard from "../install-card";
@@ -413,6 +413,30 @@ export default function OrdersPage() {
             ))}
             {o.buyer_note && (
               <div className="text-[12px] text-[var(--muted)] italic mt-1">"{o.buyer_note}"</div>
+            )}
+
+            {/* פרטי ההזמנה החדשים (2026-09): ההזמנה כבר לא מגיעה בוואטסאפ,
+                אז כל מה שהמוכרת צריכה כדי לטפל בה יושב על הכרטיס עצמו —
+                טלפון לחזרה, יעד משלוח, ואיך הקונה מתכוונת לשלם. */}
+            {(o.buyer_phone || o.wants_shipping != null || o.pay_method) && (
+              <div className="text-[12px] text-[var(--muted)] mt-1.5 flex flex-col gap-0.5" data-testid="order-details">
+                {o.buyer_phone && (
+                  <span>
+                    📞{" "}
+                    {/* המספר שמור מנורמל (972...), בדיוק מה ש-wa.me צריך */}
+                    <a dir="ltr" className="underline" href={`https://wa.me/${o.buyer_phone}`}>
+                      {displayPhone(o.buyer_phone)}
+                    </a>
+                  </span>
+                )}
+                {o.wants_shipping === true && (
+                  <span>📦 משלוח{o.ship_address ? `: ${o.ship_address}, ${o.ship_city ?? ""}` : ""}</span>
+                )}
+                {o.wants_shipping === false && <span>🤝 מסירה אישית</span>}
+                {o.pay_method && (
+                  <span>💰 {o.pay_method === "bit" ? "ביט" : o.pay_method === "paybox" ? "פייבוקס" : "מזומן"}</span>
+                )}
+              </div>
             )}
 
             {/* מי הזמינה — פתוח לעריכה תמיד, כי לפעמים הקונה כותבת כינוי

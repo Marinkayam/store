@@ -53,6 +53,8 @@ export interface Store {
   ai_enabled: boolean | null;
   ai_credits: number | null;
   media_bytes: number;
+  /** קטגוריות שהמוכרת הגדירה לחנות. null = עוד לא הוגדרו. */
+  categories?: string[] | null;
   created_at: string;
 }
 
@@ -70,6 +72,7 @@ export interface Product {
   sort_order: number;
   option_label: string | null; // "צבע" · "מידה" · null = אין אפשרויות
   options: string[] | null;
+  category: string | null; // שם מתוך stores.categories. טקסט חופשי בכוונה.
   badge: "rare" | "sale" | null; // תגית שהילדה בחרה. המחושבות נגזרות בקריאה.
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
@@ -92,8 +95,12 @@ export interface Order {
   total: number;
   buyer_note: string | null;
   owner_note: string | null;
-  buyer_phone: string | null; // אופציונלי, הקונה בחרה אם להשאיר אותו
+  buyer_phone: string | null; // חובה מאז 2026-09; null רק בהזמנות ותיקות
   buyer_name: string | null;  // שם פרטי. מה שמקשר בין ההזמנה לשיחה בוואטסאפ
+  ship_address: string | null; // כתובת הקונה למשלוח. נראית רק למוכרת.
+  ship_city: string | null;
+  pay_method: string | null;   // bit / paybox / cash
+  wants_shipping: boolean | null;
   status: OrderStatus;
   created_at: string;
 }
@@ -125,6 +132,8 @@ export interface PublicStore {
   promo_on: boolean;
   promo_title: string | null;
   promo_text: string | null;
+  /** קטגוריות שהמוכרת הגדירה. הסדר הוא סדר הצ'יפים בדף. */
+  categories: string[] | null;
 }
 
 export interface PublicProduct {
@@ -140,6 +149,7 @@ export interface PublicProduct {
   sort_order: number;
   option_label: string | null;
   options: string[] | null;
+  category: string | null;
   badge: "rare" | "sale" | null;
   created_at: string; // דרוש לתגית "חדש"
 }

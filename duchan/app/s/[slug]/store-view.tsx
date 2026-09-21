@@ -44,6 +44,15 @@ export default function StoreView({
   const [note, setNote] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
   const [buyerName, setBuyerName] = useState("");
+  const [shipAddress, setShipAddress] = useState("");
+  const [shipCity, setShipCity] = useState("");
+  /* ההזמנה כבר לא קופצת לוואטסאפ — היא נקלטת כאן, והמסך הזה מציג את
+     האישור: מספר הזמנה, לינק תשלום, וכפתור קשר למי שמתקשה. */
+  const [confirmed, setConfirmed] = useState<{
+    orderNumber: number;
+    total: number;
+    waUrl: string;
+  } | null>(null);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState("");
   // null = לא בעלת החנות (או שעוד לא נבדק). קונה לא רואה מזה כלום.
@@ -129,13 +138,23 @@ export default function StoreView({
     setTimeout(() => setToast(""), 2600);
   };
 
+  /* סינון לפי קטגוריה שהמוכרת הגדירה. מוצגות רק קטגוריות שיש בהן
+     מוצר — קטגוריה ריקה בצ'יפים היא לחיצה שמובילה ל"אין כלום". */
+  const [category, setCategory] = useState<string | null>(null);
+  const categories = useMemo(() => {
+    const used = new Set(products.map((p) => p.category).filter(Boolean));
+    return (store.categories ?? []).filter((c) => used.has(c));
+  }, [store.categories, products]);
+
   const sorted = useMemo(
     () =>
-      [...products].sort(
-        (a, b) =>
-          Number(a.track_stock && a.stock === 0) - Number(b.track_stock && b.stock === 0)
-      ),
-    [products]
+      [...products]
+        .filter((p) => !category || p.category === category)
+        .sort(
+          (a, b) =>
+            Number(a.track_stock && a.stock === 0) - Number(b.track_stock && b.stock === 0)
+        ),
+    [products, category]
   );
 
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
@@ -218,6 +237,17 @@ export default function StoreView({
       showToast("רק צריך את השם שלך, כדי שהיא תדע מי הזמינה");
       return;
     }
+    // טלפון חובה: ההזמנה כבר לא עוברת בוואטסאפ, ובלי מספר אין למוכרת
+    // דרך לחזור לקונה. אותה בדיקה רצה גם בשרת.
+    if (!buyerPhone.trim()) {
+      showToast("צריך מספר טלפון, כדי שהמוכרת תוכל לחזור אלייך");
+      return;
+    }
+    const shipping = store.ships && wantsShipping;
+    if (shipping && (shipAddress.trim().length < 4 || shipCity.trim().length < 2)) {
+      showToast("למשלוח צריך כתובת ועיר");
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch("/api/orders", {
@@ -227,8 +257,12 @@ export default function StoreView({
           slug: store.slug,
           items: cart.map((l) => ({ productId: l.id, qty: l.qty, option: l.option })),
           note: note.trim() || undefined,
-          buyerPhone: buyerPhone.trim() || undefined,
+          buyerPhone: buyerPhone.trim(),
           buyerName: buyerName.trim(),
+          wantsShipping: store.ships ? wantsShipping : false,
+          shipAddress: shipping ? shipAddress.trim() : undefined,
+          shipCity: shipping ? shipCity.trim() : undefined,
+          payMethod: chosenPay ?? undefined,
         }),
       });
       const data = await res.json();
@@ -276,13 +310,22 @@ export default function StoreView({
         (pay ? `\n${pay}` : "") +
         (payLinkMsg ? `\n${payLinkMsg}` : "");
 
+      /* ההזמנה נקלטה במערכת — המוכרת רואה אותה בדשבורד. וואטסאפ ירד
+         מ"ההזמנה עצמה" לכפתור קשר למי שמתקשה; ההודעה המוכנה נשארת
+         כדי שהשיחה, אם תיפתח, תגיע עם כל ההקשר. */
       setCart([]);
       setNote("");
       setBuyerPhone("");
       setBuyerName("");
+      setShipAddress("");
+      setShipCity("");
       setWantsShipping(true);
       setOrderOpen(false);
-      window.location.href = `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`;
+      setConfirmed({
+        orderNumber: data.orderNumber,
+        total: data.total,
+        waUrl: `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`,
+      });
     } catch {
       showToast("אין חיבור, לנסות שוב עוד רגע");
     } finally {
@@ -444,6 +487,30 @@ export default function StoreView({
               {store.promo_text}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ── צ'יפים של קטגוריות — רק כשהמוכרת הגדירה ויש בהן מוצרים ── */}
+      {categories.length > 0 && (
+        <div className="px-3 pb-3 flex gap-1.5 overflow-x-auto" data-testid="category-chips">
+          {[null, ...categories].map((c) => {
+            const on = category === c;
+            return (
+              <button
+                key={c ?? "__all"}
+                onClick={() => setCategory(c)}
+                aria-pressed={on}
+                className="shrink-0 px-3.5 py-2 text-[12.5px] font-semibold border-[1.5px]"
+                style={
+                  on
+                    ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
+                    : { background: "var(--s-surface)", borderColor: "currentColor", opacity: 0.7 }
+                }
+              >
+                {c ?? "הכל"}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -645,9 +712,31 @@ export default function StoreView({
               <div className="text-[13px] font-bold text-center mb-2.5 opacity-80">
                 {safeOptionLabel(current.option_label)}
               </div>
-              <div className="flex flex-col gap-2">
+              {/* עד שש בחירות — שורות מלאות ונוחות. מעל זה (יש מוכרות עם
+                  30 וריאציות) — רשת צ'יפים, אחרת הגיליון הופך למגילה. */}
+              <div className={current.options.length > 6 ? "grid grid-cols-3 gap-1.5" : "flex flex-col gap-2"}>
                 {current.options.map((o) => {
                   const on = choice === o;
+                  const compact = current.options!.length > 6;
+                  if (compact)
+                    return (
+                      <button
+                        key={o}
+                        onClick={() => setChoice(o)}
+                        aria-pressed={on}
+                        aria-label={`${safeOptionLabel(current.option_label)}: ${o}`}
+                        className="min-h-11 px-2 py-2 border-2 text-[13px] font-semibold truncate"
+                        style={{
+                          background: "var(--s-surface)",
+                          borderColor: on ? "var(--s-primary)" : "currentColor",
+                          color: "var(--s-ink)",
+                          opacity: on ? 1 : 0.65,
+                          fontWeight: on ? 700 : 500,
+                        }}
+                      >
+                        {o}
+                      </button>
+                    );
                   return (
                     <button
                       key={o}
@@ -841,6 +930,28 @@ export default function StoreView({
                   {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
                 </p>
               )}
+              {/* משלוח אמיתי צריך יעד. הכתובת נראית רק למוכרת — היא לא
+                  נכנסת לשום דף פומבי ולא להודעת הוואטסאפ. */}
+              {wantsShipping && (
+                <div className="mt-2 flex flex-col gap-1.5">
+                  <input
+                    value={shipAddress}
+                    onChange={(e) => setShipAddress(e.target.value)}
+                    placeholder="רחוב ומספר בית *"
+                    aria-label="כתובת למשלוח"
+                    maxLength={120}
+                    className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                  />
+                  <input
+                    value={shipCity}
+                    onChange={(e) => setShipCity(e.target.value)}
+                    placeholder="עיר *"
+                    aria-label="עיר למשלוח"
+                    maxLength={40}
+                    className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -866,16 +977,20 @@ export default function StoreView({
             maxLength={200}
             className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mb-2"
           />
-          {/* לא חובה, אבל שווה: איתו היא פותחת איתך שיחה בלחיצה אחת */}
+          {/* חובה (2026-09): ההזמנה כבר לא עוברת בוואטסאפ, והמספר הוא
+              הדרך היחידה של המוכרת לחזור לקונה. */}
           <input
             value={buyerPhone}
             onChange={(e) => setBuyerPhone(e.target.value)}
-            placeholder="מספר טלפון שלך (לא חובה, כדי שתדע לחזור אלייך)"
+            placeholder="מספר טלפון שלך *"
             inputMode="tel"
             maxLength={20}
-            aria-label="מספר טלפון (לא חובה)"
-            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px] mb-3"
+            aria-label="מספר טלפון"
+            className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
           />
+          <p className="opacity-60 text-[12px] mb-3 mt-1">
+            כדי שהמוכרת תוכל לחזור אלייך על ההזמנה.
+          </p>
           {(paySummary || payLink) && (
             <div className="border-[1.5px] border-black/10 px-3 py-2.5 text-[12px] leading-relaxed mb-3">
               {/* הקונה בוחרת איך היא משלמת, וההודעה נושאת את ההוראות לאותו
@@ -905,7 +1020,7 @@ export default function StoreView({
                     })}
                   </div>
                   <p className="opacity-60 text-[12.5px]">
-                    ההוראות ייכנסו להודעה שתישלח בוואטסאפ.
+                    המוכרת תראה במה בחרת, ולינק התשלום יופיע באישור.
                   </p>
                 </>
               )}
@@ -931,19 +1046,70 @@ export default function StoreView({
             </div>
           )}
           <p className="text-[12px] opacity-60 text-center mb-3 leading-relaxed">
-            ההזמנה תיפתח בוואטסאפ.
+            ההזמנה תישלח ישר למוכרת.
             <br />
-            שם תסכמו תשלום ומסירה.
+            מיד אחרי זה יופיע אישור עם כל הפרטים.
           </p>
           <button
             onClick={sendOrder}
             disabled={sending}
             className="w-full py-3.5 text-[15px] font-bold disabled:opacity-40"
-            /* ירוק של וואטסאפ ולא צבע הערכה: הכפתור הזה מוציא את הקונה
-               מהאתר אל אפליקציה אחרת, והצבע הוא ההבטחה לאן היא הולכת. */
-            style={{ background: "var(--whatsapp)", color: "#ffffff" }}
+            /* צבע הערכה ולא ירוק וואטסאפ: ההזמנה כבר לא יוצאת מהאתר —
+               היא נקלטת כאן, בחנות של הילדה. */
+            style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
           >
-            {sending ? "רגע…" : "שליחה בוואטסאפ"}
+            {sending ? "רגע…" : "שליחת ההזמנה"}
+          </button>
+        </div>
+      )}
+
+      {/* ── אישור הזמנה ──
+          מה שחנות טובה מציגה אחרי קנייה: מספר, סכום, איך משלמים, ודרך
+          ליצור קשר אם משהו לא ברור. הקונה לא נזרקת לאפליקציה אחרת. */}
+      {confirmed && (
+        <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setConfirmed(null)} />
+      )}
+      {confirmed && (
+        <div
+          data-testid="order-confirmed"
+          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
+          style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
+        >
+          <div className="text-4xl mb-2" aria-hidden>🎉</div>
+          <h2 className="text-lg font-bold">ההזמנה נשלחה!</h2>
+          <p className="text-[13.5px] opacity-75 mt-1">
+            הזמנה #{confirmed.orderNumber} · ₪{confirmed.total}
+          </p>
+          <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
+            המוכרת קיבלה את כל הפרטים ותחזור אלייך לטלפון שהשארת.
+          </p>
+          {payLink && (!chosenPay || chosenPay === payLink.method) && (
+            <a
+              href={payLink.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="mt-4 block py-3 text-[14px] font-bold"
+              style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+            >
+              {payLink.label} · ₪{confirmed.total} ←
+            </a>
+          )}
+          {/* וואטסאפ נשאר כדרך קשר, לא כדרך הזמנה — ההודעה המוכנה נושאת
+              את פרטי ההזמנה כדי שהשיחה תיפתח עם הקשר מלא. */}
+          <a
+            href={confirmed.waUrl}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="mt-2 block py-3 text-[13.5px] font-bold border-[1.5px]"
+            style={{ borderColor: "currentColor", opacity: 0.85 }}
+          >
+            יצירת קשר עם המוכרת בוואטסאפ
+          </a>
+          <button
+            onClick={() => setConfirmed(null)}
+            className="mt-3 text-[13px] opacity-60 underline"
+          >
+            סגירה
           </button>
         </div>
       )}

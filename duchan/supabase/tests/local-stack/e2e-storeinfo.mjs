@@ -100,8 +100,6 @@ check("והנבחרת מסומנת גם לקורא מסך, לא רק בצבע",
 await buyer.screenshot({ path: `${shots}/82-colour.png` });
 
 /* ── 4. הקופה ── */
-let waUrl = null;
-await buyer.route("https://wa.me/**", (r) => { waUrl = r.request().url(); r.abort(); });
 await add.click();
 await buyer.waitForTimeout(700);
 await buyer.click("[data-testid=cart-bar]");
@@ -116,13 +114,20 @@ check("בחירת פייבוקס חושפת את לינק התשלום",
   (await buyer.locator("a[href='https://link.payboxapp.com/abc123']").count()) === 1);
 await buyer.screenshot({ path: `${shots}/83-checkout.png` });
 
-/* השם אינו נוחות: בלעדיו הילדה לא יודעת איזו שיחה בוואטסאפ שייכת לאיזו
-   הזמנה, וזו הייתה תלונה אמיתית מהשטח. */
+/* השם אינו נוחות: בלעדיו הילדה לא יודעת איזו הזמנה של מי. הטלפון חובה
+   מאז שההזמנה נקלטת במערכת (2026-09) — בלעדיו אין דרך לחזור לקונה.
+   הדוכן הזה שולח, אז נדרשים גם כתובת ועיר. */
 await buyer.fill("input[aria-label='השם שלך']", "נועה");
-await buyer.click("button:has-text('שליחה בוואטסאפ')");
-await buyer.waitForTimeout(3000);
+await buyer.fill("input[aria-label='מספר טלפון']", "052-000-2222");
+await buyer.fill("input[aria-label='כתובת למשלוח']", "הרצל 12");
+await buyer.fill("input[aria-label='עיר למשלוח']", "רמת גן");
+await buyer.click("button:has-text('שליחת ההזמנה')");
+await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
+const waUrl = await buyer
+  .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")
+  .getAttribute("href");
 const msg = waUrl ? decodeURIComponent(new URL(waUrl).searchParams.get("text") ?? "") : "";
-check("הודעת הוואטסאפ נפתחת", !!waUrl);
+check("ההזמנה מאושרת במסך, וההודעה חיה בכפתור הקשר", !!waUrl);
 check("השורה הראשונה נושאת את שם הקונה ואת מספר ההזמנה",
   /נועה/.test(msg.split("\n")[0]) && /#\d+/.test(msg.split("\n")[0]), msg.split("\n")[0]);
 check("ההודעה מפרטת את מה שהוזמן", msg.includes("גרבי צבעים") && msg.includes("כחול"));
@@ -141,26 +146,36 @@ check("ההודעה לא נושאת את מספר הטלפון של הילדה",
   !msg.includes(store.contact_phone) && !msg.includes("050-123-4567"));
 
 const { rows: [order] } = await db.query(
-  "select order_number, buyer_name from orders where store_id=$1 order by created_at desc limit 1",
+  "select order_number, buyer_name, buyer_phone, ship_address, ship_city, pay_method, wants_shipping from orders where store_id=$1 order by created_at desc limit 1",
   [store.id]);
 check("וההזמנה נשמרה עם השם, לא רק בהודעה",
   order?.buyer_name === "נועה" && msg.includes(`#${order.order_number}`),
   `${order?.buyer_name} #${order?.order_number}`);
+/* ההזמנה כבר לא חיה בוואטסאפ — כל מה שהמוכרת צריכה יושב עליה ב-DB */
+check("הטלפון של הקונה נשמר מנורמל", order?.buyer_phone === "972520002222", String(order?.buyer_phone));
+check("כתובת ועיר למשלוח נשמרו",
+  order?.ship_address === "הרצל 12" && order?.ship_city === "רמת גן" && order?.wants_shipping === true,
+  `${order?.ship_address}, ${order?.ship_city}`);
+check("אמצעי התשלום שנבחר נשמר", order?.pay_method === "paybox", String(order?.pay_method));
 
 /* ── 5. ביט בהודעה, אבל המספר לא בקוד המקור ── */
 const buyer2 = await phone();
-let waUrl2 = null;
-await buyer2.route("https://wa.me/**", (r) => { waUrl2 = r.request().url(); r.abort(); });
 await buyer2.goto(fresh(), { waitUntil: "networkidle" });
 await buyer2.locator("button[aria-label^='הוספה מהירה']").first().click();
 await buyer2.waitForTimeout(700);
 await buyer2.click("[data-testid=cart-bar]");
 await buyer2.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
 await buyer2.fill("input[aria-label='השם שלך']", "שירה");
+await buyer2.fill("input[aria-label='מספר טלפון']", "0520003333");
+// מסירה אישית — כדי לוודא שכתובת לא נדרשת כשאין משלוח
+await buyer2.click("button:has-text('מסירה אישית')");
 await buyer2.click("button[aria-label='תשלום בביט']");
 await buyer2.waitForTimeout(400);
-await buyer2.click("button:has-text('שליחה בוואטסאפ')");
-await buyer2.waitForTimeout(3000);
+await buyer2.click("button:has-text('שליחת ההזמנה')");
+await buyer2.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
+const waUrl2 = await buyer2
+  .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")
+  .getAttribute("href");
 const msg2 = waUrl2 ? decodeURIComponent(new URL(waUrl2).searchParams.get("text") ?? "") : "";
 check("בחירת ביט מצוינת בהודעה", msg2.includes("בחרתי לשלם ב: ביט"),
   msg2.split("\n").find((l) => l.includes("בחרתי לשלם")) ?? "");
