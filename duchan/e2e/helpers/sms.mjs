@@ -28,6 +28,11 @@ export async function verifyPhone(page, local) {
   const code = await lastCode(local);
   if (!code) throw new Error(`לא נשלח קוד ל-${local}`);
   await page.fill("input[aria-label='קוד אימות']", code);
+  // פופאפ "מה חדש" מוצג לחנויות ותיקות וחוסם קליקים בבדיקות — מסמנים
+  // "כבר ראיתי" כברירת מחדל. הבדיקה של הפופאפ עצמו מוחקת את הסימון.
+  await page.evaluate(() => {
+    try { localStorage.setItem("duchan-whatsnew-2026-09-orders", "1"); } catch {}
+  }).catch(() => {});
 }
 
 export async function closeHelper() {

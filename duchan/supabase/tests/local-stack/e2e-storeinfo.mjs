@@ -186,6 +186,27 @@ check("לינק שלא תואם את האמצעי שנבחר לא נכנס לה�
 check("והמספר של הילדה עדיין לא מופיע בקוד המקור של הדף",
   !(await (await fetch(fresh())).text()).includes(store.contact_phone));
 
+/* ── 6. פופאפ "מה חדש" ──
+   חנות ותיקה (נוצרה לפני העדכון) רואה אותו פעם אחת; סגירה נשמרת.
+   חנות הבדיקה נוצרת טרייה, אז מדמים ותיקות בהזזת created_at. */
+const { rows: [orig] } = await db.query("select created_at from stores where id=$1", [store.id]);
+await db.query("update stores set created_at='2026-01-01' where id=$1", [store.id]);
+// עוזר ההתחברות מסמן "כבר ראיתי" כדי לא לחסום בדיקות אחרות — כאן
+// בודקים את הפופאפ עצמו, אז מוחקים את הסימון
+await girl.evaluate(() => localStorage.removeItem("duchan-whatsnew-2026-09-orders"));
+await girl.goto(`${BASE}/dashboard`);
+await girl.waitForSelector("[data-testid=release-popup]", { timeout: 15000 });
+check("חנות ותיקה מקבלת את 'מה חדש' בכניסה", true);
+const whatsNewText = (await girl.locator("[data-testid=release-popup]").textContent()) ?? "";
+check("והוא מספר על ההזמנות החדשות", whatsNewText.includes("ההזמנות"));
+await girl.click("button:has-text('מגניב, הבנתי!')");
+await girl.waitForTimeout(400);
+await girl.reload();
+await girl.waitForSelector("text=היי", { timeout: 15000 });
+await girl.waitForTimeout(1200);
+check("אחרי סגירה הוא לא חוזר", (await girl.locator("[data-testid=release-popup]").count()) === 0);
+await db.query("update stores set created_at=$1 where id=$2", [orig.created_at, store.id]);
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} store-info + checkout checks passed`);
 await browser.close();
