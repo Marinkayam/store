@@ -113,6 +113,12 @@ if (await pickup.count()) await pickup.click();
 await buyer.fill("input[placeholder*='הערה']", "אפשר בורוד?");
 await buyer.screenshot({ path: `${shots}/12-order-sheet.png` });
 await buyer.click("button:has-text('שליחת ההזמנה')");
+// חנות עם לינק תשלום תואם מציגה קודם "נשאר רק לשלם" (מצב שחבילות
+// קודמות משאירות) — מקדמים אותו אל האישור
+await buyer.locator("[data-testid=order-pay-first], [data-testid=order-confirmed]").first()
+  .waitFor({ timeout: 15000 });
+if (await buyer.locator("[data-testid=order-pay-first]").count())
+  await buyer.click("button:has-text('שילמתי')");
 await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
 await buyer.screenshot({ path: `${shots}/12b-confirmed.png` });
 const waUrl = await buyer

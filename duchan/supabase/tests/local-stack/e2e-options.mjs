@@ -119,6 +119,11 @@ await buyer.fill("input[aria-label='מספר טלפון']", "0520001111");
 const pickup = buyer.locator("button:has-text('מסירה אישית')");
 if (await pickup.count()) await pickup.click();
 await buyer.locator("button:text-is('שליחת ההזמנה')").click();
+// אם חבילה קודמת השאירה לינק תשלום — קודם מסך "נשאר רק לשלם"
+await buyer.locator("[data-testid=order-pay-first], [data-testid=order-confirmed]").first()
+  .waitFor({ timeout: 15000 });
+if (await buyer.locator("[data-testid=order-pay-first]").count())
+  await buyer.click("button:has-text('שילמתי')");
 await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
 const waUrl = await buyer
   .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")
