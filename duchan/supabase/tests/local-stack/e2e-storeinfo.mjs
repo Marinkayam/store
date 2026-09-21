@@ -122,6 +122,15 @@ await buyer.fill("input[aria-label='מספר טלפון']", "052-000-2222");
 await buyer.fill("input[aria-label='כתובת למשלוח']", "הרצל 12");
 await buyer.fill("input[aria-label='עיר למשלוח']", "רמת גן");
 await buyer.click("button:has-text('שליחת ההזמנה')");
+/* נבחר פייבוקס ויש לינק תואם — קודם מסך התשלום, לא "אושרה" (מרינה:
+   אישור לפני תשלום מרגיש כאילו סיימנו). רק "שילמתי" מוביל לאישור. */
+await buyer.waitForSelector("[data-testid=order-pay-first]", { timeout: 15000 });
+check("קודם מסך תשלום, לא אישור",
+  (await buyer.locator("[data-testid=order-confirmed]").count()) === 0);
+check("ובו כפתור התשלום עם הסכום",
+  ((await buyer.locator("[data-testid=order-pay-first] a[href='https://link.payboxapp.com/abc123']").textContent()) ?? "").includes("₪"));
+await buyer.screenshot({ path: `${shots}/84-pay-first.png` });
+await buyer.click("button:has-text('שילמתי')");
 await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
 const waUrl = await buyer
   .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")

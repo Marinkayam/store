@@ -46,12 +46,15 @@ export default function StoreView({
   const [buyerName, setBuyerName] = useState("");
   const [shipAddress, setShipAddress] = useState("");
   const [shipCity, setShipCity] = useState("");
-  /* ההזמנה כבר לא קופצת לוואטסאפ — היא נקלטת כאן, והמסך הזה מציג את
-     האישור: מספר הזמנה, לינק תשלום, וכפתור קשר למי שמתקשה. */
+  /* ההזמנה כבר לא קופצת לוואטסאפ — היא נקלטת כאן. כשנבחר ביט/פייבוקס
+     ויש לינק תואם, קודם מופיע מסך התשלום ("נשאר רק לשלם") ורק אחרי
+     "שילמתי" מגיע האישור — מרינה: אישור לפני תשלום מרגיש כאילו סיימנו. */
   const [confirmed, setConfirmed] = useState<{
     orderNumber: number;
     total: number;
     waUrl: string;
+    /** עוד לא עברה את מסך התשלום */
+    payFirst: boolean;
   } | null>(null);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState("");
@@ -325,6 +328,8 @@ export default function StoreView({
         orderNumber: data.orderNumber,
         total: data.total,
         waUrl: `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`,
+        // תשלום קודם — רק כשיש לינק שתואם את מה שהיא בחרה (לא במזומן)
+        payFirst: !!payLink && chosenPay === payLink.method,
       });
     } catch {
       showToast("אין חיבור, לנסות שוב עוד רגע");
@@ -1067,9 +1072,55 @@ export default function StoreView({
           מה שחנות טובה מציגה אחרי קנייה: מספר, סכום, איך משלמים, ודרך
           ליצור קשר אם משהו לא ברור. הקונה לא נזרקת לאפליקציה אחרת. */}
       {confirmed && (
-        <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setConfirmed(null)} />
+        <div
+          className="fixed inset-0 bg-black/45 z-40"
+          /* סגירה באמצע מסך התשלום לא מעלימה את ההזמנה — עוברים לאישור */
+          onClick={() => setConfirmed(confirmed.payFirst ? { ...confirmed, payFirst: false } : null)}
+        />
       )}
-      {confirmed && (
+      {/* מסך התשלום — לפני האישור. ההזמנה כבר שמורה אצל המוכרת, אבל
+          הקנייה מרגישה גמורה רק אחרי שמשלמים, אז זה הסדר. */}
+      {confirmed?.payFirst && payLink && (
+        <div
+          data-testid="order-pay-first"
+          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
+          style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
+        >
+          <div className="text-4xl mb-2" aria-hidden>💳</div>
+          <h2 className="text-lg font-bold">נשאר רק לשלם</h2>
+          <p className="text-[13px] opacity-75 mt-1 leading-relaxed">
+            ההזמנה שלך (#{confirmed.orderNumber}) שמורה אצל המוכרת.
+            <br />
+            משלמים ₪{confirmed.total} וסוגרים עניין:
+          </p>
+          <a
+            href={payLink.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="mt-4 block py-3.5 text-[15px] font-bold"
+            style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+          >
+            {payLink.label} · ₪{confirmed.total} ←
+          </a>
+          <button
+            onClick={() => setConfirmed({ ...confirmed, payFirst: false })}
+            className="mt-2 w-full py-3 text-[13.5px] font-bold border-[1.5px]"
+            style={{ borderColor: "currentColor", opacity: 0.85 }}
+          >
+            שילמתי ✓
+          </button>
+          <a
+            href={confirmed.waUrl}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="mt-3 block text-[12.5px] opacity-60 underline"
+          >
+            משהו לא מסתדר? דברי עם המוכרת בוואטסאפ
+          </a>
+        </div>
+      )}
+
+      {confirmed && !confirmed.payFirst && (
         <div
           data-testid="order-confirmed"
           className="fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
