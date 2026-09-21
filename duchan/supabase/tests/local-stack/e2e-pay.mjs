@@ -78,7 +78,11 @@ await girl.goto(`${BASE}/dashboard/settings`);
 await girl.waitForSelector("text=איך משלמים לי", { timeout: 15000 });
 check("the settings screen has a place for payment options", true);
 
-/* מאז 0046 — שני שדות: לינק ביט ולינק פייבוקס, כל אחד עם ולידציה משלו */
+/* מאז 0046 — שני שדות: לינק ביט ולינק פייבוקס, כל אחד עם ולידציה משלו.
+   מנקים לינקים מריצות קודמות — הבדיקה "לא נשמר" מניחה התחלה ריקה. */
+await db.query("update stores set payout_link=null, payout_bit_link=null, payout_paybox_link=null where id=$1", [store.id]);
+await girl.reload();
+await girl.waitForSelector("text=איך משלמים לי", { timeout: 15000 });
 const bitField = girl.locator("input[aria-label='לינק ביט']");
 const payboxField = girl.locator("input[aria-label='לינק פייבוקס']");
 check("there are separate fields for bit and paybox links",

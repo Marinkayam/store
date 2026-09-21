@@ -110,7 +110,7 @@ await buyer.fill("input[aria-label='מספר טלפון']", "052-000-1111");
 // אחרת ההזמנה תדרוש כתובת שהבדיקה הזו לא ממלאת
 const pickup = buyer.locator("button:has-text('מסירה אישית')");
 if (await pickup.count()) await pickup.click();
-await buyer.fill("input[placeholder*='הערה']", "אפשר בורוד?");
+await buyer.fill("input[placeholder*='אפשר בורוד']", "אפשר בורוד?");
 await buyer.screenshot({ path: `${shots}/12-order-sheet.png` });
 await buyer.click("button:has-text('שליחת ההזמנה')");
 // חנות עם לינק תשלום תואם מציגה קודם "נשאר רק לשלם" (מצב שחבילות
