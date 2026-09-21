@@ -115,6 +115,9 @@ await buyer.screenshot({ path: `${shots}/63-cart-two-options.png`, fullPage: tru
 // השם והטלפון נדרשים בקופה: ההזמנה נקלטת במערכת והמוכרת חוזרת לקונה
 await buyer.fill("input[aria-label='השם שלך']", "רוני");
 await buyer.fill("input[aria-label='מספר טלפון']", "0520001111");
+// מסירה אישית אם מוצע — ריצה קודמת אולי השאירה משלוחים דלוקים בחנות
+const pickup = buyer.locator("button:has-text('מסירה אישית')");
+if (await pickup.count()) await pickup.click();
 await buyer.locator("button:text-is('שליחת ההזמנה')").click();
 await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
 const waUrl = await buyer

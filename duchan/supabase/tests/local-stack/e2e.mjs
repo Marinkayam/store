@@ -106,6 +106,10 @@ await buyer.click("[data-testid=cart-bar]");
 await buyer.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
 await buyer.fill("input[aria-label='השם שלך']", "רוני");
 await buyer.fill("input[aria-label='מספר טלפון']", "052-000-1111");
+// אם החנות במצב משלוחים (ריצה קודמת השאירה אותו דלוק) — מסירה אישית,
+// אחרת ההזמנה תדרוש כתובת שהבדיקה הזו לא ממלאת
+const pickup = buyer.locator("button:has-text('מסירה אישית')");
+if (await pickup.count()) await pickup.click();
 await buyer.fill("input[placeholder*='הערה']", "אפשר בורוד?");
 await buyer.screenshot({ path: `${shots}/12-order-sheet.png` });
 await buyer.click("button:has-text('שליחת ההזמנה')");
