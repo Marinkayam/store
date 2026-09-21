@@ -35,7 +35,7 @@ interface EditState {
   // כזה. המוצר תומך בציר בחירה אחד, ולכן הם מוציאים זה את זה.
   optionKind: "none" | "color" | "size";
   optionList: string[]; // ["ורוד", "כחול"], שדה נפרד לכל ערך, לא פסיקים
-  category: string | null; // קטגוריה מתוך stores.categories
+  categories: string[]; // מוצר יכול לשבת בכמה קטגוריות (0046)
   badge: "rare" | "sale" | null;
   imageKey: string | null;
   videoKey: string | null;
@@ -62,7 +62,7 @@ const EMPTY_EDIT: EditState = {
   isVisible: true,
   optionKind: "none",
   optionList: [""],
-  category: null,
+  categories: [],
   badge: null,
   imageKey: null,
   videoKey: null,
@@ -246,7 +246,8 @@ export default function ProductsPage() {
         // כ"צבע" — היא יכולה פשוט לעבור למידה אם זה מה שהתכוונו אליו
         optionKind: !p.options?.length ? "none" : p.option_label === "מידה" ? "size" : "color",
         optionList: p.options?.length ? p.options : [""],
-        category: p.category ?? null,
+        // המערך החדש גובר; מוצר ישן עם קטגוריה יחידה נטען כרשימה של אחת
+        categories: p.categories?.length ? p.categories : p.category ? [p.category] : [],
         badge: p.badge ?? null,
         stock: p.stock,
         isVisible: p.is_visible !== false,
@@ -480,7 +481,9 @@ export default function ProductsPage() {
         track_stock: edit.trackStock,
         option_label: optionValues.length ? (edit.optionKind === "size" ? "מידה" : "צבע") : null,
         options: optionValues.length ? optionValues : null,
-        category: edit.category,
+        categories: edit.categories.length ? edit.categories : null,
+        // הישנה ממשיכה להתעדכן — קוד שעוד קורא אותה רואה את הראשונה
+        category: edit.categories[0] ?? null,
         badge: edit.badge,
         stock: Math.max(0, edit.stock),
         is_visible: edit.isVisible,
@@ -496,10 +499,14 @@ export default function ProductsPage() {
 
       let { error } = await write(row);
       if (error) {
-        // עמודת category אולי עוד לא בפרודקשן — שומרים בלעדיה במקום להפיל
-        // את כל השמירה (אותו דפוס כמו בקריאות הציבוריות)
-        const { category: _c, ...noCategory } = row;
-        ({ error } = await write(noCategory));
+        // עמודות הקטגוריות אולי עוד לא בפרודקשן — שומרים בלעדיהן במקום
+        // להפיל את כל השמירה (אותו דפוס כמו בקריאות הציבוריות)
+        const { categories: _cs, ...noCats } = row;
+        ({ error } = await write(noCats));
+        if (error) {
+          const { category: _c, ...noCategory } = noCats;
+          ({ error } = await write(noCategory));
+        }
       }
       if (error) {
         showToast("השמירה נכשלה, לנסות שוב");
@@ -548,6 +555,7 @@ export default function ProductsPage() {
       option_label: src.option_label,
       options: src.options,
       ...(src.category != null ? { category: src.category } : {}),
+      ...(src.categories?.length ? { categories: src.categories } : {}),
       badge: src.badge,
       stock: src.stock,
       is_visible: src.is_visible,
@@ -1010,14 +1018,23 @@ export default function ProductsPage() {
                 קטגוריה תקין לגמרי; הצ'יפים בחנות פשוט לא יסננו אותו. */}
             {!!store?.categories?.length && (
               <>
-                <label className="block text-[12px] text-[var(--muted)] mb-1">קטגוריה (לא חובה)</label>
+                <label className="block text-[12px] text-[var(--muted)] mb-1">קטגוריות (לא חובה, אפשר כמה)</label>
                 <div className="flex gap-1.5 flex-wrap mb-3">
                   {store.categories.map((c) => {
-                    const on = edit.category === c;
+                    const on = edit.categories.includes(c);
                     return (
                       <button
                         key={c}
-                        onClick={() => setEdit((s) => s && { ...s, category: on ? null : c })}
+                        onClick={() =>
+                          setEdit((s) =>
+                            s && {
+                              ...s,
+                              categories: on
+                                ? s.categories.filter((x) => x !== c)
+                                : [...s.categories, c],
+                            }
+                          )
+                        }
                         aria-pressed={on}
                         aria-label={`קטגוריה ${c}`}
                         className={`border-[1.5px] px-3 py-2 text-[12.5px] font-semibold ${

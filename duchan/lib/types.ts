@@ -55,6 +55,9 @@ export interface Store {
   media_bytes: number;
   /** קטגוריות שהמוכרת הגדירה לחנות. null = עוד לא הוגדרו. */
   categories?: string[] | null;
+  /** לינקים נפרדים לביט ולפייבוקס (0046) — יכולים להוביל לשני מספרים */
+  payout_bit_link?: string | null;
+  payout_paybox_link?: string | null;
   created_at: string;
 }
 
@@ -72,7 +75,8 @@ export interface Product {
   sort_order: number;
   option_label: string | null; // "צבע" · "מידה" · null = אין אפשרויות
   options: string[] | null;
-  category: string | null; // שם מתוך stores.categories. טקסט חופשי בכוונה.
+  category: string | null; // הישנה (0045) — נשמרת לתאימות
+  categories?: string[] | null; // מוצר יכול לשבת בכמה קטגוריות (0046)
   badge: "rare" | "sale" | null; // תגית שהילדה בחרה. המחושבות נגזרות בקריאה.
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
@@ -97,8 +101,16 @@ export interface Order {
   owner_note: string | null;
   buyer_phone: string | null; // חובה מאז 2026-09; null רק בהזמנות ותיקות
   buyer_name: string | null;  // שם פרטי. מה שמקשר בין ההזמנה לשיחה בוואטסאפ
-  ship_address: string | null; // כתובת הקונה למשלוח. נראית רק למוכרת.
+  ship_address: string | null; // הנוסח המלא של הכתובת. נראה רק למוכרת.
   ship_city: string | null;
+  /** הפירוק: street, homeType (building|private), floor, apartment, entryCode */
+  ship_details?: {
+    street?: string;
+    homeType?: "building" | "private";
+    floor?: string;
+    apartment?: string;
+    entryCode?: string;
+  } | null;
   pay_method: string | null;   // bit / paybox / cash
   wants_shipping: boolean | null;
   status: OrderStatus;
@@ -121,6 +133,8 @@ export interface PublicStore {
   payout_cash: boolean;
   payout_note: string | null;
   payout_link: string | null;
+  payout_bit_link?: string | null;
+  payout_paybox_link?: string | null;
   about: string | null;
   city: string | null;
   ships: boolean;
@@ -150,6 +164,7 @@ export interface PublicProduct {
   option_label: string | null;
   options: string[] | null;
   category: string | null;
+  categories?: string[] | null;
   badge: "rare" | "sale" | null;
   created_at: string; // דרוש לתגית "חדש"
 }

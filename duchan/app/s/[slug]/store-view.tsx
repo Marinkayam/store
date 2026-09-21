@@ -44,8 +44,14 @@ export default function StoreView({
   const [note, setNote] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
   const [buyerName, setBuyerName] = useState("");
-  const [shipAddress, setShipAddress] = useState("");
+  /* כתובת מובנית (0046): עיר, רחוב, בניין/בית פרטי — ולבניין גם
+     קומה, דירה וקוד כניסה. מה שהשליח באמת צריך. */
+  const [shipStreet, setShipStreet] = useState("");
   const [shipCity, setShipCity] = useState("");
+  const [homeType, setHomeType] = useState<"building" | "private" | null>(null);
+  const [shipFloor, setShipFloor] = useState("");
+  const [shipApartment, setShipApartment] = useState("");
+  const [shipEntryCode, setShipEntryCode] = useState("");
   /* ההזמנה כבר לא קופצת לוואטסאפ — היא נקלטת כאן. כשנבחר ביט/פייבוקס
      ויש לינק תואם, קודם מופיע מסך התשלום ("נשאר רק לשלם") ורק אחרי
      "שילמתי" מגיע האישור — מרינה: אישור לפני תשלום מרגיש כאילו סיימנו. */
@@ -64,12 +70,13 @@ export default function StoreView({
 
   // אמצעי התשלום שהחנות מקבלת — שמות בלבד, בלי מספרים ובלי פרטי חשבון
   const paySummary = payoutSummary(store);
-  const payLink = payoutLink(store);
   const methods = payMethods(store);
   // ברירת מחדל: האמצעי הראשון שהחנות מקבלת. קונה שלא נגעה בכלום עדיין
   // שולחת הזמנה שאומרת איך היא משלמת, במקום "נסגור בוואטסאפ".
   const [payWith, setPayWith] = useState<PayMethod | null>(null);
   const chosenPay = payWith ?? methods[0]?.key ?? null;
+  // הלינק של האמצעי שנבחר — ביט ופייבוקס יכולים להוביל לשני מספרים שונים
+  const payLink = payoutLink(store, chosenPay);
 
   // האם הקונה הזו רוצה משלוח או מסירה אישית — בחירה לכל הזמנה, לא הגדרה
   // קבועה של החנות. ברירת המחדל היא מה שהחנות מציעה, כי זו הסיבה שהיא
@@ -141,22 +148,27 @@ export default function StoreView({
     setTimeout(() => setToast(""), 2600);
   };
 
-  /* סינון לפי קטגוריה שהמוכרת הגדירה. מוצגות רק קטגוריות שיש בהן
+  /* סינון לפי קטגוריה שהמוכרת הגדירה. מוצר יכול לשבת בכמה קטגוריות
+     (0046); category הישנה עדיין מכובדת. מוצגות רק קטגוריות שיש בהן
      מוצר — קטגוריה ריקה בצ'יפים היא לחיצה שמובילה ל"אין כלום". */
   const [category, setCategory] = useState<string | null>(null);
+  const productCats = (p: PublicProduct): string[] =>
+    p.categories?.length ? p.categories : p.category ? [p.category] : [];
   const categories = useMemo(() => {
-    const used = new Set(products.map((p) => p.category).filter(Boolean));
+    const used = new Set(products.flatMap(productCats));
     return (store.categories ?? []).filter((c) => used.has(c));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.categories, products]);
 
   const sorted = useMemo(
     () =>
       [...products]
-        .filter((p) => !category || p.category === category)
+        .filter((p) => !category || productCats(p).includes(category))
         .sort(
           (a, b) =>
             Number(a.track_stock && a.stock === 0) - Number(b.track_stock && b.stock === 0)
         ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [products, category]
   );
 
@@ -247,10 +259,40 @@ export default function StoreView({
       return;
     }
     const shipping = store.ships && wantsShipping;
-    if (shipping && (shipAddress.trim().length < 4 || shipCity.trim().length < 2)) {
-      showToast("למשלוח צריך כתובת ועיר");
+    if (shipping && (shipStreet.trim().length < 2 || shipCity.trim().length < 2)) {
+      showToast("למשלוח צריך עיר ורחוב");
       return;
     }
+    if (shipping && !homeType) {
+      showToast("בניין או בית פרטי? כדי שהשליח ידע");
+      return;
+    }
+    if (shipping && homeType === "building" && (!shipFloor.trim() || !shipApartment.trim())) {
+      showToast("לבניין צריך גם קומה ומספר דירה");
+      return;
+    }
+    // הנוסח המלא לתצוגה אצל המוכרת + הפירוק המובנה
+    const shipDetails =
+      shipping && homeType
+        ? {
+            street: shipStreet.trim(),
+            homeType,
+            ...(homeType === "building"
+              ? {
+                  floor: shipFloor.trim(),
+                  apartment: shipApartment.trim(),
+                  ...(shipEntryCode.trim() ? { entryCode: shipEntryCode.trim() } : {}),
+                }
+              : {}),
+          }
+        : undefined;
+    const composedAddress = shipDetails
+      ? `${shipDetails.street}${
+          homeType === "building"
+            ? ` · קומה ${shipFloor.trim()} · דירה ${shipApartment.trim()}${shipEntryCode.trim() ? ` · קוד ${shipEntryCode.trim()}` : ""}`
+            : " · בית פרטי"
+        }`
+      : undefined;
     setSending(true);
     try {
       const res = await fetch("/api/orders", {
@@ -263,8 +305,9 @@ export default function StoreView({
           buyerPhone: buyerPhone.trim(),
           buyerName: buyerName.trim(),
           wantsShipping: store.ships ? wantsShipping : false,
-          shipAddress: shipping ? shipAddress.trim() : undefined,
+          shipAddress: composedAddress,
           shipCity: shipping ? shipCity.trim() : undefined,
+          shipDetails,
           payMethod: chosenPay ?? undefined,
         }),
       });
@@ -320,8 +363,12 @@ export default function StoreView({
       setNote("");
       setBuyerPhone("");
       setBuyerName("");
-      setShipAddress("");
+      setShipStreet("");
       setShipCity("");
+      setHomeType(null);
+      setShipFloor("");
+      setShipApartment("");
+      setShipEntryCode("");
       setWantsShipping(true);
       setOrderOpen(false);
       setConfirmed({
@@ -329,7 +376,8 @@ export default function StoreView({
         total: data.total,
         waUrl: `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`,
         // תשלום קודם — רק כשיש לינק שתואם את מה שהיא בחרה (לא במזומן)
-        payFirst: !!payLink && chosenPay === payLink.method,
+        // payLink כבר מחושב לפי האמצעי שנבחר — קיים = יש מה לשלם עכשיו
+        payFirst: !!payLink,
       });
     } catch {
       showToast("אין חיבור, לנסות שוב עוד רגע");
@@ -935,18 +983,10 @@ export default function StoreView({
                   {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
                 </p>
               )}
-              {/* משלוח אמיתי צריך יעד. הכתובת נראית רק למוכרת — היא לא
-                  נכנסת לשום דף פומבי ולא להודעת הוואטסאפ. */}
+              {/* משלוח אמיתי צריך יעד מפורק — מה שהשליח באמת שואל.
+                  הכל נראה רק למוכרת, לא נכנס לשום דף פומבי. */}
               {wantsShipping && (
                 <div className="mt-2 flex flex-col gap-1.5">
-                  <input
-                    value={shipAddress}
-                    onChange={(e) => setShipAddress(e.target.value)}
-                    placeholder="רחוב ומספר בית *"
-                    aria-label="כתובת למשלוח"
-                    maxLength={120}
-                    className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
-                  />
                   <input
                     value={shipCity}
                     onChange={(e) => setShipCity(e.target.value)}
@@ -955,6 +995,67 @@ export default function StoreView({
                     maxLength={40}
                     className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
                   />
+                  <input
+                    value={shipStreet}
+                    onChange={(e) => setShipStreet(e.target.value)}
+                    placeholder="רחוב ומספר בית *"
+                    aria-label="רחוב למשלוח"
+                    maxLength={80}
+                    className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                  />
+                  <div className="flex gap-1.5">
+                    {([["building", "בניין"], ["private", "בית פרטי"]] as const).map(([k, label]) => {
+                      const on = homeType === k;
+                      return (
+                        <button
+                          key={k}
+                          onClick={() => setHomeType(k)}
+                          aria-pressed={on}
+                          aria-label={label}
+                          className="flex-1 min-h-10 border-[1.5px] text-[12.5px] font-semibold"
+                          style={
+                            on
+                              ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
+                              : { borderColor: "currentColor", background: "var(--s-thumb)" }
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {homeType === "building" && (
+                    <>
+                      <div className="flex gap-1.5">
+                        <input
+                          value={shipFloor}
+                          onChange={(e) => setShipFloor(e.target.value)}
+                          placeholder="קומה *"
+                          aria-label="קומה"
+                          inputMode="numeric"
+                          maxLength={6}
+                          className="flex-1 min-w-0 border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                        />
+                        <input
+                          value={shipApartment}
+                          onChange={(e) => setShipApartment(e.target.value)}
+                          placeholder="דירה *"
+                          aria-label="מספר דירה"
+                          inputMode="numeric"
+                          maxLength={6}
+                          className="flex-1 min-w-0 border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                        />
+                      </div>
+                      <input
+                        value={shipEntryCode}
+                        onChange={(e) => setShipEntryCode(e.target.value)}
+                        placeholder="קוד כניסה לבניין (אם יש)"
+                        aria-label="קוד כניסה"
+                        maxLength={12}
+                        className="w-full border-[1.5px] border-black/20 bg-transparent px-3 py-2.5 text-[13px]"
+                      />
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1028,7 +1129,7 @@ export default function StoreView({
               {store.payout_note && <div className="opacity-70 mt-0.5">{store.payout_note}</div>}
               {/* לינק התשלום נפתח בלשונית חדשה: הסל והטופס נשארים כאן,
                   והקונה חוזרת לשלוח את ההזמנה אחרי ששילמה. */}
-              {payLink && chosenPay === payLink.method && (
+              {payLink && (
                 <a
                   href={payLink.url}
                   target="_blank"
@@ -1125,7 +1226,7 @@ export default function StoreView({
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
             המוכרת קיבלה את כל הפרטים ותחזור אלייך לטלפון שהשארת.
           </p>
-          {payLink && (!chosenPay || chosenPay === payLink.method) && (
+          {payLink && (
             <a
               href={payLink.url}
               target="_blank"

@@ -268,11 +268,11 @@ check("ההגדרות מבטיחות במפורש שאין עמלה על המכ�
    והיא נדחפה לתוך הודעת הוואטסאפ. הבדיקה לא מחזירה אותה; היא בודקת את
    מה שבא במקומה: הסימונים, ולינק תשלום שנאכף. */
 await girl.click("#payment button:has-text('מזומן')");
-await girl.fill("input[aria-label='לינק לתשלום']", "https://www.bitpay.co.il/app/me/ABC123");
+await girl.fill("input[aria-label='לינק ביט']", "https://www.bitpay.co.il/app/me/ABC123");
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2000);
 const { rows: [payRow] } = await db.query(
-  "select payout_bit, payout_cash, payout_link from stores where id=$1", [seed.id]);
+  "select payout_bit, payout_cash, payout_bit_link as payout_link from stores where id=$1", [seed.id]);
 check("כיבוי אמצעי תשלום נשמר", payRow.payout_cash === false, `cash=${payRow.payout_cash}`);
 check("ומה שנשאר דלוק נשמר גם הוא", payRow.payout_bit === true, `bit=${payRow.payout_bit}`);
 check("ולינק התשלום נשמר", (payRow.payout_link ?? "").includes("bitpay.co.il"), String(payRow.payout_link));

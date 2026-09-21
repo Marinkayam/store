@@ -7,7 +7,7 @@ import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
-import { deliveryLine, isPayoutLink, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
+import { deliveryLine, isBitLink, isPayboxLink, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 
@@ -43,6 +43,8 @@ export default function SettingsPage() {
     payout_cash: true,
     payout_note: "" as string | null,
     payout_link: "" as string | null,
+    payout_bit_link: "" as string | null,
+    payout_paybox_link: "" as string | null,
   });
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -85,6 +87,9 @@ export default function SettingsPage() {
       payout_cash: store.payout_cash ?? true,
       payout_note: store.payout_note ?? "",
       payout_link: store.payout_link ?? "",
+      // הלינק הישן נודד לשדה לפי הסוג שלו — המסך מציג רק את השניים החדשים
+      payout_bit_link: store.payout_bit_link ?? (store.payout_link && isBitLink(store.payout_link) ? store.payout_link : ""),
+      payout_paybox_link: store.payout_paybox_link ?? (store.payout_link && isPayboxLink(store.payout_link) ? store.payout_link : ""),
     });
   }, [store]);
 
@@ -123,9 +128,14 @@ export default function SettingsPage() {
       showToast("מספר הוואטסאפ לא נראה תקין, לבדוק שוב");
       return;
     }
-    const link = payout.payout_link?.trim();
-    if (link && !isPayoutLink(link)) {
-      showToast("אפשר להדביק כאן רק לינק של ביט או פייבוקס");
+    const bitLink = payout.payout_bit_link?.trim();
+    if (bitLink && !isBitLink(bitLink)) {
+      showToast("לינק הביט לא נראה כמו לינק מאפליקציית ביט");
+      return;
+    }
+    const payboxLink = payout.payout_paybox_link?.trim();
+    if (payboxLink && !isPayboxLink(payboxLink)) {
+      showToast("לינק הפייבוקס לא נראה כמו לינק מאפליקציית פייבוקס");
       return;
     }
     const supa = supabaseBrowser();
@@ -140,6 +150,8 @@ export default function SettingsPage() {
       payout_cash: payout.payout_cash,
       payout_note: payout.payout_note?.trim() || null,
       payout_link: payout.payout_link?.trim() || null,
+      payout_bit_link: payout.payout_bit_link?.trim() || null,
+      payout_paybox_link: payout.payout_paybox_link?.trim() || null,
       // התיאור כולו יושב ב-tagline. about מתאפס בשמירה כדי שהדוכן לא יציג
       // את אותו טקסט פעמיים, אחרי שהתוכן שלו כבר אוחד לשדה היחיד.
       about: null,
@@ -848,31 +860,46 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
-          {/* לינק תשלום — הופך "תשלמי לי בפייבוקס" ללחיצה אחת.
-              מותרים רק לינקים של ביט ופייבוקס, וזה נאכף גם בדאטהבייס. */}
+          {/* שני לינקים נפרדים — ביט ופייבוקס יכולים להוביל לשני מספרים
+              שונים (למשל אבא ואח). הסוג נאכף גם כאן וגם בדאטהבייס. */}
           <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">
-            לינק לתשלום אם יש (לא חובה)
+            לינק ביט (לא חובה)
           </label>
           <input
-            value={payout.payout_link ?? ""}
-            onChange={(e) => { setPayout({ ...payout, payout_link: e.target.value }); setDirty(true); }}
-            placeholder="להדביק כאן לינק מביט או מפייבוקס"
-            aria-label="לינק לתשלום"
-            /* dir=ltr כדי שהכתובת תיקרא נכון, text-right כדי שהיא תתחיל
-               באותו צד כמו כל שאר השדות במסך ולא תיתקע בשמאל */
+            value={payout.payout_bit_link ?? ""}
+            onChange={(e) => { setPayout({ ...payout, payout_bit_link: e.target.value }); setDirty(true); }}
+            placeholder="להדביק לינק מאפליקציית ביט"
+            aria-label="לינק ביט"
             dir="ltr"
             maxLength={200}
             className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
           />
-          <p className="text-[12px] text-[var(--muted)] mt-1 leading-relaxed">
-            בפייבוקס או בביט: פותחים את האפליקציה, "בקשת תשלום" או "הלינק שלי",
-            ומעתיקים. הקונים יראו כפתור שמעביר אותם ישר לשם.
-          </p>
-          {!!payout.payout_link?.trim() && !isPayoutLink(payout.payout_link.trim()) && (
+          {!!payout.payout_bit_link?.trim() && !isBitLink(payout.payout_bit_link.trim()) && (
             <p className="text-[12px] text-[var(--danger)] mt-1">
-              זה לא נראה כמו לינק של ביט או פייבוקס. מטעמי בטיחות אפשר רק אותם.
+              זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר רק אותו.
             </p>
           )}
+          <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">
+            לינק פייבוקס (לא חובה)
+          </label>
+          <input
+            value={payout.payout_paybox_link ?? ""}
+            onChange={(e) => { setPayout({ ...payout, payout_paybox_link: e.target.value }); setDirty(true); }}
+            placeholder="להדביק לינק מאפליקציית פייבוקס"
+            aria-label="לינק פייבוקס"
+            dir="ltr"
+            maxLength={200}
+            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
+          />
+          {!!payout.payout_paybox_link?.trim() && !isPayboxLink(payout.payout_paybox_link.trim()) && (
+            <p className="text-[12px] text-[var(--danger)] mt-1">
+              זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר רק אותו.
+            </p>
+          )}
+          <p className="text-[12px] text-[var(--muted)] mt-1 leading-relaxed">
+            בכל אפליקציה: "בקשת תשלום" או "הלינק שלי" ומעתיקים. הקונות
+            יקבלו את הלינק של האמצעי שבחרו, ואפשר ששניהם יובילו למספרים שונים.
+          </p>
 
           {/* "הערה לקונה" ירדה: היא נדחפה לתוך הודעת הוואטסאפ בלי שהיה
               ברור איפה היא מופיעה, ורוב מה שנכתב בה היה מספר טלפון —

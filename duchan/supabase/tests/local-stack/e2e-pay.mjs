@@ -78,25 +78,31 @@ await girl.goto(`${BASE}/dashboard/settings`);
 await girl.waitForSelector("text=איך משלמים לי", { timeout: 15000 });
 check("the settings screen has a place for payment options", true);
 
-const linkField = girl.locator("input[aria-label='לינק לתשלום']");
-check("there is a field for a payment link", (await linkField.count()) === 1);
+/* מאז 0046 — שני שדות: לינק ביט ולינק פייבוקס, כל אחד עם ולידציה משלו */
+const bitField = girl.locator("input[aria-label='לינק ביט']");
+const payboxField = girl.locator("input[aria-label='לינק פייבוקס']");
+check("there are separate fields for bit and paybox links",
+  (await bitField.count()) === 1 && (await payboxField.count()) === 1);
 
-await linkField.fill("https://example.com/pay-me");
+await payboxField.fill("https://example.com/pay-me");
 await girl.waitForTimeout(400);
-check("a link that is not bit or paybox is called out on the spot",
-  (await girl.textContent("body")).includes("לא נראה כמו לינק של ביט או פייבוקס"));
+check("a link that is not paybox is called out on the spot",
+  (await girl.textContent("body")).includes("לא נראה כמו לינק של פייבוקס"));
 await girl.click("button:has-text('שמירת שינויים')");
-await girl.waitForSelector("text=רק לינק של ביט או פייבוקס", { timeout: 8000 });
-const { rows: [notSaved] } = await db.query("select payout_link from stores where id=$1", [store.id]);
-check("and it is never saved", notSaved.payout_link === null, String(notSaved.payout_link));
+await girl.waitForSelector("text=לא נראה כמו לינק מאפליקציית פייבוקס", { timeout: 8000 });
+const { rows: [notSaved] } = await db.query("select payout_paybox_link from stores where id=$1", [store.id]);
+check("and it is never saved", notSaved.payout_paybox_link === null, String(notSaved.payout_paybox_link));
 
-await linkField.fill("https://link.payboxapp.com/abc123");
+/* לינק ביט בשדה של פייבוקס נדחה גם הוא — שני מספרים שונים זו הנקודה */
+await payboxField.fill("https://link.payboxapp.com/abc123");
+await bitField.fill("https://www.bitpay.co.il/app/me/DAD1");
 await girl.waitForTimeout(300);
 await girl.click("button:has-text('שמירת שינויים')");
 await girl.waitForSelector("text=נשמר", { timeout: 10000 });
 await girl.waitForTimeout(800);
-const { rows: [saved] } = await db.query("select payout_link from stores where id=$1", [store.id]);
-check("a paybox link is saved", saved.payout_link === "https://link.payboxapp.com/abc123", String(saved.payout_link));
+const { rows: [saved] } = await db.query("select payout_paybox_link, payout_bit_link from stores where id=$1", [store.id]);
+check("a paybox link is saved", saved.payout_paybox_link === "https://link.payboxapp.com/abc123", String(saved.payout_paybox_link));
+check("and the bit link can lead to a different number", saved.payout_bit_link === "https://www.bitpay.co.il/app/me/DAD1", String(saved.payout_bit_link));
 await girl.screenshot({ path: `${shots}/71-settings-pay.png`, fullPage: true });
 
 /* ── 4. הדאטהבייס עצמו דוחה לינק אחר, גם בעקיפה של המסך ── */
@@ -138,7 +144,7 @@ const waHref = await buyer.evaluate(async (slug) => {
 }, store.slug);
 check("an empty order is still refused", waHref === 400, `status=${waHref}`);
 
-await db.query("update stores set payout_link = null where id = $1", [store.id]);
+await db.query("update stores set payout_link = null, payout_bit_link = null, payout_paybox_link = null where id = $1", [store.id]);
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} quick-add + payment checks passed`);
 await browser.close();

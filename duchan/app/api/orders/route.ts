@@ -19,6 +19,14 @@ interface Body {
   wantsShipping?: boolean;
   shipAddress?: string;
   shipCity?: string;
+  /** הפירוק המובנה: רחוב, בניין/פרטי, קומה, דירה, קוד כניסה */
+  shipDetails?: {
+    street?: string;
+    homeType?: string;
+    floor?: string;
+    apartment?: string;
+    entryCode?: string;
+  };
   payMethod?: string;
 }
 
@@ -30,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, payMethod } = body;
+  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, shipDetails, payMethod } = body;
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
@@ -124,15 +132,38 @@ export async function POST(req: NextRequest) {
   // אמצעי תשלום — רק מהרשימה המוכרת; ערך זר לא נכנס להזמנה.
   const pay = ["bit", "paybox", "cash"].includes(payMethod ?? "") ? payMethod! : null;
 
-  // משלוח דורש כתובת ועיר. הכתובת של הקונה, נראית רק למוכרת.
+  // משלוח דורש כתובת מובנית. הכל של הקונה, נראה רק למוכרת.
   const ships = wantsShipping === true;
-  const address = shipAddress?.trim().replace(/\s+/g, " ").slice(0, 120) ?? "";
+  const address = shipAddress?.trim().replace(/\s+/g, " ").slice(0, 200) ?? "";
   const city = shipCity?.trim().replace(/\s+/g, " ").slice(0, 40) ?? "";
-  if (ships && (address.length < 4 || city.length < 2)) {
-    return NextResponse.json(
-      { error: "למשלוח צריך כתובת ועיר, כדי שהחבילה תדע לאן להגיע" },
-      { status: 400 }
-    );
+  const clean = (v: unknown, max: number) =>
+    typeof v === "string" ? v.trim().replace(/\s+/g, " ").slice(0, max) : "";
+  const details = shipDetails
+    ? {
+        street: clean(shipDetails.street, 80),
+        homeType: shipDetails.homeType === "building" ? "building" : "private",
+        ...(shipDetails.homeType === "building"
+          ? {
+              floor: clean(shipDetails.floor, 6),
+              apartment: clean(shipDetails.apartment, 6),
+              ...(clean(shipDetails.entryCode, 12) ? { entryCode: clean(shipDetails.entryCode, 12) } : {}),
+            }
+          : {}),
+      }
+    : null;
+  if (ships) {
+    if (city.length < 2 || !details || details.street.length < 2) {
+      return NextResponse.json(
+        { error: "למשלוח צריך עיר ורחוב, כדי שהחבילה תדע לאן להגיע" },
+        { status: 400 }
+      );
+    }
+    if (details.homeType === "building" && (!details.floor || !details.apartment)) {
+      return NextResponse.json(
+        { error: "לבניין צריך גם קומה ומספר דירה" },
+        { status: 400 }
+      );
+    }
   }
 
   // מספור + כתיבה בטרנזקציה אחת — שתי קונות בו-זמניות מקבלות מספרים שונים.
@@ -149,12 +180,14 @@ export async function POST(req: NextRequest) {
     p_note: note?.slice(0, 200) || null,
     p_ip_hash: ipHash,
   };
+  const v8 = {
+    ...base, p_buyer_phone: phone, p_buyer_name: name,
+    p_ship_address: ships ? address : null, p_ship_city: ships ? city : null,
+    p_pay_method: pay, p_wants_shipping: wantsShipping ?? null,
+  };
   const attempts: Record<string, unknown>[] = [
-    {
-      ...base, p_buyer_phone: phone, p_buyer_name: name,
-      p_ship_address: ships ? address : null, p_ship_city: ships ? city : null,
-      p_pay_method: pay, p_wants_shipping: wantsShipping ?? null,
-    },
+    { ...v8, p_ship_details: ships ? details : null },
+    v8,
     { ...base, p_buyer_phone: phone, p_buyer_name: name },
     { ...base, p_buyer_phone: phone },
     base,

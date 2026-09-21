@@ -16,16 +16,28 @@ export interface PayoutPrefs {
   payout_paybox: boolean;
   payout_cash: boolean;
   payout_note: string | null;
+  /** הלינק הישן, מלפני הפיצול — עדיין מכובד כשאין עמודה חדשה */
   payout_link?: string | null;
+  /** לינק ביט ולינק פייבוקס נפרדים (0046) — יכולים להוביל לשני
+      מספרי טלפון שונים, למשל אבא ואח. */
+  payout_bit_link?: string | null;
+  payout_paybox_link?: string | null;
 }
 
-/** רק ביט ופייבוקס. אותה רשימה בדיוק כמו בטריגר (0018, עודכן ב-0044).
+/** רק ביט ופייבוקס. אותן רשימות בדיוק כמו בטריגר (0018 → 0044 → 0046).
     payboxapp.page.link נוסף אחרי תלונה מהשטח: זה הפורמט שאפליקציית
     פייבוקס באמת מעתיקה ללוח, והוא נדחה — אז אף ילדה לא הצליחה לשמור. */
-const PAY_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(paybox\.co\.il|payboxapp\.com|payboxapp\.page\.link|bitpay\.co\.il)(\/|$)/i;
+const BIT_HOSTS = /^https:\/\/([a-z0-9-]+\.)*bitpay\.co\.il(\/|$)/i;
+const PAYBOX_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(paybox\.co\.il|payboxapp\.com|payboxapp\.page\.link)(\/|$)/i;
 
+export function isBitLink(url: string): boolean {
+  return BIT_HOSTS.test(url.trim());
+}
+export function isPayboxLink(url: string): boolean {
+  return PAYBOX_HOSTS.test(url.trim());
+}
 export function isPayoutLink(url: string): boolean {
-  return PAY_HOSTS.test(url.trim());
+  return isBitLink(url) || isPayboxLink(url);
 }
 
 /**
@@ -35,19 +47,29 @@ export function isPayoutLink(url: string): boolean {
  * מהדאטהבייס, לא תהפוך לקישור יוצא בדף פומבי.
  */
 export function payoutLink(
-  p: PayoutPrefs
+  p: PayoutPrefs,
+  method?: PayMethod | null
 ): { url: string; label: string; method: PayMethod } | null {
-  const url = p.payout_link?.trim();
-  if (!url || !isPayoutLink(url)) return null;
-  // האמצעי נגזר מהכתובת, כדי שאפשר יהיה להציג את הלינק רק למי שבחרה
-  // באמצעי שלו. קודם התנאי במסך היה מקובע ל-paybox, ולכן לינק של ביט
-  // נשמר יפה בהגדרות ולא הוצג לקונה אף פעם.
-  const isBit = /bitpay/i.test(url);
-  return {
-    url,
-    label: isBit ? "תשלום בביט" : "תשלום בפייבוקס",
-    method: isBit ? "bit" : "paybox",
+  /* מאז 0046 יש לינק לכל אמצעי — הם יכולים להוביל לשני מספרים שונים.
+     הלינק הישן (payout_link) עדיין מכובד לחנות שלא עודכנה, לפי הסוג
+     שנגזר מהכתובת שלו. */
+  const legacy = p.payout_link?.trim();
+  const bitUrl =
+    p.payout_bit_link?.trim() || (legacy && isBitLink(legacy) ? legacy : "");
+  const payboxUrl =
+    p.payout_paybox_link?.trim() || (legacy && isPayboxLink(legacy) ? legacy : "");
+
+  const pick = (m: PayMethod): { url: string; label: string; method: PayMethod } | null => {
+    if (m === "bit" && bitUrl && isBitLink(bitUrl))
+      return { url: bitUrl, label: "תשלום בביט", method: "bit" };
+    if (m === "paybox" && payboxUrl && isPayboxLink(payboxUrl))
+      return { url: payboxUrl, label: "תשלום בפייבוקס", method: "paybox" };
+    return null;
   };
+
+  if (method) return method === "cash" ? null : pick(method);
+  // בלי אמצעי מבוקש — הלינק הראשון שקיים (לתצוגה כללית)
+  return pick("bit") ?? pick("paybox");
 }
 
 /** אמצעי התשלום שהחנות מקבלת, כרשימה שאפשר לבחור ממנה. */
@@ -106,9 +128,8 @@ export function payoutLine(p: PayoutPrefs, chosen?: PayMethod | null): string {
  * מקבלת קישור שלא רלוונטי לה. הטלפון של הילדה לא נכנס להודעה לעולם.
  */
 export function paymentLinkLine(p: PayoutPrefs, chosen?: PayMethod | null): string {
-  const link = payoutLink(p);
+  const link = payoutLink(p, chosen ?? undefined);
   if (!link) return "";
-  if (chosen && chosen !== link.method) return "";
   return `לינק לתשלום: ${link.url}`;
 }
 

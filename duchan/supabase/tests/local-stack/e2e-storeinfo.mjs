@@ -119,8 +119,13 @@ await buyer.screenshot({ path: `${shots}/83-checkout.png` });
    הדוכן הזה שולח, אז נדרשים גם כתובת ועיר. */
 await buyer.fill("input[aria-label='השם שלך']", "נועה");
 await buyer.fill("input[aria-label='מספר טלפון']", "052-000-2222");
-await buyer.fill("input[aria-label='כתובת למשלוח']", "הרצל 12");
 await buyer.fill("input[aria-label='עיר למשלוח']", "רמת גן");
+await buyer.fill("input[aria-label='רחוב למשלוח']", "הרצל 12");
+/* בניין דורש קומה ודירה; הקוד רשות. מה שהשליח באמת שואל. */
+await buyer.click("button[aria-label='בניין']");
+await buyer.fill("input[aria-label='קומה']", "3");
+await buyer.fill("input[aria-label='מספר דירה']", "8");
+await buyer.fill("input[aria-label='קוד כניסה']", "1234");
 await buyer.click("button:has-text('שליחת ההזמנה')");
 /* נבחר פייבוקס ויש לינק תואם — קודם מסך התשלום, לא "אושרה" (מרינה:
    אישור לפני תשלום מרגיש כאילו סיימנו). רק "שילמתי" מוביל לאישור. */
@@ -155,16 +160,21 @@ check("ההודעה לא נושאת את מספר הטלפון של הילדה",
   !msg.includes(store.contact_phone) && !msg.includes("050-123-4567"));
 
 const { rows: [order] } = await db.query(
-  "select order_number, buyer_name, buyer_phone, ship_address, ship_city, pay_method, wants_shipping from orders where store_id=$1 order by created_at desc limit 1",
+  "select order_number, buyer_name, buyer_phone, ship_address, ship_city, pay_method, wants_shipping, ship_details from orders where store_id=$1 order by created_at desc limit 1",
   [store.id]);
 check("וההזמנה נשמרה עם השם, לא רק בהודעה",
   order?.buyer_name === "נועה" && msg.includes(`#${order.order_number}`),
   `${order?.buyer_name} #${order?.order_number}`);
 /* ההזמנה כבר לא חיה בוואטסאפ — כל מה שהמוכרת צריכה יושב עליה ב-DB */
 check("הטלפון של הקונה נשמר מנורמל", order?.buyer_phone === "972520002222", String(order?.buyer_phone));
-check("כתובת ועיר למשלוח נשמרו",
-  order?.ship_address === "הרצל 12" && order?.ship_city === "רמת גן" && order?.wants_shipping === true,
+check("הכתובת המלאה נשמרה — רחוב, קומה, דירה וקוד",
+  order?.ship_address === "הרצל 12 · קומה 3 · דירה 8 · קוד 1234" &&
+    order?.ship_city === "רמת גן" && order?.wants_shipping === true,
   `${order?.ship_address}, ${order?.ship_city}`);
+check("והפירוק המובנה נשמר לצידה",
+  order?.ship_details?.homeType === "building" && order?.ship_details?.floor === "3" &&
+    order?.ship_details?.apartment === "8" && order?.ship_details?.entryCode === "1234",
+  JSON.stringify(order?.ship_details ?? null));
 check("אמצעי התשלום שנבחר נשמר", order?.pay_method === "paybox", String(order?.pay_method));
 
 /* ── 5. ביט בהודעה, אבל המספר לא בקוד המקור ── */
