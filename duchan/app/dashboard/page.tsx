@@ -408,7 +408,7 @@ export default function OrdersPage() {
             </div>
             {o.items.map((it, i) => (
               <div key={i} className="text-[13px] py-px">
-                • {it.name} × {it.qty} · ₪{it.qty * it.price}
+                • {it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{it.qty * it.price}
               </div>
             ))}
             {o.buyer_note && (
