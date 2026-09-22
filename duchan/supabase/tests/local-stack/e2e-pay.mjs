@@ -173,7 +173,31 @@ check("with which app to open and the amount to send",
   ((await buyer3.locator("[data-testid=order-pay-first]").textContent()) ?? "").includes("ביט"));
 await buyer3.screenshot({ path: `${shots}/73-pay-by-phone.png` });
 
-await db.query("update stores set payout_link = null, payout_bit_link = null, payout_paybox_link = null, payout_bit_phone = null, payout_paybox_phone = null where id = $1", [store.id]);
+/* ── 8. בלי מספר ובלי לינק — סוגרים את התשלום בוואטסאפ ── */
+await db.query(
+  "update stores set payout_bit_phone=null, payout_whatsapp=true where id=$1", [store.id]);
+const buyer4 = await phone();
+await buyer4.goto(`${BASE}/s/${store.slug}?t=${Date.now()}`, { waitUntil: "networkidle" });
+await buyer4.click("button[aria-label='הוספה מהירה, מחזיק מפתחות']");
+await buyer4.waitForTimeout(600);
+await buyer4.click("[data-testid=cart-bar]");
+await buyer4.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
+await buyer4.fill("input[aria-label='השם שלך']", "מיה");
+await buyer4.fill("input[aria-label='מספר טלפון']", "0521114444");
+const pickup4 = buyer4.locator("button:has-text('מסירה אישית')");
+if (await pickup4.count()) await pickup4.click();
+await buyer4.click("button[aria-label='תשלום בביט']");
+await buyer4.click("button:has-text('שליחת ההזמנה')");
+await buyer4.waitForSelector("[data-testid=order-pay-first]", { timeout: 15000 });
+const waPayHref = await buyer4.locator("[data-testid=pay-whatsapp]").getAttribute("href") ?? "";
+const waPayMsg = decodeURIComponent(waPayHref);
+check("with whatsapp-payment on, the buyer gets a chat button",
+  waPayHref.includes("wa.me/"), waPayHref.slice(0, 40));
+check("whose message names the order and the amount",
+  /הזמנה #\d+/.test(waPayMsg) && waPayMsg.includes("איך הכי נוח לך שאשלם"),
+  waPayMsg.slice(waPayMsg.indexOf("text=") + 5, waPayMsg.indexOf("text=") + 60));
+
+await db.query("update stores set payout_link = null, payout_bit_link = null, payout_paybox_link = null, payout_bit_phone = null, payout_paybox_phone = null, payout_whatsapp = null where id = $1", [store.id]);
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} quick-add + payment checks passed`);
 await browser.close();

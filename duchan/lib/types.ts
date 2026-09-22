@@ -61,6 +61,8 @@ export interface Store {
   /** מספרי תשלום להעתקה (0047) — למשפחות בלי לינק */
   payout_bit_phone?: string | null;
   payout_paybox_phone?: string | null;
+  /** הקונה יכולה לסגור את התשלום בשיחת וואטסאפ (0048) */
+  payout_whatsapp?: boolean | null;
   created_at: string;
 }
 
@@ -140,6 +142,7 @@ export interface PublicStore {
   payout_paybox_link?: string | null;
   payout_bit_phone?: string | null;
   payout_paybox_phone?: string | null;
+  payout_whatsapp?: boolean | null;
   about: string | null;
   city: string | null;
   ships: boolean;

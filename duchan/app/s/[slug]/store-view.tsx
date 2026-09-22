@@ -59,6 +59,8 @@ export default function StoreView({
     orderNumber: number;
     total: number;
     waUrl: string;
+    /** שיחת תשלום בוואטסאפ — כשהמוכרת הדליקה "לסגור תשלום בוואטסאפ" */
+    waPayUrl: string | null;
     /** עוד לא עברה את מסך התשלום */
     payFirst: boolean;
   } | null>(null);
@@ -382,13 +384,21 @@ export default function StoreView({
       setShipEntryCode("");
       setWantsShipping(true);
       setOrderOpen(false);
+      /* שיחת תשלום: הודעה קצרה וממוקדת — לא ההזמנה כולה, רק "בואי
+         נקבע איך משלמים". המספר מגיע מתשובת השרת, לא מה-HTML. */
+      const waPayUrl = store.payout_whatsapp
+        ? `https://wa.me/${data.phone}?text=${encodeURIComponent(
+            `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בחנות שלך 🛍️ (סה"כ ₪${data.total}). איך הכי נוח לך שאשלם?`
+          )}`
+        : null;
       setConfirmed({
         orderNumber: data.orderNumber,
         total: data.total,
         waUrl: `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`,
-        // תשלום קודם — רק כשיש לינק שתואם את מה שהיא בחרה (לא במזומן)
-        // payTarget כבר מחושב לפי האמצעי שנבחר — קיים = יש מה לשלם עכשיו
-        payFirst: !!payTarget,
+        waPayUrl,
+        // יש מה לסגור עכשיו: יעד דיגיטלי, או שיחת תשלום שהמוכרת הדליקה.
+        // מזומן = אין מה לשלם מרחוק.
+        payFirst: (!!payTarget || !!waPayUrl) && chosenPay !== "cash",
       });
     } catch {
       showToast("אין חיבור, לנסות שוב עוד רגע");
@@ -1243,7 +1253,7 @@ export default function StoreView({
       )}
       {/* מסך התשלום — לפני האישור. ההזמנה כבר שמורה אצל המוכרת, אבל
           הקנייה מרגישה גמורה רק אחרי שמשלמים, אז זה הסדר. */}
-      {confirmed?.payFirst && payTarget && (
+      {confirmed?.payFirst && (payTarget || confirmed.waPayUrl) && (
         <div
           data-testid="order-pay-first"
           className="fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
@@ -1256,7 +1266,18 @@ export default function StoreView({
             <br />
             משלמים ₪{confirmed.total} וסוגרים עניין:
           </p>
-          {payTarget.kind === "link" ? (
+          {!payTarget && confirmed.waPayUrl ? (
+            <a
+              href={confirmed.waPayUrl}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              data-testid="pay-whatsapp"
+              className="mt-4 block py-3.5 text-[15px] font-bold text-white"
+              style={{ background: "var(--whatsapp)" }}
+            >
+              קביעת התשלום בוואטסאפ 💬
+            </a>
+          ) : payTarget?.kind === "link" ? (
             <a
               href={payTarget.url}
               target="_blank"
@@ -1266,7 +1287,7 @@ export default function StoreView({
             >
               {payTarget.label} · ₪{confirmed.total} ←
             </a>
-          ) : (
+          ) : payTarget ? (
             <div className="mt-4">
               {/* אין לביט ולפייבוקס כתובת שפותחת העברה עם מספר וסכום —
                   אז נותנים את הדבר הכי קרוב: המספר בענק, והעתקה בלחיצה. */}
@@ -1295,7 +1316,7 @@ export default function StoreView({
                 מדביקים את המספר → ₪{confirmed.total}
               </p>
             </div>
-          )}
+          ) : null}
           <button
             onClick={() => setConfirmed({ ...confirmed, payFirst: false })}
             className="mt-2 w-full py-3 text-[13.5px] font-bold border-[1.5px]"

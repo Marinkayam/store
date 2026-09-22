@@ -37,7 +37,7 @@ export type PublicStoreResult =
  */
 const STORE_BASE =
   "id, slug, display_name, emoji, tagline, theme, cover_key, avatar_key, status, activated_at";
-const STORE_FULL = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payout_cash, payout_note, payout_link, payout_bit_link, payout_paybox_link, payout_bit_phone, payout_paybox_phone, about, city, ships, shipping_note, shipping_price, order_intro, order_outro, promo_on, promo_title, promo_text, categories`;
+const STORE_FULL = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payout_cash, payout_note, payout_link, payout_bit_link, payout_paybox_link, payout_bit_phone, payout_paybox_phone, payout_whatsapp, about, city, ships, shipping_note, shipping_price, order_intro, order_outro, promo_on, promo_title, promo_text, categories`;
 
 const PRODUCT_BASE =
   "id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, created_at";
@@ -106,6 +106,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     payout_paybox_link: null,
     payout_bit_phone: null,
     payout_paybox_phone: null,
+    payout_whatsapp: false,
     about: null,
     city: null,
     ships: false,

@@ -47,6 +47,7 @@ export default function SettingsPage() {
     payout_paybox_link: "" as string | null,
     payout_bit_phone: "" as string | null,
     payout_paybox_phone: "" as string | null,
+    payout_whatsapp: false,
   });
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -94,6 +95,7 @@ export default function SettingsPage() {
       payout_paybox_link: store.payout_paybox_link ?? (store.payout_link && isPayboxLink(store.payout_link) ? store.payout_link : ""),
       payout_bit_phone: store.payout_bit_phone ?? "",
       payout_paybox_phone: store.payout_paybox_phone ?? "",
+      payout_whatsapp: store.payout_whatsapp ?? false,
     });
   }, [store]);
 
@@ -168,6 +170,7 @@ export default function SettingsPage() {
       payout_paybox_link: payout.payout_paybox_link?.trim() || null,
       payout_bit_phone: payout.payout_bit_phone?.replace(/\D/g, "") || null,
       payout_paybox_phone: payout.payout_paybox_phone?.replace(/\D/g, "") || null,
+      payout_whatsapp: payout.payout_whatsapp,
       // התיאור כולו יושב ב-tagline. about מתאפס בשמירה כדי שהדוכן לא יציג
       // את אותו טקסט פעמיים, אחרי שהתוכן שלו כבר אוחד לשדה היחיד.
       about: null,
@@ -943,6 +946,26 @@ export default function SettingsPage() {
             מספיק מספר. הקונות יראו אותו עם כפתור העתקה ואת הסכום להעברה.
             לינק (מ"בקשת תשלום" באפליקציה) פותח להן את האפליקציה ישר — אם יש, עדיף.
           </p>
+          {/* אופציה שלישית: בלי מספר ובלי לינק — סוגרים את התשלום בשיחה.
+              הכפתור אצל הקונה נפתח עם הודעה מוכנה על ההזמנה והסכום. */}
+          <button
+            onClick={() => { setPayout({ ...payout, payout_whatsapp: !payout.payout_whatsapp }); setDirty(true); }}
+            aria-pressed={payout.payout_whatsapp}
+            aria-label="לסגור תשלום בוואטסאפ"
+            className={`mt-2 w-full flex items-center gap-2.5 border-[1.5px] px-3 py-3 text-right ${
+              payout.payout_whatsapp ? "border-[var(--ink)]" : "border-[var(--line)]"
+            }`}
+          >
+            <span className={`w-5 h-5 shrink-0 border-[1.5px] flex items-center justify-center text-[12px] ${
+              payout.payout_whatsapp ? "bg-[var(--ink)] border-[var(--ink)] text-white" : "border-[var(--line)]"
+            }`} aria-hidden>{payout.payout_whatsapp ? "✓" : ""}</span>
+            <span className="flex-1">
+              <span className="block text-[13px] font-medium">💬 לסגור תשלום בוואטסאפ</span>
+              <span className="block text-[12px] text-[var(--muted)] mt-0.5">
+                הקונה תקבל כפתור שפותח איתך שיחה על ההזמנה, ותקבעו ביניכן איך משלמים.
+              </span>
+            </span>
+          </button>
 
           {/* "הערה לקונה" ירדה: היא נדחפה לתוך הודעת הוואטסאפ בלי שהיה
               ברור איפה היא מופיעה, ורוב מה שנכתב בה היה מספר טלפון —
