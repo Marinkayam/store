@@ -7,7 +7,7 @@ import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
-import { deliveryLine, isBitLink, isPayboxLink, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
+import { deliveryLine, isBitLink, isPayboxLink, isPayPhone, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 
@@ -45,6 +45,8 @@ export default function SettingsPage() {
     payout_link: "" as string | null,
     payout_bit_link: "" as string | null,
     payout_paybox_link: "" as string | null,
+    payout_bit_phone: "" as string | null,
+    payout_paybox_phone: "" as string | null,
   });
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -90,6 +92,8 @@ export default function SettingsPage() {
       // הלינק הישן נודד לשדה לפי הסוג שלו — המסך מציג רק את השניים החדשים
       payout_bit_link: store.payout_bit_link ?? (store.payout_link && isBitLink(store.payout_link) ? store.payout_link : ""),
       payout_paybox_link: store.payout_paybox_link ?? (store.payout_link && isPayboxLink(store.payout_link) ? store.payout_link : ""),
+      payout_bit_phone: store.payout_bit_phone ?? "",
+      payout_paybox_phone: store.payout_paybox_phone ?? "",
     });
   }, [store]);
 
@@ -138,6 +142,16 @@ export default function SettingsPage() {
       showToast("לינק הפייבוקס לא נראה כמו לינק מאפליקציית פייבוקס");
       return;
     }
+    const bitPhone = payout.payout_bit_phone?.trim();
+    if (bitPhone && !isPayPhone(bitPhone)) {
+      showToast("מספר הביט לא נראה כמו מספר נייד ישראלי");
+      return;
+    }
+    const payboxPhone = payout.payout_paybox_phone?.trim();
+    if (payboxPhone && !isPayPhone(payboxPhone)) {
+      showToast("מספר הפייבוקס לא נראה כמו מספר נייד ישראלי");
+      return;
+    }
     const supa = supabaseBrowser();
     const patch = {
       display_name: name.trim() || store.display_name,
@@ -152,6 +166,8 @@ export default function SettingsPage() {
       payout_link: payout.payout_link?.trim() || null,
       payout_bit_link: payout.payout_bit_link?.trim() || null,
       payout_paybox_link: payout.payout_paybox_link?.trim() || null,
+      payout_bit_phone: payout.payout_bit_phone?.replace(/\D/g, "") || null,
+      payout_paybox_phone: payout.payout_paybox_phone?.replace(/\D/g, "") || null,
       // התיאור כולו יושב ב-tagline. about מתאפס בשמירה כדי שהדוכן לא יציג
       // את אותו טקסט פעמיים, אחרי שהתוכן שלו כבר אוחד לשדה היחיד.
       about: null,
@@ -860,45 +876,72 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
-          {/* שני לינקים נפרדים — ביט ופייבוקס יכולים להוביל לשני מספרים
-              שונים (למשל אבא ואח). הסוג נאכף גם כאן וגם בדאטהבייס. */}
-          <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">
-            לינק ביט (לא חובה)
-          </label>
-          <input
-            value={payout.payout_bit_link ?? ""}
-            onChange={(e) => { setPayout({ ...payout, payout_bit_link: e.target.value }); setDirty(true); }}
-            placeholder="להדביק לינק מאפליקציית ביט"
-            aria-label="לינק ביט"
-            dir="ltr"
-            maxLength={200}
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
-          />
-          {!!payout.payout_bit_link?.trim() && !isBitLink(payout.payout_bit_link.trim()) && (
-            <p className="text-[12px] text-[var(--danger)] mt-1">
-              זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר רק אותו.
-            </p>
-          )}
-          <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">
-            לינק פייבוקס (לא חובה)
-          </label>
-          <input
-            value={payout.payout_paybox_link ?? ""}
-            onChange={(e) => { setPayout({ ...payout, payout_paybox_link: e.target.value }); setDirty(true); }}
-            placeholder="להדביק לינק מאפליקציית פייבוקס"
-            aria-label="לינק פייבוקס"
-            dir="ltr"
-            maxLength={200}
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
-          />
-          {!!payout.payout_paybox_link?.trim() && !isPayboxLink(payout.payout_paybox_link.trim()) && (
-            <p className="text-[12px] text-[var(--danger)] mt-1">
-              זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר רק אותו.
-            </p>
-          )}
-          <p className="text-[12px] text-[var(--muted)] mt-1 leading-relaxed">
-            בכל אפליקציה: "בקשת תשלום" או "הלינק שלי" ומעתיקים. הקונות
-            יקבלו את הלינק של האמצעי שבחרו, ואפשר ששניהם יובילו למספרים שונים.
+          {/* לכל אמצעי — מספר או לינק, ואפשר ששניהם יובילו לאנשים שונים
+              (אבא בביט, אח בפייבוקס). לינק פותח את האפליקציה ישר על
+              ההעברה; מספר מוצג לקונה עם כפתור העתקה. */}
+          <div className="mt-3 border border-[var(--line)] p-3">
+            <div className="text-[12.5px] font-bold mb-2">ביט — לאן מעבירים?</div>
+            <input
+              value={payout.payout_bit_phone ?? ""}
+              onChange={(e) => { setPayout({ ...payout, payout_bit_phone: e.target.value }); setDirty(true); }}
+              placeholder="מספר הביט, למשל 050-1234567"
+              aria-label="מספר ביט"
+              inputMode="tel"
+              dir="ltr"
+              maxLength={14}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
+            />
+            {!!payout.payout_bit_phone?.trim() && !isPayPhone(payout.payout_bit_phone) && (
+              <p className="text-[12px] text-[var(--danger)] mt-1">זה לא נראה כמו מספר נייד ישראלי.</p>
+            )}
+            <input
+              value={payout.payout_bit_link ?? ""}
+              onChange={(e) => { setPayout({ ...payout, payout_bit_link: e.target.value }); setDirty(true); }}
+              placeholder="או לינק מאפליקציית ביט (אם יש)"
+              aria-label="לינק ביט"
+              dir="ltr"
+              maxLength={200}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right mt-1.5"
+            />
+            {!!payout.payout_bit_link?.trim() && !isBitLink(payout.payout_bit_link.trim()) && (
+              <p className="text-[12px] text-[var(--danger)] mt-1">
+                זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר רק אותו.
+              </p>
+            )}
+          </div>
+          <div className="mt-2 border border-[var(--line)] p-3">
+            <div className="text-[12.5px] font-bold mb-2">פייבוקס — לאן מעבירים?</div>
+            <input
+              value={payout.payout_paybox_phone ?? ""}
+              onChange={(e) => { setPayout({ ...payout, payout_paybox_phone: e.target.value }); setDirty(true); }}
+              placeholder="מספר הפייבוקס, למשל 052-7654321"
+              aria-label="מספר פייבוקס"
+              inputMode="tel"
+              dir="ltr"
+              maxLength={14}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
+            />
+            {!!payout.payout_paybox_phone?.trim() && !isPayPhone(payout.payout_paybox_phone) && (
+              <p className="text-[12px] text-[var(--danger)] mt-1">זה לא נראה כמו מספר נייד ישראלי.</p>
+            )}
+            <input
+              value={payout.payout_paybox_link ?? ""}
+              onChange={(e) => { setPayout({ ...payout, payout_paybox_link: e.target.value }); setDirty(true); }}
+              placeholder="או לינק מאפליקציית פייבוקס (אם יש)"
+              aria-label="לינק פייבוקס"
+              dir="ltr"
+              maxLength={200}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right mt-1.5"
+            />
+            {!!payout.payout_paybox_link?.trim() && !isPayboxLink(payout.payout_paybox_link.trim()) && (
+              <p className="text-[12px] text-[var(--danger)] mt-1">
+                זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר רק אותו.
+              </p>
+            )}
+          </div>
+          <p className="text-[12px] text-[var(--muted)] mt-1.5 leading-relaxed">
+            מספיק מספר. הקונות יראו אותו עם כפתור העתקה ואת הסכום להעברה.
+            לינק (מ"בקשת תשלום" באפליקציה) פותח להן את האפליקציה ישר — אם יש, עדיף.
           </p>
 
           {/* "הערה לקונה" ירדה: היא נדחפה לתוך הודעת הוואטסאפ בלי שהיה

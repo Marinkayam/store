@@ -148,7 +148,32 @@ const waHref = await buyer.evaluate(async (slug) => {
 }, store.slug);
 check("an empty order is still refused", waHref === 400, `status=${waHref}`);
 
-await db.query("update stores set payout_link = null, payout_bit_link = null, payout_paybox_link = null where id = $1", [store.id]);
+/* ── 7. משפחה בלי לינק — רק מספר. הקונה מקבלת מספר להעתקה וסכום ── */
+await db.query(
+  "update stores set payout_link=null, payout_bit_link=null, payout_paybox_link=null, payout_bit_phone='0501112233' where id=$1",
+  [store.id]);
+const buyer3 = await phone();
+await buyer3.goto(`${BASE}/s/${store.slug}?t=${Date.now()}`, { waitUntil: "networkidle" });
+await buyer3.click("button[aria-label='הוספה מהירה, מחזיק מפתחות']");
+await buyer3.waitForTimeout(600);
+await buyer3.click("[data-testid=cart-bar]");
+await buyer3.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
+await buyer3.fill("input[aria-label='השם שלך']", "דנה");
+await buyer3.fill("input[aria-label='מספר טלפון']", "0529998877");
+const pickup3 = buyer3.locator("button:has-text('מסירה אישית')");
+if (await pickup3.count()) await pickup3.click();
+await buyer3.click("button[aria-label='תשלום בביט']");
+await buyer3.waitForTimeout(300);
+await buyer3.click("button:has-text('שליחת ההזמנה')");
+await buyer3.waitForSelector("[data-testid=order-pay-first]", { timeout: 15000 });
+const phoneBox = (await buyer3.locator("[data-testid=pay-phone]").textContent()) ?? "";
+check("a store with only a bit number shows it big on the pay screen",
+  phoneBox.includes("050-1112233"), phoneBox.trim().slice(0, 60));
+check("with which app to open and the amount to send",
+  ((await buyer3.locator("[data-testid=order-pay-first]").textContent()) ?? "").includes("ביט"));
+await buyer3.screenshot({ path: `${shots}/73-pay-by-phone.png` });
+
+await db.query("update stores set payout_link = null, payout_bit_link = null, payout_paybox_link = null, payout_bit_phone = null, payout_paybox_phone = null where id = $1", [store.id]);
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} quick-add + payment checks passed`);
 await browser.close();

@@ -22,6 +22,42 @@ export interface PayoutPrefs {
       מספרי טלפון שונים, למשל אבא ואח. */
   payout_bit_link?: string | null;
   payout_paybox_link?: string | null;
+  /** מספרי תשלום (0047) — למשפחות שאין להן לינק. הקונה מעתיקה
+      את המספר ומעבירה באפליקציה. */
+  payout_bit_phone?: string | null;
+  payout_paybox_phone?: string | null;
+}
+
+/** מספר נייד ישראלי לתשלום — ספרות בלבד אחרי ניקוי. */
+export function isPayPhone(raw: string): boolean {
+  return /^05\d{8}$/.test(raw.replace(/\D/g, ""));
+}
+/** 0501234567 → 050-1234567, להצגה נוחה להעתקה ידנית. */
+export function formatPayPhone(raw: string): string {
+  const d = raw.replace(/\D/g, "");
+  return d.length === 10 ? `${d.slice(0, 3)}-${d.slice(3)}` : raw;
+}
+
+/**
+ * היעד לתשלום באמצעי נתון: לינק אם יש (פותח את האפליקציה ישר על
+ * ההעברה), אחרת מספר טלפון (הקונה מעתיקה ומעבירה בעצמה). null =
+ * אין לחנות דרך תשלום דיגיטלית לאמצעי הזה.
+ */
+export type PayTarget =
+  | { kind: "link"; url: string; label: string; method: PayMethod }
+  | { kind: "phone"; phone: string; label: string; method: PayMethod };
+
+export function payoutTarget(p: PayoutPrefs, method?: PayMethod | null): PayTarget | null {
+  const link = payoutLink(p, method);
+  if (link) return { kind: "link", ...link };
+  const m = method ?? null;
+  const pick = (mm: PayMethod): PayTarget | null => {
+    const phone = (mm === "bit" ? p.payout_bit_phone : p.payout_paybox_phone)?.replace(/\D/g, "") ?? "";
+    if (!/^05\d{8}$/.test(phone)) return null;
+    return { kind: "phone", phone, label: mm === "bit" ? "תשלום בביט" : "תשלום בפייבוקס", method: mm };
+  };
+  if (m) return m === "cash" ? null : pick(m);
+  return pick("bit") ?? pick("paybox");
 }
 
 /** רק ביט ופייבוקס. אותן רשימות בדיוק כמו בטריגר (0018 → 0044 → 0046).
@@ -128,9 +164,10 @@ export function payoutLine(p: PayoutPrefs, chosen?: PayMethod | null): string {
  * מקבלת קישור שלא רלוונטי לה. הטלפון של הילדה לא נכנס להודעה לעולם.
  */
 export function paymentLinkLine(p: PayoutPrefs, chosen?: PayMethod | null): string {
-  const link = payoutLink(p, chosen ?? undefined);
-  if (!link) return "";
-  return `לינק לתשלום: ${link.url}`;
+  const target = payoutTarget(p, chosen ?? undefined);
+  if (!target) return "";
+  if (target.kind === "link") return `לינק לתשלום: ${target.url}`;
+  return `${target.label} למספר: ${formatPayPhone(target.phone)}`;
 }
 
 /**

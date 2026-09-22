@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { deliveryLine, payMethods, paymentLinkLine, payoutLine, payoutLink, payoutSummary, type PayMethod } from "@/lib/payouts";
+import { deliveryLine, formatPayPhone, payMethods, paymentLinkLine, payoutLine, payoutSummary, payoutTarget, type PayMethod } from "@/lib/payouts";
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { coverCss } from "@/lib/covers";
@@ -75,8 +75,19 @@ export default function StoreView({
   // שולחת הזמנה שאומרת איך היא משלמת, במקום "נסגור בוואטסאפ".
   const [payWith, setPayWith] = useState<PayMethod | null>(null);
   const chosenPay = payWith ?? methods[0]?.key ?? null;
-  // הלינק של האמצעי שנבחר — ביט ופייבוקס יכולים להוביל לשני מספרים שונים
-  const payLink = payoutLink(store, chosenPay);
+  // היעד של האמצעי שנבחר: לינק (פותח את האפליקציה) או מספר להעתקה —
+  // ביט ופייבוקס יכולים להוביל לשני אנשים שונים
+  const payTarget = payoutTarget(store, chosenPay);
+
+  /** העתקת מספר התשלום — הפעולה של מי שאין לה לינק */
+  function copyPayPhone(phone: string) {
+    try {
+      navigator.clipboard.writeText(phone);
+      showToast("המספר הועתק 📋");
+    } catch {
+      showToast("לא הצלחנו להעתיק — אפשר להקליד אותו");
+    }
+  }
 
   // האם הקונה הזו רוצה משלוח או מסירה אישית — בחירה לכל הזמנה, לא הגדרה
   // קבועה של החנות. ברירת המחדל היא מה שהחנות מציעה, כי זו הסיבה שהיא
@@ -376,8 +387,8 @@ export default function StoreView({
         total: data.total,
         waUrl: `https://wa.me/${data.phone}?text=${encodeURIComponent(msg)}`,
         // תשלום קודם — רק כשיש לינק שתואם את מה שהיא בחרה (לא במזומן)
-        // payLink כבר מחושב לפי האמצעי שנבחר — קיים = יש מה לשלם עכשיו
-        payFirst: !!payLink,
+        // payTarget כבר מחושב לפי האמצעי שנבחר — קיים = יש מה לשלם עכשיו
+        payFirst: !!payTarget,
       });
     } catch {
       showToast("אין חיבור, לנסות שוב עוד רגע");
@@ -1123,7 +1134,7 @@ export default function StoreView({
               </label>
             </div>
           </section>
-          {(paySummary || payLink) && (
+          {(paySummary || payTarget) && (
             <section className="mt-5">
               {/* הקונה בוחרת איך היא משלמת, והמוכרת רואה את הבחירה על
                   ההזמנה. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?". */}
@@ -1161,18 +1172,34 @@ export default function StoreView({
               {store.payout_note && (
                 <p className="opacity-60 text-[12.5px] mt-2">{store.payout_note}</p>
               )}
-              {/* לינק התשלום נפתח בלשונית חדשה: הסל והטופס נשארים כאן,
-                  והקונה חוזרת לשלוח את ההזמנה אחרי ששילמה. */}
-              {payLink && (
+              {/* לינק נפתח בלשונית חדשה; מספר מוצג עם העתקה. הסל והטופס
+                  נשארים כאן, והקונה חוזרת לשלוח אחרי ששילמה. */}
+              {payTarget?.kind === "link" && (
                 <a
-                  href={payLink.url}
+                  href={payTarget.url}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   className="mt-3 block text-center py-3 text-[13.5px] font-bold"
                   style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
                 >
-                  {payLink.label} ←
+                  {payTarget.label} ←
                 </a>
+              )}
+              {payTarget?.kind === "phone" && (
+                <div className="mt-3 flex items-center justify-between gap-2 border-[1.5px] border-black/10 px-3 py-2.5">
+                  <span className="text-[13px]">
+                    {payTarget.method === "bit" ? "ביט" : "פייבוקס"} למספר{" "}
+                    <b dir="ltr" className="text-[14px]">{formatPayPhone(payTarget.phone)}</b>
+                  </span>
+                  <button
+                    onClick={() => copyPayPhone(payTarget.phone)}
+                    aria-label="העתקת מספר התשלום"
+                    className="shrink-0 px-3 py-2 text-[12.5px] font-bold border-[1.5px]"
+                    style={{ borderColor: "var(--s-primary)", color: "var(--s-primary)" }}
+                  >
+                    העתקה 📋
+                  </button>
+                </div>
               )}
             </section>
           )}
@@ -1216,7 +1243,7 @@ export default function StoreView({
       )}
       {/* מסך התשלום — לפני האישור. ההזמנה כבר שמורה אצל המוכרת, אבל
           הקנייה מרגישה גמורה רק אחרי שמשלמים, אז זה הסדר. */}
-      {confirmed?.payFirst && payLink && (
+      {confirmed?.payFirst && payTarget && (
         <div
           data-testid="order-pay-first"
           className="fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
@@ -1229,15 +1256,46 @@ export default function StoreView({
             <br />
             משלמים ₪{confirmed.total} וסוגרים עניין:
           </p>
-          <a
-            href={payLink.url}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="mt-4 block py-3.5 text-[15px] font-bold"
-            style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
-          >
-            {payLink.label} · ₪{confirmed.total} ←
-          </a>
+          {payTarget.kind === "link" ? (
+            <a
+              href={payTarget.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="mt-4 block py-3.5 text-[15px] font-bold"
+              style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+            >
+              {payTarget.label} · ₪{confirmed.total} ←
+            </a>
+          ) : (
+            <div className="mt-4">
+              {/* אין לביט ולפייבוקס כתובת שפותחת העברה עם מספר וסכום —
+                  אז נותנים את הדבר הכי קרוב: המספר בענק, והעתקה בלחיצה. */}
+              <div
+                className="py-3 border-[1.5px]"
+                style={{ borderColor: "var(--s-primary)" }}
+                data-testid="pay-phone"
+              >
+                <div className="text-[12px] opacity-60 mb-0.5">
+                  {payTarget.method === "bit" ? "מעבירים בביט למספר" : "מעבירים בפייבוקס למספר"}
+                </div>
+                <div dir="ltr" className="text-[24px] font-bold tracking-wide">
+                  {formatPayPhone(payTarget.phone)}
+                </div>
+              </div>
+              <button
+                onClick={() => copyPayPhone(payTarget.phone)}
+                aria-label="העתקת מספר התשלום"
+                className="mt-2 w-full py-3.5 text-[15px] font-bold"
+                style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+              >
+                העתקת המספר 📋
+              </button>
+              <p className="text-[12px] opacity-60 mt-2 leading-relaxed">
+                פותחים את {payTarget.method === "bit" ? "ביט" : "פייבוקס"} → העברה →
+                מדביקים את המספר → ₪{confirmed.total}
+              </p>
+            </div>
+          )}
           <button
             onClick={() => setConfirmed({ ...confirmed, payFirst: false })}
             className="mt-2 w-full py-3 text-[13.5px] font-bold border-[1.5px]"
@@ -1270,16 +1328,26 @@ export default function StoreView({
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
             המוכרת קיבלה את כל הפרטים ותחזור אלייך לטלפון שהשארת.
           </p>
-          {payLink && (
+          {payTarget?.kind === "link" && (
             <a
-              href={payLink.url}
+              href={payTarget.url}
               target="_blank"
               rel="noopener noreferrer nofollow"
               className="mt-4 block py-3 text-[14px] font-bold"
               style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             >
-              {payLink.label} · ₪{confirmed.total} ←
+              {payTarget.label} · ₪{confirmed.total} ←
             </a>
+          )}
+          {payTarget?.kind === "phone" && (
+            <button
+              onClick={() => copyPayPhone(payTarget.phone)}
+              aria-label="העתקת מספר התשלום"
+              className="mt-4 w-full py-3 text-[14px] font-bold"
+              style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+            >
+              {payTarget.method === "bit" ? "ביט" : "פייבוקס"} · {formatPayPhone(payTarget.phone)} · העתקה 📋
+            </button>
           )}
           {/* וואטסאפ נשאר כדרך קשר, לא כדרך הזמנה — ההודעה המוכנה נושאת
               את פרטי ההזמנה כדי שהשיחה תיפתח עם הקשר מלא. */}

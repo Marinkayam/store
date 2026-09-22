@@ -58,6 +58,9 @@ export interface Store {
   /** לינקים נפרדים לביט ולפייבוקס (0046) — יכולים להוביל לשני מספרים */
   payout_bit_link?: string | null;
   payout_paybox_link?: string | null;
+  /** מספרי תשלום להעתקה (0047) — למשפחות בלי לינק */
+  payout_bit_phone?: string | null;
+  payout_paybox_phone?: string | null;
   created_at: string;
 }
 
@@ -135,6 +138,8 @@ export interface PublicStore {
   payout_link: string | null;
   payout_bit_link?: string | null;
   payout_paybox_link?: string | null;
+  payout_bit_phone?: string | null;
+  payout_paybox_phone?: string | null;
   about: string | null;
   city: string | null;
   ships: boolean;
