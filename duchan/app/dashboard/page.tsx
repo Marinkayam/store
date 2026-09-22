@@ -421,11 +421,25 @@ export default function OrdersPage() {
             {(o.buyer_phone || o.wants_shipping != null || o.pay_method) && (
               <div className="text-[12px] text-[var(--muted)] mt-1.5 flex flex-col gap-0.5" data-testid="order-details">
                 {o.buyer_phone && (
-                  <span>
-                    📞{" "}
-                    {/* המספר שמור מנורמל (972...), בדיוק מה ש-wa.me צריך */}
-                    <a dir="ltr" className="underline" href={`https://wa.me/${o.buyer_phone}`}>
-                      {displayPhone(o.buyer_phone)}
+                  <span className="flex items-center gap-2 flex-wrap">
+                    <span>
+                      📞{" "}
+                      {/* המספר שמור מנורמל (972...), בדיוק מה ש-wa.me צריך */}
+                      <a dir="ltr" className="underline" href={`https://wa.me/${o.buyer_phone}`}>
+                        {displayPhone(o.buyer_phone)}
+                      </a>
+                    </span>
+                    {/* גם המוכרת סוגרת תשלום בוואטסאפ — שיחה שנפתחת עם
+                        ההזמנה והסכום, במקום "היי" ריק ומבוכה. */}
+                    <a
+                      href={`https://wa.me/${o.buyer_phone}?text=${encodeURIComponent(
+                        `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! קיבלתי את ההזמנה שלך (#${o.order_number} · ₪${o.total}) 💜 בואי נסגור את התשלום — איך נוח לך?`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11.5px] font-bold px-2 py-1 border border-[var(--line)] bg-white"
+                    >
+                      💬 לסגור תשלום
                     </a>
                   </span>
                 )}
