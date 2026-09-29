@@ -259,7 +259,7 @@ export default function OrdersPage() {
 
       {/* רשימת השלמה — נעלמת לגמרי כשמסיימים */}
       {doneCount < checklist.length && (
-        <div className="mx-3 mt-3 bg-white border border-[var(--line)] p-3 text-xs">
+        <div className="mx-4 mt-4 bg-white border border-[var(--line)] p-4 text-xs">
           <div className="flex justify-between font-medium mb-1.5">
             <span>החנות שלך {doneCount} מתוך {checklist.length}</span>
             <span>{"▓".repeat(doneCount)}{"░".repeat(checklist.length - doneCount)}</span>
@@ -275,7 +275,7 @@ export default function OrdersPage() {
 
       {/* הקופה שלי */}
       {revenue > 0 && (
-        <div className="mx-3 mt-3 bg-white border border-[var(--line)] p-3 flex items-center gap-3">
+        <div className="mx-4 mt-4 bg-white border border-[var(--line)] p-4 flex items-center gap-3">
           <span className="text-2xl">💰</span>
           <div className="flex-1">
             <div className="text-sm font-bold">₪{formatPrice(revenue)} בקופה</div>
@@ -301,7 +301,7 @@ export default function OrdersPage() {
 
       {/* סינון */}
       {orders.length > 0 && (
-        <div className="flex gap-1.5 px-3 pt-3 overflow-x-auto">
+        <div className="flex gap-2 px-4 pt-4 overflow-x-auto">
           {FILTERS.map((f) => {
             const count =
               f.key === "all" ? orders.length : orders.filter((o) => o.status === f.key).length;
@@ -323,24 +323,11 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <div className="p-3 flex flex-col gap-2">
+      <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
         {/* "להוסיף למסך הבית" יושב כאן ולא בהגדרות: זה המסך שהיא פותחת
             הכי הרבה, וזה הרגע שבו כדאי לה שיהיה לזה קיצור. הכרטיס נעלם
             לבד כשהאפליקציה כבר במסך הבית, או כשסוגרים אותו. */}
         <InstallCard />
-
-        {/* למה יש כאן הזמנה שלא הגיעה בוואטסאפ.
-            ההזמנה נרשמת ברגע הלחיצה על "שליחה בוואטסאפ", כי רק אז השרת
-            מקצה לה מספר ומוסר את מספר הטלפון. מה שקורה אחרי זה — אם
-            ההודעה באמת נשלחה — קורה בתוך וואטסאפ, ואף אחד לא מדווח לנו.
-            עדיף להסביר את זה פעם אחת מאשר שהיא תארוז הזמנה שלא קיימת. */}
-        {newCount > 0 && (
-          <div className="border border-[var(--line)] bg-white px-3 py-2.5 text-[12px] text-[var(--muted)] leading-relaxed">
-            הזמנה נכנסת לרשימה ברגע שלוחצים "שליחה בוואטסאפ" — <b className="text-[var(--ink)]">גם אם
-            ההודעה לא נשלחה בסוף</b>. כדאי לוודא שההודעה הגיעה אלייך בוואטסאפ לפני
-            שאורזים, ומה שלא הגיע אפשר להוריד מהרשימה.
-          </div>
-        )}
 
         {orders.length === 0 &&
           (store.activated_at ? (
@@ -381,7 +368,7 @@ export default function OrdersPage() {
         {filtered.map((o) => (
           <div
             key={o.id}
-            className={`bg-white border p-3 ${
+            className={`bg-white border p-4 ${
               o.status === "paid"
                 ? "bg-[var(--ok-bg)] border-[var(--ok-line)]"
                 : o.status === "delivered" || o.status === "cancelled"
@@ -420,7 +407,7 @@ export default function OrdersPage() {
                 אז כל מה שהמוכרת צריכה כדי לטפל בה יושב על הכרטיס עצמו —
                 טלפון לחזרה, יעד משלוח, ואיך הקונה מתכוונת לשלם. */}
             {(o.buyer_phone || o.wants_shipping != null || o.pay_method) && (
-              <div className="text-[12px] text-[var(--muted)] mt-1.5 flex flex-col gap-0.5" data-testid="order-details">
+              <div className="text-[12px] text-[var(--muted)] mt-3 flex flex-col gap-1.5" data-testid="order-details">
                 {o.buyer_phone && (
                   <span className="flex items-center gap-2 flex-wrap">
                     <span>
@@ -542,15 +529,15 @@ export default function OrdersPage() {
               )
             )}
 
-            <div className="flex justify-between text-xs font-medium border-t border-[var(--line)] mt-2 pt-2">
+            <div className="flex justify-between text-xs font-medium border-t border-[var(--line)] mt-3.5 pt-3">
               <span>סה"כ</span>
               <span>₪{formatPrice(o.total)}</span>
             </div>
             {o.status === "sent" && (
-              <div className="flex gap-1.5 mt-2">
+              <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => markPaid(o)}
-                  className="flex-1 bg-[var(--ink)] text-white py-2 text-xs font-medium"
+                  className="flex-1 bg-[var(--ink)] text-white py-2.5 min-h-11 text-xs font-medium"
                 >
                   שולם
                 </button>
@@ -562,31 +549,31 @@ export default function OrdersPage() {
                     href={`https://wa.me/${o.buyer_phone}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex-1 bg-white border border-[var(--line)] py-2 text-xs font-medium text-center"
+                    className="flex-1 bg-white border border-[var(--line)] py-2.5 min-h-11 text-xs font-medium text-center"
                   >
                     וואטסאפ ל{o.buyer_name ?? "קונה"}
                   </a>
                 ) : (
                   <button
                     onClick={() => openWho(o)}
-                    className="flex-1 bg-white border border-dashed border-[var(--line)] text-[var(--muted)] py-2 text-xs text-center"
+                    className="flex-1 bg-white border border-dashed border-[var(--line)] text-[var(--muted)] py-2.5 min-h-11 text-xs text-center"
                   >
                     להוסיף מספר
                   </button>
                 )}
                 <button
                   onClick={() => cancelOrder(o)}
-                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2 px-3 text-xs"
+                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2.5 min-h-11 px-3.5 text-xs"
                 >
                   ביטול
                 </button>
               </div>
             )}
             {o.status === "paid" && (
-              <div className="flex gap-1.5 mt-2">
+              <div className="flex gap-2 mt-3">
                 <button
                   onClick={(e) => markDelivered(o, e)}
-                  className="flex-1 bg-[var(--ink)] text-white py-2 text-xs font-medium"
+                  className="flex-1 bg-[var(--ink)] text-white py-2.5 min-h-11 text-xs font-medium"
                 >
                   נמסר
                 </button>
@@ -595,14 +582,14 @@ export default function OrdersPage() {
                     href={`https://wa.me/${o.buyer_phone}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="bg-white border border-[var(--line)] py-2 px-3 text-xs font-medium text-center"
+                    className="bg-white border border-[var(--line)] py-2.5 min-h-11 px-3.5 text-xs font-medium text-center"
                   >
                     וואטסאפ ל{o.buyer_name ?? "קונה"}
                   </a>
                 )}
                 <button
                   onClick={() => cancelOrder(o)}
-                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2 px-3 text-xs"
+                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2.5 min-h-11 px-3.5 text-xs"
                 >
                   ביטול והחזרת מלאי
                 </button>

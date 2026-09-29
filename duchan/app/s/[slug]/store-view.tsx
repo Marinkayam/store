@@ -617,7 +617,7 @@ export default function StoreView({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3.5">
             {sorted.map((p, i) => {
               const out = p.track_stock && p.stock === 0;
               const img = mediaUrl(p.image_key);
@@ -687,12 +687,12 @@ export default function StoreView({
                       <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
                     )}
                   </div>
-                  <div className="px-2.5 py-2.5 text-right">
-                    <div className="text-[13.5px] font-semibold leading-tight">{p.name}</div>
+                  <div className="px-3.5 pt-3 pb-2 text-right">
+                    <div className="text-[13.5px] font-semibold leading-snug">{p.name}</div>
                     {p.description && (
                       <div className="text-[12px] opacity-60 truncate">{p.description}</div>
                     )}
-                    <div className="text-[17px] font-bold mt-1" style={{ color: "var(--s-primary)" }}>
+                    <div className="text-[17px] font-bold mt-1.5" style={{ color: "var(--s-primary)" }}>
                       ₪{formatPrice(p.price)}
                     </div>
                   </div>
@@ -703,7 +703,7 @@ export default function StoreView({
                   <button
                     onClick={() => quickAdd(p)}
                     aria-label={`הוספה מהירה, ${p.name}`}
-                    className="mt-auto mx-2.5 mb-2.5 py-2 text-[12.5px] font-bold"
+                    className="mt-auto mx-3.5 mb-3.5 py-2.5 text-[12.5px] font-bold"
                     style={
                       inCartQty
                         ? { background: "var(--s-thumb)", color: "var(--s-ink)" }
@@ -956,7 +956,7 @@ export default function StoreView({
               <div
                 key={lineKey(l.id, l.option)}
                 data-cart-line=""
-                className="flex items-center gap-3 text-[13.5px] py-3 border-b border-black/5"
+                className="flex items-center gap-3 text-[13.5px] py-3.5 border-b border-black/5"
               >
                 <div className="flex-1 min-w-0">
                   <div className="truncate font-medium" data-line-name="">
@@ -1007,9 +1007,9 @@ export default function StoreView({
           {/* בחירה לכל הזמנה, לא רק הגדרת ברירת מחדל של החנות — קונה שרוצה
               לאסוף בעצמה לא צריכה "לקבל" משלוח שהיא לא ביקשה. */}
           {store.ships && (
-            <section className="mt-5">
-              <h3 className="text-[13.5px] font-bold mb-2.5">📦 איך תרצי לקבל?</h3>
-              <div className="flex gap-2">
+            <section className="mt-8">
+              <h3 className="text-[13.5px] font-bold mb-3.5">📦 איך תרצי לקבל?</h3>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setWantsShipping(true)}
                   aria-pressed={wantsShipping}
@@ -1044,10 +1044,10 @@ export default function StoreView({
               {/* משלוח אמיתי צריך יעד מפורק — מה שהשליח באמת שואל.
                   הכל נראה רק למוכרת, לא נכנס לשום דף פומבי. */}
               {wantsShipping && (
-                <div className="mt-3 flex flex-col gap-3">
-                  <div className="flex gap-2">
+                <div className="mt-4 flex flex-col gap-4">
+                  <div className="flex gap-3">
                     <label className="flex-1 min-w-0 block">
-                      <span className="block text-[11.5px] opacity-60 mb-1">עיר *</span>
+                      <span className="block text-[11.5px] opacity-60 mb-1.5">עיר *</span>
                       <input
                         value={shipCity}
                         onChange={(e) => setShipCity(e.target.value)}
@@ -1058,7 +1058,7 @@ export default function StoreView({
                       />
                     </label>
                     <label className="flex-1 min-w-0 block">
-                      <span className="block text-[11.5px] opacity-60 mb-1">רחוב ומספר *</span>
+                      <span className="block text-[11.5px] opacity-60 mb-1.5">רחוב ומספר *</span>
                       <input
                         value={shipStreet}
                         onChange={(e) => setShipStreet(e.target.value)}
@@ -1069,7 +1069,7 @@ export default function StoreView({
                       />
                     </label>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     {([["building", "בניין"], ["private", "בית פרטי"]] as const).map(([k, label]) => {
                       const on = homeType === k;
                       return (
@@ -1091,9 +1091,9 @@ export default function StoreView({
                     })}
                   </div>
                   {homeType === "building" && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-60 mb-1">קומה *</span>
+                        <span className="block text-[11.5px] opacity-60 mb-1.5">קומה *</span>
                         <input
                           value={shipFloor}
                           onChange={(e) => setShipFloor(e.target.value)}
@@ -1105,7 +1105,7 @@ export default function StoreView({
                         />
                       </label>
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-60 mb-1">דירה *</span>
+                        <span className="block text-[11.5px] opacity-60 mb-1.5">דירה *</span>
                         <input
                           value={shipApartment}
                           onChange={(e) => setShipApartment(e.target.value)}
@@ -1117,7 +1117,7 @@ export default function StoreView({
                         />
                       </label>
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-60 mb-1">קוד כניסה</span>
+                        <span className="block text-[11.5px] opacity-60 mb-1.5">קוד כניסה</span>
                         <input
                           value={shipEntryCode}
                           onChange={(e) => setShipEntryCode(e.target.value)}
@@ -1136,12 +1136,12 @@ export default function StoreView({
 
           {/* שם פרטי בלבד — אין כאן שם משפחה או גיל. הטלפון חובה מאז
               שההזמנה נקלטת במערכת: זו הדרך של המוכרת לחזור לקונה. */}
-          <section className="mt-5">
-            <h3 className="text-[13.5px] font-bold mb-2.5">👋 הפרטים שלך</h3>
-            <div className="flex flex-col gap-3">
-              <div className="flex gap-2">
+          <section className="mt-8">
+            <h3 className="text-[13.5px] font-bold mb-3.5">👋 הפרטים שלך</h3>
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-3">
                 <label className="flex-1 min-w-0 block">
-                  <span className="block text-[11.5px] opacity-60 mb-1">איך קוראים לך? *</span>
+                  <span className="block text-[11.5px] opacity-60 mb-1.5">איך קוראים לך? *</span>
                   <input
                     value={buyerName}
                     onChange={(e) => setBuyerName(e.target.value)}
@@ -1152,7 +1152,7 @@ export default function StoreView({
                   />
                 </label>
                 <label className="flex-1 min-w-0 block">
-                  <span className="block text-[11.5px] opacity-60 mb-1">מספר טלפון *</span>
+                  <span className="block text-[11.5px] opacity-60 mb-1.5">מספר טלפון *</span>
                   <input
                     value={buyerPhone}
                     onChange={(e) => setBuyerPhone(e.target.value)}
@@ -1165,7 +1165,7 @@ export default function StoreView({
                 </label>
               </div>
               <label className="block">
-                <span className="block text-[11.5px] opacity-60 mb-1">הערה למוכרת (לא חובה)</span>
+                <span className="block text-[11.5px] opacity-60 mb-1.5">הערה למוכרת (לא חובה)</span>
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -1177,13 +1177,13 @@ export default function StoreView({
             </div>
           </section>
           {(paySummary || payTarget) && (
-            <section className="mt-5">
+            <section className="mt-8">
               {/* הקונה בוחרת איך היא משלמת, והמוכרת רואה את הבחירה על
                   ההזמנה. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?". */}
               {methods.length > 0 && (
                 <>
-                  <h3 className="text-[13.5px] font-bold mb-2.5">💜 איך תשלמי?</h3>
-                  <div className="flex gap-2">
+                  <h3 className="text-[13.5px] font-bold mb-3.5">💜 איך תשלמי?</h3>
+                  <div className="flex gap-3">
                     {methods.map((m) => {
                       const on = chosenPay === m.key;
                       return (

@@ -650,12 +650,12 @@ export default function ProductsPage() {
         </p>
       </header>
 
-      <div className="p-3 flex flex-col gap-2">
+      <div className="px-4 pt-4 pb-6 flex flex-col gap-3">
         {/* ── קטגוריות של החנות ──
             המוכרת מגדירה כאן רשימה משלה (נידו, מים, קרח...), מתייגת
             מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות. */}
         {products.length > 0 && (
-          <div className="bg-white border border-[var(--line)] p-3 mb-1" data-testid="categories-box">
+          <div className="bg-white border border-[var(--line)] p-4 mb-2" data-testid="categories-box">
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="text-[13px] font-bold">קטגוריות בחנות</div>
               {(store?.categories?.length ?? 0) > 0 && (
@@ -736,7 +736,7 @@ export default function ProductsPage() {
             <div
               key={p.id}
               onClick={() => openEditor(p)}
-              className={`bg-white border border-[var(--line)] p-2.5 flex gap-2.5 items-center text-right cursor-pointer ${out || hidden ? "opacity-55" : ""}`}
+              className={`bg-white border border-[var(--line)] p-3 flex gap-3 items-center text-right cursor-pointer ${out || hidden ? "opacity-55" : ""}`}
             >
               {/* סידור */}
               <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
