@@ -734,7 +734,8 @@ export default function StoreView({
         {sorted.length === 0 ? (
           <div className="text-center pt-14">
             <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-60"} style={plate}>
-              עוד אין כאן מוצרים.
+              {/* יש מוצרים אבל כולם אזלו — לא "אין כאן כלום", שנראה כמו דוכן נטוש */}
+              {products.length > 0 ? "הכל נמכר! 🎉 מוצרים חדשים בקרוב" : "עוד אין כאן מוצרים."}
             </p>
           </div>
         ) : featured.length ? (
