@@ -3,15 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../use-store";
-import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
+import { THEMES, themeCssVars, themeOrDefault, type ThemeKey } from "@/lib/themes";
 import { squareImage, scaledImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { deliveryLine, isBitLink, isPayboxLink, isPayPhone, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
-import { hasCustomBg, readablePlate, ALL_LOOK_FONTS_HREF, LOOKS, LOOK_KEYS, PATTERNS, PATTERN_KEYS, isLookKey, isPatternKey, lookOrBase, patternCss, storeBackground, type LookKey } from "@/lib/looks";
+import { lookCssVars, hasCustomBg, readablePlate, ALL_LOOK_FONTS_HREF, LOOKS, LOOK_KEYS, PATTERNS, PATTERN_KEYS, isLookKey, isPatternKey, lookOrBase, patternCss, storeBackground, type LookKey } from "@/lib/looks";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
+import CategoryBar from "@/app/category-bar";
+import CategoryDesigner from "../products/category-designer";
+import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -28,6 +31,7 @@ export default function SettingsPage() {
   const [look, setLook] = useState<LookKey | null>(null);
   const [bgPattern, setBgPattern] = useState<string | null>(null);
   const [bgPreview, setBgPreview] = useState<string | null>(null);
+  const [catDesignOpen, setCatDesignOpen] = useState(false);
   const bgRef = useRef<HTMLInputElement>(null);
   const [phone, setPhone] = useState("");
   // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה
@@ -878,7 +882,63 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
+
+          {/* 4. קטגוריות — אותו עורך שיש בדף המוצרים. כאן כי זה המקום שבו
+              מחפשים "עיצוב"; שם כי שם מגדירים את הקטגוריות עצמן. */}
+          <div data-testid="settings-categories">
+            <span className="text-[12px] font-semibold">4. קטגוריות</span>
+            <span className="text-[12px] text-[var(--faint)]"> · איך נראית שורת הקטגוריות בדוכן</span>
+            {(store.categories?.length ?? 0) > 0 ? (
+              <>
+                <div
+                  className="s-look mt-1.5 border border-[var(--line)] pt-3 overflow-hidden"
+                  style={{
+                    ...(themeCssVars(t) as Record<string, string>),
+                    ...lookCssVars(t, look),
+                    background: storeBackground(t, bgPattern, bgPreview),
+                    color: t.ink,
+                    fontFamily: lk.font,
+                  }}
+                >
+                  <CategoryBar
+                    categories={store.categories ?? []}
+                    active={null}
+                    onSelect={() => setCatDesignOpen(true)}
+                    layout={layoutOrDefault(store.category_layout)}
+                    size={sizeOrDefault(store.category_size)}
+                    meta={cleanMeta(store.category_meta)}
+                  />
+                </div>
+                <button
+                  onClick={() => setCatDesignOpen(true)}
+                  data-testid="settings-open-category-designer"
+                  className="w-full mt-2 min-h-12 border-2 border-[var(--ink)] bg-white text-[13px] font-bold"
+                >
+                  🎨 עיצוב הקטגוריות · צורה, גודל, אייקונים ותמונות
+                </button>
+              </>
+            ) : (
+              <div className="mt-1.5 bg-white border border-dashed border-[var(--line)] p-3.5 text-[12.5px] text-[var(--muted)] leading-relaxed">
+                עוד אין קטגוריות בדוכן. מוסיפים אותן בדף המוצרים, ואז חוזרים לכאן לעצב אותן.
+                <a href="/dashboard/products" className="block mt-2 text-[var(--ink)] font-semibold underline">
+                  לדף המוצרים
+                </a>
+              </div>
+            )}
+          </div>
         </div>
+
+        {catDesignOpen && (
+          <CategoryDesigner
+            store={store}
+            onClose={() => setCatDesignOpen(false)}
+            onSaved={(patch) => {
+              setStore({ ...store, ...patch });
+              setCatDesignOpen(false);
+              showToast("עיצוב הקטגוריות נשמר ✨");
+            }}
+          />
+        )}
 
         {/* שלושת הפרטים שאינם חלק מהתצוגה של הדוכן, בכרטיס אחד.
             הטלפון ישב קודם לבדו באמצע המסך עם רווחים גדולים סביבו ובלי

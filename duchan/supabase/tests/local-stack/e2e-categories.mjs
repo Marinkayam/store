@@ -156,6 +156,23 @@ for (const [layout, size] of [["icon", "sm"], ["square", "md"], ["card", "lg"], 
 }
 check("בלי שגיאות JS בכל הצורות", errors.length === 0, errors[0] ?? "");
 
+/* ── 5. גם מהגדרות → עיצוב הדוכן ── */
+await db.query("update stores set category_layout=null, category_size=null where id=$1", [store.id]);
+await girl.goto(`${BASE}/dashboard/settings`);
+await girl.waitForSelector("[data-testid=settings-categories]", { timeout: 20000 });
+check("בעיצוב הדוכן יש שלב קטגוריות עם תצוגה", (await girl.locator("[data-testid=settings-categories] [data-testid=category-chips]").count()) === 1);
+await girl.click("[data-testid=settings-open-category-designer]");
+await girl.waitForSelector("[data-testid=category-designer]");
+check("הכפתור בהגדרות פותח את עורך הקטגוריות", true);
+await girl.click("button[aria-label='צורה: ריבועים']");
+await girl.click("[data-testid=save-category-design]");
+await girl.waitForSelector("[data-testid=category-designer]", { state: "detached", timeout: 10000 });
+const { rows: [s2] } = await db.query("select category_layout from stores where id=$1", [store.id]);
+check("שמירה מההגדרות נשמרת", s2.category_layout === "square", String(s2.category_layout));
+check("והתצוגה בהגדרות מתעדכנת",
+  (await girl.getAttribute("[data-testid=settings-categories] [data-testid=category-chips]", "data-layout")) === "square");
+await girl.locator("[data-testid=settings-categories]").screenshot({ path: "/tmp/cat-settings-step.png" });
+
 /* ── ניקוי ── */
 await db.query(
   "update stores set categories=$1, category_layout=null, category_size=null, category_meta=null where id=$2",
