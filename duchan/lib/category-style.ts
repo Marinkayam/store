@@ -61,32 +61,38 @@ export function cleanMeta(v: unknown): CategoryMeta {
   return out;
 }
 
-/** מידות לכל צורה ולכל גודל, בפיקסלים. */
+/**
+ * מידות לכל צורה ולכל גודל, בפיקסלים.
+ *
+ * gap — הרווח בין פריט לפריט. גדל עם הגודל ועם הצורה: עיגול של 84px
+ * עם 12px לידו נראה דחוס, צ'יפ קטן עם 22px נראה מפוזר. after — הרווח
+ * מתחת לשורה, עד רשת המוצרים, כדי שהקטגוריות לא ייצמדו לכרטיסים.
+ */
 export const CATEGORY_DIMENSIONS = {
   text: {
-    sm: { font: 12, padY: 6, padX: 12 },
-    md: { font: 13, padY: 8, padX: 14 },
-    lg: { font: 15, padY: 11, padX: 18 },
+    sm: { font: 12, padY: 7, padX: 13, gap: 8, after: 16 },
+    md: { font: 13, padY: 9, padX: 16, gap: 10, after: 20 },
+    lg: { font: 15, padY: 12, padX: 20, gap: 12, after: 22 },
   },
   icon: {
-    sm: { font: 12, padY: 5, padX: 10, icon: 20 },
-    md: { font: 13, padY: 6, padX: 12, icon: 26 },
-    lg: { font: 15, padY: 8, padX: 14, icon: 32 },
+    sm: { font: 12, padY: 5, padX: 12, icon: 22, inner: 6, gap: 8, after: 16 },
+    md: { font: 13, padY: 6, padX: 14, icon: 28, inner: 8, gap: 10, after: 20 },
+    lg: { font: 15, padY: 7, padX: 18, icon: 34, inner: 10, gap: 12, after: 22 },
   },
   circle: {
-    sm: { font: 11, box: 52 },
-    md: { font: 12, box: 66 },
-    lg: { font: 13.5, box: 84 },
+    sm: { font: 11.5, box: 56, gap: 14, after: 18 },
+    md: { font: 12.5, box: 68, gap: 18, after: 22 },
+    lg: { font: 13.5, box: 84, gap: 22, after: 24 },
   },
   square: {
-    sm: { font: 11, box: 58 },
-    md: { font: 12, box: 76 },
-    lg: { font: 13.5, box: 98 },
+    sm: { font: 11.5, box: 60, gap: 12, after: 18 },
+    md: { font: 12.5, box: 76, gap: 16, after: 22 },
+    lg: { font: 13.5, box: 98, gap: 18, after: 24 },
   },
   card: {
-    sm: { font: 12, w: 112, h: 70 },
-    md: { font: 13, w: 140, h: 88 },
-    lg: { font: 15, w: 176, h: 112 },
+    sm: { font: 12, w: 116, h: 74, gap: 10, after: 18 },
+    md: { font: 13, w: 144, h: 92, gap: 12, after: 22 },
+    lg: { font: 15, w: 180, h: 116, gap: 14, after: 24 },
   },
 } as const;
 

@@ -40,14 +40,22 @@ export default function CategoryBar({
 }) {
   const items: (string | null)[] = [null, ...categories];
   const vertical = layout === "circle" || layout === "square";
+  const { gap, after } = CATEGORY_DIMENSIONS[layout][size];
 
   return (
     <div
       data-testid="category-chips"
       data-layout={layout}
       data-size={size}
-      className={`px-3 pb-3 flex overflow-x-auto ${vertical ? "gap-3 pt-1" : layout === "card" ? "gap-2" : "gap-1.5"}`}
-      style={{ scrollbarWidth: "none" }}
+      className="flex overflow-x-auto"
+      style={{
+        gap,
+        // 16px מהצדדים כמו שאר הדף; רווח ברור מתחת עד הרשת; ולמעלה מקום
+        // לטבעת של העיגול הנבחר ולצל של הכרטיסים, שלא ייחתכו
+        padding: `${vertical || layout === "card" ? 6 : 2}px 16px ${after}px`,
+        scrollPaddingInline: 16,
+        scrollbarWidth: "none",
+      }}
     >
       {items.map((c) => {
         const on = active === c;
@@ -90,10 +98,13 @@ export default function CategoryBar({
             <button
               key={k}
               {...common}
-              className="shrink-0 inline-flex items-center gap-1.5 font-semibold border-[1.5px] min-h-11"
+              className="shrink-0 inline-flex items-center font-semibold border-[1.5px] min-h-11"
               style={{
+                gap: d.inner,
                 fontSize: d.font,
-                padding: `${d.padY}px ${d.padX}px ${d.padY}px ${Math.max(6, d.padX - 6)}px`,
+                padding: `${d.padY}px ${d.padX}px`,
+                // האייקון יושב בצד ההתחלה (ימין), והוא עגול — פחות ריפוד שם
+                paddingInlineStart: Math.max(6, d.padX - 7),
                 ...(on
                   ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
                   : { background: "var(--s-surface)", borderColor: "color-mix(in srgb, currentColor 30%, transparent)" }),
@@ -110,7 +121,7 @@ export default function CategoryBar({
           const d = CATEGORY_DIMENSIONS[layout][size];
           const round = layout === "circle";
           return (
-            <button key={k} {...common} className="shrink-0 flex flex-col items-center gap-1.5" style={{ width: d.box + 10 }}>
+            <button key={k} {...common} className="shrink-0 flex flex-col items-center gap-2" style={{ width: d.box + 12 }}>
               <span
                 className={round ? "" : "s-r"}
                 style={{
@@ -164,7 +175,7 @@ export default function CategoryBar({
               </span>
             )}
             <span
-              className="absolute inset-x-0 bottom-0 px-2 py-1 truncate"
+              className="absolute inset-x-0 bottom-0 px-2.5 py-1.5 truncate"
               style={{
                 fontSize: d.font,
                 fontWeight: on ? 800 : 700,

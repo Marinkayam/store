@@ -152,7 +152,7 @@ export default function CategoryDesigner({
       {/* התצוגה החיה — צמודה, בצבעים ובסגנון של הדוכן */}
       <div
         data-testid="category-preview"
-        className="s-look shrink-0 border-b border-[var(--line)] pt-3"
+        className="s-look shrink-0 border-b border-[var(--line)] pt-4"
         style={{
           ...(themeCssVars(theme) as Record<string, string>),
           ...lookCssVars(theme, store.look),
@@ -161,7 +161,7 @@ export default function CategoryDesigner({
           fontFamily: "var(--s-font)",
         }}
       >
-        <div className="px-3 pb-1.5 text-[11px] font-semibold opacity-70">ככה זה ייראה בדוכן:</div>
+        <div className="px-4 pb-2 text-[11.5px] font-semibold opacity-70">ככה זה ייראה בדוכן:</div>
         <CategoryBar
           categories={categories}
           active={active}
@@ -173,21 +173,21 @@ export default function CategoryDesigner({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 flex flex-col gap-5 pb-28">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-5 flex flex-col gap-8 pb-32">
         {/* 1. צורה */}
         <section>
-          <div className="text-[13px] font-bold mb-2">1. צורה</div>
-          <div className="grid grid-cols-2 gap-2" data-testid="category-layouts">
+          <div className="text-[14px] font-bold mb-3">1. צורה</div>
+          <div className="grid grid-cols-2 gap-3" data-testid="category-layouts">
             {CATEGORY_LAYOUTS.map((l) => (
               <button
                 key={l.key}
                 onClick={() => change(setLayout, l.key)}
                 aria-pressed={layout === l.key}
                 aria-label={`צורה: ${l.label}`}
-                className={`bg-white border-2 p-2.5 text-right min-h-11 ${layout === l.key ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                className={`bg-white border-2 p-3.5 text-right min-h-11 flex flex-col gap-1 ${layout === l.key ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
               >
                 <Sketch layout={l.key} />
-                <div className="text-[13px] font-bold mt-2">
+                <div className="text-[13px] font-bold mt-2.5">
                   {layout === l.key && "✓ "}
                   {l.label}
                 </div>
@@ -199,7 +199,7 @@ export default function CategoryDesigner({
 
         {/* 2. גודל */}
         <section>
-          <div className="text-[13px] font-bold mb-2">2. גודל</div>
+          <div className="text-[14px] font-bold mb-3">2. גודל</div>
           <div className="grid grid-cols-3 border border-[var(--line)] bg-white" data-testid="category-sizes">
             {CATEGORY_SIZES.map((s, i) => (
               <button
@@ -217,7 +217,7 @@ export default function CategoryDesigner({
 
         {/* 3. אייקון או תמונה לכל קטגוריה */}
         <section>
-          <div className="text-[13px] font-bold">3. אייקון או תמונה לכל קטגוריה</div>
+          <div className="text-[14px] font-bold mb-1">3. אייקון או תמונה לכל קטגוריה</div>
           <p className="text-[11.5px] text-[var(--muted)] mt-0.5 leading-snug" data-testid="category-image-hint">
             📐 {CATEGORY_IMAGE_HINT}
           </p>
@@ -227,13 +227,13 @@ export default function CategoryDesigner({
             </p>
           )}
 
-          <div className="flex flex-col gap-2 mt-2.5" data-testid="category-rows">
+          <div className="flex flex-col gap-3 mt-4" data-testid="category-rows">
             {categories.map((c) => {
               const m = meta[c];
               const img = imageUrl(m?.image);
               return (
-                <div key={c} className="bg-white border border-[var(--line)] p-2.5">
-                  <div className="flex items-center gap-2.5">
+                <div key={c} className="bg-white border border-[var(--line)] p-3.5">
+                  <div className="flex items-center gap-3">
                     <span className="w-12 h-12 shrink-0 flex items-center justify-center text-2xl bg-[var(--canvas)] overflow-hidden border border-[var(--line)]">
                       {uploading === c ? (
                         <span className="text-[11px] text-[var(--muted)]">מעלה…</span>
@@ -246,7 +246,7 @@ export default function CategoryDesigner({
                       )}
                     </span>
                     <span className="flex-1 min-w-0 text-[13.5px] font-semibold truncate">{c}</span>
-                    <div className="flex gap-1.5 shrink-0">
+                    <div className="flex gap-2 shrink-0">
                       <button
                         onClick={() => setEmojiFor(emojiFor === c ? null : c)}
                         aria-expanded={emojiFor === c}
@@ -276,7 +276,7 @@ export default function CategoryDesigner({
                   )}
 
                   {emojiFor === c && (
-                    <div className="mt-2 grid grid-cols-8 gap-1" data-testid="emoji-grid">
+                    <div className="mt-3 grid grid-cols-8 gap-1.5" data-testid="emoji-grid">
                       {CATEGORY_EMOJIS.map((e) => (
                         <button
                           key={e}

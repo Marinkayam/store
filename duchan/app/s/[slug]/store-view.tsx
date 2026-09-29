@@ -530,7 +530,7 @@ export default function StoreView({
 
       <div
         data-testid="store-header"
-        className={customBg ? "s-r text-center pt-10 px-4 pb-4 mx-3 mt-2 mb-4" : "text-center pt-10 px-5 pb-4"}
+        className={customBg ? "s-r text-center pt-10 px-4 pb-5 mx-4 mt-2 mb-5" : "text-center pt-10 px-5 pb-4"}
         style={plate}
       >
         <h1 className="text-2xl font-bold">{store.display_name}</h1>
@@ -579,7 +579,7 @@ export default function StoreView({
            אין ריפוד עליון משלה. כל ערך אחר כאן יוצר באנר שנצמד למוצרים
            ומרחף מתחת לכותרת — נראה כאילו הוא שייך לרשת ולא הודעה בפני
            עצמה. שני הצדדים נמדדים בבדיקה, כדי שלא ייפרד בשקט. */
-        <div className="px-3 pb-4">
+        <div className="px-4 pb-4">
           <div
             data-testid="store-promo"
             className="s-r mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"
@@ -609,7 +609,7 @@ export default function StoreView({
       )}
 
       {/* grid */}
-      <div className="flex-1 px-3 pb-24" ref={gridRef}>
+      <div className="flex-1 px-4 pb-24" ref={gridRef}>
         {sorted.length === 0 ? (
           <div className="text-center pt-14">
             <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-60"} style={plate}>
@@ -617,7 +617,7 @@ export default function StoreView({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-3">
             {sorted.map((p, i) => {
               const out = p.track_stock && p.stock === 0;
               const img = mediaUrl(p.image_key);
