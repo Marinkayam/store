@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../use-store";
 import { THEMES, themeOrDefault, type ThemeKey } from "@/lib/themes";
-import { squareImage, mediaUrl, MediaError } from "@/lib/media";
+import { squareImage, scaledImage, mediaUrl, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { deliveryLine, isBitLink, isPayboxLink, isPayPhone, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
@@ -282,12 +282,12 @@ export default function SettingsPage() {
     showToast("התמונה הוסרה, חזרנו לרקע");
   }
 
-  /** תמונת רקע לכל הדף. עוברת בקנבס כמו כל תמונה (EXIF), ונשמרת מיד. */
+  /** תמונת רקע לכל הדף, בפרופורציות המקוריות. עוברת בקנבס (EXIF), ונשמרת מיד. */
   async function onBackground(file: File) {
     if (!store) return;
     let blob: Blob;
     try {
-      blob = await squareImage(file, 1200);
+      blob = await scaledImage(file, 1600);
     } catch (e) {
       showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
       return;

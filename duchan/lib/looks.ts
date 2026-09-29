@@ -206,8 +206,9 @@ export function hasCustomBg(pattern: string | null | undefined, photoUrl: string
 /**
  * הרקע של כל הדף.
  *
- * photo → התמונה מתחת לשכבת צבע של הערכה. בדף החנות היא יושבת בשכבה
- * קבועה בגובה המסך (ראה store-view): cover על כל גובה הדף היה מגדיל
+ * photo → התמונה כמו שהיא, בלי שכבת צבע מעליה: המוכרת בחרה אותה כדי
+ * לראות אותה. הטקסט קריא בזכות הלוחות שמתחתיו (readablePlate), לא בזכות
+ * החלשת התמונה. בדף החנות היא יושבת בשכבה קבועה בגובה המסך (ראה store-view): cover על כל גובה הדף היה מגדיל
  * תמונה ריבועית פי כמה בדוכן ארוך, ו-background-attachment: fixed
  * לא עובד באייפון.
  */
@@ -217,8 +218,7 @@ export function storeBackground(
   photoUrl: string | null | undefined
 ): string {
   if (hasPhotoBg(pattern, photoUrl)) {
-    const veil = withAlpha(t.bg, 0.55);
-    return `linear-gradient(${veil}, ${veil}), url("${photoUrl}") center/cover no-repeat, ${t.bg}`;
+    return `url("${photoUrl}") center/cover no-repeat, ${t.bg}`;
   }
   if (isPatternKey(pattern)) return patternCss(pattern, t);
   return t.bg;

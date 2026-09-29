@@ -192,8 +192,18 @@ check("ובלי לוח מסביב לשם — בדיוק כמו קודם", basePl
 await girl.reload();
 await girl.waitForSelector("[data-testid=look-picker]", { timeout: 20000 });
 check("כפתור העלאה בולט, לא אריח חבוי", await girl.locator("button[aria-label='העלאת תמונת רקע']").isVisible());
+// צילום לאורך (400×800), כמו רוב הצילומים מטלפון — לבדוק שלא נחתך לריבוע
+const portrait = Buffer.from((await girl.evaluate(() => {
+  const c = document.createElement("canvas");
+  c.width = 400; c.height = 800;
+  const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 0, 800);
+  g.addColorStop(0, "#ff5fa2"); g.addColorStop(1, "#5fb4ff");
+  x.fillStyle = g; x.fillRect(0, 0, 400, 800);
+  return c.toDataURL("image/png").split(",")[1];
+})), "base64");
 await girl.locator("[data-testid=bg-upload-input]")
-  .setInputFiles(new URL("../../../e2e/fixtures/square.png", import.meta.url).pathname);
+  .setInputFiles({ name: "portrait.png", mimeType: "image/png", buffer: portrait });
 await girl.waitForTimeout(3500);
 const { rows: [s3] } = await db.query("select bg_pattern, bg_key from stores where id=$1", [store.id]);
 check("תמונת רקע נשמרת מיד", s3.bg_pattern === "photo" && /\/bg\/.+\.webp$/.test(s3.bg_key ?? ""), `${s3.bg_pattern} · ${s3.bg_key}`);
@@ -205,6 +215,14 @@ await b2.goto(fresh(), { waitUntil: "networkidle" });
 const layer = b2.locator("[data-testid=store-bg-photo]");
 const photoBg = await layer.evaluate((el) => getComputedStyle(el).backgroundImage);
 check("והדוכן מציג אותה", photoBg.includes(s3.bg_key ?? "@@"), photoBg.slice(0, 120));
+check("כמו שהיא — בלי שכבת צבע מעליה", !photoBg.includes("gradient"), photoBg.slice(0, 60));
+const dims = await b2.evaluate(async (src) => {
+  const img = new Image();
+  img.src = src;
+  await img.decode();
+  return { w: img.naturalWidth, h: img.naturalHeight };
+}, /url\("([^"]+)"\)/.exec(photoBg)?.[1] ?? "");
+check("ובפרופורציות המקוריות, לא חתוכה לריבוע", dims.w * 2 === dims.h, `${dims.w}×${dims.h}`);
 /* השכבה בגובה המסך ולא בגובה הדף — אחרת בדוכן ארוך התמונה מתנפחת */
 const box = await layer.boundingBox();
 check("התמונה בגובה המסך, לא מתוחה על כל הדף", !!box && Math.abs(box.height - 900) < 2, `${box?.height}`);

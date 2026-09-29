@@ -21,11 +21,12 @@ async function canvasToImageBlob(c: OffscreenCanvas | HTMLCanvasElement): Promis
   return toBlob("image/jpeg", 0.85);
 }
 
-function makeCanvas(size: number): OffscreenCanvas | HTMLCanvasElement {
-  if (typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(size, size);
+function makeCanvas(size: number, height = size): OffscreenCanvas | HTMLCanvasElement {
+  if (typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(size, height);
   // iOS ישן — אין OffscreenCanvas
   const c = document.createElement("canvas");
-  c.width = c.height = size;
+  c.width = size;
+  c.height = height;
   return c;
 }
 
@@ -100,6 +101,28 @@ export async function squareImage(
       const sy = ((h - side) * pos.y) / 100;
       ctx.drawImage(src, sx, sy, side, side, 0, 0, size, size);
     }
+    return await canvasToImageBlob(c);
+  } finally {
+    done();
+  }
+}
+
+/**
+ * כמו squareImage אבל בלי חיתוך: התמונה נשארת בפרופורציות שלה, רק מוקטנת
+ * כך שהצלע הארוכה לא עוברת את maxSide. לתמונת רקע — ריבוע היה מוחק את
+ * החלק העליון והתחתון של צילום לאורך, לפני שהמסך חותך אותה שוב.
+ * עדיין עוברת בקנבס: הציור מחדש הוא מה שמוחק את ה-EXIF (מיקום הבית).
+ */
+export async function scaledImage(file: File | Blob, maxSide = 1600): Promise<Blob> {
+  const { src, w, h, done } = await decodeImage(file);
+  try {
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    const dw = Math.max(1, Math.round(w * scale));
+    const dh = Math.max(1, Math.round(h * scale));
+    const c = makeCanvas(dw, dh);
+    const ctx = c.getContext("2d") as CanvasRenderingContext2D | null;
+    if (!ctx) throw new MediaError("הדפדפן לא הצליח לעבד את התמונה. לרענן את הדף ולנסות שוב.");
+    ctx.drawImage(src, 0, 0, w, h, 0, 0, dw, dh);
     return await canvasToImageBlob(c);
   } finally {
     done();
