@@ -503,11 +503,8 @@ export default function StoreView({
       {/* hero */}
       <div className="relative">
         <div
-          data-testid="store-cover"
           className="h-36 overflow-hidden"
-          // רקע שנבחר רץ מלמעלה — קאבר מוכן מעליו היה רקע שני שמתחרה בו.
-          // תמונת קאבר שהועלתה עדיין גוברת.
-          style={{ background: cover || customBg ? undefined : coverCss(store.cover_preset) }}
+          style={{ background: cover ? undefined : coverCss(store.cover_preset) }}
         >
           {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
         </div>
@@ -532,8 +529,7 @@ export default function StoreView({
       <div
         data-testid="store-header"
         className={customBg ? "s-r text-center pt-10 px-4 pb-4 mx-3 mt-2 mb-4" : "text-center pt-10 px-5 pb-4"}
-        // הלוח לובש את הקו והצל של הסגנון, כמו כרטיסי המוצרים שמתחתיו
-        style={plate && { ...plate, border: "var(--s-border)", boxShadow: "var(--s-shadow)" }}
+        style={plate}
       >
         <h1 className="text-2xl font-bold">{store.display_name}</h1>
         {/* תיאור אחד ולא שניים. קודם הופיעו כאן גם המשפט הקצר וגם התיאור

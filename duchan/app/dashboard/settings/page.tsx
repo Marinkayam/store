@@ -497,7 +497,7 @@ export default function SettingsPage() {
               onClick={() => coverRef.current?.click()}
               aria-label="החלפת תמונת הקאבר"
               className="block w-full h-28 overflow-hidden relative"
-              style={coverPreview || previewBg ? undefined : { background: coverCss(preset) }}
+              style={coverPreview ? undefined : { background: coverCss(preset) }}
             >
               {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
               <span className="absolute bottom-1.5 left-1.5 bg-black/55 text-white text-[11.5px] px-2 py-1">
@@ -694,7 +694,7 @@ export default function SettingsPage() {
           <div className="flex items-baseline justify-between gap-2">
             <div>
               <div className="text-[13px] font-bold">🎨 עיצוב הדוכן</div>
-              <p className="text-[12px] text-[var(--faint)] mt-0.5">כל לחיצה מופיעה מיד בדוכן הקטן.</p>
+              <p className="text-[12px] text-[var(--faint)] mt-0.5">לוחצים ורואים למעלה איך הדוכן משתנה.</p>
             </div>
             {(look || bgPattern) && (
               <button
@@ -705,47 +705,6 @@ export default function SettingsPage() {
                 ↺ חזרה לבסיס
               </button>
             )}
-          </div>
-
-          {/* הדוכן הקטן — צמוד למעלה בזמן שגוללים בין הבחירות. בלעדיו כל
-              לחיצה על סגנון או רקע שינתה משהו שנמצא מחוץ למסך. */}
-          <div
-            data-testid="design-preview"
-            aria-label="תצוגה מקדימה של הדוכן"
-            className="sticky top-[54px] z-20 border border-[var(--line)] overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
-            style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
-          >
-            <div className="p-2.5 flex flex-col gap-2">
-              <div
-                className="text-center px-2 py-1.5"
-                style={previewBg ? { ...readablePlate(t), borderRadius: lk.radius, border: lk.border(t), boxShadow: lk.shadow(t) } : undefined}
-              >
-                <div className="text-[13.5px] font-bold truncate">{emoji} {name || "הדוכן שלך"}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {[0, 1].map((i) => {
-                  const p = products[i];
-                  const img = p ? mediaUrl(p.poster_key) ?? mediaUrl(p.image_key) : null;
-                  return (
-                    <div key={i} className="overflow-hidden"
-                      style={{ background: t.surface, border: lk.border(t), borderRadius: lk.radius, boxShadow: lk.shadow(t) }}>
-                      <div className="h-11 flex items-center justify-center text-lg overflow-hidden" style={{ background: t.thumb }}>
-                        {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : p ? "🛍️" : i ? "🧸" : "🧁"}
-                      </div>
-                      <div className="px-1.5 py-1 flex items-center justify-between gap-1">
-                        <span className="text-[10.5px] font-bold" style={{ color: t.primary }}>
-                          ₪{p ? formatPrice(p.price) : i ? "12.90" : "15"}
-                        </span>
-                        <span className="px-1.5 py-0.5 text-[9.5px] font-bold"
-                          style={{ background: t.primary, color: t.onPrimary, borderRadius: lk.radius }}>
-                          לסל
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           <div>
