@@ -7,7 +7,7 @@ import { deliveryLine, formatPayPhone, payMethods, paymentLinkLine, payoutLine, 
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { coverCss } from "@/lib/covers";
-import { lookOrBase, storeBackground } from "@/lib/looks";
+import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } from "@/lib/looks";
 import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
@@ -412,18 +412,38 @@ export default function StoreView({
 
   const sold = useMemo(() => new Set(soldIds), [soldIds]);
   const roundedLook = lookOrBase(store.look).radius !== "0px";
+  const theme = themeOrDefault(store.theme);
+  const bgPhoto = mediaUrl(store.bg_key ?? null);
+  const photoBg = hasPhotoBg(store.bg_pattern, bgPhoto);
+  /* נבחר רקע — טקסט שיושב ישירות על הדף (שם, תיאור, שורת הפרטים, הקרדיט)
+     עובר ללוח קריא. בלי רקע הדף נשאר בדיוק כמו שהיה. */
+  const customBg = hasCustomBg(store.bg_pattern, bgPhoto);
+  const plate = customBg ? readablePlate(theme) : undefined;
   const cover = mediaUrl(store.cover_key);
 
   return (
     <div
-      className="s-look min-h-screen flex flex-col"
+      className="s-look relative min-h-screen flex flex-col"
       style={{
         // הרקע שהמוכרת בחרה (lib/looks.ts). בלי בחירה — הרקע השטוח של הערכה.
-        background: storeBackground(themeOrDefault(store.theme), store.bg_pattern, mediaUrl(store.bg_key ?? null)),
+        // תמונה יושבת בשכבה נפרדת למטה; כאן רק הצבע שמתחתיה.
+        background: photoBg ? theme.bg : storeBackground(theme, store.bg_pattern, bgPhoto),
         color: "var(--s-ink)",
         fontFamily: "var(--s-font)",
+        // השכבה הקבועה (z שלילי) נצבעת מעל הרקע של הדף ומתחת לתוכן
+        isolation: "isolate",
       }}
     >
+      {/* תמונת הרקע: קבועה בגובה המסך ולא מתוחה על כל הדף — בדוכן ארוך
+          cover על כל הגובה הגדיל אותה פי כמה, ו-attachment: fixed לא עובד באייפון */}
+      {photoBg && (
+        <div
+          aria-hidden
+          data-testid="store-bg-photo"
+          className="fixed inset-0 -z-10 pointer-events-none"
+          style={{ background: storeBackground(theme, store.bg_pattern, bgPhoto) }}
+        />
+      )}
       {/* רצועת הבעלים — נצמדת למעלה, אפור-שחור ולא בערכה של החנות, כדי שיהיה
           ברור שזו המערכת ולא הדף שהקונות רואות. קונה לא מקבלת אותה בכלל. */}
       {owner && (
@@ -506,7 +526,11 @@ export default function StoreView({
         </div>
       </div>
 
-      <div className="text-center pt-10 px-5 pb-4">
+      <div
+        data-testid="store-header"
+        className={customBg ? "s-r text-center pt-10 px-4 pb-4 mx-3 mt-2 mb-4" : "text-center pt-10 px-5 pb-4"}
+        style={plate}
+      >
         <h1 className="text-2xl font-bold">{store.display_name}</h1>
         {/* תיאור אחד ולא שניים. קודם הופיעו כאן גם המשפט הקצר וגם התיאור
             הארוך, וזה נראה כמו שתי הערות שאומרות את אותו דבר. */}
@@ -583,7 +607,10 @@ export default function StoreView({
                 style={
                   on
                     ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                    : { background: "var(--s-surface)", borderColor: "currentColor", opacity: 0.7 }
+                    : customBg
+                      // על רקע — צ'יפ אטום, אחרת הדוגמה עוברת דרך הטקסט
+                      ? { background: "var(--s-surface)", borderColor: "color-mix(in srgb, currentColor 35%, transparent)" }
+                      : { background: "var(--s-surface)", borderColor: "currentColor", opacity: 0.7 }
                 }
               >
                 {c ?? "הכל"}
@@ -596,7 +623,11 @@ export default function StoreView({
       {/* grid */}
       <div className="flex-1 px-3 pb-24" ref={gridRef}>
         {sorted.length === 0 ? (
-          <p className="text-center text-sm opacity-60 pt-14">עוד אין כאן מוצרים.</p>
+          <div className="text-center pt-14">
+            <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-60"} style={plate}>
+              עוד אין כאן מוצרים.
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-2.5">
             {sorted.map((p, i) => {
@@ -610,7 +641,9 @@ export default function StoreView({
                 // וכפתור בתוך כפתור אינו HTML תקין ומתנהג שונה בין דפדפנים
                 <div
                   key={p.id}
-                  className={`s-r text-right overflow-hidden relative flex flex-col ${out ? "opacity-45 pointer-events-none" : ""}`}
+                  // אזל: הכרטיס עצמו נשאר אטום ורק התוכן דוהה — כרטיס שקוף על
+                  // רקע של דוגמה או תמונה נראה כמו כתם
+                  className={`s-r text-right overflow-hidden relative flex flex-col ${out ? "pointer-events-none" : ""}`}
                   style={{
                     background: "var(--s-surface)",
                     border: "var(--s-border)" as string,
@@ -620,7 +653,7 @@ export default function StoreView({
                 <button
                   onClick={() => !out && openProduct(p)}
                   aria-label={p.name}
-                  className="text-right transition active:translate-y-[1px]"
+                  className={`text-right transition active:translate-y-[1px] ${out ? "opacity-45" : ""}`}
                 >
                   {out ? (
                     // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
@@ -701,7 +734,10 @@ export default function StoreView({
             })}
           </div>
         )}
-        <p className="text-center text-[11px] opacity-45 pt-6 pb-1">
+        <p
+          className={customBg ? "s-r w-fit mx-auto mt-6 mb-1 px-3 py-1.5 text-center text-[11px]" : "text-center text-[11px] opacity-45 pt-6 pb-1"}
+          style={plate}
+        >
           {store.display_name} ·{" "}
           <a href="/" className="underline">
             נבנתה בדוכן

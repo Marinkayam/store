@@ -193,20 +193,46 @@ export function patternCss(key: PatternKey, t: Theme): string {
   return `url("data:image/svg+xml,${svg}") 0 0/${p.size}px ${h}px, ${t.bg}`;
 }
 
+/** יש לדוכן תמונת רקע פעילה (ולא רק שמורה). */
+export function hasPhotoBg(pattern: string | null | undefined, photoUrl: string | null | undefined): boolean {
+  return pattern === "photo" && !!photoUrl;
+}
+
+/** נבחר רקע כלשהו — ואז טקסט שיושב ישירות על הדף עובר לכרטיס קריא. */
+export function hasCustomBg(pattern: string | null | undefined, photoUrl: string | null | undefined): boolean {
+  return isPatternKey(pattern) || hasPhotoBg(pattern, photoUrl);
+}
+
 /**
  * הרקע של כל הדף.
- * photo עם תמונה → התמונה מתחת לשכבת צבע של הערכה, כדי שהשם והתיאור
- * שיושבים ישירות על הרקע יישארו קריאים גם על תמונה צבעונית.
+ *
+ * photo → התמונה מתחת לשכבת צבע של הערכה. בדף החנות היא יושבת בשכבה
+ * קבועה בגובה המסך (ראה store-view): cover על כל גובה הדף היה מגדיל
+ * תמונה ריבועית פי כמה בדוכן ארוך, ו-background-attachment: fixed
+ * לא עובד באייפון.
  */
 export function storeBackground(
   t: Theme,
   pattern: string | null | undefined,
   photoUrl: string | null | undefined
 ): string {
-  if (pattern === "photo" && photoUrl) {
-    const veil = withAlpha(t.bg, 0.72);
-    return `linear-gradient(${veil}, ${veil}), url("${photoUrl}") center/cover fixed, ${t.bg}`;
+  if (hasPhotoBg(pattern, photoUrl)) {
+    const veil = withAlpha(t.bg, 0.55);
+    return `linear-gradient(${veil}, ${veil}), url("${photoUrl}") center/cover no-repeat, ${t.bg}`;
   }
   if (isPatternKey(pattern)) return patternCss(pattern, t);
   return t.bg;
+}
+
+/**
+ * לוח קריא לטקסט שיושב על רקע: צבע המשטח של הערכה, כמעט אטום, עם
+ * טשטוש קל של מה שמאחור. כך השם והתיאור קריאים על כל דוגמה ועל כל
+ * תמונה, בכל ערכה — גם בלילה, שבה המשטח כהה והטקסט בהיר.
+ */
+export function readablePlate(t: Theme): Record<string, string> {
+  return {
+    background: withAlpha(t.surface, 0.9),
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
+  };
 }

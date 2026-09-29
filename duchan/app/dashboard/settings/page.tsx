@@ -9,7 +9,7 @@ import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { deliveryLine, isBitLink, isPayboxLink, isPayPhone, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
-import { ALL_LOOK_FONTS_HREF, LOOKS, LOOK_KEYS, PATTERNS, PATTERN_KEYS, isLookKey, isPatternKey, lookOrBase, patternCss, storeBackground, type LookKey } from "@/lib/looks";
+import { hasCustomBg, readablePlate, ALL_LOOK_FONTS_HREF, LOOKS, LOOK_KEYS, PATTERNS, PATTERN_KEYS, isLookKey, isPatternKey, lookOrBase, patternCss, storeBackground, type LookKey } from "@/lib/looks";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 
@@ -138,6 +138,7 @@ export default function SettingsPage() {
 
   const t = themeOrDefault(theme);
   const lk = lookOrBase(look);
+  const previewBg = hasCustomBg(bgPattern, bgPreview);
 
   async function save() {
     if (!store) return;
@@ -309,6 +310,25 @@ export default function SettingsPage() {
     setStore({ ...store, bg_key: r.key, bg_pattern: "photo" });
     refreshStorePage(store.slug);
     showToast("תמונת הרקע עודכנה");
+  }
+
+  /** הסרת התמונה: הקובץ נשאר ב-R2 (כמו קאבר), הדוכן חוזר לרקע אחר. נשמר מיד. */
+  async function removeBackground() {
+    if (!store) return;
+    const next = bgPattern === "photo" ? null : bgPattern;
+    const { error } = await supabaseBrowser()
+      .from("stores")
+      .update({ bg_key: null, bg_pattern: next })
+      .eq("id", store.id);
+    if (error) {
+      showToast("משהו השתבש, לנסות שוב");
+      return;
+    }
+    setBgPreview(null);
+    setBgPattern(next);
+    setStore({ ...store, bg_key: null, bg_pattern: next });
+    refreshStorePage(store.slug);
+    showToast("תמונת הרקע הוסרה");
   }
 
   /** בסיס = בלי סגנון ובלי רקע. הצבעים נשארים — הם בחירה נפרדת. */
@@ -511,6 +531,12 @@ export default function SettingsPage() {
                 </button>
               </div>
 
+              {/* על רקע — אותו לוח קריא שיש בדוכן עצמו, כדי שמה שרואים כאן
+                  יהיה בדיוק מה שהקונות יראו */}
+              <div
+                className={previewBg ? "mt-2 px-2 py-2" : ""}
+                style={previewBg ? { ...readablePlate(t), borderRadius: lk.radius } : undefined}
+              >
               {/* שם, תיאור ועיר נערכים בדיוק במקום שבו הם מוצגים.
                   בלי קווים מקווקווים ובלי רווחים מיותרים: הכותרת מעל הכרטיס
                   כבר אומרת שאפשר ללחוץ על הכל, והקווים רק הרעישו. */}
@@ -572,6 +598,8 @@ export default function SettingsPage() {
                     </span>
                   </>
                 )}
+              </div>
+
               </div>
 
               {/* המוצרים האמיתיים */}
@@ -744,17 +772,55 @@ export default function SettingsPage() {
           <div>
             <span className="text-[12px] font-semibold">3. רקע</span>
             <span className="text-[12px] text-[var(--faint)]"> · מה שמאחורי המוצרים</span>
-            <input ref={bgRef} type="file" accept="image/*" hidden
+            <input ref={bgRef} type="file" accept="image/*" hidden data-testid="bg-upload-input"
               onChange={(e) => { if (e.target.files?.[0]) onBackground(e.target.files[0]); e.target.value = ""; }} />
-            <div className="grid grid-cols-4 gap-1.5 mt-1.5" data-testid="bg-picker">
-              {/* בלי רקע */}
+
+            {/* תמונה משלה — שורה בולטת משלה ולא עוד אריח בסוף הרשת, שם
+                היא נחבאה מתחת לקפל */}
+            {bgPreview ? (
+              <div className="flex items-stretch gap-2 mt-1.5" data-testid="bg-photo-row">
+                <button
+                  onClick={() => { setBgPattern("photo"); setDirty(true); }}
+                  aria-label="רקע תמונה שלי"
+                  aria-pressed={bgPattern === "photo"}
+                  className={`relative w-24 h-16 shrink-0 border-2 overflow-hidden ${bgPattern === "photo" ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                >
+                  <img src={bgPreview} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  {bgPattern === "photo" && (
+                    <span className="absolute top-1 right-1 bg-[var(--ink)] text-white text-[10px] font-bold px-1.5">✓ נבחר</span>
+                  )}
+                </button>
+                <div className="flex flex-col justify-center gap-1 min-w-0">
+                  <span className="text-[12.5px] font-semibold">התמונה שלי</span>
+                  <div className="flex gap-3">
+                    <button onClick={() => bgRef.current?.click()} className="text-[12px] underline text-[var(--muted)] min-h-9">
+                      החלפה
+                    </button>
+                    <button onClick={removeBackground} className="text-[12px] underline text-[var(--muted)] min-h-9">
+                      הסרה
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => bgRef.current?.click()}
+                aria-label="העלאת תמונת רקע"
+                className="w-full mt-1.5 min-h-12 border-2 border-dashed border-[var(--line)] bg-white flex items-center justify-center gap-2 text-[13px] font-semibold"
+              >
+                <span aria-hidden>📷</span> להעלות רקע משלך
+              </button>
+            )}
+
+            <div className="text-[12px] text-[var(--faint)] mt-2.5 mb-1.5">או רקע מוכן, בצבעים של הדוכן:</div>
+            <div className="grid grid-cols-3 gap-1.5" data-testid="bg-picker">
               <button onClick={() => { setBgPattern(null); setDirty(true); }}
                 aria-label="בלי רקע"
                 aria-pressed={bgPattern === null}
                 className={`h-16 border-2 flex items-end justify-center pb-1 ${bgPattern === null ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
                 style={{ background: t.bg }}
               >
-                <span className="text-[11px] font-semibold bg-white/85 px-1.5" style={{ color: t.ink }}>בלי</span>
+                <span className="text-[11px] font-semibold px-1.5" style={{ ...readablePlate(t), color: t.ink }}>בלי</span>
               </button>
               {PATTERN_KEYS.map((k) => (
                 <button key={k} onClick={() => { setBgPattern(k); setDirty(true); }}
@@ -763,35 +829,11 @@ export default function SettingsPage() {
                   className={`h-16 border-2 flex items-end justify-center pb-1 ${bgPattern === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
                   style={{ background: patternCss(k, t) }}
                 >
-                  <span className="text-[11px] font-semibold bg-white/85 px-1.5" style={{ color: t.ink }}>
+                  <span className="text-[11px] font-semibold px-1.5" style={{ ...readablePlate(t), color: t.ink }}>
                     {PATTERNS[k].label}
                   </span>
                 </button>
               ))}
-              {/* תמונה משלה. כשכבר יש — לחיצה בוחרת בה; "החלפה" מעלה חדשה */}
-              <button
-                onClick={() => {
-                  if (bgPreview && bgPattern !== "photo") { setBgPattern("photo"); setDirty(true); }
-                  else bgRef.current?.click();
-                }}
-                aria-label={bgPreview ? "רקע תמונה שלי" : "העלאת תמונת רקע"}
-                aria-pressed={bgPattern === "photo"}
-                className={`h-16 border-2 flex flex-col items-center justify-center gap-0.5 overflow-hidden relative ${bgPattern === "photo" ? "border-[var(--ink)]" : "border-dashed border-[var(--line)] bg-white"}`}
-              >
-                {bgPreview ? (
-                  <>
-                    <img src={bgPreview} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                    <span className="relative text-[11px] font-semibold bg-white/85 px-1.5 mt-auto mb-1" style={{ color: t.ink }}>
-                      {bgPattern === "photo" ? "החלפה" : "התמונה שלי"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-lg" aria-hidden>📷</span>
-                    <span className="text-[11px] font-semibold text-[var(--muted)]">תמונה שלי</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </div>

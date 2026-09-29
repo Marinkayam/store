@@ -140,6 +140,10 @@ const radius = await card.evaluate((el) => getComputedStyle(el).borderTopLeftRad
 check("כרטיסי המוצרים עגולים (22px)", radius === "22px", radius);
 const font = await b2.locator(".s-look").first().evaluate((el) => getComputedStyle(el).fontFamily);
 check("והגופן מתחלף", font.includes("Varela Round"), font);
+const plateBg = await b2.locator("[data-testid=store-header]").evaluate((el) => getComputedStyle(el).backgroundColor);
+check("על רקע, השם והתיאור יושבים על לוח קריא", /^rgba?\(255, 255, 255/.test(plateBg), plateBg);
+const credit = b2.locator("text=נבנתה בדוכן").locator("xpath=..");
+check("וגם הקרדיט בתחתית", /^rgba?\(255, 255, 255/.test(await credit.evaluate((el) => getComputedStyle(el).backgroundColor)));
 await b2.screenshot({ path: "/tmp/looks-store-round-hearts.png" });
 
 // סגנון שני, לראות שהוא לא תקוע על הראשון
@@ -167,17 +171,49 @@ await b2.goto(fresh(), { waitUntil: "networkidle" });
 const baseBg = await b2.locator(".s-look").first().evaluate((el) => getComputedStyle(el).backgroundImage);
 const baseRadius = await b2.locator(".s-look .s-r.relative").first().evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
 check("הדוכן חזר לבסיס: בלי רקע ובלי עיגול", baseBg === "none" && baseRadius === "0px", `${baseBg} · ${baseRadius}`);
+const basePlate = await b2.locator("[data-testid=store-header]").evaluate((el) => getComputedStyle(el).backgroundColor);
+check("ובלי לוח מסביב לשם — בדיוק כמו קודם", basePlate === "rgba(0, 0, 0, 0)", basePlate);
 
 /* ── 6. תמונת רקע משלה ── */
-// ה-input המוסתר של הרקע יושב ממש לפני רשת הרקעים
-await girl.locator("[data-testid=bg-picker]").locator("xpath=preceding-sibling::input[@type='file']")
+await girl.reload();
+await girl.waitForSelector("[data-testid=look-picker]", { timeout: 20000 });
+check("כפתור העלאה בולט, לא אריח חבוי", await girl.locator("button[aria-label='העלאת תמונת רקע']").isVisible());
+await girl.locator("[data-testid=bg-upload-input]")
   .setInputFiles(new URL("../../../e2e/fixtures/square.png", import.meta.url).pathname);
 await girl.waitForTimeout(3500);
 const { rows: [s3] } = await db.query("select bg_pattern, bg_key from stores where id=$1", [store.id]);
 check("תמונת רקע נשמרת מיד", s3.bg_pattern === "photo" && /\/bg\/.+\.webp$/.test(s3.bg_key ?? ""), `${s3.bg_pattern} · ${s3.bg_key}`);
+check("ובהגדרות מופיעה שורת התמונה עם החלפה והסרה",
+  (await girl.locator("[data-testid=bg-photo-row]").count()) === 1 &&
+  (await girl.getAttribute("button[aria-label='רקע תמונה שלי']", "aria-pressed")) === "true");
+
 await b2.goto(fresh(), { waitUntil: "networkidle" });
-const photoBg = await b2.locator(".s-look").first().evaluate((el) => getComputedStyle(el).backgroundImage);
+const layer = b2.locator("[data-testid=store-bg-photo]");
+const photoBg = await layer.evaluate((el) => getComputedStyle(el).backgroundImage);
 check("והדוכן מציג אותה", photoBg.includes(s3.bg_key ?? "@@"), photoBg.slice(0, 120));
+/* השכבה בגובה המסך ולא בגובה הדף — אחרת בדוכן ארוך התמונה מתנפחת */
+const box = await layer.boundingBox();
+check("התמונה בגובה המסך, לא מתוחה על כל הדף", !!box && Math.abs(box.height - 900) < 2, `${box?.height}`);
+await b2.mouse.wheel(0, 1500);
+await b2.waitForTimeout(300);
+const box2 = await layer.boundingBox();
+check("ונשארת במקום בגלילה", !!box2 && Math.abs(box2.y) < 2, `${box2?.y}`);
+check("השם קריא גם על תמונה",
+  /^rgba?\(255, 255, 255/.test(await b2.locator("[data-testid=store-header]").evaluate((el) => getComputedStyle(el).backgroundColor)));
+// מוצר אזל על תמונה: הכרטיס אטום, רק התוכן דוהה
+await db.query("update products set stock=0, track_stock=true where id=$1", [keychain.id]);
+await b2.goto(fresh(), { waitUntil: "networkidle" });
+const outCard = b2.locator(".s-look .s-r.relative", { hasText: "מחזיק מפתחות מנצנץ" });
+check("כרטיס של מוצר שאזל לא שקוף על הרקע",
+  (await outCard.evaluate((el) => getComputedStyle(el).opacity)) === "1");
+await b2.screenshot({ path: "/tmp/looks-store-photo.png" });
+await b2.evaluate(() => window.scrollTo(0, 0));
+
+// הסרה מחזירה לבלי רקע ולא משאירה תמונה תקועה
+await girl.click("button:has-text('הסרה')");
+await girl.waitForTimeout(1500);
+const { rows: [s4] } = await db.query("select bg_pattern, bg_key from stores where id=$1", [store.id]);
+check("הסרה: בלי תמונה ובלי רקע", s4.bg_pattern === null && s4.bg_key === null, `${s4.bg_pattern} · ${s4.bg_key}`);
 
 /* ── ניקוי: הבדיקות שאחריי מצפות לדוכן בסיס ── */
 await db.query("update stores set look=null, bg_pattern=null, bg_key=null where id=$1", [store.id]);
