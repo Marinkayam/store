@@ -37,7 +37,11 @@ export type PublicStoreResult =
  */
 const STORE_BASE =
   "id, slug, display_name, emoji, tagline, theme, cover_key, avatar_key, status, activated_at";
-const STORE_FULL = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payout_cash, payout_note, payout_link, payout_bit_link, payout_paybox_link, payout_bit_phone, payout_paybox_phone, payout_whatsapp, about, city, ships, shipping_note, shipping_price, order_intro, order_outro, promo_on, promo_title, promo_text, categories`;
+const STORE_PREV = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payout_cash, payout_note, payout_link, payout_bit_link, payout_paybox_link, payout_bit_phone, payout_paybox_phone, payout_whatsapp, about, city, ships, shipping_note, shipping_price, order_intro, order_outro, promo_on, promo_title, promo_text, categories`;
+/* מה שנוסף אחרון יושב בשכבה משלו: אם המיגרציה שלו עוד לא רצה, נופלים
+   ל-PREV ולא עד ל-BASE — אחרת עמודה חדשה אחת מעלימה את הקטגוריות,
+   הלינקים לתשלום וכל השאר (וזה בדיוק מה שקרה עם 0047). */
+const STORE_FULL = `${STORE_PREV}, look, bg_pattern, bg_key`;
 
 const PRODUCT_BASE =
   "id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, created_at";
@@ -53,6 +57,10 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
   if (error) {
     // רואים את זה בלוגים של השרת, ובינתיים החנות ממשיכה לעבוד
     console.error("[store] full select failed, falling back:", error.message);
+    ({ data: store, error } = await readStore(STORE_PREV));
+  }
+  if (error) {
+    console.error("[store] prev select failed, falling back to base:", error.message);
     ({ data: store } = await readStore(STORE_BASE));
   }
 
@@ -118,6 +126,9 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     promo_title: null,
     promo_text: null,
     categories: null,
+    look: null,
+    bg_pattern: null,
+    bg_key: null,
     ...rest,
   } as unknown as PublicStore;
 

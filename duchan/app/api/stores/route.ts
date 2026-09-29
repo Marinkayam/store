@@ -8,6 +8,7 @@ import { THEMES } from "@/lib/themes";
 import { COVERS, DEFAULT_COVER } from "@/lib/covers";
 import { notifyTelegram } from "@/lib/telegram";
 import { absolute } from "@/lib/site";
+import { parsePrice } from "@/lib/money";
 
 // POST /api/stores — נקרא בסוף האונבורדינג, אחרי supabase.auth.signUp.
 // מאמת טלפון (נרמול בשמירה!), אוכף 3 חנויות לאימייל, ומגריל slug אקראי.
@@ -146,7 +147,7 @@ export async function POST(req: NextRequest) {
         store_id: store.id,
         name: fp.name.trim().slice(0, 40),
         description: fp.description?.trim().slice(0, 120) || null,
-        price: Math.max(0, Math.floor(fp.price)),
+        price: parsePrice(fp.price) ?? 0,
         track_stock: fp.trackStock ?? true,
         stock: Math.max(0, Math.floor(fp.stock ?? 1)),
       })

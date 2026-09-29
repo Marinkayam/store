@@ -31,7 +31,7 @@ export async function verifyPhone(page, local) {
   // פופאפ "מה חדש" מוצג לחנויות ותיקות וחוסם קליקים בבדיקות — מסמנים
   // "כבר ראיתי" כברירת מחדל. הבדיקה של הפופאפ עצמו מוחקת את הסימון.
   await page.evaluate(() => {
-    try { localStorage.setItem("duchan-whatsnew-2026-09-orders", "1"); } catch {}
+    try { localStorage.setItem("duchan-whatsnew-2026-09-looks", "1"); } catch {}
   }).catch(() => {});
 }
 

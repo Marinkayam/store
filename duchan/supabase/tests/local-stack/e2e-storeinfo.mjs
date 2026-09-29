@@ -69,7 +69,7 @@ await girl.waitForTimeout(2000);
 const { rows: [saved] } = await db.query("select * from stores where id=$1", [store.id]);
 check("התיאור והעיר נשמרו", saved.tagline === STORY && saved.city === "רמת גן", `${saved.city}`);
 check("והמשלוח נשמר עם המחיר שלו",
-  saved.ships === true && saved.shipping_price === 15,
+  saved.ships === true && Number(saved.shipping_price) === 15,
   `${saved.ships} · ₪${saved.shipping_price}`);
 await girl.screenshot({ path: `${shots}/80-settings.png`, fullPage: true });
 
@@ -212,12 +212,12 @@ const { rows: [orig] } = await db.query("select created_at from stores where id=
 await db.query("update stores set created_at='2026-01-01' where id=$1", [store.id]);
 // עוזר ההתחברות מסמן "כבר ראיתי" כדי לא לחסום בדיקות אחרות — כאן
 // בודקים את הפופאפ עצמו, אז מוחקים את הסימון
-await girl.evaluate(() => localStorage.removeItem("duchan-whatsnew-2026-09-orders"));
+await girl.evaluate(() => localStorage.removeItem("duchan-whatsnew-2026-09-looks"));
 await girl.goto(`${BASE}/dashboard`);
 await girl.waitForSelector("[data-testid=release-popup]", { timeout: 15000 });
 check("חנות ותיקה מקבלת את 'מה חדש' בכניסה", true);
 const whatsNewText = (await girl.locator("[data-testid=release-popup]").textContent()) ?? "";
-check("והוא מספר על ההזמנות החדשות", whatsNewText.includes("ההזמנות"));
+check("והוא מספר על הסגנונות החדשים", whatsNewText.includes("סגנון"));
 await girl.click("button:has-text('מגניב, הבנתי!')");
 await girl.waitForTimeout(400);
 await girl.reload();

@@ -47,7 +47,7 @@ async function listSizes(prefix: string): Promise<Map<string, number> | null> {
 /** סופרת מחדש את מדיית החנות. מחזירה את הערך החדש, או null אם אי אפשר לדעת. */
 export async function recountStoreMedia(db: SupabaseClient, storeId: string): Promise<number | null> {
   const [{ data: store }, { data: products }, sizes] = await Promise.all([
-    db.from("stores").select("cover_key").eq("id", storeId).maybeSingle(),
+    db.from("stores").select("cover_key, bg_key").eq("id", storeId).maybeSingle(),
     db.from("products").select("image_key, video_key, poster_key").eq("store_id", storeId).is("deleted_at", null),
     listSizes(`${storeId}/`),
   ]);
@@ -55,6 +55,7 @@ export async function recountStoreMedia(db: SupabaseClient, storeId: string): Pr
 
   const refs = new Set<string>();
   if (store?.cover_key) refs.add(store.cover_key);
+  if (store?.bg_key) refs.add(store.bg_key);
   for (const p of products ?? []) {
     for (const k of [p.image_key, p.video_key, p.poster_key]) if (k) refs.add(k);
   }

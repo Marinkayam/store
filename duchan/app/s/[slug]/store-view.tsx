@@ -7,7 +7,10 @@ import { deliveryLine, formatPayPhone, payMethods, paymentLinkLine, payoutLine, 
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { coverCss } from "@/lib/covers";
+import { lookOrBase, storeBackground } from "@/lib/looks";
+import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
+import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 
 interface CartLine {
@@ -186,7 +189,7 @@ export default function StoreView({
   );
 
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
-  const cartTotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
+  const cartTotal = sumPrices(cart.map((l) => lineTotal(l.price, l.qty)));
 
   const inCart = (id: string) =>
     cart.filter((l) => l.id === id).reduce((s, l) => s + l.qty, 0);
@@ -207,7 +210,7 @@ export default function StoreView({
       if (ex) {
         return c.map((l) => (lineKey(l.id, l.option) === key ? { ...l, qty: l.qty + amount } : l));
       }
-      return [...c, { id: p.id, name: p.name, price: p.price, qty: amount, ...(option ? { option } : {}) }];
+      return [...c, { id: p.id, name: p.name, price: Number(p.price), qty: amount, ...(option ? { option } : {}) }];
     });
     showToast("נוסף לסל");
   }
@@ -334,7 +337,7 @@ export default function StoreView({
       const lines = (data.items as { name: string; qty: number; price: number; option?: string }[])
         .map(
           (i) =>
-            `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${i.price * i.qty}`
+            `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${formatPrice(lineTotal(i.price, i.qty))}`
         )
         .join("\n");
       // שתי השורות האלה מתארות את מה ש*הקונה בחרה*, ולא את מה שהדוכן
@@ -363,7 +366,7 @@ export default function StoreView({
       const msg =
         `היי! 👋 אני ${data.buyerName} · הזמנה #${data.orderNumber}\n` +
         `ראיתי את הדוכן שלך ואני רוצה להזמין:\n\n${lines}\n\n` +
-        `סה"כ: ₪${data.total}` +
+        `סה"כ: ₪${formatPrice(data.total)}` +
         (note.trim() ? `\nהערה: ${note.trim()}` : "") +
         shipLine +
         (pay ? `\n${pay}` : "") +
@@ -388,7 +391,7 @@ export default function StoreView({
          נקבע איך משלמים". המספר מגיע מתשובת השרת, לא מה-HTML. */
       const waPayUrl = store.payout_whatsapp
         ? `https://wa.me/${data.phone}?text=${encodeURIComponent(
-            `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בחנות שלך 🛍️ (סה"כ ₪${data.total}). איך הכי נוח לך שאשלם?`
+            `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בחנות שלך 🛍️ (סה"כ ₪${formatPrice(data.total)}). איך הכי נוח לך שאשלם?`
           )}`
         : null;
       setConfirmed({
@@ -408,13 +411,15 @@ export default function StoreView({
   }
 
   const sold = useMemo(() => new Set(soldIds), [soldIds]);
+  const roundedLook = lookOrBase(store.look).radius !== "0px";
   const cover = mediaUrl(store.cover_key);
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className="s-look min-h-screen flex flex-col"
       style={{
-        background: "var(--s-bg)",
+        // הרקע שהמוכרת בחרה (lib/looks.ts). בלי בחירה — הרקע השטוח של הערכה.
+        background: storeBackground(themeOrDefault(store.theme), store.bg_pattern, mediaUrl(store.bg_key ?? null)),
         color: "var(--s-ink)",
         fontFamily: "var(--s-font)",
       }}
@@ -484,7 +489,7 @@ export default function StoreView({
           {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
         </div>
         <div
-          className="absolute -bottom-8 right-1/2 translate-x-1/2 w-18 h-18 flex items-center justify-center text-3xl overflow-hidden"
+          className="s-r absolute -bottom-8 right-1/2 translate-x-1/2 w-18 h-18 flex items-center justify-center text-3xl overflow-hidden"
           style={{
             background: "var(--s-surface)",
             border: "var(--s-border)" as string,
@@ -522,7 +527,7 @@ export default function StoreView({
             <>
               <span aria-hidden>·</span>
               <span>
-                משלוח{typeof store.shipping_price === "number" ? ` ₪${store.shipping_price}` : ""}
+                משלוח{typeof store.shipping_price === "number" ? ` ₪${formatPrice(store.shipping_price)}` : ""}
               </span>
             </>
           )}
@@ -530,11 +535,11 @@ export default function StoreView({
 
         {store.ships && store.shipping_note && (
           <div
-            className="mt-3 mx-auto max-w-sm border-[1.5px] px-3 py-2 text-[12px] leading-relaxed text-start"
+            className="s-r mt-3 mx-auto max-w-sm border-[1.5px] px-3 py-2 text-[12px] leading-relaxed text-start"
             style={{ borderColor: "currentColor", opacity: 0.75 }}
           >
             <b>משלוחים:</b> {store.shipping_note}
-            {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
+            {typeof store.shipping_price === "number" && ` · ₪${formatPrice(store.shipping_price)}`}
           </div>
         )}
       </div>
@@ -551,7 +556,7 @@ export default function StoreView({
         <div className="px-3 pb-4">
           <div
             data-testid="store-promo"
-            className="mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"
+            className="s-r mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"
             style={{ background: "var(--s-surface)", borderColor: "var(--s-primary)" }}
           >
             <div className="text-[12px] font-bold tracking-wide" style={{ color: "var(--s-primary)" }}>
@@ -605,7 +610,7 @@ export default function StoreView({
                 // וכפתור בתוך כפתור אינו HTML תקין ומתנהג שונה בין דפדפנים
                 <div
                   key={p.id}
-                  className={`text-right overflow-hidden relative flex flex-col ${out ? "opacity-45 pointer-events-none" : ""}`}
+                  className={`s-r text-right overflow-hidden relative flex flex-col ${out ? "opacity-45 pointer-events-none" : ""}`}
                   style={{
                     background: "var(--s-surface)",
                     border: "var(--s-border)" as string,
@@ -637,7 +642,10 @@ export default function StoreView({
                       // הרקע לבן והצבע יושב על הטקסט ועל הקו — קריא על כל תמונה.
                       return (
                         <span
-                          className="absolute top-0 right-0 z-10 bg-white text-[11px] font-semibold px-1.5 py-0.5 border-b border-r-0 border-t-0 border-l"
+                          className={`absolute z-10 bg-white text-[11px] font-semibold px-1.5 py-0.5 ${
+                            // בסגנון עגול הפינה נחתכת — אז השבב זז פנימה והופך לגלולה
+                            roundedLook ? "top-2 right-2 border s-r" : "top-0 right-0 border-b border-r-0 border-t-0 border-l"
+                          }`}
                           style={{ color: b.bg, borderColor: b.bg }}
                         >
                           <Icon name={b.icon} size={12} tone="none" className="inline-block align-[-1px] ms-0.5" />{" "}
@@ -664,7 +672,7 @@ export default function StoreView({
                       <div className="text-[12px] opacity-60 truncate">{p.description}</div>
                     )}
                     <div className="text-[17px] font-bold mt-1" style={{ color: "var(--s-primary)" }}>
-                      ₪{p.price}
+                      ₪{formatPrice(p.price)}
                     </div>
                   </div>
                 </button>
@@ -707,13 +715,13 @@ export default function StoreView({
       <div
         data-testid="cart-bar"
         role="button"
-        className={`fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-4 pb-5 cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
+        className={`s-sheet fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-4 pb-5 cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
         style={{ background: "var(--s-primary)", color: "var(--s-onprimary)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)" }}
         onClick={() => cartCount && setOrderOpen(true)}
       >
-        <span className="text-sm">{cartCount} פריטים · ₪{cartTotal}</span>
+        <span className="text-sm">{cartCount} פריטים · ₪{formatPrice(cartTotal)}</span>
         <span
-          className="px-4 py-1.5 text-[13px] font-bold"
+          className="s-r px-4 py-1.5 text-[13px] font-bold"
           style={{ background: "var(--s-onprimary)", color: "var(--s-primary)" }}
         >
           הזמנה
@@ -734,7 +742,7 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-5 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-5 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
           style={{
             background: "var(--s-surface)",
             color: "var(--s-ink)",
@@ -748,7 +756,7 @@ export default function StoreView({
           <div className="w-9 h-1 bg-current opacity-15 mx-auto -mb-1" />
           <div>
             <div
-              className="h-52 flex items-center justify-center text-6xl overflow-hidden"
+              className="s-r h-52 flex items-center justify-center text-6xl overflow-hidden"
               style={{ background: "var(--s-thumb)" }}
             >
               {mediaUrl(current.video_key) ? (
@@ -769,7 +777,7 @@ export default function StoreView({
               <p className="text-[13px] opacity-70 text-center mt-1 leading-relaxed">{current.description}</p>
             )}
             <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary)" }}>
-              ₪{current.price}
+              ₪{formatPrice(current.price)}
             </p>
             {current.track_stock && current.stock <= 3 && (
               <p className="text-[12px] opacity-60 text-center mt-1">נשארו {current.stock} במלאי</p>
@@ -903,7 +911,7 @@ export default function StoreView({
       )}
       {orderOpen && (
         <div
-          className="fixed bottom-0 inset-x-0 z-50 max-h-[92%] flex flex-col"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 max-h-[92%] flex flex-col"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           {/* אזור גלילה — הסיכום והכפתור יושבים קבועים מתחתיו */}
@@ -931,7 +939,7 @@ export default function StoreView({
                     {l.name}
                     {l.option ? ` (${l.option})` : ""}
                   </div>
-                  <div className="opacity-50 text-[12px] mt-0.5">₪{l.price} ליחידה</div>
+                  <div className="opacity-50 text-[12px] mt-0.5">₪{formatPrice(l.price)} ליחידה</div>
                 </div>
 
                 <div className="flex items-center border-[1.5px] border-black/10">
@@ -953,7 +961,7 @@ export default function StoreView({
                   </button>
                 </div>
 
-                <span className="w-12 text-left font-bold text-[13.5px]">₪{l.price * l.qty}</span>
+                <span className="w-12 text-left font-bold text-[13.5px]">₪{formatPrice(lineTotal(l.price, l.qty))}</span>
                 <button
                   onClick={() => setLineQty(l.id, l.option, 0)}
                   aria-label={`הסרה, ${l.name}`}
@@ -1006,7 +1014,7 @@ export default function StoreView({
               {wantsShipping && (
                 <p className="opacity-55 text-[12.5px] mt-2 leading-relaxed">
                   {store.shipping_note || "בתיאום"}
-                  {typeof store.shipping_price === "number" && ` · ₪${store.shipping_price}`}
+                  {typeof store.shipping_price === "number" && ` · ₪${formatPrice(store.shipping_price)}`}
                 </p>
               )}
               {/* משלוח אמיתי צריך יעד מפורק — מה שהשליח באמת שואל.
@@ -1222,7 +1230,7 @@ export default function StoreView({
           >
             <div className="flex justify-between items-baseline mb-2.5">
               <span className="text-[13.5px] font-bold">סה"כ לתשלום</span>
-              <span className="text-[19px] font-bold">₪{cartTotal}</span>
+              <span className="text-[19px] font-bold">₪{formatPrice(cartTotal)}</span>
             </div>
             <button
               onClick={sendOrder}
@@ -1256,7 +1264,7 @@ export default function StoreView({
       {confirmed?.payFirst && (payTarget || confirmed.waPayUrl) && (
         <div
           data-testid="order-pay-first"
-          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <div className="text-4xl mb-2" aria-hidden>💳</div>
@@ -1264,7 +1272,7 @@ export default function StoreView({
           <p className="text-[13px] opacity-75 mt-1 leading-relaxed">
             ההזמנה שלך (#{confirmed.orderNumber}) שמורה אצל המוכרת.
             <br />
-            משלמים ₪{confirmed.total} וסוגרים עניין:
+            משלמים ₪{formatPrice(confirmed.total)} וסוגרים עניין:
           </p>
           {!payTarget && confirmed.waPayUrl ? (
             <a
@@ -1285,7 +1293,7 @@ export default function StoreView({
               className="mt-4 block py-3.5 text-[15px] font-bold"
               style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             >
-              {payTarget.label} · ₪{confirmed.total} ←
+              {payTarget.label} · ₪{formatPrice(confirmed.total)} ←
             </a>
           ) : payTarget ? (
             <div className="mt-4">
@@ -1313,7 +1321,7 @@ export default function StoreView({
               </button>
               <p className="text-[12px] opacity-60 mt-2 leading-relaxed">
                 פותחים את {payTarget.method === "bit" ? "ביט" : "פייבוקס"} → העברה →
-                מדביקים את המספר → ₪{confirmed.total}
+                מדביקים את המספר → ₪{formatPrice(confirmed.total)}
               </p>
             </div>
           ) : null}
@@ -1338,13 +1346,13 @@ export default function StoreView({
       {confirmed && !confirmed.payFirst && (
         <div
           data-testid="order-confirmed"
-          className="fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <div className="text-4xl mb-2" aria-hidden>🎉</div>
           <h2 className="text-lg font-bold">ההזמנה נשלחה!</h2>
           <p className="text-[13.5px] opacity-75 mt-1">
-            הזמנה #{confirmed.orderNumber} · ₪{confirmed.total}
+            הזמנה #{confirmed.orderNumber} · ₪{formatPrice(confirmed.total)}
           </p>
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
             המוכרת קיבלה את כל הפרטים ותחזור אלייך לטלפון שהשארת.
@@ -1357,7 +1365,7 @@ export default function StoreView({
               className="mt-4 block py-3 text-[14px] font-bold"
               style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             >
-              {payTarget.label} · ₪{confirmed.total} ←
+              {payTarget.label} · ₪{formatPrice(confirmed.total)} ←
             </a>
           )}
           {payTarget?.kind === "phone" && (

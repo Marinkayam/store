@@ -9,7 +9,9 @@ import { uploadBlob } from "@/lib/upload-client";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { deliveryLine, isBitLink, isPayboxLink, isPayPhone, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
+import { ALL_LOOK_FONTS_HREF, LOOKS, LOOK_KEYS, PATTERNS, PATTERN_KEYS, isLookKey, isPatternKey, lookOrBase, patternCss, storeBackground, type LookKey } from "@/lib/looks";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
+import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -21,6 +23,12 @@ export default function SettingsPage() {
   const [tagline, setTagline] = useState("");
   const [emoji, setEmoji] = useState("🦄");
   const [theme, setTheme] = useState<ThemeKey>("cloud");
+  /* סגנון ורקע (0050). null = בסיס. התמונה עצמה נשמרת מיד בהעלאה,
+     הבחירה ביניהם עוברת דרך "שמירת שינויים" כמו הערכה. */
+  const [look, setLook] = useState<LookKey | null>(null);
+  const [bgPattern, setBgPattern] = useState<string | null>(null);
+  const [bgPreview, setBgPreview] = useState<string | null>(null);
+  const bgRef = useRef<HTMLInputElement>(null);
   const [phone, setPhone] = useState("");
   // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה
   const [info, setInfo] = useState({
@@ -67,6 +75,9 @@ export default function SettingsPage() {
     setTagline([store.tagline, store.about].filter(Boolean).join(" ").trim().slice(0, 140));
     setEmoji(store.emoji);
     setTheme(store.theme);
+    setLook(isLookKey(store.look) ? store.look : null);
+    setBgPattern(isPatternKey(store.bg_pattern) || (store.bg_pattern === "photo" && store.bg_key) ? store.bg_pattern! : null);
+    setBgPreview(mediaUrl(store.bg_key ?? null));
     setPhone(displayPhone(store.contact_phone));
     setCoverPreview(mediaUrl(store.cover_key));
     setPreset(store.cover_preset ?? null);
@@ -126,6 +137,7 @@ export default function SettingsPage() {
     }).catch(() => {});
 
   const t = themeOrDefault(theme);
+  const lk = lookOrBase(look);
 
   async function save() {
     if (!store) return;
@@ -160,6 +172,8 @@ export default function SettingsPage() {
       tagline: tagline.trim() || null,
       emoji,
       theme,
+      look,
+      bg_pattern: bgPattern,
       contact_phone: normalized,
       payout_bit: payout.payout_bit,
       payout_paybox: payout.payout_paybox,
@@ -178,7 +192,7 @@ export default function SettingsPage() {
       age: info.age !== "" && Number(info.age) >= 5 && Number(info.age) <= 18 ? Number(info.age) : null,
       ships: info.ships,
       shipping_note: info.ships ? info.shipping_note.trim() || null : null,
-      shipping_price: info.ships && info.shipping_price !== "" ? Math.max(0, Math.min(200, Math.round(Number(info.shipping_price) || 0))) : null,
+      shipping_price: info.ships && info.shipping_price !== "" ? Math.min(200, parsePrice(info.shipping_price) ?? 0) : null,
       promo_on: promo.promo_on,
       promo_title: promo.promo_title.trim().slice(0, 40) || null,
       promo_text: promo.promo_text.trim().slice(0, 180) || null,
@@ -265,6 +279,44 @@ export default function SettingsPage() {
     setStore({ ...store, cover_key: null });
     refreshStorePage(store.slug);
     showToast("התמונה הוסרה, חזרנו לרקע");
+  }
+
+  /** תמונת רקע לכל הדף. עוברת בקנבס כמו כל תמונה (EXIF), ונשמרת מיד. */
+  async function onBackground(file: File) {
+    if (!store) return;
+    let blob: Blob;
+    try {
+      blob = await squareImage(file, 1200);
+    } catch (e) {
+      showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      return;
+    }
+    const r = await uploadBlob("background", blob, store.id);
+    if ("error" in r) {
+      showToast(r.error);
+      return;
+    }
+    const { error } = await supabaseBrowser()
+      .from("stores")
+      .update({ bg_key: r.key, bg_pattern: "photo" })
+      .eq("id", store.id);
+    if (error) {
+      showToast("השמירה נכשלה, לנסות שוב");
+      return;
+    }
+    setBgPreview(URL.createObjectURL(blob));
+    setBgPattern("photo");
+    setStore({ ...store, bg_key: r.key, bg_pattern: "photo" });
+    refreshStorePage(store.slug);
+    showToast("תמונת הרקע עודכנה");
+  }
+
+  /** בסיס = בלי סגנון ובלי רקע. הצבעים נשארים — הם בחירה נפרדת. */
+  function resetDesign() {
+    setLook(null);
+    setBgPattern(null);
+    setDirty(true);
+    showToast("חזרנו לבסיס — לשמור כדי שזה יופיע בדוכן");
   }
 
   async function onAvatar(file: File) {
@@ -418,7 +470,7 @@ export default function SettingsPage() {
           <div
             id="identity"
             className="scroll-mt-14 overflow-hidden border border-[var(--line)]"
-            style={{ background: t.bg, color: t.ink, fontFamily: t.font }}
+            style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
           >
             {/* קאבר */}
             <button
@@ -445,7 +497,7 @@ export default function SettingsPage() {
                 >
                   <span
                     className="flex w-full h-full items-center justify-center text-3xl overflow-hidden"
-                    style={{ background: t.surface, border: `2px solid ${t.bg}` }}
+                    style={{ background: t.surface, border: `2px solid ${t.bg}`, borderRadius: lk.radius }}
                   >
                     {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
                   </span>
@@ -516,7 +568,7 @@ export default function SettingsPage() {
                     <span aria-hidden>·</span>
                     <span>
                       🚚 משלוח
-                      {info.shipping_price !== "" ? ` ₪${info.shipping_price}` : " בתיאום"}
+                      {info.shipping_price !== "" ? ` ₪${formatPrice(parsePrice(info.shipping_price))}` : " בתיאום"}
                     </span>
                   </>
                 )}
@@ -526,7 +578,8 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-2 mt-3">
                 {(products.length ? products : [null]).map((p, i) =>
                   p ? (
-                    <div key={p.id} style={{ background: t.surface, border: `1px solid ${t.border}` }}>
+                    <div key={p.id} className="overflow-hidden"
+                      style={{ background: t.surface, border: lk.border(t), borderRadius: lk.radius, boxShadow: lk.shadow(t) }}>
                       <div className="h-20 flex items-center justify-center text-2xl overflow-hidden opacity-90">
                         {mediaUrl(p.poster_key) ?? mediaUrl(p.image_key) ? (
                           <img src={(mediaUrl(p.poster_key) ?? mediaUrl(p.image_key))!} alt="" className="w-full h-full object-cover" />
@@ -537,9 +590,9 @@ export default function SettingsPage() {
                       <div className="px-2 pb-2">
                         <div className="text-[12.5px] truncate">{p.name}</div>
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-[12px] font-bold">₪{p.price}</span>
+                          <span className="text-[12px] font-bold">₪{formatPrice(p.price)}</span>
                           <span className="px-2 py-1 text-[11px] font-bold"
-                            style={{ background: t.primary, color: t.onPrimary }}>
+                            style={{ background: t.primary, color: t.onPrimary, borderRadius: lk.radius }}>
                             לסל
                           </span>
                         </div>
@@ -601,34 +654,145 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div id="design" className="scroll-mt-14">
-          <span className="text-[12px] text-[var(--muted)]">ערכת נושא</span>
-          <p className="text-[12px] text-[var(--faint)] mt-0.5">כל ערכה משנה את צבעי החנות. לוחצים ורואים למעלה בתצוגה המקדימה.</p>
-          <div className="grid grid-cols-3 gap-1.5 mt-1.5">
-            {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, th]) => (
-              /* כל ערכה היא כרטיס מוצר קטן ולא ריבועי צבע מופשטים: ככה רואים
-                 מראש איך כפתור "הוספה לסל" ייראה בפועל, וזה מה שבאמת משתנה */
-              <button key={k} onClick={() => { setTheme(k); setDirty(true); }}
-                aria-label={`ערכת ${th.label}`}
-                aria-pressed={theme === k}
-                className={`border-[1.5px] p-1.5 text-right ${theme === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
-                style={{ background: th.bg }}
+        {/* ── עיצוב הדוכן ──
+            שלוש בחירות עצמאיות, בסדר שבו ילדה חושבת עליהן: קודם צבע, אחר
+            כך צורה, ובסוף מה מאחורה. כל לחיצה משנה מיד את הדוכן שלמעלה,
+            ו"חזרה לבסיס" מחזירה צורה ורקע בלי לגעת בצבעים שבחרה. */}
+        <div id="design" className="scroll-mt-14 flex flex-col gap-4">
+          {/* הגופנים של כל הסגנונות — כדי שהאריחים והתצוגה יראו אותם באמת */}
+          <link rel="stylesheet" href={ALL_LOOK_FONTS_HREF} precedence="default" />
+
+          <div className="flex items-baseline justify-between gap-2">
+            <div>
+              <div className="text-[13px] font-bold">🎨 עיצוב הדוכן</div>
+              <p className="text-[12px] text-[var(--faint)] mt-0.5">לוחצים ורואים למעלה איך הדוכן משתנה.</p>
+            </div>
+            {(look || bgPattern) && (
+              <button
+                onClick={resetDesign}
+                data-testid="reset-design"
+                className="shrink-0 text-[12px] font-semibold underline text-[var(--muted)] min-h-11 px-1"
               >
-                <div className="p-1" style={{ border: `1px solid ${th.border}`, background: th.surface }}>
-                  <div className="h-6 flex items-center justify-center text-[13px] opacity-70">🧁</div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-[8.5px] font-bold" style={{ color: th.ink }}>₪15</span>
-                    <span className="px-1.5 py-[3px] text-[8px] font-bold"
-                      style={{ background: th.primary, color: th.onPrimary }}>
-                      לסל
-                    </span>
-                  </div>
-                </div>
-                <span className="block text-[12px] font-medium mt-1.5" style={{ color: th.ink }}>
-                  {th.label}
-                </span>
+                ↺ חזרה לבסיס
               </button>
-            ))}
+            )}
+          </div>
+
+          <div>
+            <span className="text-[12px] font-semibold">1. צבעים</span>
+            <div className="grid grid-cols-3 gap-1.5 mt-1.5">
+              {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, th]) => (
+                /* כל ערכה היא כרטיס מוצר קטן ולא ריבועי צבע מופשטים: ככה רואים
+                   מראש איך כפתור "הוספה לסל" ייראה בפועל, וזה מה שבאמת משתנה */
+                <button key={k} onClick={() => { setTheme(k); setDirty(true); }}
+                  aria-label={`ערכת ${th.label}`}
+                  aria-pressed={theme === k}
+                  className={`border-[1.5px] p-1.5 text-right ${theme === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                  style={{ background: th.bg }}
+                >
+                  <div className="p-1" style={{ border: th.border, background: th.surface, borderRadius: lk.radius }}>
+                    <div className="h-6 flex items-center justify-center text-[13px] opacity-70">🧁</div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[8.5px] font-bold" style={{ color: th.ink }}>₪15</span>
+                      <span className="px-1.5 py-[3px] text-[8px] font-bold"
+                        style={{ background: th.primary, color: th.onPrimary, borderRadius: lk.radius }}>
+                        לסל
+                      </span>
+                    </div>
+                  </div>
+                  <span className="block text-[12px] font-medium mt-1.5" style={{ color: th.ink }}>
+                    {th.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="text-[12px] font-semibold">2. סגנון</span>
+            <span className="text-[12px] text-[var(--faint)]"> · הצורה של הכרטיסים, הכפתורים והכתב</span>
+            <div className="grid grid-cols-3 gap-1.5 mt-1.5" data-testid="look-picker">
+              {([null, ...LOOK_KEYS] as (LookKey | null)[]).map((k) => {
+                const l = lookOrBase(k);
+                const on = look === k;
+                return (
+                  <button key={k ?? "base"} onClick={() => { setLook(k); setDirty(true); }}
+                    aria-label={`סגנון ${l.label}`}
+                    aria-pressed={on}
+                    className={`border-[1.5px] p-1.5 text-right min-h-11 ${on ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                    style={{ background: t.bg, fontFamily: l.font }}
+                  >
+                    <div className="p-1 overflow-hidden"
+                      style={{ border: l.border(t), background: t.surface, borderRadius: l.radius, boxShadow: l.shadow(t) }}>
+                      <div className="h-6 flex items-center justify-center text-[13px] opacity-70">🧸</div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[8.5px] font-bold" style={{ color: t.ink }}>₪15</span>
+                        <span className="px-1.5 py-[3px] text-[8px] font-bold"
+                          style={{ background: t.primary, color: t.onPrimary, borderRadius: l.radius }}>
+                          לסל
+                        </span>
+                      </div>
+                    </div>
+                    <span className="block text-[12.5px] font-bold mt-1.5" style={{ color: t.ink }}>{l.label}</span>
+                    <span className="block text-[10.5px] leading-tight opacity-60" style={{ color: t.ink }}>{l.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <span className="text-[12px] font-semibold">3. רקע</span>
+            <span className="text-[12px] text-[var(--faint)]"> · מה שמאחורי המוצרים</span>
+            <input ref={bgRef} type="file" accept="image/*" hidden
+              onChange={(e) => { if (e.target.files?.[0]) onBackground(e.target.files[0]); e.target.value = ""; }} />
+            <div className="grid grid-cols-4 gap-1.5 mt-1.5" data-testid="bg-picker">
+              {/* בלי רקע */}
+              <button onClick={() => { setBgPattern(null); setDirty(true); }}
+                aria-label="בלי רקע"
+                aria-pressed={bgPattern === null}
+                className={`h-16 border-2 flex items-end justify-center pb-1 ${bgPattern === null ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                style={{ background: t.bg }}
+              >
+                <span className="text-[11px] font-semibold bg-white/85 px-1.5" style={{ color: t.ink }}>בלי</span>
+              </button>
+              {PATTERN_KEYS.map((k) => (
+                <button key={k} onClick={() => { setBgPattern(k); setDirty(true); }}
+                  aria-label={`רקע ${PATTERNS[k].label}`}
+                  aria-pressed={bgPattern === k}
+                  className={`h-16 border-2 flex items-end justify-center pb-1 ${bgPattern === k ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                  style={{ background: patternCss(k, t) }}
+                >
+                  <span className="text-[11px] font-semibold bg-white/85 px-1.5" style={{ color: t.ink }}>
+                    {PATTERNS[k].label}
+                  </span>
+                </button>
+              ))}
+              {/* תמונה משלה. כשכבר יש — לחיצה בוחרת בה; "החלפה" מעלה חדשה */}
+              <button
+                onClick={() => {
+                  if (bgPreview && bgPattern !== "photo") { setBgPattern("photo"); setDirty(true); }
+                  else bgRef.current?.click();
+                }}
+                aria-label={bgPreview ? "רקע תמונה שלי" : "העלאת תמונת רקע"}
+                aria-pressed={bgPattern === "photo"}
+                className={`h-16 border-2 flex flex-col items-center justify-center gap-0.5 overflow-hidden relative ${bgPattern === "photo" ? "border-[var(--ink)]" : "border-dashed border-[var(--line)] bg-white"}`}
+              >
+                {bgPreview ? (
+                  <>
+                    <img src={bgPreview} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    <span className="relative text-[11px] font-semibold bg-white/85 px-1.5 mt-auto mb-1" style={{ color: t.ink }}>
+                      {bgPattern === "photo" ? "החלפה" : "התמונה שלי"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg" aria-hidden>📷</span>
+                    <span className="text-[11px] font-semibold text-[var(--muted)]">תמונה שלי</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -729,10 +893,10 @@ export default function SettingsPage() {
               <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">מחיר משלוח (₪)</label>
               <input
                 value={info.shipping_price}
-                onChange={(e) => { setInfo({ ...info, shipping_price: e.target.value.replace(/\D/g, "") }); setDirty(true); }}
-                inputMode="numeric"
-                placeholder="למשל: 15"
-                maxLength={3}
+                onChange={(e) => { setInfo({ ...info, shipping_price: typedPrice(e.target.value, 3) }); setDirty(true); }}
+                inputMode="decimal"
+                placeholder="למשל: 15 או 12.90"
+                maxLength={6}
                 aria-label="מחיר משלוח"
                 className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
               />

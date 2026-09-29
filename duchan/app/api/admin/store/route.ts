@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { parsePrice } from "@/lib/money";
 
 // GET ?id= — תיק חנות מלא: כל המוצרים (כולל מחוקים — כלום לא נמחק באמת),
 // הזמנות אחרונות, כניסות לפי יום.
@@ -94,7 +95,7 @@ export async function PATCH(req: NextRequest) {
       patch = {};
       if (typeof body.name === "string" && body.name.trim()) patch.name = body.name.trim().slice(0, 40);
       if (typeof body.description === "string") patch.description = body.description.trim().slice(0, 120) || null;
-      if (Number.isFinite(body.price)) patch.price = Math.max(0, Math.floor(body.price as number));
+      if (Number.isFinite(body.price)) patch.price = parsePrice(body.price as number) ?? 0;
       if (Number.isFinite(body.stock)) patch.stock = Math.max(0, Math.floor(body.stock as number));
       if (typeof body.trackStock === "boolean") patch.track_stock = body.trackStock;
       if (Object.keys(patch).length === 0) {

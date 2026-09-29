@@ -228,7 +228,7 @@ await admin.fill("input[aria-label='מלאי']", "9");
 await admin.locator("button:text-is('שמירה')").last().click();
 await admin.waitForTimeout(1800);
 const { rows: [edited] } = await db.query("select price, stock from products where id=$1", [bracelet.id]);
-check("admin edits price and stock", edited.price === 44 && edited.stock === 9, `₪${edited.price} · ${edited.stock}`);
+check("admin edits price and stock", Number(edited.price) === 44 && edited.stock === 9, `₪${edited.price} · ${edited.stock}`);
 
 // מחיקה — רכה בלבד. השורה נשארת.
 await rowBtn("הוצאה מהחנות").click();

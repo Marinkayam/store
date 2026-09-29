@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const { kind, contentType, bytes, storeId } = body;
   if (
-    !kind || !["image", "video", "poster", "cover", "avatar", "squish", "squish-video", "squish-poster"].includes(kind) ||
+    !kind || !["image", "video", "poster", "cover", "avatar", "background", "squish", "squish-video", "squish-poster"].includes(kind) ||
     !contentType || !(contentType in EXT) ||
     !bytes || bytes <= 0 || bytes > QUOTAS.maxUploadBytes
   ) {
@@ -161,7 +161,10 @@ export async function POST(req: NextRequest) {
       ? `${store.id}/cover.${EXT[contentType]}`
       : kind === "avatar"
         ? `${store.id}/avatar.${EXT[contentType]}`
-        : `${store.id}/products/${randomUUID()}.${EXT[contentType]}`;
+        : kind === "background"
+          // מפתח חדש בכל העלאה: תמונה שהוחלפה לא תוצג מהמטמון של ה-CDN
+          ? `${store.id}/bg/${randomUUID()}.${EXT[contentType]}`
+          : `${store.id}/products/${randomUUID()}.${EXT[contentType]}`;
 
   const url = await presignedUpload(key, contentType, bytes);
 

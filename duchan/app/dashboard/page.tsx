@@ -7,6 +7,7 @@ import { useStore, confettiBurst } from "./use-store";
 import WhatsNew from "./whats-new";
 import InstallCard from "../install-card";
 import type { Order } from "@/lib/types";
+import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
 // "שולם" מנכה מלאי (בפונקציית DB אטומית). "נמסר" מקבל קונפטי — המיקרו-אינטראקציה היחידה.
@@ -185,7 +186,7 @@ export default function OrdersPage() {
 
   // "הקופה שלי" — בתוך גבולות האפיון: ספירת הזמנות וסכומים, לא אנליטיקס
   const sold = orders.filter((o) => o.status === "paid" || o.status === "delivered");
-  const revenue = sold.reduce((s, o) => s + o.total, 0);
+  const revenue = sumPrices(sold.map((o) => o.total));
   const topProduct = (() => {
     const counts = new Map<string, number>();
     sold.forEach((o) => o.items.forEach((it) => counts.set(it.name, (counts.get(it.name) ?? 0) + it.qty)));
@@ -277,7 +278,7 @@ export default function OrdersPage() {
         <div className="mx-3 mt-3 bg-white border border-[var(--line)] p-3 flex items-center gap-3">
           <span className="text-2xl">💰</span>
           <div className="flex-1">
-            <div className="text-sm font-bold">₪{revenue} בקופה</div>
+            <div className="text-sm font-bold">₪{formatPrice(revenue)} בקופה</div>
             <div className="text-[12px] text-[var(--muted)]">
               {sold.length} הזמנות ששולמו{topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
             </div>
@@ -408,7 +409,7 @@ export default function OrdersPage() {
             </div>
             {o.items.map((it, i) => (
               <div key={i} className="text-[13px] py-px">
-                • {it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{it.qty * it.price}
+                • {it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{formatPrice(lineTotal(it.price, it.qty))}
               </div>
             ))}
             {o.buyer_note && (
@@ -433,7 +434,7 @@ export default function OrdersPage() {
                         ההזמנה והסכום, במקום "היי" ריק ומבוכה. */}
                     <a
                       href={`https://wa.me/${o.buyer_phone}?text=${encodeURIComponent(
-                        `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! קיבלתי את ההזמנה שלך (#${o.order_number} · ₪${o.total}) 💜 בואי נסגור את התשלום — איך נוח לך?`
+                        `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! קיבלתי את ההזמנה שלך (#${o.order_number} · ₪${formatPrice(o.total)}) 💜 בואי נסגור את התשלום — איך נוח לך?`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -543,7 +544,7 @@ export default function OrdersPage() {
 
             <div className="flex justify-between text-xs font-medium border-t border-[var(--line)] mt-2 pt-2">
               <span>סה"כ</span>
-              <span>₪{o.total}</span>
+              <span>₪{formatPrice(o.total)}</span>
             </div>
             {o.status === "sent" && (
               <div className="flex gap-1.5 mt-2">

@@ -377,3 +377,18 @@ h3 {
 }
 .squish-reveal { animation: squish-reveal 0.26s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .squish-reveal { animation: none; } }
+
+/* ── סגנון הדוכן (lib/looks.ts) ──
+   הרדיוס מגיע מ-lookCssVars על שורש דף החנות. בבסיס הוא 0px, כך שדוכן
+   שלא בחר סגנון נראה בדיוק כמו קודם. עיגול שהוגדר inline (כמו עיגול
+   הסימון בבחירת צבע) גובר על הכלל הזה, וזה מכוון. */
+.s-look button,
+.s-look input,
+.s-look textarea,
+.s-look .s-r {
+  border-radius: var(--s-radius, 0px);
+}
+.s-look .s-sheet {
+  border-top-left-radius: var(--s-radius, 0px);
+  border-top-right-radius: var(--s-radius, 0px);
+}

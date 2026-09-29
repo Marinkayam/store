@@ -8,6 +8,7 @@ import { uploadBlob } from "@/lib/upload-client";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "../phone-verify";
 import HelpButton from "../help-button";
+import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 
 // ארבעה מסכים: שם → עיצוב הדוכן → פרטים ואישור → טלפון.
 //
@@ -211,7 +212,7 @@ export default function Onboarding() {
           await supabaseBrowser().from("products").insert({
             store_id: data.storeId,
             name: pr.name.trim().slice(0, 40) || "מוצר",
-            price: Math.max(0, Math.floor(Number(pr.price) || 0)),
+            price: parsePrice(pr.price) ?? 0,
             image_key: imageKey,
             stock: 1,
           });
@@ -351,7 +352,7 @@ export default function Onboarding() {
                     <div className="px-2 pb-2">
                       <div className="text-[12.5px] truncate">{pr.name || "מוצר"}</div>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-[12px] font-bold">₪{pr.price || 0}</span>
+                        <span className="text-[12px] font-bold">₪{formatPrice(parsePrice(pr.price) ?? 0)}</span>
                         <span className="px-2 py-1 text-[11px] font-bold"
                           style={{ background: th.primary, color: th.onPrimary }}>לסל</span>
                       </div>
@@ -393,10 +394,10 @@ export default function Onboarding() {
               />
               <input
                 value={adding.price}
-                inputMode="numeric"
+                inputMode="decimal"
                 aria-label="מחיר המוצר"
                 placeholder="מחיר בשקלים"
-                onChange={(e) => setAdding({ ...adding, price: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                onChange={(e) => setAdding({ ...adding, price: typedPrice(e.target.value, 4) })}
                 className="field w-full px-3 py-3 t-small"
               />
               {photoErr && <p className="t-small text-[var(--danger)]">{photoErr}</p>}

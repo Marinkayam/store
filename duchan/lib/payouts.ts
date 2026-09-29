@@ -1,3 +1,4 @@
+import { formatPrice } from "./money";
 /**
  * איך הקונה משלמת לילדה.
  *
@@ -181,7 +182,7 @@ export function deliveryLine(
 ): string {
   if (!opts.ships) return "";
   if (!opts.wantsShipping) return "בחרתי בשיטת מסירה: מסירה אישית";
-  const extra = [opts.note?.trim() || "בתיאום", opts.price ? `₪${opts.price}` : ""]
+  const extra = [opts.note?.trim() || "בתיאום", opts.price ? `₪${formatPrice(opts.price)}` : ""]
     .filter(Boolean)
     .join(" · ");
   return `בחרתי בשיטת מסירה: משלוח · ${extra}`;

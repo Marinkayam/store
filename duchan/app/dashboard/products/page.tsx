@@ -18,6 +18,7 @@ import { uploadBlob } from "@/lib/upload-client";
 import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
+import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -477,7 +478,7 @@ export default function ProductsPage() {
       const row: Record<string, unknown> = {
         name: edit.name.trim() || "מוצר",
         description: edit.description.trim() || null,
-        price: Math.max(0, Math.floor(Number(edit.price) || 0)),
+        price: parsePrice(edit.price) ?? 0,
         track_stock: edit.trackStock,
         option_label: optionValues.length ? (edit.optionKind === "size" ? "מידה" : "צבע") : null,
         options: optionValues.length ? optionValues : null,
@@ -749,7 +750,7 @@ export default function ProductsPage() {
                   <div className="text-[12px] text-[var(--muted)] truncate">{p.description}</div>
                 )}
                 <div className="flex gap-1.5 items-center mt-1 flex-wrap">
-                  <span className="text-[13px] font-medium">₪{p.price}</span>
+                  <span className="text-[13px] font-medium">₪{formatPrice(p.price)}</span>
                   {hidden && (
                     <span className="text-[11px] px-1.5 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
                   )}
@@ -903,8 +904,8 @@ export default function ProductsPage() {
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3" />
 
             <label className="block text-[12px] font-semibold mb-1.5">3. מחיר (₪)</label>
-            <input value={edit.price} type="number" inputMode="numeric" aria-label="מחיר" placeholder="למשל: 15"
-              onChange={(e) => setEdit((s) => s && { ...s, price: e.target.value })}
+            <input value={edit.price} type="text" inputMode="decimal" aria-label="מחיר" placeholder="למשל: 15 או 10.90"
+              onChange={(e) => setEdit((s) => s && { ...s, price: typedPrice(e.target.value) })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-4" />
 
             <p className="text-[12px] text-[var(--faint)] mb-2.5">
@@ -1161,7 +1162,7 @@ export default function ProductsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>
                     <div className="text-[12px] text-[var(--muted)]">
-                      נמחק ב-{new Date(p.deleted_at!).toLocaleDateString("he-IL")} · ₪{p.price}
+                      נמחק ב-{new Date(p.deleted_at!).toLocaleDateString("he-IL")} · ₪{formatPrice(p.price)}
                     </div>
                   </div>
                   <button

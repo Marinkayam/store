@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getPublicStore } from "@/lib/store-public";
 import { themeCssVars, themeOrDefault } from "@/lib/themes";
+import { lookCssVars, lookFontHref } from "@/lib/looks";
 import { ACTIVATION_PRICE, FULL_PRICE, IS_LAUNCH, LAUNCH_UNTIL_LABEL } from "@/lib/pricing";
 import StoreView from "./store-view";
 import Icon from "@/app/icons";
@@ -76,9 +77,12 @@ export default async function StorePage({ params }: Props) {
   }
 
   const theme = themeOrDefault(data.store.theme);
+  const fontHref = lookFontHref(data.store.look);
 
   return (
-    <div style={themeCssVars(theme) as React.CSSProperties}>
+    <div style={{ ...themeCssVars(theme), ...lookCssVars(theme, data.store.look) } as React.CSSProperties}>
+      {/* הגופן של הסגנון נטען רק כשיש סגנון שצריך אותו — React מעלה ל-head */}
+      {fontHref && <link rel="stylesheet" href={fontHref} precedence="default" />}
       <StoreView
         store={data.store}
         products={data.products}

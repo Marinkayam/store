@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
 import { safeOptionLabel } from "@/lib/product-options";
 import type { OrderItem } from "@/lib/types";
+import { lineTotal, sumPrices } from "@/lib/money";
 
 // POST /api/orders  { slug, items:[{productId, qty}], note?, buyerPhone? }
 // המספר של הילדה לא יושב ב-HTML — הוא מוחזר מכאן, רק אחרי שההזמנה נוצרה.
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   const byId = new Map((products ?? []).map((p) => [p.id, p]));
   const snapshot: OrderItem[] = [];
-  let total = 0;
+  const lines: number[] = [];
 
   for (const item of items) {
     const qty = Math.floor(Number(item.qty));
@@ -104,9 +105,12 @@ export async function POST(req: NextRequest) {
 
     // המזהה נשמר כדי שתגית "הכי נמכר" תוכל להיגזר מהזמנות אמיתיות.
     // השם לבדו נשבר ברגע שילדה משנה שם מוצר.
-    snapshot.push({ id: p.id, name: p.name, qty, price: p.price, ...(option ? { option } : {}) });
-    total += p.price * qty;
+    const price = Number(p.price);
+    snapshot.push({ id: p.id, name: p.name, qty, price, ...(option ? { option } : {}) });
+    lines.push(lineTotal(price, qty));
   }
+  // באגורות שלמות: 10.90 × 3 בנקודה צפה זה 32.699999…
+  const total = sumPrices(lines);
 
   // השם הוא מה שמאפשר לה לדעת מי הזמינה, ולכן הוא נדרש גם כאן ולא רק
   // בטופס — טופס אפשר לעקוף, את זה לא. הבדיקה יושבת אחרי אימות החנות

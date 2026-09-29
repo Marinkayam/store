@@ -63,6 +63,10 @@ export interface Store {
   payout_paybox_phone?: string | null;
   /** הקונה יכולה לסגור את התשלום בשיחת וואטסאפ (0048) */
   payout_whatsapp?: boolean | null;
+  /** סגנון ורקע (0050). null = בסיס. ראה lib/looks.ts */
+  look?: string | null;
+  bg_pattern?: string | null;
+  bg_key?: string | null;
   created_at: string;
 }
 
@@ -143,6 +147,9 @@ export interface PublicStore {
   payout_bit_phone?: string | null;
   payout_paybox_phone?: string | null;
   payout_whatsapp?: boolean | null;
+  look?: string | null;
+  bg_pattern?: string | null;
+  bg_key?: string | null;
   about: string | null;
   city: string | null;
   ships: boolean;

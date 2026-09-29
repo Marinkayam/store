@@ -63,7 +63,7 @@ const storeRow = seedStore;
 check("store created with random 5-char slug", slug?.length === 5, slug);
 check("phone normalized on save (050-123-4567 → 972501234567)",
   storeRow?.contact_phone === "972501234567", storeRow?.contact_phone);
-check("first product saved", prodRow?.name === "סקוויש חד-קרן" && prodRow?.price === 15);
+check("first product saved", prodRow?.name === "סקוויש חד-קרן" && Number(prodRow?.price) === 15);
 check("first product description saved",
   prodRow?.description === "רך, ורוד, ומתנפח לאט", prodRow?.description ?? "none");
 check("product image uploaded to storage", !!prodRow?.image_key, prodRow?.image_key ?? "none");
@@ -137,7 +137,7 @@ if (waUrl) {
   check("and the buyer's name, so she knows whose order it is", msg.includes("רוני"));
 }
 const orderRow = (await db.query("select * from orders where store_id=$1", [storeRow.id])).rows[0];
-check("order in DB: status sent, snapshot, total", orderRow?.status === "sent" && orderRow?.total === 30 && orderRow?.items[0].qty === 2);
+check("order in DB: status sent, snapshot, total", orderRow?.status === "sent" && Number(orderRow?.total) === 30 && orderRow?.items[0].qty === 2);
 check("stock NOT deducted on order creation", (await db.query("select stock from products where id=$1", [prodRow.id])).rows[0].stock === 4);
 
 /* ── שלב 4: הזמנות ללא תקרה יומית ──

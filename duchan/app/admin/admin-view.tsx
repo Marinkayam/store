@@ -10,6 +10,7 @@ import { milestones, reachedCount } from "@/lib/milestones";
 import { payoutSummary } from "@/lib/payouts";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { QUOTAS } from "@/lib/quotas";
+import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 
 /* ---------- types ---------- */
 
@@ -561,7 +562,7 @@ function SchemaWarning() {
               <Stat label="הכנסה מהפעלות" value={`₪${totals.paidTotal}`} sub={`${totals.live} חנויות ששולמו`} icon="🏦" />
               <Stat label="כניסות · 7 ימים" value={totals.views7d} sub={`${totals.viewsTotal} סה"כ`} icon="👀" />
               <Stat label="הזמנות חדשות" value={totals.newOrders} sub={`${totals.orders} סה"כ`} icon="🧾" />
-              <Stat label='מכירות ששולמו' value={`₪${totals.revenue}`} sub="בכל החנויות" icon="💰" />
+              <Stat label='מכירות ששולמו' value={`₪${formatPrice(totals.revenue)}`} sub="בכל החנויות" icon="💰" />
               <Stat label="מוצרים באוויר" value={totals.products} sub={`${totals.stores} חנויות`} icon="🛍️" />
             </div>
 
@@ -575,7 +576,7 @@ function SchemaWarning() {
                     className="w-full flex items-center gap-2.5 py-1.5 text-right">
                     <Avatar s={s} size={8} />
                     <span className="flex-1 text-[13px] font-medium truncate">{s.display_name}</span>
-                    <span className="text-[12px] text-[var(--muted)]">{s.views7d} כניסות · ₪{s.revenue}</span>
+                    <span className="text-[12px] text-[var(--muted)]">{s.views7d} כניסות · ₪{formatPrice(s.revenue)}</span>
                   </button>
                 ))}
               {stores.length === 0 && <p className="text-xs text-[var(--muted)] py-3">עוד אין חנויות.</p>}
@@ -631,7 +632,7 @@ function SchemaWarning() {
                         )}
                       </div>
                       <div className="text-[12px] text-[var(--muted)] mt-0.5">
-                        {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{s.revenue}
+                        {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{formatPrice(s.revenue)}
                         {s.ordersNew > 0 && <b className="text-[var(--warn-ink)]"> · {s.ordersNew} חדשות</b>}
                       </div>
                       <div className="text-[12px] text-[var(--muted)] mt-0.5">
@@ -695,7 +696,7 @@ function SchemaWarning() {
                             )}
                           </div>
                           <div className="text-[11px] truncate mt-0.5">{p.name}</div>
-                          <div className="text-[11px] font-bold">₪{p.price}</div>
+                          <div className="text-[11px] font-bold">₪{formatPrice(p.price)}</div>
                         </div>
                       );
                     })}
@@ -994,7 +995,7 @@ function SchemaWarning() {
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-medium truncate">{p.name}</div>
                         <div className="text-[11px] text-[var(--muted)]">
-                          ₪{p.price}
+                          ₪{formatPrice(p.price)}
                           {p.track_stock ? ` · מלאי ${p.stock}` : " · בלי מעקב"}
                           {p.is_visible === false && " · מוסתר"}
                           {p.deleted_at && ` · הוצא ${new Date(p.deleted_at).toLocaleDateString("he-IL")}`}
@@ -1041,8 +1042,8 @@ function SchemaWarning() {
                           onChange={(e) => setEditProduct((s) => s && { ...s, name: e.target.value })}
                           className="w-full border border-[var(--line)] px-2.5 py-2 text-[13px]" />
                         <div className="flex gap-1.5">
-                          <input value={editProduct.price} type="number" inputMode="numeric" aria-label="מחיר"
-                            onChange={(e) => setEditProduct((s) => s && { ...s, price: e.target.value })}
+                          <input value={editProduct.price} type="text" inputMode="decimal" aria-label="מחיר"
+                            onChange={(e) => setEditProduct((s) => s && { ...s, price: typedPrice(e.target.value) })}
                             className="flex-1 border border-[var(--line)] px-2.5 py-2 text-[13px]" />
                           <input value={editProduct.stock} type="number" inputMode="numeric" aria-label="מלאי"
                             onChange={(e) => setEditProduct((s) => s && { ...s, stock: e.target.value })}
@@ -1052,7 +1053,7 @@ function SchemaWarning() {
                           onClick={() =>
                             productAction(p.id, detail.store.id, "edit", {
                               name: editProduct.name,
-                              price: Number(editProduct.price),
+                              price: parsePrice(editProduct.price) ?? 0,
                               stock: Number(editProduct.stock),
                             })
                           }
@@ -1079,7 +1080,7 @@ function SchemaWarning() {
                   <span className="flex-1 truncate">
                     {o.items.map((i) => `${i.name}×${i.qty}`).join(", ")}
                   </span>
-                  <span className="font-medium">₪{o.total}</span>
+                  <span className="font-medium">₪{formatPrice(o.total)}</span>
                   <span className={`text-[11px] px-1.5 py-0.5 ${
                     o.status === "sent" ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]"
                     : o.status === "paid" ? "bg-[#E4F3E9] text-[var(--ok-ink)]"
