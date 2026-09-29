@@ -509,7 +509,7 @@ export default function StoreView({
           {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
         </div>
         <div
-          className="s-r absolute -bottom-8 right-1/2 translate-x-1/2 w-18 h-18 flex items-center justify-center text-3xl overflow-hidden"
+          className="s-r absolute z-10 -bottom-8 right-1/2 translate-x-1/2 w-18 h-18 flex items-center justify-center text-3xl overflow-hidden"
           style={{
             background: "var(--s-surface)",
             border: "var(--s-border)" as string,

@@ -687,8 +687,9 @@ export default function SettingsPage() {
             כך צורה, ובסוף מה מאחורה. כל לחיצה משנה מיד את הדוכן שלמעלה,
             ו"חזרה לבסיס" מחזירה צורה ורקע בלי לגעת בצבעים שבחרה. */}
         <div id="design" className="scroll-mt-14 flex flex-col gap-4">
-          {/* הגופנים של כל הסגנונות — כדי שהאריחים והתצוגה יראו אותם באמת */}
-          <link rel="stylesheet" href={ALL_LOOK_FONTS_HREF} precedence="default" />
+          {/* הגופנים של כל הסגנונות — כדי שהאריחים והתצוגה יראו אותם באמת.
+              בלי precedence: כשל טעינה צריך להיות שקט, לא שגיאת JS */}
+          <link rel="stylesheet" href={ALL_LOOK_FONTS_HREF} />
 
           <div className="flex items-baseline justify-between gap-2">
             <div>

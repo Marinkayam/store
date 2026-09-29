@@ -144,6 +144,13 @@ const plateBg = await b2.locator("[data-testid=store-header]").evaluate((el) => 
 check("על רקע, השם והתיאור יושבים על לוח קריא", /^rgba?\(255, 255, 255/.test(plateBg), plateBg);
 const credit = b2.locator("text=נבנתה בדוכן").locator("xpath=..");
 check("וגם הקרדיט בתחתית", /^rgba?\(255, 255, 255/.test(await credit.evaluate((el) => getComputedStyle(el).backgroundColor)));
+/* הלוח (עם טשטוש) יוצר שכבה משלו — בלי z על התמונה העגולה הוא מכסה את חציה */
+const avatarOnTop = await b2.evaluate(() => {
+  const h = document.querySelector("[data-testid=store-header]").getBoundingClientRect();
+  const el = document.elementFromPoint(window.innerWidth / 2, h.top + 6);
+  return !!el?.closest(".s-r.absolute");
+});
+check("תמונת הדוכן מעל הלוח, לא חצויה", avatarOnTop);
 await b2.screenshot({ path: "/tmp/looks-store-round-hearts.png" });
 
 // סגנון שני, לראות שהוא לא תקוע על הראשון

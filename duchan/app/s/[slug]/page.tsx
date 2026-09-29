@@ -81,8 +81,10 @@ export default async function StorePage({ params }: Props) {
 
   return (
     <div style={{ ...themeCssVars(theme), ...lookCssVars(theme, data.store.look) } as React.CSSProperties}>
-      {/* הגופן של הסגנון נטען רק כשיש סגנון שצריך אותו — React מעלה ל-head */}
-      {fontHref && <link rel="stylesheet" href={fontHref} precedence="default" />}
+      {/* הגופן של הסגנון נטען רק כשיש סגנון שצריך אותו. בלי precedence בכוונה:
+          איתו React ממתין לגיליון, ורשת שחוסמת את גוגל (בית ספר, סינון)
+          הופכת לשגיאת JS. בלעדיו — כשל שקט, והטקסט נופל ל-Heebo. */}
+      {fontHref && <link rel="stylesheet" href={fontHref} />}
       <StoreView
         store={data.store}
         products={data.products}
