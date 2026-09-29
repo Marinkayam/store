@@ -71,6 +71,9 @@ export interface Store {
   category_layout?: string | null;
   category_size?: string | null;
   category_meta?: unknown;
+  /** 0053: כותרת חלק המומלצים, והאם להציג מוצרים שאזלו (null = להסתיר) */
+  featured_title?: string | null;
+  show_sold_out?: boolean | null;
   created_at: string;
 }
 
@@ -91,6 +94,7 @@ export interface Product {
   category: string | null; // הישנה (0045) — נשמרת לתאימות
   categories?: string[] | null; // מוצר יכול לשבת בכמה קטגוריות (0046)
   badge: "rare" | "sale" | null; // תגית שהילדה בחרה. המחושבות נגזרות בקריאה.
+  featured?: boolean | null; // מופיע בחלק "המומלצים" בראש הדוכן (0053)
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
   created_at: string;
@@ -157,6 +161,8 @@ export interface PublicStore {
   category_layout?: string | null;
   category_size?: string | null;
   category_meta?: unknown;
+  featured_title?: string | null;
+  show_sold_out?: boolean | null;
   about: string | null;
   city: string | null;
   ships: boolean;
@@ -188,5 +194,6 @@ export interface PublicProduct {
   category: string | null;
   categories?: string[] | null;
   badge: "rare" | "sale" | null;
+  featured?: boolean | null;
   created_at: string; // דרוש לתגית "חדש"
 }

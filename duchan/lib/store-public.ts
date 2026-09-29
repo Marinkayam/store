@@ -42,11 +42,13 @@ const STORE_PREV = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payo
    ל-PREV ולא עד ל-BASE — אחרת עמודה חדשה אחת מעלימה את הקטגוריות,
    הלינקים לתשלום וכל השאר (וזה בדיוק מה שקרה עם 0047). */
 const STORE_LOOKS = `${STORE_PREV}, look, bg_pattern, bg_key`;
-const STORE_FULL = `${STORE_LOOKS}, category_layout, category_size, category_meta`;
+const STORE_CATS = `${STORE_LOOKS}, category_layout, category_size, category_meta`;
+const STORE_FULL = `${STORE_CATS}, featured_title, show_sold_out`;
 
 const PRODUCT_BASE =
   "id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, created_at";
-const PRODUCT_FULL = `${PRODUCT_BASE}, option_label, options, badge, category, categories`;
+const PRODUCT_PREV = `${PRODUCT_BASE}, option_label, options, badge, category, categories`;
+const PRODUCT_FULL = `${PRODUCT_PREV}, featured`;
 
 export const getPublicStore = cache(async (slug: string): Promise<PublicStoreResult> => {
   const db = supabaseAdmin();
@@ -57,7 +59,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
   // מהמלא לבסיס, שכבה אחרי שכבה: עמודה שעוד לא קיימת מורידה רק את מה
   // שנוסף אחריה, לא את כל מה שנוסף מאז ומעולם
   let store: unknown = null;
-  for (const cols of [STORE_FULL, STORE_LOOKS, STORE_PREV, STORE_BASE]) {
+  for (const cols of [STORE_FULL, STORE_CATS, STORE_LOOKS, STORE_PREV, STORE_BASE]) {
     const { data, error } = await readStore(cols);
     if (!error) {
       store = data;
@@ -87,10 +89,15 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
 
-  let { data: products, error: prodErr } = await readProducts(PRODUCT_FULL);
-  if (prodErr) {
-    console.error("[store] full product select failed, falling back:", prodErr.message);
-    ({ data: products } = await readProducts(PRODUCT_BASE));
+  // כמו החנות: שכבה-שכבה, כדי שעמודה חדשה שחסרה לא תמחק אפשרויות וקטגוריות
+  let products: unknown[] | null = null;
+  for (const cols of [PRODUCT_FULL, PRODUCT_PREV, PRODUCT_BASE]) {
+    const { data, error: prodErr } = await readProducts(cols);
+    if (!prodErr) {
+      products = data;
+      break;
+    }
+    console.error("[store] product select failed, falling back:", prodErr.message);
   }
 
   // "הכי נמכר" נגזר מהזמנות ששולמו בלבד — ראה ההסבר ב-lib/badges.ts
@@ -135,6 +142,8 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     category_layout: null,
     category_size: null,
     category_meta: null,
+    featured_title: null,
+    show_sold_out: null,
     ...rest,
   } as unknown as PublicStore;
 

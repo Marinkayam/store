@@ -172,23 +172,36 @@ export default function StoreView({
   const [category, setCategory] = useState<string | null>(null);
   const productCats = (p: PublicProduct): string[] =>
     p.categories?.length ? p.categories : p.category ? [p.category] : [];
+
+  /* מוצר שאזל יורד מהדוכן לבד, וחוזר כשמוסיפים מלאי — המוכרת לא צריכה
+     למחוק אותו. חנות שרוצה להציג אותם עם "אזל" מדליקה את זה בהגדרות. */
+  const visibleProducts = useMemo(
+    () => (store.show_sold_out ? products : products.filter((p) => !(p.track_stock && p.stock === 0))),
+    [products, store.show_sold_out]
+  );
+
   const categories = useMemo(() => {
-    const used = new Set(products.flatMap(productCats));
+    const used = new Set(visibleProducts.flatMap(productCats));
     return (store.categories ?? []).filter((c) => used.has(c));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store.categories, products]);
+  }, [store.categories, visibleProducts]);
 
   const sorted = useMemo(
     () =>
-      [...products]
+      [...visibleProducts]
         .filter((p) => !category || productCats(p).includes(category))
         .sort(
           (a, b) =>
             Number(a.track_stock && a.stock === 0) - Number(b.track_stock && b.stock === 0)
         ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [products, category]
+    [visibleProducts, category]
   );
+
+  /* "המומלצים" — חלק קבוע בראש הדוכן, לא קטגוריה ולא כפתור. מופיע כשאין
+     סינון; כשבוחרים קטגוריה רואים רק אותה. */
+  const featured = category ? [] : sorted.filter((p) => p.featured);
+  const rest = featured.length ? sorted.filter((p) => !p.featured) : sorted;
 
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
   const cartTotal = sumPrices(cart.map((l) => lineTotal(l.price, l.qty)));
@@ -423,6 +436,110 @@ export default function StoreView({
   const plate = customBg ? readablePlate(theme) : undefined;
   const cover = mediaUrl(store.cover_key);
 
+  /** כרטיס מוצר אחד ברשת. משותף לחלק המומלצים ולשאר המוצרים. */
+  const renderCard = (p: PublicProduct, i: number) => {
+              const out = p.track_stock && p.stock === 0;
+              const img = mediaUrl(p.image_key);
+              const vid = mediaUrl(p.video_key);
+              const poster = mediaUrl(p.poster_key);
+              const inCartQty = inCart(p.id);
+              return (
+                // div ולא button: בתוך הכרטיס יש כפתור הוספה מהירה משלו,
+                // וכפתור בתוך כפתור אינו HTML תקין ומתנהג שונה בין דפדפנים
+                <div
+                  key={p.id}
+                  // אזל: הכרטיס עצמו נשאר אטום ורק התוכן דוהה — כרטיס שקוף על
+                  // רקע של דוגמה או תמונה נראה כמו כתם
+                  className={`s-r text-right overflow-hidden relative flex flex-col ${out ? "pointer-events-none" : ""}`}
+                  style={{
+                    background: "var(--s-surface)",
+                    border: "var(--s-border)" as string,
+                    boxShadow: out ? "none" : ("var(--s-shadow)" as string),
+                  }}
+                >
+                <button
+                  onClick={() => !out && openProduct(p)}
+                  aria-label={p.name}
+                  className={`text-right transition active:translate-y-[1px] ${out ? "opacity-45" : ""}`}
+                >
+                  {out ? (
+                    // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
+                    <span className="absolute inset-x-0 top-1/4 z-10 bg-[var(--ink)]/78 text-white text-[13px] font-semibold text-center py-1.5 tracking-wide">
+                      אזל
+                    </span>
+                  ) : (
+                    (() => {
+                      // תגית אחת לכרטיס, לפי סדר עדיפות. שלוש תגיות ברשת של
+                      // שתי עמודות הופכות את כולן לרעש. הצבע קבוע לכל תגית
+                      // ולא נגזר מהערכה — "מבצע" חייב להיראות אותו דבר בכל
+                      // חנות, אחרת הוא מפסיק להיות שפה משותפת בין החנויות.
+                      const key = badgeFor(p, bestSellerId, sold);
+                      if (!key) return null;
+                      const b = BADGES[key];
+                      // שבב קטן בפינת התמונה, לא רצועה על כל הרוחב: ברשת של
+                      // שתי עמודות רצועה צבעונית מושכת יותר תשומת לב מהמוצר
+                      // עצמו, ושש רצועות זו ליד זו הופכות את הדף לרעש.
+                      // הרקע לבן והצבע יושב על הטקסט ועל הקו — קריא על כל תמונה.
+                      return (
+                        <span
+                          className={`absolute z-10 bg-white text-[11px] font-semibold px-1.5 py-0.5 ${
+                            // בסגנון עגול הפינה נחתכת — אז השבב זז פנימה והופך לגלולה
+                            roundedLook ? "top-2 right-2 border s-r" : "top-0 right-0 border-b border-r-0 border-t-0 border-l"
+                          }`}
+                          style={{ color: b.bg, borderColor: b.bg }}
+                        >
+                          <Icon name={b.icon} size={12} tone="none" className="inline-block align-[-1px] ms-0.5" />{" "}
+                          {b.label}
+                        </span>
+                      );
+                    })()
+                  )}
+                  <div
+                    className="h-40 flex items-center justify-center text-5xl overflow-hidden"
+                    style={{ background: "var(--s-thumb)" }}
+                  >
+                    {vid ? (
+                      <video src={vid} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
+                    ) : img ? (
+                      <img src={img} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
+                    )}
+                  </div>
+                  <div className="px-3.5 pt-3 pb-2 text-right">
+                    <div className="text-[13.5px] font-semibold leading-snug">{p.name}</div>
+                    {p.description && (
+                      <div className="text-[12px] opacity-60 truncate">{p.description}</div>
+                    )}
+                    <div className="text-[17px] font-bold mt-1.5" style={{ color: "var(--s-primary)" }}>
+                      ₪{formatPrice(p.price)}
+                    </div>
+                  </div>
+                </button>
+
+                {/* הוספה מהירה — הכפתור שמאפשר לקנות בלי לפתוח כלום */}
+                {!out && !preview && (
+                  <button
+                    onClick={() => quickAdd(p)}
+                    aria-label={`הוספה מהירה, ${p.name}`}
+                    className="mt-auto mx-3.5 mb-3.5 py-2.5 text-[12.5px] font-bold"
+                    style={
+                      inCartQty
+                        ? { background: "var(--s-thumb)", color: "var(--s-ink)" }
+                        : { background: "var(--s-primary)", color: "var(--s-onprimary)" }
+                    }
+                  >
+                    {inCartQty
+                      ? `בסל · ${inCartQty}`
+                      : p.options?.length
+                        ? `בחירת ${safeOptionLabel(p.option_label)}`
+                        : "הוספה לסל"}
+                  </button>
+                )}
+                </div>
+              );
+  };
+
   return (
     <div
       className="s-look relative min-h-screen flex flex-col"
@@ -552,7 +669,7 @@ export default function StoreView({
         <div className="flex items-center justify-center gap-2 mt-2 text-[12.5px] opacity-70 flex-wrap">
           {store.city && <span>📍 {store.city}</span>}
           {store.city && <span aria-hidden>·</span>}
-          <span>{products.length} מוצרים</span>
+          <span>{visibleProducts.length} מוצרים</span>
           {store.ships && (
             <>
               <span aria-hidden>·</span>
@@ -620,111 +737,21 @@ export default function StoreView({
               עוד אין כאן מוצרים.
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3.5">
-            {sorted.map((p, i) => {
-              const out = p.track_stock && p.stock === 0;
-              const img = mediaUrl(p.image_key);
-              const vid = mediaUrl(p.video_key);
-              const poster = mediaUrl(p.poster_key);
-              const inCartQty = inCart(p.id);
-              return (
-                // div ולא button: בתוך הכרטיס יש כפתור הוספה מהירה משלו,
-                // וכפתור בתוך כפתור אינו HTML תקין ומתנהג שונה בין דפדפנים
-                <div
-                  key={p.id}
-                  // אזל: הכרטיס עצמו נשאר אטום ורק התוכן דוהה — כרטיס שקוף על
-                  // רקע של דוגמה או תמונה נראה כמו כתם
-                  className={`s-r text-right overflow-hidden relative flex flex-col ${out ? "pointer-events-none" : ""}`}
-                  style={{
-                    background: "var(--s-surface)",
-                    border: "var(--s-border)" as string,
-                    boxShadow: out ? "none" : ("var(--s-shadow)" as string),
-                  }}
-                >
-                <button
-                  onClick={() => !out && openProduct(p)}
-                  aria-label={p.name}
-                  className={`text-right transition active:translate-y-[1px] ${out ? "opacity-45" : ""}`}
-                >
-                  {out ? (
-                    // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
-                    <span className="absolute inset-x-0 top-1/4 z-10 bg-[var(--ink)]/78 text-white text-[13px] font-semibold text-center py-1.5 tracking-wide">
-                      אזל
-                    </span>
-                  ) : (
-                    (() => {
-                      // תגית אחת לכרטיס, לפי סדר עדיפות. שלוש תגיות ברשת של
-                      // שתי עמודות הופכות את כולן לרעש. הצבע קבוע לכל תגית
-                      // ולא נגזר מהערכה — "מבצע" חייב להיראות אותו דבר בכל
-                      // חנות, אחרת הוא מפסיק להיות שפה משותפת בין החנויות.
-                      const key = badgeFor(p, bestSellerId, sold);
-                      if (!key) return null;
-                      const b = BADGES[key];
-                      // שבב קטן בפינת התמונה, לא רצועה על כל הרוחב: ברשת של
-                      // שתי עמודות רצועה צבעונית מושכת יותר תשומת לב מהמוצר
-                      // עצמו, ושש רצועות זו ליד זו הופכות את הדף לרעש.
-                      // הרקע לבן והצבע יושב על הטקסט ועל הקו — קריא על כל תמונה.
-                      return (
-                        <span
-                          className={`absolute z-10 bg-white text-[11px] font-semibold px-1.5 py-0.5 ${
-                            // בסגנון עגול הפינה נחתכת — אז השבב זז פנימה והופך לגלולה
-                            roundedLook ? "top-2 right-2 border s-r" : "top-0 right-0 border-b border-r-0 border-t-0 border-l"
-                          }`}
-                          style={{ color: b.bg, borderColor: b.bg }}
-                        >
-                          <Icon name={b.icon} size={12} tone="none" className="inline-block align-[-1px] ms-0.5" />{" "}
-                          {b.label}
-                        </span>
-                      );
-                    })()
-                  )}
-                  <div
-                    className="h-40 flex items-center justify-center text-5xl overflow-hidden"
-                    style={{ background: "var(--s-thumb)" }}
-                  >
-                    {vid ? (
-                      <video src={vid} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
-                    ) : img ? (
-                      <img src={img} alt={p.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
-                    )}
-                  </div>
-                  <div className="px-3.5 pt-3 pb-2 text-right">
-                    <div className="text-[13.5px] font-semibold leading-snug">{p.name}</div>
-                    {p.description && (
-                      <div className="text-[12px] opacity-60 truncate">{p.description}</div>
-                    )}
-                    <div className="text-[17px] font-bold mt-1.5" style={{ color: "var(--s-primary)" }}>
-                      ₪{formatPrice(p.price)}
-                    </div>
-                  </div>
-                </button>
-
-                {/* הוספה מהירה — הכפתור שמאפשר לקנות בלי לפתוח כלום */}
-                {!out && !preview && (
-                  <button
-                    onClick={() => quickAdd(p)}
-                    aria-label={`הוספה מהירה, ${p.name}`}
-                    className="mt-auto mx-3.5 mb-3.5 py-2.5 text-[12.5px] font-bold"
-                    style={
-                      inCartQty
-                        ? { background: "var(--s-thumb)", color: "var(--s-ink)" }
-                        : { background: "var(--s-primary)", color: "var(--s-onprimary)" }
-                    }
-                  >
-                    {inCartQty
-                      ? `בסל · ${inCartQty}`
-                      : p.options?.length
-                        ? `בחירת ${safeOptionLabel(p.option_label)}`
-                        : "הוספה לסל"}
-                  </button>
-                )}
-                </div>
-              );
-            })}
+        ) : featured.length ? (
+          <div className="flex flex-col gap-5">
+            <section className="flex flex-col gap-3.5" data-testid="featured-section">
+              <SectionTitle text={store.featured_title?.trim() || "המומלצים שלי"} star plate={plate} testId="featured-title" />
+              <div className="grid grid-cols-2 gap-3.5">{featured.map((p, i) => renderCard(p, i))}</div>
+            </section>
+            {rest.length > 0 && (
+              <section className="flex flex-col gap-3.5 mt-3">
+                <SectionTitle text="עוד מוצרים" plate={plate} testId="rest-title" />
+                <div className="grid grid-cols-2 gap-3.5">{rest.map((p, i) => renderCard(p, featured.length + i))}</div>
+              </section>
+            )}
           </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3.5">{sorted.map((p, i) => renderCard(p, i))}</div>
         )}
         <p
           className={customBg ? "s-r w-fit mx-auto mt-6 mb-1 px-3 py-1.5 text-center text-[11px]" : "text-center text-[11px] opacity-45 pt-6 pb-1"}
@@ -1433,5 +1460,29 @@ export default function StoreView({
         </div>
       )}
     </div>
+  );
+}
+
+/** כותרת חלק ברשת ("המומלצים שלי", "עוד מוצרים"). על רקע — יושבת על לוח קריא. */
+function SectionTitle({
+  text,
+  star = false,
+  plate,
+  testId,
+}: {
+  text: string;
+  star?: boolean;
+  plate?: Record<string, string>;
+  testId: string;
+}) {
+  return (
+    <h2
+      data-testid={testId}
+      className={`text-[17px] font-bold leading-tight flex items-center gap-2 ${plate ? "s-r w-fit px-3.5 py-2" : ""}`}
+      style={plate}
+    >
+      {star && <span aria-hidden style={{ color: "var(--s-primary)" }}>★</span>}
+      {text}
+    </h2>
   );
 }

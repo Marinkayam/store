@@ -32,6 +32,9 @@ export default function SettingsPage() {
   const [bgPattern, setBgPattern] = useState<string | null>(null);
   const [bgPreview, setBgPreview] = useState<string | null>(null);
   const [catDesignOpen, setCatDesignOpen] = useState(false);
+  /* איך המוצרים מוצגים בדוכן (0053) */
+  const [featuredTitle, setFeaturedTitle] = useState("");
+  const [showSoldOut, setShowSoldOut] = useState(false);
   const bgRef = useRef<HTMLInputElement>(null);
   const [phone, setPhone] = useState("");
   // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה
@@ -82,6 +85,8 @@ export default function SettingsPage() {
     setLook(isLookKey(store.look) ? store.look : null);
     setBgPattern(isPatternKey(store.bg_pattern) || (store.bg_pattern === "photo" && store.bg_key) ? store.bg_pattern! : null);
     setBgPreview(mediaUrl(store.bg_key ?? null));
+    setFeaturedTitle(store.featured_title ?? "");
+    setShowSoldOut(store.show_sold_out === true);
     setPhone(displayPhone(store.contact_phone));
     setCoverPreview(mediaUrl(store.cover_key));
     setPreset(store.cover_preset ?? null);
@@ -179,6 +184,8 @@ export default function SettingsPage() {
       theme,
       look,
       bg_pattern: bgPattern,
+      featured_title: featuredTitle.trim().slice(0, 40) || null,
+      show_sold_out: showSoldOut,
       contact_phone: normalized,
       payout_bit: payout.payout_bit,
       payout_paybox: payout.payout_paybox,
@@ -926,6 +933,54 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* המוצרים בדוכן — כותרת המומלצים, ומה קורה למוצר שאזל */}
+        <div id="products-display" className="scroll-mt-14 bg-white border border-[var(--line)] p-4 flex flex-col gap-4" data-testid="products-display">
+          <div className="text-[13px] font-bold">🛍️ המוצרים בדוכן</div>
+
+          <div>
+            <label htmlFor="featured-title" className="block text-[12px] text-[var(--muted)] mb-1.5">
+              כותרת לחלק המומלצים
+            </label>
+            <input
+              id="featured-title"
+              value={featuredTitle}
+              maxLength={40}
+              aria-label="כותרת המומלצים"
+              placeholder="המומלצים שלי"
+              onChange={(e) => { setFeaturedTitle(e.target.value); setDirty(true); }}
+              className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-[13px]"
+            />
+            <p className="text-[11.5px] text-[var(--faint)] mt-1.5 leading-snug">
+              מסמנים ⭐ מומלץ בעריכת מוצר, והוא מופיע בחלק הזה בראש הדוכן.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { setShowSoldOut((v) => !v); setDirty(true); }}
+            aria-pressed={showSoldOut}
+            aria-label="להציג גם מוצרים שאזלו"
+            data-testid="show-sold-out-toggle"
+            className="flex items-center justify-between gap-3 text-right min-h-11"
+          >
+            <span className="flex-1">
+              <span className="block text-[13px] font-semibold">להציג גם מוצרים שאזלו</span>
+              <span className="block text-[11.5px] text-[var(--muted)] leading-snug mt-0.5">
+                {showSoldOut
+                  ? "מוצר שאזל מופיע בסוף הדוכן עם תווית \"אזל\"."
+                  : "כבוי: מוצר שאזל יורד מהדוכן לבד, וחוזר כשמוסיפים מלאי. לא צריך למחוק אותו."}
+              </span>
+            </span>
+            <span
+              className={`w-11 shrink-0 relative transition ${showSoldOut ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
+              style={{ height: 26 }}
+              aria-hidden
+            >
+              <i className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all" style={{ right: showSoldOut ? 21 : 3 }} />
+            </span>
+          </button>
         </div>
 
         {catDesignOpen && (

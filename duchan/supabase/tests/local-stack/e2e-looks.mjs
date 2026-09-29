@@ -27,6 +27,9 @@ const check = (n, ok, d = "") => {
 const { rows: [store] } = await db.query(
   "select * from stores where activated_at is not null order by created_at limit 1"
 );
+// הבדיקה הזו בודקת את תווית "אזל" בדוכן — מאז 0053 מוצר שאזל מוסתר,
+// אלא אם החנות בחרה להציג אותו. מדליקים לה את זה, ומחזירים בסוף.
+if (store) await db.query("update stores set show_sold_out=true where id=$1", [store.id]);
 if (!store) {
   console.error("צריך דוכן פעיל. הריצי seed.mjs ואז e2e-activation.mjs");
   process.exit(1);
@@ -262,6 +265,7 @@ await db.query("delete from products where store_id=$1 and name in ('מחזיק 
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} prices + looks checks passed`);
+await db.query("update stores set show_sold_out=null where id=$1", [store.id]);
 await browser.close();
 await db.end();
 process.exit(failed.length ? 1 : 0);

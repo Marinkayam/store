@@ -19,6 +19,9 @@ const check = (name, ok, detail = "") => {
 const { rows: [store] } = await db.query(
   "select * from stores where activated_at is not null order by created_at limit 1"
 );
+// הבדיקה הזו בודקת את תווית "אזל" בדוכן — מאז 0053 מוצר שאזל מוסתר,
+// אלא אם החנות בחרה להציג אותו. מדליקים לה את זה, ומחזירים בסוף.
+if (store) await db.query("update stores set show_sold_out=true where id=$1", [store.id]);
 const slug = store.slug;
 // /api/revalidate דורש שהמבקשת תהיה בעלת החנות, ולכן הוא לא זמין מכאן.
 // הדף מוגש מקאש של 60 שניות — פרמטר משתנה נותן כתובת חדשה וקאש חדש.
@@ -196,6 +199,7 @@ check("writing 'best' straight into the table is rejected", rejected);
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} badge checks passed`);
+await db.query("update stores set show_sold_out=null where id=$1", [store.id]);
 await browser.close();
 await db.end();
 process.exit(failed.length ? 1 : 0);

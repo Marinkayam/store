@@ -39,6 +39,8 @@ interface EditState {
   optionList: string[]; // ["ורוד", "כחול"], שדה נפרד לכל ערך, לא פסיקים
   categories: string[]; // מוצר יכול לשבת בכמה קטגוריות (0046)
   badge: "rare" | "sale" | null;
+  /** ⭐ מומלץ — בחלק המומלצים בראש הדוכן (0053) */
+  featured: boolean;
   imageKey: string | null;
   videoKey: string | null;
   posterKey: string | null;
@@ -66,6 +68,7 @@ const EMPTY_EDIT: EditState = {
   optionList: [""],
   categories: [],
   badge: null,
+  featured: false,
   imageKey: null,
   videoKey: null,
   posterKey: null,
@@ -252,6 +255,7 @@ export default function ProductsPage() {
         // המערך החדש גובר; מוצר ישן עם קטגוריה יחידה נטען כרשימה של אחת
         categories: p.categories?.length ? p.categories : p.category ? [p.category] : [],
         badge: p.badge ?? null,
+        featured: p.featured === true,
         stock: p.stock,
         isVisible: p.is_visible !== false,
         imageKey: p.image_key,
@@ -488,6 +492,7 @@ export default function ProductsPage() {
         // הישנה ממשיכה להתעדכן — קוד שעוד קורא אותה רואה את הראשונה
         category: edit.categories[0] ?? null,
         badge: edit.badge,
+        featured: edit.featured,
         stock: Math.max(0, edit.stock),
         is_visible: edit.isVisible,
         image_key: imageKey,
@@ -502,9 +507,13 @@ export default function ProductsPage() {
 
       let { error } = await write(row);
       if (error) {
-        // עמודות הקטגוריות אולי עוד לא בפרודקשן — שומרים בלעדיהן במקום
-        // להפיל את כל השמירה (אותו דפוס כמו בקריאות הציבוריות)
-        const { categories: _cs, ...noCats } = row;
+        // עמודה חדשה שאולי עוד לא בפרודקשן — שומרים בלעדיה במקום להפיל
+        // את כל השמירה (אותו דפוס כמו בקריאות הציבוריות)
+        const { featured: _f, ...noFeatured } = row;
+        ({ error } = await write(noFeatured));
+      }
+      if (error) {
+        const { categories: _cs, featured: _f2, ...noCats } = row;
         ({ error } = await write(noCats));
         if (error) {
           const { category: _c, ...noCategory } = noCats;
@@ -560,6 +569,7 @@ export default function ProductsPage() {
       ...(src.category != null ? { category: src.category } : {}),
       ...(src.categories?.length ? { categories: src.categories } : {}),
       badge: src.badge,
+      ...(src.featured ? { featured: true } : {}),
       stock: src.stock,
       is_visible: src.is_visible,
       image_key: src.image_key,
@@ -768,6 +778,7 @@ export default function ProductsPage() {
               <div className="flex-1 min-w-0">
                 {/* השורה כולה פותחת עריכה, אבל בלי סימן אי אפשר לדעת את זה */}
                 <div className="text-sm font-medium flex items-center gap-1.5">
+                  {p.featured && <span aria-label="מומלץ" title="מומלץ" className="text-[var(--warn-ink)]">★</span>}
                   {p.name}
                   <span className="text-[11px] text-[var(--faint)] font-normal">✎ עריכה</span>
                 </div>
@@ -1099,6 +1110,27 @@ export default function ProductsPage() {
             <p className="text-[12px] text-[var(--faint)] mb-3 leading-relaxed">
               ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי מופיעות לבד, לפי מה שבאמת קורה בחנות.
             </p>
+
+            {/* ⭐ מומלץ — חלק משלו בראש הדוכן, לא קטגוריה ולא תגית */}
+            <button
+              type="button"
+              onClick={() => setEdit((s) => s && { ...s, featured: !s.featured })}
+              aria-pressed={edit.featured}
+              aria-label="מומלץ"
+              data-testid="featured-toggle"
+              className={`w-full flex items-center gap-3 border-2 px-3 py-3 mb-3 text-right ${
+                edit.featured ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)] bg-white"
+              }`}
+            >
+              <span className="text-xl leading-none" aria-hidden>{edit.featured ? "★" : "☆"}</span>
+              <span className="flex-1">
+                <span className="block text-[13px] font-bold">מומלץ</span>
+                <span className="block text-[11.5px] text-[var(--muted)] leading-snug">יופיע בחלק &quot;המומלצים&quot; בראש הדוכן</span>
+              </span>
+              <span className={`text-[11px] font-bold px-2 py-1 ${edit.featured ? "bg-[var(--ink)] text-white" : "border border-[var(--line)] text-[var(--muted)]"}`}>
+                {edit.featured ? "כן" : "לא"}
+              </span>
+            </button>
 
             <div className="flex justify-between items-center border border-[var(--line)] px-3 py-2.5 mb-3">
               <span className="text-[13px]">מוצג בחנות</span>
