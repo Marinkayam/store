@@ -129,6 +129,13 @@ await girl.click("button[aria-label='סגנון עגלגל']");
 await girl.click("button[aria-label='רקע לבבות']");
 await girl.waitForTimeout(300);
 check("הבחירה נרשמת", (await girl.getAttribute("button[aria-label='סגנון עגלגל']", "aria-pressed")) === "true");
+// הדוכן הקטן צמוד למעלה: גם כשגוללים עד הרקעים, רואים את מה שבחרו
+await girl.locator("[data-testid=bg-picker]").scrollIntoViewIfNeeded();
+await girl.waitForTimeout(300);
+const mini = await girl.locator("[data-testid=design-preview]").boundingBox();
+check("הדוכן הקטן נשאר על המסך בזמן הבחירה", !!mini && mini.y >= 0 && mini.y < 120, `${mini?.y}`);
+check("והוא כבר מראה את הלבבות",
+  (await girl.locator("[data-testid=design-preview]").evaluate((el) => getComputedStyle(el).backgroundImage)).includes("svg"));
 const previewBg = await girl.locator("#identity").evaluate((el) => getComputedStyle(el).backgroundImage);
 check("התצוגה המקדימה מקבלת את הרקע מיד", previewBg.includes("svg"), previewBg.slice(0, 60));
 await girl.screenshot({ path: "/tmp/looks-settings.png", fullPage: true });
@@ -142,6 +149,8 @@ const b2 = await phone();
 await b2.goto(fresh(), { waitUntil: "networkidle" });
 const rootBg = await b2.locator(".s-look").first().evaluate((el) => getComputedStyle(el).backgroundImage);
 check("הדוכן לקונות מקבל את הרקע", rootBg.includes("svg"), rootBg.slice(0, 60));
+const coverBg = await b2.locator("[data-testid=store-cover]").evaluate((el) => getComputedStyle(el).backgroundImage);
+check("הקאבר המוכן לא מתחרה ברקע — שקוף", coverBg === "none", coverBg.slice(0, 40));
 const card = b2.locator(".s-look .s-r.relative").first();
 const radius = await card.evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
 check("כרטיסי המוצרים עגולים (22px)", radius === "22px", radius);

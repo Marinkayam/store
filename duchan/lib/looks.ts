@@ -181,9 +181,9 @@ function withAlpha(hex: string, a: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
-/** צבע הדוגמה: הראשי של הערכה, שקוף — אווירה ולא רעש. */
+/** צבע הדוגמה: הראשי של הערכה. הטקסט יושב על לוחות, אז הדוגמה יכולה להיות נוכחת. */
 function patternColor(t: Theme): string {
-  return withAlpha(t.primary, 0.22);
+  return withAlpha(t.primary, 0.34);
 }
 
 export function patternCss(key: PatternKey, t: Theme): string {
