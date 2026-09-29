@@ -19,6 +19,7 @@ import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
+import CategoryDesigner from "./category-designer";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -81,6 +82,7 @@ export default function ProductsPage() {
   const { store, setStore, loading } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [newCategory, setNewCategory] = useState("");
+  const [designOpen, setDesignOpen] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
@@ -654,7 +656,18 @@ export default function ProductsPage() {
             מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות. */}
         {products.length > 0 && (
           <div className="bg-white border border-[var(--line)] p-3 mb-1" data-testid="categories-box">
-            <div className="text-[13px] font-bold mb-0.5">קטגוריות בחנות</div>
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <div className="text-[13px] font-bold">קטגוריות בחנות</div>
+              {(store?.categories?.length ?? 0) > 0 && (
+                <button
+                  onClick={() => setDesignOpen(true)}
+                  data-testid="open-category-designer"
+                  className="shrink-0 border border-[var(--ink)] px-2.5 min-h-9 text-[12px] font-bold"
+                >
+                  🎨 עיצוב הקטגוריות
+                </button>
+              )}
+            </div>
             <p className="text-[11.5px] text-[var(--faint)] mb-2">
               הקונות יוכלו לסנן לפי זה. אחרי שמגדירים — בוחרים קטגוריה לכל מוצר בעריכה שלו.
             </p>
@@ -683,6 +696,18 @@ export default function ProductsPage() {
               />
             </div>
           </div>
+        )}
+
+        {designOpen && store && (
+          <CategoryDesigner
+            store={store}
+            onClose={() => setDesignOpen(false)}
+            onSaved={(patch) => {
+              setStore({ ...store, ...patch });
+              setDesignOpen(false);
+              showToast("עיצוב הקטגוריות נשמר ✨");
+            }}
+          />
         )}
 
         {/* דוכן ריק זה לא מסך שגיאה — זו הזמנה. הכפתור יושב כאן וגם למעלה,

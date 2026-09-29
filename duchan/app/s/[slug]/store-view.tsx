@@ -6,6 +6,8 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { deliveryLine, formatPayPhone, payMethods, paymentLinkLine, payoutLine, payoutSummary, payoutTarget, type PayMethod } from "@/lib/payouts";
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
+import CategoryBar from "@/app/category-bar";
+import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import { coverCss } from "@/lib/covers";
 import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } from "@/lib/looks";
 import { themeOrDefault } from "@/lib/themes";
@@ -593,31 +595,17 @@ export default function StoreView({
         </div>
       )}
 
-      {/* ── צ'יפים של קטגוריות — רק כשהמוכרת הגדירה ויש בהן מוצרים ── */}
+      {/* ── קטגוריות — רק כשהמוכרת הגדירה ויש בהן מוצרים. הצורה, הגודל
+          והאייקונים לפי מה שהיא עיצבה (lib/category-style.ts) ── */}
       {categories.length > 0 && (
-        <div className="px-3 pb-3 flex gap-1.5 overflow-x-auto" data-testid="category-chips">
-          {[null, ...categories].map((c) => {
-            const on = category === c;
-            return (
-              <button
-                key={c ?? "__all"}
-                onClick={() => setCategory(c)}
-                aria-pressed={on}
-                className="shrink-0 px-3.5 py-2 text-[12.5px] font-semibold border-[1.5px]"
-                style={
-                  on
-                    ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                    : customBg
-                      // על רקע — צ'יפ אטום, אחרת הדוגמה עוברת דרך הטקסט
-                      ? { background: "var(--s-surface)", borderColor: "color-mix(in srgb, currentColor 35%, transparent)" }
-                      : { background: "var(--s-surface)", borderColor: "currentColor", opacity: 0.7 }
-                }
-              >
-                {c ?? "הכל"}
-              </button>
-            );
-          })}
-        </div>
+        <CategoryBar
+          categories={categories}
+          active={category}
+          onSelect={setCategory}
+          layout={layoutOrDefault(store.category_layout)}
+          size={sizeOrDefault(store.category_size)}
+          meta={cleanMeta(store.category_meta)}
+        />
       )}
 
       {/* grid */}

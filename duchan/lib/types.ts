@@ -67,6 +67,10 @@ export interface Store {
   look?: string | null;
   bg_pattern?: string | null;
   bg_key?: string | null;
+  /** עיצוב הקטגוריות (0052). ראה lib/category-style.ts */
+  category_layout?: string | null;
+  category_size?: string | null;
+  category_meta?: unknown;
   created_at: string;
 }
 
@@ -150,6 +154,9 @@ export interface PublicStore {
   look?: string | null;
   bg_pattern?: string | null;
   bg_key?: string | null;
+  category_layout?: string | null;
+  category_size?: string | null;
+  category_meta?: unknown;
   about: string | null;
   city: string | null;
   ships: boolean;

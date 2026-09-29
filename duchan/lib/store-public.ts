@@ -41,7 +41,8 @@ const STORE_PREV = `${STORE_BASE}, cover_preset, payout_bit, payout_paybox, payo
 /* מה שנוסף אחרון יושב בשכבה משלו: אם המיגרציה שלו עוד לא רצה, נופלים
    ל-PREV ולא עד ל-BASE — אחרת עמודה חדשה אחת מעלימה את הקטגוריות,
    הלינקים לתשלום וכל השאר (וזה בדיוק מה שקרה עם 0047). */
-const STORE_FULL = `${STORE_PREV}, look, bg_pattern, bg_key`;
+const STORE_LOOKS = `${STORE_PREV}, look, bg_pattern, bg_key`;
+const STORE_FULL = `${STORE_LOOKS}, category_layout, category_size, category_meta`;
 
 const PRODUCT_BASE =
   "id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, created_at";
@@ -53,15 +54,17 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
   const readStore = (cols: string) =>
     db.from("stores").select(cols).eq("slug", slug).maybeSingle();
 
-  let { data: store, error } = await readStore(STORE_FULL);
-  if (error) {
+  // מהמלא לבסיס, שכבה אחרי שכבה: עמודה שעוד לא קיימת מורידה רק את מה
+  // שנוסף אחריה, לא את כל מה שנוסף מאז ומעולם
+  let store: unknown = null;
+  for (const cols of [STORE_FULL, STORE_LOOKS, STORE_PREV, STORE_BASE]) {
+    const { data, error } = await readStore(cols);
+    if (!error) {
+      store = data;
+      break;
+    }
     // רואים את זה בלוגים של השרת, ובינתיים החנות ממשיכה לעבוד
-    console.error("[store] full select failed, falling back:", error.message);
-    ({ data: store, error } = await readStore(STORE_PREV));
-  }
-  if (error) {
-    console.error("[store] prev select failed, falling back to base:", error.message);
-    ({ data: store } = await readStore(STORE_BASE));
+    console.error("[store] select failed, falling back:", error.message);
   }
 
   if (!store) return { state: "closed" };
@@ -129,6 +132,9 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     look: null,
     bg_pattern: null,
     bg_key: null,
+    category_layout: null,
+    category_size: null,
+    category_meta: null,
     ...rest,
   } as unknown as PublicStore;
 
