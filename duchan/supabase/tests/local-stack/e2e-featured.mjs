@@ -126,6 +126,17 @@ await buyer.goto(fresh(), { waitUntil: "networkidle" });
 check("עכשיו המוצר שאזל מופיע", (await card(buyer, outP.name).count()) === 1);
 check("עם 'אזל'", (await buyer.locator("span:text-is('אזל')").count()) >= 1);
 
+/* ── 5. דוכן שכל המוצרים בו אזלו ── */
+await db.query("update stores set show_sold_out=null where id=$1", [store.id]);
+const { rows: before } = await db.query(
+  "select id, stock, track_stock from products where store_id=$1 and deleted_at is null", [store.id]);
+await db.query("update products set track_stock=true, stock=0 where store_id=$1 and deleted_at is null", [store.id]);
+await buyer.goto(fresh(), { waitUntil: "networkidle" });
+const body = (await buyer.textContent("body")) ?? "";
+check("הכל אזל: 'הכל נמכר! 🎉' ולא 'עוד אין כאן מוצרים'",
+  body.includes("הכל נמכר") && !body.includes("עוד אין כאן מוצרים"));
+for (const r of before) await db.query("update products set stock=$1, track_stock=$2 where id=$3", [r.stock, r.track_stock, r.id]);
+
 /* ── ניקוי ── */
 await db.query("update stores set show_sold_out=null, featured_title=null, categories=$1 where id=$2", [store.categories, store.id]);
 for (const p of prods) {
