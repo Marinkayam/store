@@ -97,6 +97,13 @@ const { rows: [orderRow] } = await db.query(
 check("ובדאטהבייס 32.70", orderRow?.total === "32.70", String(orderRow?.total));
 check("המחיר ליחידה נשמר ב-snapshot", orderRow?.items?.[0]?.price === 10.9, JSON.stringify(orderRow?.items));
 
+// 0051: אף גרסה של place_order לא פתוחה לציבור — הזמנה נכנסת רק דרך השרת,
+// שם נבדקים מחיר, מלאי ובחירה. גרסה פתוחה = הזמנה מזויפת בכל סכום.
+const { rows: open } = await db.query(
+  "select pronargs from pg_proc where proname='place_order' and (has_function_privilege('anon', oid, 'execute') or has_function_privilege('authenticated', oid, 'execute'))"
+);
+check("place_order סגורה לציבור בכל הגרסאות", open.length === 0, open.map((r) => r.pronargs).join(","));
+
 // בדשבורד ההזמנות הסכום מוצג עם אגורות
 await girl.goto(`${BASE}/dashboard`);
 await girl.waitForSelector("text=היי", { timeout: 15000 });
