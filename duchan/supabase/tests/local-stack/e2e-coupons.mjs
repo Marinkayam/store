@@ -92,6 +92,16 @@ const girl = await phone();
 await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 20000 });
+// בעלת הדוכן שמזמינה מעצמה, כשעוד אין קופון — רואה הסבר וקישור; קונה לא
+await openCheckout(girl);
+check("בעלת הדוכן רואה 'עוד אין לך קופון' עם קישור ליצירה",
+  (await girl.locator("[data-testid=coupon-owner-hint]").count()) === 1 &&
+  ((await girl.getAttribute("[data-testid=coupon-owner-hint]", "href")) ?? "").includes("/dashboard/share#coupons"));
+check("וקונה לא רואה את ההודעה הזו", (await buyer.locator("[data-testid=coupon-owner-hint]").count()) === 0);
+await girl.goto(`${BASE}/dashboard/settings`);
+await girl.waitForSelector("[data-testid=settings-coupons-link]", { timeout: 20000 });
+check("בהגדרות יש קיצור לקופונים", true);
+
 await girl.goto(`${BASE}/dashboard/share`);
 await girl.waitForSelector("[data-testid=seller-coupons]", { timeout: 20000 });
 check("ב'להפיץ' יש חלק קופונים", (await girl.locator("[data-testid=coupon-manager]").count()) === 1);

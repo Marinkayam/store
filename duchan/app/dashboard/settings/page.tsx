@@ -936,6 +936,22 @@ export default function SettingsPage() {
         </div>
 
         {/* המוצרים בדוכן — כותרת המומלצים, ומה קורה למוצר שאזל */}
+        {/* קופונים יושבים ב"להפיץ"; כאן קיצור, כי בהגדרות מחפשים כל אפשרות של הדוכן */}
+        <a
+          href="/dashboard/share#coupons"
+          data-testid="settings-coupons-link"
+          className="bg-white border border-[var(--line)] p-4 flex items-center gap-3"
+        >
+          <span className="text-xl" aria-hidden>🏷️</span>
+          <span className="flex-1">
+            <span className="block text-[13px] font-bold">קופונים</span>
+            <span className="block text-[12px] text-[var(--muted)] leading-snug">
+              קוד שקונה מקלידה בהזמנה ומקבלת הנחה. יצירה וניהול בדף &quot;להפיץ&quot;.
+            </span>
+          </span>
+          <span className="text-[12.5px] font-bold underline shrink-0">לקופונים ←</span>
+        </a>
+
         <div id="products-display" className="scroll-mt-14 bg-white border border-[var(--line)] p-4 flex flex-col gap-4" data-testid="products-display">
           <div className="text-[13px] font-bold">🛍️ המוצרים בדוכן</div>
 

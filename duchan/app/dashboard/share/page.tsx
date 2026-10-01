@@ -112,7 +112,7 @@ export default function SharePage() {
       )}
 
       {/* קופונים — כלי ההפצה הכי ישיר: "קוד SALE10 נותן 10% הנחה" */}
-      <section className="px-4 pt-5" data-testid="seller-coupons">
+      <section id="coupons" className="px-4 pt-5 scroll-mt-4" data-testid="seller-coupons">
         <h2 className="text-[14px] font-bold">🏷️ קופונים</h2>
         <p className="text-[12px] text-[var(--muted)] mt-0.5 mb-3">
           קונה מקלידה את הקוד בהזמנה ומקבלת הנחה. אפשר לשתף אותו עם ההודעות למטה.

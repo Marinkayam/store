@@ -1111,6 +1111,24 @@ export default function StoreView({
 
           {/* ── קוד קופון — רק בדוכן שיש בו קופון חי, ומקופל כברירת מחדל:
               שדה פתוח שולח את כל מי שאין לה קוד לחפש אחד ── */}
+          {/* בעלת הדוכן שמזמינה מעצמה ועוד אין לה קופון — רואה רק היא, ושולח
+              ליצירה. קונות לא רואות כלום עד שיש קופון חי. */}
+          {!hasCoupons && owner && cart.length > 0 && (
+            <a
+              href="/dashboard/share#coupons"
+              data-testid="coupon-owner-hint"
+              className="mt-4 flex items-center gap-2 border-[1.5px] border-dashed px-3.5 py-3 text-[12.5px] leading-snug"
+              style={{ borderColor: "color-mix(in srgb, currentColor 30%, transparent)" }}
+            >
+              <span aria-hidden>🏷️</span>
+              <span className="flex-1">
+                <b>קופונים:</b> עוד אין לך קופון בדוכן, אז הקונות לא רואות כאן שדה קוד.
+                <span className="block opacity-60">רק את רואה את ההודעה הזו.</span>
+              </span>
+              <span className="font-bold underline shrink-0">ליצירה ←</span>
+            </a>
+          )}
+
           {hasCoupons && cart.length > 0 && (
             <div className="mt-4" data-testid="coupon-box">
               {coupon ? (
