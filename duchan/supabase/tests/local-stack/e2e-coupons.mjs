@@ -130,6 +130,15 @@ check("קוד שכבר קיים — 'כבר יש קופון'",
   ((await girl.textContent("[data-testid=coupon-form-error]").catch(() => "")) ?? "").includes("כבר יש קופון"));
 await girl.click("button:text-is('ביטול')");
 
+// קוד בעברית, עם רווח — נשמר עם מקף
+await girl.click("[data-testid=coupon-new]");
+await girl.fill("input[aria-label='קוד הקופון']", "מבצע חורף");
+await girl.fill("input[aria-label='גובה ההנחה']", "15");
+await girl.click("[data-testid=coupon-create]");
+await girl.waitForSelector("[data-testid=coupon-row][data-code='מבצע-חורף']", { timeout: 10000 });
+const { rows: [heb] } = await db.query("select code from coupons where store_id=$1 and code='מבצע-חורף'", [store.id]);
+check("קוד בעברית נשמר (רווח הופך למקף)", heb?.code === "מבצע-חורף", String(heb?.code));
+
 // המוכרת לא נוגעת במונה
 const { rows: [priv] } = await db.query(
   "select has_column_privilege('authenticated','coupons','used_count','UPDATE') u, has_table_privilege('anon','coupons','SELECT') a");
@@ -189,6 +198,18 @@ const off = await (await checkCode("OFF")).json();
 check("כבוי: 'לא פעיל'", (off.error ?? "").includes("לא פעיל"), off.error);
 const amount = await (await checkCode("BIG", 6)).json();
 check("סכום קבוע: ₪15 מ-₪120", Number(amount.discount) === 15 && Number(amount.total) === 105, JSON.stringify(amount));
+// עברית ומקלדת בשפה הלא נכונה
+const hebApply = await (await checkCode("מבצע חורף")).json();
+check("קונה מקלידה 'מבצע חורף' עם רווח — עובד", hebApply.code === "מבצע-חורף" && Number(hebApply.discount) === 6, JSON.stringify(hebApply));
+await db.query("insert into coupons (store_id, code, kind, value) values ($1,'SUMMER','amount',3), ($1,'חנוכה','amount',4)", [store.id]);
+const wrongHeb = await (await checkCode("דוצצקר")).json();
+check("SUMMER שהוקלד במקלדת עברית (דוצצקר) — מזוהה", wrongHeb.code === "SUMMER", JSON.stringify(wrongHeb));
+const wrongEng = await (await checkCode("jbufv")).json();
+check("חנוכה שהוקלד במקלדת אנגלית (jbufv) — מזוהה", wrongEng.code === "חנוכה", JSON.stringify(wrongEng));
+const hebOrder = await order({ couponCode: "דוצצקר" });
+const hebOrderBody = await hebOrder.json();
+check("וגם ההזמנה עצמה מקבלת את זה, עם הקוד הנכון", hebOrder.ok && hebOrderBody.couponCode === "SUMMER", JSON.stringify(hebOrderBody).slice(0, 120));
+
 const bad = await order({ couponCode: "OLD" });
 check("גם ההזמנה עצמה דוחה קוד שפג (לא רק הבדיקה)", bad.status === 400 && (await bad.json()).field === "coupon");
 

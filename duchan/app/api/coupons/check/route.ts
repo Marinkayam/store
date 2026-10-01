@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { lineTotal, sumPrices } from "@/lib/money";
-import { couponLabel, couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
+import { couponLabel, couponProblem, discountFor, normalizeCode } from "@/lib/coupons";
+import { findCoupon } from "@/lib/coupons-server";
 
 // POST /api/coupons/check  { slug, code, items:[{productId, qty}] }
 // הקונה לוחצת "החלה" ורואה מיד כמה יורד. הסכום מחושב כאן לפי המחירים
@@ -44,17 +45,10 @@ export async function POST(req: NextRequest) {
     })
   );
 
-  const { data } = await db
-    .from("coupons")
-    .select("*")
-    .eq("store_id", store.id)
-    .eq("code", code)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (!data) {
+  const c = await findCoupon(db, store.id, code);
+  if (!c) {
     return NextResponse.json({ error: "הקוד הזה לא קיים בדוכן. אפשר לבדוק את האיות" }, { status: 404 });
   }
-  const c = data as Coupon;
   const problem = couponProblem(c, subtotal);
   if (problem) return NextResponse.json({ error: problem }, { status: 400 });
 

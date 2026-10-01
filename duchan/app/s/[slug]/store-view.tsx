@@ -1175,7 +1175,7 @@ export default function StoreView({
                       autoCapitalize="characters"
                       autoComplete="off"
                       maxLength={20}
-                      placeholder="למשל: SALE10"
+                      placeholder="הקוד שקיבלת"
                       className="flex-1 min-w-0 border-[1.5px] border-black/15 px-3 py-3 text-[14px] tracking-wide"
                       style={{ background: "var(--s-surface)" }}
                     />

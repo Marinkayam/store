@@ -24,9 +24,48 @@ export interface Coupon {
   deleted_at?: string | null;
 }
 
-/** קוד כמו שהמוכרת או הקונה הקלידו → הצורה השמורה: אותיות גדולות, בלי רווחים. */
+/**
+ * קוד כמו שהמוכרת או הקונה הקלידו → הצורה השמורה.
+ * אנגלית לאותיות גדולות; עברית כמו שהיא. רווח הופך למקף ("מבצע חורף" →
+ * "מבצע-חורף"), וגרש/גרשיים יורדים ("חג׳" → "חג") — כך הקונה מקלידה
+ * איך שבא לה והקוד עדיין נמצא.
+ */
 export function normalizeCode(raw: string | null | undefined): string {
-  return (raw ?? "").trim().toUpperCase().replace(/\s+/g, "");
+  return (raw ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[׳״'"`]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-{2,}/g, "-");
+}
+
+/*
+ * מקלדת בשפה הלא נכונה: ילדה מקלידה SALE10 כשהמקלדת בעברית ומקבלת
+ * "דשךק10". הפריסה הישראלית התקנית, אות מול אות. Q ו-W יושבים על סימנים
+ * (/ ו-'), ולכן קוד עם Q/W לא משוחזר — וזה בסדר.
+ */
+const HEB_TO_ENG: Record<string, string> = {
+  ק: "E", ר: "R", א: "T", ט: "Y", ו: "U", ן: "I", ם: "O", פ: "P",
+  ש: "A", ד: "S", ג: "D", כ: "F", ע: "G", י: "H", ח: "J", ל: "K", ך: "L",
+  ז: "Z", ס: "X", ב: "C", ה: "V", נ: "B", מ: "N", צ: "M",
+};
+const ENG_TO_HEB: Record<string, string> = Object.fromEntries(
+  Object.entries(HEB_TO_ENG).map(([h, e]) => [e, h])
+);
+
+/** הקוד כפי שהיה יוצא בפריסת המקלדת השנייה, או null כשאין המרה מלאה. */
+export function otherLayout(code: string): string | null {
+  const heb = /[א-ת]/.test(code);
+  const eng = /[A-Z]/.test(code);
+  if (heb === eng) return null; // ריק, או מעורבב — לא ניחוש סביר
+  const map = heb ? HEB_TO_ENG : ENG_TO_HEB;
+  let out = "";
+  for (const ch of code) {
+    if (/[0-9_-]/.test(ch)) out += ch;
+    else if (map[ch]) out += map[ch];
+    else return null;
+  }
+  return out;
 }
 
 /** אותו כלל כמו ה-check בדאטהבייס. */
@@ -97,7 +136,7 @@ export function draftToRow(
   d: CouponDraft
 ): { row: Record<string, unknown> } | { error: string } {
   const code = normalizeCode(d.code);
-  if (!isValidCode(code)) return { error: "קוד: 3 עד 20 אותיות או ספרות, בלי רווחים" };
+  if (!isValidCode(code)) return { error: "קוד: 3 עד 20 אותיות (עברית או אנגלית) או ספרות" };
   const value = Number(String(d.value).replace(",", "."));
   if (!Number.isFinite(value) || value <= 0) return { error: "כמה הנחה? צריך מספר גדול מ-0" };
   if (d.kind === "percent" && value > 100) return { error: "אחוז ההנחה יכול להיות עד 100" };

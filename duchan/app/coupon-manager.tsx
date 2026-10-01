@@ -108,8 +108,9 @@ export default function CouponManager({
           <div key={c.id} className="bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5" data-testid="coupon-row" data-code={c.code}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[16px] font-extrabold tracking-wider" dir="ltr" style={{ textAlign: "right" }}>
-                  {c.code}
+                {/* bdi: קוד באנגלית או בעברית, כל אחד בכיוון שלו */}
+                <div className="text-[16px] font-extrabold tracking-wider">
+                  <bdi>{c.code}</bdi>
                 </div>
                 <div className="text-[13px] font-semibold mt-0.5">{couponLabel(c)}</div>
                 <div className="text-[11.5px] text-[var(--muted)] mt-0.5">{couponTerms(c)}</div>
@@ -174,16 +175,18 @@ export default function CouponManager({
           <div className="text-[13.5px] font-bold">קופון חדש</div>
 
           <div>
-            <label htmlFor="cp-code" className="block text-[12px] text-[var(--muted)] mb-1.5">הקוד שהקונה מקלידה</label>
+            <label htmlFor="cp-code" className="block text-[12px] text-[var(--muted)] mb-1.5">
+              הקוד שהקונה מקלידה · בעברית או באנגלית
+            </label>
             <div className="flex gap-2">
               <input
                 id="cp-code"
                 value={draft.code}
-                onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/\s/g, "") })}
+                onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/[׳״'"`]/g, "").replace(/\s+/g, "-") })}
                 aria-label="קוד הקופון"
                 maxLength={20}
                 autoCapitalize="characters"
-                placeholder="למשל: SALE10"
+                placeholder="למשל: חנוכה10 או SALE10"
                 className="flex-1 min-w-0 border border-[var(--line)] px-3 py-2.5 text-[14px] tracking-wider"
               />
               <button onClick={randomCode} className="shrink-0 min-h-11 px-3 border border-[var(--line)] text-[12px]">

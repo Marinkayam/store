@@ -6,6 +6,7 @@ import { safeOptionLabel } from "@/lib/product-options";
 import type { OrderItem } from "@/lib/types";
 import { lineTotal, sumPrices } from "@/lib/money";
 import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
+import { findCoupon } from "@/lib/coupons-server";
 
 // POST /api/orders  { slug, items:[{productId, qty}], note?, buyerPhone? }
 // המספר של הילדה לא יושב ב-HTML — הוא מוחזר מכאן, רק אחרי שההזמנה נוצרה.
@@ -121,13 +122,7 @@ export async function POST(req: NextRequest) {
   let coupon: Coupon | null = null;
   let discount = 0;
   if (code) {
-    const { data } = await db
-      .from("coupons")
-      .select("*")
-      .eq("store_id", store.id)
-      .eq("code", code)
-      .is("deleted_at", null)
-      .maybeSingle();
+    const data = await findCoupon(db, store.id, code);
     if (!data) {
       return NextResponse.json({ error: "הקוד הזה לא קיים בדוכן. אפשר לבדוק את האיות, או להמשיך בלי קוד", field: "coupon" }, { status: 400 });
     }
