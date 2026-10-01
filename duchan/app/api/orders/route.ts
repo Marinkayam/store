@@ -5,6 +5,7 @@ import { normalizePhone } from "@/lib/phone";
 import { safeOptionLabel } from "@/lib/product-options";
 import type { OrderItem } from "@/lib/types";
 import { lineTotal, sumPrices } from "@/lib/money";
+import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
 
 // POST /api/orders  { slug, items:[{productId, qty}], note?, buyerPhone? }
 // המספר של הילדה לא יושב ב-HTML — הוא מוחזר מכאן, רק אחרי שההזמנה נוצרה.
@@ -29,6 +30,8 @@ interface Body {
     entryCode?: string;
   };
   payMethod?: string;
+  /** קוד קופון. נבדק כאן מחדש — מה שהלקוח חישב לא נכנס להזמנה. */
+  couponCode?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, shipDetails, payMethod } = body;
+  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, shipDetails, payMethod, couponCode } = body;
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
@@ -110,7 +113,30 @@ export async function POST(req: NextRequest) {
     lines.push(lineTotal(price, qty));
   }
   // באגורות שלמות: 10.90 × 3 בנקודה צפה זה 32.699999…
-  const total = sumPrices(lines);
+  const subtotal = sumPrices(lines);
+
+  // קופון: נבדק מחדש בשרת (קיים, פעיל, בתוקף, לא נוצל, מעל המינימום).
+  // השימוש עצמו "נתפס" בתוך place_order, אטומית עם ההזמנה.
+  const code = normalizeCode(couponCode);
+  let coupon: Coupon | null = null;
+  let discount = 0;
+  if (code) {
+    const { data } = await db
+      .from("coupons")
+      .select("*")
+      .eq("store_id", store.id)
+      .eq("code", code)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!data) {
+      return NextResponse.json({ error: "הקוד הזה לא קיים בדוכן. אפשר לבדוק את האיות, או להמשיך בלי קוד", field: "coupon" }, { status: 400 });
+    }
+    const problem = couponProblem(data as Coupon, subtotal);
+    if (problem) return NextResponse.json({ error: problem, field: "coupon" }, { status: 400 });
+    coupon = data as Coupon;
+    discount = discountFor(coupon, subtotal);
+  }
+  const total = sumPrices([subtotal, -discount]);
 
   // השם הוא מה שמאפשר לה לדעת מי הזמינה, ולכן הוא נדרש גם כאן ולא רק
   // בטופס — טופס אפשר לעקוף, את זה לא. הבדיקה יושבת אחרי אימות החנות
@@ -189,13 +215,18 @@ export async function POST(req: NextRequest) {
     p_ship_address: ships ? address : null, p_ship_city: ships ? city : null,
     p_pay_method: pay, p_wants_shipping: wantsShipping ?? null,
   };
-  const attempts: Record<string, unknown>[] = [
-    { ...v8, p_ship_details: ships ? details : null },
-    v8,
-    { ...base, p_buyer_phone: phone, p_buyer_name: name },
-    { ...base, p_buyer_phone: phone },
-    base,
-  ];
+  const v9 = { ...v8, p_ship_details: ships ? details : null };
+  // עם קופון אין ירידה לחתימות ישנות: הזמנה מוזלת בלי שהשימוש נספר היא
+  // קופון שאפשר לממש בלי סוף. עדיף לומר שזה לא עבד.
+  const attempts: Record<string, unknown>[] = coupon
+    ? [{ ...v9, p_coupon_id: coupon.id, p_coupon_code: coupon.code, p_discount: discount, p_subtotal: subtotal }]
+    : [
+        v9,
+        v8,
+        { ...base, p_buyer_phone: phone, p_buyer_name: name },
+        { ...base, p_buyer_phone: phone },
+        base,
+      ];
 
   let orderNumber: number | null = null;
   let orderErr;
@@ -205,6 +236,12 @@ export async function POST(req: NextRequest) {
     console.error(
       `[orders] place_order(${Object.keys(args).length} args) failed, falling back:`,
       orderErr.message
+    );
+  }
+  if (orderErr && /coupon_unavailable/.test(orderErr.message)) {
+    return NextResponse.json(
+      { error: "הקוד נוצל עד הסוף ממש עכשיו. אפשר להזמין בלי הקוד", field: "coupon" },
+      { status: 409 }
     );
   }
   if (orderErr || typeof orderNumber !== "number") {
@@ -218,5 +255,6 @@ export async function POST(req: NextRequest) {
     buyerName: name,
     items: snapshot,
     total,
+    ...(coupon ? { subtotal, discount, couponCode: coupon.code } : {}),
   });
 }

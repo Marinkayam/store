@@ -16,6 +16,8 @@ export type PublicStoreResult =
       products: PublicProduct[];
       bestSellerId: string | null;
       soldIds: string[];
+      /** יש בדוכן קופון חי — רק אז הקופה מציגה "יש לך קוד קופון?" */
+      hasCoupons: boolean;
     }
   | { state: "closed" };
 
@@ -107,6 +109,18 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     .eq("store_id", row.id)
     .in("status", ["paid", "delivered"]);
 
+  // רק אם יש: שדה קופון בדוכן בלי קופונים שולח קונות לחפש קוד שלא קיים.
+  // הקודים עצמם לא יוצאים מכאן — רק כן/לא.
+  const { data: liveCoupon, error: couponErr } = await db
+    .from("coupons")
+    .select("id")
+    .eq("store_id", row.id)
+    .eq("active", true)
+    .is("deleted_at", null)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .limit(1);
+  const hasCoupons = !couponErr && (liveCoupon?.length ?? 0) > 0;
+
   const list = (products ?? []) as unknown as PublicProduct[];
   const bestSellerId = bestSellerOf(sold ?? [], list);
   const soldIds = soldProductIds(sold ?? [], list);
@@ -153,5 +167,6 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     products: list,
     bestSellerId,
     soldIds,
+    hasCoupons,
   };
 });

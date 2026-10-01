@@ -83,6 +83,8 @@ psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/tests/local-stack/p
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0040_function_grants.sql >/dev/null 2>&1
 # אותו דבר ל-place_order (0051): בלי זה כל הגרסאות נפתחות שוב ל-anon מקומית
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0051_close_legacy_place_order.sql >/dev/null 2>&1
+# ו-0054: הקופונים מקבלים הרשאות ברמת עמודות (אין עדכון של used_count)
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0054_coupons.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
 up 3001 || { say "מפעיל PostgREST"; ("$PGREST" "$PGREST_CONF" >"$LOGS/postgrest.log" 2>&1 &); sleep 5; }

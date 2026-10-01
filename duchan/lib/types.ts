@@ -129,6 +129,10 @@ export interface Order {
     entryCode?: string;
   } | null;
   pay_method: string | null;   // bit / paybox / cash
+  /** קופון שהוחל (0054). total = subtotal - discount */
+  coupon_code?: string | null;
+  discount?: number | string | null;
+  subtotal?: number | string | null;
   wants_shipping: boolean | null;
   status: OrderStatus;
   created_at: string;

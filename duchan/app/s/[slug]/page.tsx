@@ -90,6 +90,7 @@ export default async function StorePage({ params }: Props) {
         products={data.products}
         bestSellerId={data.bestSellerId}
         soldIds={data.soldIds}
+        hasCoupons={data.hasCoupons}
         preview={data.state === "preview"}
       />
       {/* הלולאה: מי שראתה חנות של חברה יכולה לפתוח אחת משלה, והשיוך נשמר */}

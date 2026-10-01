@@ -32,12 +32,15 @@ export default function StoreView({
   bestSellerId,
   soldIds,
   preview = false,
+  hasCoupons = false,
 }: {
   store: PublicStore;
   products: PublicProduct[];
   bestSellerId: string | null;
   /** מוצרים שכבר נמכרו — קובע אם "אחרון במלאי" באמת אומר משהו */
   soldIds: string[];
+  /** יש בדוכן קופון חי — רק אז מופיע "יש לך קוד קופון?" */
+  hasCoupons?: boolean;
   /** הדוכן עוד לא פורסם: רואים הכל, אי אפשר להזמין. */
   preview?: boolean;
 }) {
@@ -206,6 +209,60 @@ export default function StoreView({
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
   const cartTotal = sumPrices(cart.map((l) => lineTotal(l.price, l.qty)));
 
+  /* ── קופון ── השרת מחשב (לפי המחירים בדאטהבייס), כאן רק מציגים.
+     כל שינוי בסל בודק את הקוד מחדש — מינימום שכבר לא מתקיים מוריד אותו. */
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; label: string; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponBusy, setCouponBusy] = useState(false);
+  const payable = coupon ? sumPrices([cartTotal, -coupon.discount]) : cartTotal;
+
+  async function applyCoupon(raw: string) {
+    const code = raw.trim();
+    if (!code) {
+      setCouponError("צריך להקליד קוד");
+      return;
+    }
+    setCouponBusy(true);
+    setCouponError("");
+    try {
+      const res = await fetch("/api/coupons/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: store.slug,
+          code,
+          items: cart.map((l) => ({ productId: l.id, qty: l.qty })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCoupon(null);
+        setCouponError(data.error ?? "לא הצלחנו לבדוק את הקוד");
+        return;
+      }
+      setCoupon({ code: data.code, label: data.label, discount: Number(data.discount) });
+      setCouponInput(data.code);
+    } catch {
+      setCouponError("אין חיבור. הקוד לא נבדק, אפשר לנסות שוב");
+    } finally {
+      setCouponBusy(false);
+    }
+  }
+
+  // הסל השתנה → הקוד נבדק שוב (סכום, מינימום)
+  const cartSig = cart.map((l) => `${l.id}:${l.qty}`).join(",");
+  useEffect(() => {
+    if (!coupon) return;
+    if (!cart.length) {
+      setCoupon(null);
+      return;
+    }
+    applyCoupon(coupon.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartSig]);
+
   const inCart = (id: string) =>
     cart.filter((l) => l.id === id).reduce((s, l) => s + l.qty, 0);
   const maxQty = (p: PublicProduct) => (p.track_stock ? Math.max(0, p.stock - inCart(p.id)) : 99);
@@ -340,10 +397,19 @@ export default function StoreView({
           shipCity: shipping ? shipCity.trim() : undefined,
           shipDetails,
           payMethod: chosenPay ?? undefined,
+          couponCode: coupon?.code,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.field === "coupon") {
+          // הקוד נפל בדרך (נוצל, פג). ההזמנה לא נשלחה; הסל והפרטים נשמרו.
+          setCoupon(null);
+          setCouponOpen(true);
+          setCouponError(data.error ?? "הקוד לא עבר");
+          showToast("ההזמנה לא נשלחה כי הקוד לא עבר. אפשר לשלוח בלי הקוד");
+          return;
+        }
         showToast(data.error ?? "משהו השתבש, לנסות שוב");
         return; // לא מנקים את הסל עד שהשרת אישר
       }
@@ -381,6 +447,9 @@ export default function StoreView({
       const msg =
         `היי! 👋 אני ${data.buyerName} · הזמנה #${data.orderNumber}\n` +
         `ראיתי את הדוכן שלך ואני רוצה להזמין:\n\n${lines}\n\n` +
+        (data.discount
+          ? `סכום: ₪${formatPrice(data.subtotal)}\nקופון ${data.couponCode}: −₪${formatPrice(data.discount)}\n`
+          : "") +
         `סה"כ: ₪${formatPrice(data.total)}` +
         (note.trim() ? `\nהערה: ${note.trim()}` : "") +
         shipLine +
@@ -391,6 +460,10 @@ export default function StoreView({
          מ"ההזמנה עצמה" לכפתור קשר למי שמתקשה; ההודעה המוכנה נשארת
          כדי שהשיחה, אם תיפתח, תגיע עם כל ההקשר. */
       setCart([]);
+      setCoupon(null);
+      setCouponInput("");
+      setCouponOpen(false);
+      setCouponError("");
       setNote("");
       setBuyerPhone("");
       setBuyerName("");
@@ -1036,6 +1109,78 @@ export default function StoreView({
             </p>
           )}
 
+          {/* ── קוד קופון — רק בדוכן שיש בו קופון חי, ומקופל כברירת מחדל:
+              שדה פתוח שולח את כל מי שאין לה קוד לחפש אחד ── */}
+          {hasCoupons && cart.length > 0 && (
+            <div className="mt-4" data-testid="coupon-box">
+              {coupon ? (
+                <div
+                  data-testid="coupon-applied"
+                  className="s-r flex items-center gap-2 px-3.5 py-3 border-2"
+                  style={{ borderColor: "var(--s-primary)" }}
+                >
+                  <span aria-hidden>🏷️</span>
+                  <span className="flex-1 min-w-0 text-[13px]">
+                    {/* הקוד באנגלית ומספרים — בתוך bdi, אחרת הוא מערבב את כיוון השורה */}
+                    <span className="block font-extrabold tracking-wider"><bdi>{coupon.code}</bdi></span>
+                    <span className="block text-[12px] opacity-75">
+                      {coupon.label} · חסכת <bdi>₪{formatPrice(coupon.discount)}</bdi>
+                    </span>
+                  </span>
+                  <button
+                    onClick={() => { setCoupon(null); setCouponInput(""); setCouponError(""); }}
+                    className="text-[12px] underline opacity-70 min-h-11 px-1"
+                  >
+                    הסרה
+                  </button>
+                </div>
+              ) : !couponOpen ? (
+                <button
+                  onClick={() => setCouponOpen(true)}
+                  data-testid="coupon-open"
+                  className="text-[13px] font-semibold underline underline-offset-4 min-h-11"
+                >
+                  🏷️ יש לך קוד קופון?
+                </button>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="coupon-code" className="text-[12px] opacity-70">קוד קופון</label>
+                  <div className="flex gap-2">
+                    <input
+                      id="coupon-code"
+                      value={couponInput}
+                      onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(""); }}
+                      onKeyDown={(e) => e.key === "Enter" && applyCoupon(couponInput)}
+                      aria-label="קוד קופון"
+                      aria-invalid={!!couponError}
+                      aria-describedby={couponError ? "coupon-error" : undefined}
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                      maxLength={20}
+                      placeholder="למשל: SALE10"
+                      className="flex-1 min-w-0 border-[1.5px] border-black/15 px-3 py-3 text-[14px] tracking-wide"
+                      style={{ background: "var(--s-surface)" }}
+                    />
+                    <button
+                      onClick={() => applyCoupon(couponInput)}
+                      disabled={couponBusy}
+                      data-testid="coupon-apply"
+                      className="shrink-0 px-5 text-[13.5px] font-bold disabled:opacity-50"
+                      style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+                    >
+                      {couponBusy ? "בודקת…" : "החלה"}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p id="coupon-error" role="alert" data-testid="coupon-error" className="text-[12.5px] text-[var(--danger)] leading-snug">
+                      {couponError}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* בחירה לכל הזמנה, לא רק הגדרת ברירת מחדל של החנות — קונה שרוצה
               לאסוף בעצמה לא צריכה "לקבל" משלוח שהיא לא ביקשה. */}
           {store.ships && (
@@ -1284,9 +1429,21 @@ export default function StoreView({
             className="px-5 pt-3 pb-6 border-t border-black/10"
             style={{ background: "var(--s-surface)" }}
           >
+            {coupon && (
+              <div className="flex flex-col gap-1 mb-2 text-[12.5px]" data-testid="coupon-summary">
+                <div className="flex justify-between opacity-70">
+                  <span>סכום המוצרים</span>
+                  <span>₪{formatPrice(cartTotal)}</span>
+                </div>
+                <div className="flex justify-between font-semibold" style={{ color: "var(--s-primary)" }}>
+                  <span>קופון <bdi>{coupon.code}</bdi></span>
+                  <bdi dir="ltr">−₪{formatPrice(coupon.discount)}</bdi>
+                </div>
+              </div>
+            )}
             <div className="flex justify-between items-baseline mb-2.5">
               <span className="text-[13.5px] font-bold">סה"כ לתשלום</span>
-              <span className="text-[19px] font-bold">₪{formatPrice(cartTotal)}</span>
+              <span className="text-[19px] font-bold" data-testid="order-total">₪{formatPrice(payable)}</span>
             </div>
             <button
               onClick={sendOrder}

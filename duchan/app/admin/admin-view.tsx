@@ -11,6 +11,7 @@ import { payoutSummary } from "@/lib/payouts";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { QUOTAS } from "@/lib/quotas";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
+import AdminCoupons from "./admin-coupons";
 
 /* ---------- types ---------- */
 
@@ -90,6 +91,7 @@ interface DetailOrder {
   id: string;
   order_number: number;
   total: number;
+  coupon_code?: string | null;
   status: string;
   created_at: string;
   items: { name: string; qty: number; price: number }[];
@@ -1071,6 +1073,12 @@ function SchemaWarning() {
               {detail.products.length === 0 && <p className="text-xs text-[var(--muted)]">עוד אין מוצרים.</p>}
             </div>
 
+            {/* קופונים של החנות — המנהלת יוצרת ומנהלת, המוכרת רואה אותם אצלה */}
+            <h3 className="text-sm font-bold mb-1.5">🏷️ קופונים</h3>
+            <div className="mb-4" data-testid="admin-coupons">
+              <AdminCoupons storeId={detail.store.id} />
+            </div>
+
             {/* הזמנות אחרונות */}
             <h3 className="text-sm font-bold mb-1.5">הזמנות אחרונות</h3>
             <div className="flex flex-col gap-1.5">
@@ -1080,6 +1088,7 @@ function SchemaWarning() {
                   <span className="flex-1 truncate">
                     {o.items.map((i) => `${i.name}×${i.qty}`).join(", ")}
                   </span>
+                  {o.coupon_code && <span className="text-[var(--muted)]">🏷️ <bdi>{o.coupon_code}</bdi></span>}
                   <span className="font-medium">₪{formatPrice(o.total)}</span>
                   <span className={`text-[11px] px-1.5 py-0.5 ${
                     o.status === "sent" ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]"

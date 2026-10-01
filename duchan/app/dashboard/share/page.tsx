@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../use-store";
 import { SHARE_TEXTS, inviteText, type ShareContext } from "@/lib/share-texts";
+import SellerCoupons from "./seller-coupons";
 
 // "להפיץ" — המסך שהופך חנות לחנות שיש בה אנשים.
 // הילדה לא צריכה להמציא ניסוח: היא בוחרת הודעה, עורכת אם בא לה, ושולחת.
@@ -110,6 +111,16 @@ export default function SharePage() {
         </a>
       )}
 
+      {/* קופונים — כלי ההפצה הכי ישיר: "קוד SALE10 נותן 10% הנחה" */}
+      <section className="px-4 pt-5" data-testid="seller-coupons">
+        <h2 className="text-[14px] font-bold">🏷️ קופונים</h2>
+        <p className="text-[12px] text-[var(--muted)] mt-0.5 mb-3">
+          קונה מקלידה את הקוד בהזמנה ומקבלת הנחה. אפשר לשתף אותו עם ההודעות למטה.
+        </p>
+        <SellerCoupons store={store} />
+      </section>
+
+      <div className="px-4 pt-6 pb-1 text-[14px] font-bold">💬 הודעות מוכנות</div>
       <div className="p-3 flex flex-col gap-2">
         {SHARE_TEXTS.map((t) => {
           const open = openKey === t.key;

@@ -529,7 +529,13 @@ export default function OrdersPage() {
               )
             )}
 
-            <div className="flex justify-between text-xs font-medium border-t border-[var(--line)] mt-3.5 pt-3">
+            {o.coupon_code && (
+              <div className="flex justify-between text-[12px] text-[var(--muted)] border-t border-[var(--line)] mt-3.5 pt-3" data-testid="order-coupon">
+                <span>🏷️ קופון <bdi>{o.coupon_code}</bdi> · לפני הנחה ₪{formatPrice(o.subtotal)}</span>
+                <bdi dir="ltr">−₪{formatPrice(o.discount)}</bdi>
+              </div>
+            )}
+            <div className={`flex justify-between text-xs font-medium ${o.coupon_code ? "mt-1.5" : "border-t border-[var(--line)] mt-3.5 pt-3"}`}>
               <span>סה"כ</span>
               <span>₪{formatPrice(o.total)}</span>
             </div>
