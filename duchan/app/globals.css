@@ -416,8 +416,8 @@ h3 {
 }
 .fx-shine { position: relative; overflow: hidden; isolation: isolate; }
 .fx-shine::after {
-  content: ""; position: absolute; inset: 0 auto 0 0; width: 45%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.38), transparent);
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 14%;
+  background: rgba(255,255,255,.16);
   animation: fx-shine 3.6s ease-in-out infinite; pointer-events: none; z-index: 1;
 }
 /* המחיר קופץ פנימה פעם אחת */
@@ -441,7 +441,7 @@ h3 {
   15%  { opacity: 1; }
   100% { transform: translateY(-46px) rotate(220deg); opacity: 0; }
 }
-.fx-confetti { position: absolute; width: 6px; height: 9px; border-radius: 2px; pointer-events: none;
+.fx-confetti { position: absolute; width: 6px; height: 9px; pointer-events: none;
   animation: fx-confetti 2.6s ease-out infinite; z-index: 2; }
 /* מתג שזז ברכות */
 .fx-press { transition: transform .12s ease; }

@@ -36,11 +36,11 @@ export default function PricePage() {
             לפתוח את הלינק ולשלוח אותו לחברים.
           </p>
 
-          <div className={`mt-6 inline-flex flex-col items-center card px-8 py-5 ${IS_LAUNCH ? "fx-shine relative rounded-2xl" : ""}`}>
+          <div className={`mt-6 inline-flex flex-col items-center card px-8 py-5 ${IS_LAUNCH ? "fx-shine relative" : ""}`}>
             {IS_LAUNCH && <PromoBurst />}
             {IS_LAUNCH && (
-              <div className="relative z-[3] t-small font-bold text-white mb-2 rounded-full px-3 py-1"
-                style={{ background: "linear-gradient(135deg, #9b6d3e 0%, #b47fb0 100%)" }}>
+              <div className="relative z-[3] t-small font-bold text-white mb-2 px-3 py-1"
+                style={{ background: "var(--wood)" }}>
                 <span className="fx-wiggle">🎉</span> {DEAL_LABEL}!
               </div>
             )}

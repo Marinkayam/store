@@ -487,7 +487,7 @@ export default function SettingsPage() {
 
   const hero = (
     <div
-      className="rounded-3xl overflow-hidden border border-[var(--line)] shadow-[0_10px_28px_rgba(38,38,38,0.08)]"
+      className=" overflow-hidden border border-[var(--line)] shadow-[0_10px_28px_rgba(38,38,38,0.08)]"
       style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
       data-testid="settings-hero"
     >
@@ -502,17 +502,17 @@ export default function SettingsPage() {
       <div className="px-4 pb-4 -mt-9 text-center">
         <span
           className="inline-flex w-[72px] h-[72px] items-center justify-center text-4xl overflow-hidden"
-          style={{ background: t.surface, border: `3px solid ${t.bg}`, borderRadius: 20, boxShadow: "0 4px 12px rgba(0,0,0,.08)" }}
+          style={{ background: t.surface, border: `3px solid ${t.bg}`, borderRadius: lk.radius, boxShadow: "0 4px 12px rgba(0,0,0,.08)" }}
         >
           {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
         </span>
         <div
           className={previewBg ? "mt-2 px-3 py-2 inline-block" : "mt-1"}
-          style={previewBg ? { ...readablePlate(t), borderRadius: 14 } : undefined}
+          style={previewBg ? { ...readablePlate(t), borderRadius: lk.radius } : undefined}
         >
           <div className="text-[19px] font-bold leading-tight">{name || "הדוכן שלך"}</div>
           <span
-            className="inline-block mt-1.5 text-[11.5px] font-bold px-2.5 py-1 rounded-full"
+            className="inline-block mt-1.5 text-[11.5px] font-bold px-2.5 py-1"
             style={{ background: statusChip.bg, color: statusChip.fg, fontFamily: "var(--font-body)" }}
             data-testid="store-status-chip"
           >
@@ -522,7 +522,7 @@ export default function SettingsPage() {
         {!store.activated_at && (
           <div
             data-testid="preview-notice"
-            className="mt-3 rounded-xl bg-white/90 px-3 py-2 text-[12px] text-[var(--warn-ink)] leading-relaxed"
+            className="mt-3 bg-white/90 px-3 py-2 text-[12px] text-[var(--warn-ink)] leading-relaxed"
             style={{ fontFamily: "var(--font-body)" }}
           >
             אפשר כבר לשלוח את הלינק והחברים יראו הכל — ההזמנות נפתחות אחרי הפרסום.
@@ -531,13 +531,13 @@ export default function SettingsPage() {
         <div className="grid grid-cols-2 gap-2 mt-3" style={{ fontFamily: "var(--font-body)" }}>
           <a
             href={storeUrl}
-            className="fx-press rounded-xl bg-white/95 border border-black/5 py-2.5 text-[13px] font-bold text-[var(--ink)]"
+            className="fx-press bg-white/95 border border-black/5 py-2.5 text-[13px] font-bold text-[var(--ink)]"
           >
             👀 לראות את הדוכן
           </a>
           <a
             href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
-            className="fx-press rounded-xl py-2.5 text-[13px] font-bold"
+            className="fx-press py-2.5 text-[13px] font-bold"
             style={{ background: t.primary, color: t.onPrimary }}
           >
             📤 לשלוח לחברים
@@ -556,13 +556,13 @@ export default function SettingsPage() {
 
   const statusRow =
     store.status === "blocked" ? (
-      <div className="rounded-2xl bg-[var(--danger-bg)] border border-[var(--danger-line)] p-3.5 text-[13px] text-[var(--danger)]">
+      <div className=" bg-[var(--danger-bg)] border border-[var(--danger-line)] p-3.5 text-[13px] text-[var(--danger)]">
         החנות הושבתה על ידי הנהלת דוכן.
       </div>
     ) : (
-      <div className="rounded-2xl bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
+      <div className=" bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
         <div className="flex items-center gap-3">
-        <span className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-[19px] bg-[var(--sand)]" aria-hidden>
+        <span className="w-10 h-10 shrink-0 flex items-center justify-center text-[19px] bg-[var(--sand)]" aria-hidden>
           {store.status === "active" ? "🟢" : "⏸️"}
         </span>
         <div className="flex-1 min-w-0">
@@ -652,7 +652,7 @@ export default function SettingsPage() {
              שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */
           before={
             !store.activated_at ? (
-              <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 rounded-2xl block shadow-[0_8px_22px_rgba(38,38,38,0.18)]">
+              <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block shadow-[0_8px_22px_rgba(38,38,38,0.18)]">
                 <div className="text-[13px] font-bold">
                   {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
                 </div>
@@ -863,7 +863,7 @@ export default function SettingsPage() {
           </div>
 
           {/* אפשרויות משניות לקאבר ולתמונה — מתחת לדוכן, לא במקומו */}
-          <div className="bg-white rounded-2xl border border-[var(--line)] p-3 mt-2.5">
+          <div className="bg-white border border-[var(--line)] p-3 mt-2.5">
             <div className="text-[12px] text-[var(--muted)] mb-1.5">רקע מוכן לקאבר</div>
             <div className="flex gap-1.5 flex-wrap">
               {COVERS.map((c) => (
@@ -1147,7 +1147,7 @@ export default function SettingsPage() {
           )}
           {section === "products" && (
             <>
-        <div id="products-display" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-4 flex flex-col gap-4" data-testid="products-display">
+        <div id="products-display" className="scroll-mt-14 bg-white border border-[var(--line)] p-4 flex flex-col gap-4" data-testid="products-display">
           <div>
             <label htmlFor="featured-title" className="block text-[12px] text-[var(--muted)] mb-1.5">
               כותרת לחלק המומלצים
@@ -1194,7 +1194,7 @@ export default function SettingsPage() {
             המקום היחיד לכתוב "בקנייה מעל ₪50 מקבלים מתנה" היה עד היום
             התיאור, והוא מיועד לספר מה יש בדוכן — לא להכריז על מבצע
             שנגמר בסוף החודש. */}
-        <div id="promo" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
+        <div id="promo" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="flex items-center justify-between gap-2">
             <div>
               <div className="text-[13px] font-bold">ההודעה בדוכן</div>
@@ -1270,7 +1270,7 @@ export default function SettingsPage() {
           {section === "payment" && (
             <>
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
-        <div id="payment" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
+        <div id="payment" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">מה מקבלים ממך?</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             מה שמסומן מופיע לקונים לפני ההזמנה וגם בהודעה. הכסף עובר ישירות
@@ -1402,7 +1402,7 @@ export default function SettingsPage() {
           {section === "shipping" && (
             <>
         {/* משלוחים */}
-        <div className="bg-white rounded-2xl border border-[var(--line)] p-3">
+        <div className="bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">איך המוצרים מגיעים לקונים?</div>
           <div className="text-[12px] text-[var(--muted)] mb-2.5">
             {info.ships ? "המשלוח מופיע בדוכן ובהודעת ההזמנה." : "הקונים יודעים שמוסרים ביד ומתאמים בוואטסאפ."}
@@ -1449,7 +1449,7 @@ export default function SettingsPage() {
           {section === "order" && (
             <>
         {/* איך ההזמנה מגיעה אליך */}
-        <div id="order-msg" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
+        <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <ol className="text-[12.5px] text-[var(--muted)] leading-relaxed flex flex-col gap-1">
             <li>1. בוחרים מוצרים בדוכן ולוחצים "שליחה בוואטסאפ".</li>
             <li>2. וואטסאפ נפתח <b>אצלם</b>, וההודעה כבר כתובה בפנים.</li>
@@ -1485,7 +1485,7 @@ export default function SettingsPage() {
             הטלפון ישב קודם לבדו באמצע המסך עם רווחים גדולים סביבו ובלי
             להסביר למה הוא שם. העיר מופיעה כאן וגם על הדוכן למעלה, ושתי
             התיבות קשורות לאותו ערך — מה שמקלידים בזו מתעדכן בזו. */}
-        <div id="about" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
+        <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <label className="block text-[12px] text-[var(--muted)] mb-1">
             הטלפון שלך בוואטסאפ, לשם מגיעות ההזמנות
           </label>

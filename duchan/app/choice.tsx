@@ -37,7 +37,7 @@ export default function Choice({
       aria-label={label}
       data-testid={testid}
       data-on={String(value)}
-      className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[var(--sand)]"
+      className="grid grid-cols-2 gap-1 p-1 bg-[var(--sand)]"
     >
       {([true, false] as const).map((v) => {
         const sel = value === v;
@@ -50,7 +50,7 @@ export default function Choice({
             disabled={disabled}
             data-testid={testid ? `${testid}-${v ? "on" : "off"}` : undefined}
             onClick={() => !sel && onChange(v)}
-            className={`min-h-11 rounded-lg px-2 text-[13px] leading-tight transition disabled:opacity-50 ${
+            className={`min-h-11 px-2 text-[13px] leading-tight transition disabled:opacity-50 ${
               sel
                 ? "bg-white font-bold text-[var(--ink)] shadow-[0_1px_4px_rgba(0,0,0,0.12)]"
                 : "text-[var(--muted)] font-medium"

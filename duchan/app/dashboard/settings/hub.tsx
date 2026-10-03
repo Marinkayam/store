@@ -57,12 +57,12 @@ export default function SettingsHub({
       {groups.map((g) => (
         <section key={g.title} className="fx-rise" style={delay()}>
           <h2 className="text-[12px] font-bold text-[var(--faint)] px-1 mb-1.5 tracking-wide">{g.title}</h2>
-          <div className="bg-white rounded-2xl border border-[var(--line)] overflow-hidden">
+          <div className="bg-white border border-[var(--line)] overflow-hidden">
             {g.rows.map((r, idx) => {
               const inner = (
                 <>
                   <span
-                    className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-[19px]"
+                    className="w-10 h-10 shrink-0 flex items-center justify-center text-[19px]"
                     style={{ background: r.tint }}
                     aria-hidden
                   >

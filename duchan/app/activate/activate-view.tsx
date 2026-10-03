@@ -206,8 +206,8 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         </p>
         {isLaunch && (
           <div
-            className="fx-shine mt-5 inline-block text-white px-3.5 py-1.5 text-[12.5px] font-bold rounded-full"
-            style={{ background: "linear-gradient(135deg, #9b6d3e 0%, #b47fb0 100%)" }}
+            className="fx-shine mt-5 inline-block text-white px-3.5 py-1.5 text-[12.5px] font-bold"
+            style={{ background: "var(--wood)" }}
           >
             <span className="relative z-[3]"><span className="fx-wiggle">🎉</span> {dealLabel}: רק ₪{price}!</span>
           </div>

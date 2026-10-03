@@ -129,8 +129,8 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
       </p>
       {IS_LAUNCH && (
         <p
-          className="fx-shine inline-block text-[12.5px] font-bold mt-3 text-white rounded-full px-3.5 py-1.5"
-          style={{ background: "linear-gradient(135deg, #9b6d3e 0%, #b47fb0 100%)" }}
+          className="fx-shine inline-block text-[12.5px] font-bold mt-3 text-white px-3.5 py-1.5"
+          style={{ background: "var(--wood)" }}
         >
           <span className="relative z-[3]">
             <span className="fx-wiggle">🎉</span> {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi className="line-through opacity-75">₪{FULL_PRICE}</bdi>!

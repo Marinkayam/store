@@ -148,11 +148,11 @@ export default function AdminPush() {
   const others = st.devices.filter((d) => d.endpoint !== mine).length;
 
   return (
-    <section className="bg-white rounded-2xl border border-[var(--line)] overflow-hidden" data-testid="admin-push">
+    <section className="bg-white border border-[var(--line)] overflow-hidden" data-testid="admin-push">
       <div className="p-3.5 flex items-start gap-3">
         <span
-          className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-[21px]"
-          style={{ background: on ? "var(--ok-bg)" : "linear-gradient(135deg, #f2d9dc, #ece2f3)" }}
+          className="w-11 h-11 shrink-0 flex items-center justify-center text-[21px]"
+          style={{ background: on ? "var(--ok-bg)" : "var(--blush)" }}
           aria-hidden
         >
           <span className={on ? "" : "fx-wiggle"}>🔔</span>
@@ -171,7 +171,7 @@ export default function AdminPush() {
 
       <div className="px-3.5 flex flex-wrap gap-1.5">
         {KINDS.map((k) => (
-          <span key={k.label} className="text-[11.5px] bg-[var(--canvas)] border border-[var(--sand)] rounded-full px-2.5 py-1">
+          <span key={k.label} className="text-[11.5px] bg-[var(--canvas)] border border-[var(--sand)] px-2.5 py-1">
             {k.icon} {k.label}
           </span>
         ))}
@@ -183,7 +183,7 @@ export default function AdminPush() {
             ההתראות עוד לא זמינות בשרת (מיגרציה 0055).
           </p>
         ) : support === "ios-browser" ? (
-          <div className="rounded-xl bg-[var(--warn-bg)] p-3 text-[12.5px] leading-relaxed" data-testid="push-ios-howto">
+          <div className=" bg-[var(--warn-bg)] p-3 text-[12.5px] leading-relaxed" data-testid="push-ios-howto">
             <b>באייפון זה עובד מהמסך הבית:</b>
             <ol className="mt-1 flex flex-col gap-0.5">
               <li>1. בספארי, כפתור השיתוף <span aria-hidden>⬆️</span> ← &quot;הוספה למסך הבית&quot;</li>
@@ -201,11 +201,11 @@ export default function AdminPush() {
               onClick={test}
               disabled={busy === "test"}
               data-testid="push-test"
-              className="fx-press flex-1 rounded-xl bg-[var(--ink)] text-white py-2.5 text-[13px] font-bold disabled:opacity-50"
+              className="fx-press flex-1 bg-[var(--ink)] text-white py-2.5 text-[13px] font-bold disabled:opacity-50"
             >
               {busy === "test" ? "שולחת…" : "🔔 לשלוח התראת בדיקה"}
             </button>
-            <button onClick={disable} disabled={busy === "off"} className="rounded-xl border border-[var(--line)] px-3 text-[12.5px]">
+            <button onClick={disable} disabled={busy === "off"} className=" border border-[var(--line)] px-3 text-[12.5px]">
               לכבות
             </button>
           </div>
@@ -214,8 +214,8 @@ export default function AdminPush() {
             onClick={enable}
             disabled={busy === "enable"}
             data-testid="push-enable"
-            className="fx-press fx-shine w-full rounded-xl text-white py-3 text-[14px] font-bold disabled:opacity-60"
-            style={{ background: "linear-gradient(135deg, #262626, #756192)" }}
+            className="fx-press fx-shine w-full text-white py-3 text-[14px] font-bold disabled:opacity-60"
+            style={{ background: "var(--ink)" }}
           >
             {busy === "enable" ? "רגע…" : "🔔 להפעיל התראות בטלפון"}
           </button>
