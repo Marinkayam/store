@@ -144,9 +144,9 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
 
       {/* 3. להזמין חברה לפתוח דוכן — הלולאה שמגדלת את הרשת */}
       <div className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3.5">
-        <div className="text-[13.5px] font-bold">🎁 להזמין חברה לפתוח דוכן</div>
+        <div className="text-[13.5px] font-bold">🎁 להזמין חברים לפתוח דוכן</div>
         <p className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-0.5">
-          כשחברות פותחות דוכנים, כולן מוכרות יותר — כי כולן גם קונות.
+          כשחברים פותחים דוכנים, כולם מוכרים יותר — כי כולם גם קונים.
           {store.ref_clicks > 0 && ` כבר ${store.ref_clicks} לחצו על זה מהדוכן שלך.`}
         </p>
         <div className="grid grid-cols-2 gap-2 mt-2.5">

@@ -37,13 +37,13 @@ export const SHARE_TEXTS: ShareText[] = [
   },
   {
     key: "friend",
-    label: "לחברה אחת",
+    label: "הודעה אישית",
     icon: "💛",
     when: "שיחה אישית, לא קבוצה",
     build: (c) =>
       `היי! בניתי לי חנות 🙂\n` +
-      `יש שם דברים שאני מוכרת${c.topProduct ? `, בעיקר ${c.topProduct}` : ""}.\n` +
-      `תגידי לי מה את חושבת?\n${c.link}`,
+      `יש שם דברים למכירה${c.topProduct ? `, בעיקר ${c.topProduct}` : ""}.\n` +
+      `מה דעתך?\n${c.link}`,
   },
   {
     key: "new",
@@ -53,7 +53,7 @@ export const SHARE_TEXTS: ShareText[] = [
     build: (c) =>
       `הוספתי דברים חדשים לחנות 👇\n` +
       `${c.name}\n${c.link}\n` +
-      `מי ראשונה?`,
+      `שווה להציץ 👀`,
   },
   {
     key: "story",
@@ -79,7 +79,7 @@ export const SHARE_TEXTS: ShareText[] = [
     build: (c) =>
       `היי! פתחתי חנות קטנה משלי 🛍️\n` +
       `הכל שלי, אני בחרתי, צילמתי ותמחרתי.\n` +
-      `שמחה אם תסתכלו:\n${c.link}`,
+      `אשמח אם תסתכלו:\n${c.link}`,
   },
 ];
 

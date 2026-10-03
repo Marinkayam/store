@@ -343,7 +343,7 @@ export default function StoreView({
     // טלפון חובה: ההזמנה כבר לא עוברת בוואטסאפ, ובלי מספר אין למוכרת
     // דרך לחזור לקונה. אותה בדיקה רצה גם בשרת.
     if (!buyerPhone.trim()) {
-      showToast("צריך מספר טלפון, כדי שהמוכרת תוכל לחזור אלייך");
+      showToast("צריך מספר טלפון, כדי שהדוכן יוכל לחזור אליכם");
       return;
     }
     const shipping = store.ships && wantsShipping;
@@ -644,7 +644,7 @@ export default function StoreView({
             <span className="text-[12px] opacity-80 leading-tight">
               זו החנות שלך
               <br />
-              <span className="opacity-70">ככה הקונות רואות אותה</span>
+              <span className="opacity-70">ככה הקונים רואים אותה</span>
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
               <a href="/dashboard" className="relative bg-white text-[var(--ink)] px-2.5 py-1.5 text-[12.5px] font-bold">
@@ -1122,7 +1122,7 @@ export default function StoreView({
             >
               <span aria-hidden>🏷️</span>
               <span className="flex-1">
-                <b>קופונים:</b> עוד אין לך קופון בדוכן, אז הקונות לא רואות כאן שדה קוד.
+                <b>קופונים:</b> עוד אין לך קופון בדוכן, אז הקונים לא רואים כאן שדה קוד.
                 <span className="block opacity-60">רק את רואה את ההודעה הזו.</span>
               </span>
               <span className="font-bold underline shrink-0">ליצירה ←</span>
@@ -1203,7 +1203,7 @@ export default function StoreView({
               לאסוף בעצמה לא צריכה "לקבל" משלוח שהיא לא ביקשה. */}
           {store.ships && (
             <section className="mt-8">
-              <h3 className="text-[13.5px] font-bold mb-3.5">📦 איך תרצי לקבל?</h3>
+              <h3 className="text-[13.5px] font-bold mb-3.5">📦 איך לקבל את ההזמנה?</h3>
               <div className="flex gap-3">
                 <button
                   onClick={() => setWantsShipping(true)}
@@ -1360,7 +1360,7 @@ export default function StoreView({
                 </label>
               </div>
               <label className="block">
-                <span className="block text-[11.5px] opacity-60 mb-1.5">הערה למוכרת (לא חובה)</span>
+                <span className="block text-[11.5px] opacity-60 mb-1.5">הערה לדוכן (לא חובה)</span>
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -1377,7 +1377,7 @@ export default function StoreView({
                   ההזמנה. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?". */}
               {methods.length > 0 && (
                 <>
-                  <h3 className="text-[13.5px] font-bold mb-3.5">💜 איך תשלמי?</h3>
+                  <h3 className="text-[13.5px] font-bold mb-3.5">💜 איך משלמים?</h3>
                   <div className="flex gap-3">
                     {methods.map((m) => {
                       const on = chosenPay === m.key;
@@ -1474,7 +1474,7 @@ export default function StoreView({
               {sending ? "רגע…" : "שליחת ההזמנה"}
             </button>
             <p className="text-[11.5px] opacity-50 text-center mt-2">
-              ההזמנה נשלחת ישר למוכרת, והאישור יופיע כאן.
+              ההזמנה נשלחת ישר לדוכן, והאישור יופיע כאן.
             </p>
           </div>
         </div>
@@ -1501,7 +1501,7 @@ export default function StoreView({
           <div className="text-4xl mb-2" aria-hidden>💳</div>
           <h2 className="text-lg font-bold">נשאר רק לשלם</h2>
           <p className="text-[13px] opacity-75 mt-1 leading-relaxed">
-            ההזמנה שלך (#{confirmed.orderNumber}) שמורה אצל המוכרת.
+            ההזמנה שלך (#{confirmed.orderNumber}) שמורה בדוכן.
             <br />
             משלמים ₪{formatPrice(confirmed.total)} וסוגרים עניין:
           </p>
@@ -1569,7 +1569,7 @@ export default function StoreView({
             rel="noopener noreferrer nofollow"
             className="mt-3 block text-[12.5px] opacity-60 underline"
           >
-            משהו לא מסתדר? דברי עם המוכרת בוואטסאפ
+            משהו לא מסתדר? אפשר לכתוב לדוכן בוואטסאפ
           </a>
         </div>
       )}
@@ -1586,7 +1586,7 @@ export default function StoreView({
             הזמנה #{confirmed.orderNumber} · ₪{formatPrice(confirmed.total)}
           </p>
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
-            המוכרת קיבלה את כל הפרטים ותחזור אלייך לטלפון שהשארת.
+            הדוכן קיבל את כל הפרטים, ויחזרו אליכם לטלפון שהשארתם.
           </p>
           {payTarget?.kind === "link" && (
             <a
@@ -1618,7 +1618,7 @@ export default function StoreView({
             className="mt-2 block py-3 text-[13.5px] font-bold border-[1.5px]"
             style={{ borderColor: "currentColor", opacity: 0.85 }}
           >
-            יצירת קשר עם המוכרת בוואטסאפ
+            יצירת קשר עם הדוכן בוואטסאפ
           </a>
           <button
             onClick={() => setConfirmed(null)}

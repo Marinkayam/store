@@ -20,7 +20,7 @@ type State = { available: boolean; publicKey: string | null; devices: { endpoint
 const KINDS = [
   { icon: "🆕", label: "דוכן חדש נפתח" },
   { icon: "💰", label: "תשלום מחכה לאישור" },
-  { icon: "📵", label: "מישהי לא מצליחה להיכנס" },
+  { icon: "📵", label: "מישהו לא מצליח להיכנס" },
   { icon: "⚠️", label: "סמס לא נשלח" },
 ];
 

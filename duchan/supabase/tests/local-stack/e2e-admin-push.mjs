@@ -70,7 +70,7 @@ await admin.goto(`${BASE}/admin`);
 await admin.waitForSelector("[data-testid=admin-push]", { timeout: 20000 });
 const card = (await admin.textContent("[data-testid=admin-push]")) ?? "";
 check("כרטיס ההתראות בחמ\"ל", card.includes("התראות לטלפון"));
-check("ואומר מה מגיע", ["דוכן חדש", "מחכה לאישור", "לא מצליחה להיכנס", "סמס לא נשלח"].every((w) => card.includes(w)));
+check("ואומר מה מגיע", ["דוכן חדש", "מחכה לאישור", "לא מצליח להיכנס", "סמס לא נשלח"].every((w) => card.includes(w)));
 check("עם כפתור הפעלה", (await admin.locator("[data-testid=push-enable]").count()) === 1);
 
 /* ── מפתח VAPID ── */
@@ -143,7 +143,7 @@ check("והמכשיר הפעיל נשאר פעיל", subs.find((s) => s.endpoint
 await admin.reload();
 await admin.waitForSelector("[data-testid=push-recent]", { timeout: 15000 });
 const recent = (await admin.textContent("[data-testid=push-recent]")) ?? "";
-check("'מה קרה לאחרונה' מראה דוכן חדש ומי שתקועה", recent.includes("נפתח דוכן חדש") && recent.includes("לא מצליחה להיכנס"));
+check("'מה קרה לאחרונה' מראה דוכן חדש ומי שתקועה", recent.includes("נפתח דוכן חדש") && recent.includes("לא מצליח להיכנס"));
 check("בלי התראות הבדיקה", !recent.includes("ההתראות עובדות"));
 await admin.locator("[data-testid=admin-push]").screenshot({ path: "/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1f4-12e282a8e978/scratchpad/admin-push.png" });
 

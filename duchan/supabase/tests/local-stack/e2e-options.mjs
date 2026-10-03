@@ -182,7 +182,7 @@ check("the strip links to orders, products and design",
   (await girl.locator("a[href='/dashboard']").count()) >= 1 &&
   (await girl.locator("a[href='/dashboard/products']").count()) === 1 &&
   (await girl.locator("a[href='/dashboard/settings']").count()) === 1);
-check("the strip explains this is the buyers' view", (await girl.textContent("body")).includes("ככה הקונות רואות אותה"));
+check("the strip explains this is the buyers' view", (await girl.textContent("body")).includes("ככה הקונים רואים אותה"));
 await girl.screenshot({ path: `${shots}/65-owner-strip.png` });
 
 /* ── 8. החמ"ל: הסתרה, מחיקה רכה, שחזור, עריכה ── */

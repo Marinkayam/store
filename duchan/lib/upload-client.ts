@@ -53,7 +53,7 @@ export async function uploadBlob(
     });
     if (!put.ok) return { error: `ההעלאה נכשלה (${put.status}), לנסות שוב` };
   } catch {
-    return { error: "ההעלאה נחסמה. אם זה חוזר, זו הגדרת האחסון, תגידי למרינה." };
+    return { error: "ההעלאה נחסמה. אם זה חוזר, זו הגדרת האחסון, כדאי לספר למרינה." };
   }
   return { key: data.key };
 }

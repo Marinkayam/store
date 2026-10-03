@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     );
   }
   if (newest.attempts >= OTP_MAX_ATTEMPTS) {
-    return NextResponse.json({ error: "יותר מדי ניסיונות. בקשי קוד חדש" }, { status: 429 });
+    return NextResponse.json({ error: "יותר מדי ניסיונות. אפשר לבקש קוד חדש" }, { status: 429 });
   }
 
   const otp = candidates.find((c) => codeMatches(phone, code, c.code_hash));
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     await db.from("phone_otps").update({ attempts: newest.attempts + 1 }).eq("id", newest.id);
     const left = OTP_MAX_ATTEMPTS - newest.attempts - 1;
     return NextResponse.json(
-      { error: left > 0 ? `הקוד לא נכון. נשארו ${left} ניסיונות` : "יותר מדי ניסיונות. בקשי קוד חדש" },
+      { error: left > 0 ? `הקוד לא נכון. נשארו ${left} ניסיונות` : "יותר מדי ניסיונות. אפשר לבקש קוד חדש" },
       { status: 400 }
     );
   }

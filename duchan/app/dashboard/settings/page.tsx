@@ -29,15 +29,15 @@ import { setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
  * עובד, ואפשר לשלוח קישור ישר למקטע.
  */
 const SECTIONS = {
-  share: { icon: "🔗", title: "לשתף את הדוכן", intro: "הלינק לדוכן, הודעות מוכנות לוואטסאפ, והזמנה לחברה." },
+  share: { icon: "🔗", title: "לשתף את הדוכן", intro: "הלינק לדוכן, הודעות מוכנות לוואטסאפ, והזמנה לחברים." },
   design: { icon: "🎨", title: "עיצוב הדוכן", intro: "כל מה שקשור לאיך הדוכן נראה, במקום אחד. לוחצים על השם, התיאור או התמונה כדי לשנות." },
   products: { icon: "⭐", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
   promo: { icon: "📣", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
   coupons: { icon: "🏷️", title: "קופונים", intro: "יוצרים כאן קוד הנחה, ושולחים אותו לחברים." },
   payment: { icon: "💳", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
   shipping: { icon: "🚚", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
-  order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה אלייך. היא נכתבת לבד, אין מה למלא." },
-  details: { icon: "📱", title: "הפרטים שלי", intro: "לאן מגיעות ההזמנות, וקצת עלייך. אף פעם לא כתובת." },
+  order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה בוואטסאפ. היא נכתבת לבד, אין מה למלא." },
+  details: { icon: "📱", title: "הפרטים שלי", intro: "לאן מגיעות ההזמנות, וקצת עליכם. אף פעם לא כתובת." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
 /* העוגנים של הגרסה הקודמת (גלילה אחת) — קישורים ישנים ממשיכים לעבוד */
@@ -586,7 +586,7 @@ export default function SettingsPage() {
               צריך לכתוב במפורש שסגירה היא זמנית ושום דבר לא נמחק. */}
           <div className="text-[12px] text-[var(--muted)] leading-snug mt-0.5">
             {store.status === "active"
-              ? "צריכה הפסקה? סוגרים כאן, ופותחים שוב מתי שרוצים."
+              ? "צריך הפסקה? סוגרים כאן, ופותחים שוב מתי שרוצים."
               : "הלינק מציג 'סגור כרגע'. הכל נשמר — לחיצה פותחת שוב."}
           </div>
         </div>
@@ -643,7 +643,7 @@ export default function SettingsPage() {
           key: "shipping", icon: "🚚", tint: "#f6efe6", title: "משלוחים",
           summary: info.ships ? (info.shipping_price !== "" ? `משלוח ₪${formatPrice(parsePrice(info.shipping_price))}` : "משלוח · המחיר בתיאום") : "מסירה ביד בלבד",
         },
-        { key: "order", icon: "💬", tint: "#e3f5ea", title: "ההזמנה בוואטסאפ", summary: "ככה נראית הזמנה שמגיעה אלייך" },
+        { key: "order", icon: "💬", tint: "#e3f5ea", title: "ההזמנה בוואטסאפ", summary: "ככה נראית הזמנה שמגיעה בוואטסאפ" },
       ],
     },
     {
@@ -1274,7 +1274,7 @@ export default function SettingsPage() {
           <div className="text-[13px] font-bold">מה מקבלים ממך?</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             מה שמסומן מופיע לקונים לפני ההזמנה וגם בהודעה. הכסף עובר ישירות
-            אלייך — דוכן לא נוגע בו ולא לוקח עמלה.
+            אליכם — דוכן לא נוגע בו ולא לוקח עמלה.
           </p>
           {/* כל אמצעי בשורה משלו. מסמנים ✓ — ומתחתיו נפתח "לאן מעבירים?".
               מה שלא סומן לא מציג שדות (מרינה: "אם לוחצים על הצ'ק בוקס אז
@@ -1388,7 +1388,7 @@ export default function SettingsPage() {
             <span className="flex-1">
               <span className="block text-[13px] font-medium">💬 לסגור תשלום בוואטסאפ</span>
               <span className="block text-[12px] text-[var(--muted)] mt-0.5">
-                הקונה תקבל כפתור שפותח איתך שיחה על ההזמנה, ותקבעו ביניכן איך משלמים.
+                הקונים יקבלו כפתור שפותח איתכם שיחה על ההזמנה, ותקבעו ביחד איך משלמים.
               </span>
             </span>
           </button>
@@ -1463,7 +1463,7 @@ export default function SettingsPage() {
           </ol>
           <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
             ההודעה נכתבת לבד, אין מה למלא כאן. השם ומספר ההזמנה בשורה הראשונה,
-            כדי שתדעי איזו הודעה שייכת לאיזו הזמנה כבר מרשימת השיחות:
+            כדי לדעת איזו הודעה שייכת לאיזו הזמנה כבר מרשימת השיחות:
           </p>
           {/* בלי "שורת פתיחה" ו"שורת סיום": שתי תיבות שביקשו טקסט לפני
               שבכלל היה ברור מה ההודעה, וההודעה מסתדרת מצוין בלעדיהן. */}
@@ -1478,7 +1478,7 @@ export default function SettingsPage() {
           </div>
           <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
             {payLabels.length
-              ? `הקונה בוחרת בקופה מתוך מה שסימנת למטה (${payLabels.join(" / ")}), ומה שהיא בחרה מופיע בהודעה.`
+              ? `בקופה בוחרים מתוך מה שסומן למטה (${payLabels.join(" / ")}), ומה שנבחר מופיע בהודעה.`
               : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
           </p>
         </div>

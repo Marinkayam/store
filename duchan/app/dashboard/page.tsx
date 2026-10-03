@@ -421,7 +421,7 @@ export default function OrdersPage() {
                         ההזמנה והסכום, במקום "היי" ריק ומבוכה. */}
                     <a
                       href={`https://wa.me/${o.buyer_phone}?text=${encodeURIComponent(
-                        `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! קיבלתי את ההזמנה שלך (#${o.order_number} · ₪${formatPrice(o.total)}) 💜 בואי נסגור את התשלום — איך נוח לך?`
+                        `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! קיבלתי את ההזמנה שלך (#${o.order_number} · ₪${formatPrice(o.total)}) 💜 אפשר לסגור את התשלום — איך נוח לך?`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -612,7 +612,7 @@ export default function OrdersPage() {
                 ההחלטה "לארוז או לא" מתקבלת מול הכרטיס הזה. */}
             {o.status === "sent" && confirmHide !== o.id && (
               <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2">
-                הגיעה אלייך הודעה בוואטסאפ על ההזמנה הזו? אם לא, יכול להיות שהיא
+                הגיעה אליכם הודעה בוואטסאפ על ההזמנה הזו? אם לא, יכול להיות שהיא
                 נלחצה ולא נשלחה.
               </p>
             )}

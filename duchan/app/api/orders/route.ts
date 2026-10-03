@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
   const phone = normalizePhone(buyerPhone ?? "");
   if (!phone) {
     return NextResponse.json(
-      { error: "צריך מספר טלפון תקין, כדי שהמוכרת תוכל לחזור אלייך" },
+      { error: "צריך מספר טלפון תקין, כדי שהדוכן יוכל לחזור אליכם" },
       { status: 400 }
     );
   }

@@ -223,7 +223,7 @@ export default function CategoryDesigner({
           </p>
           {!icons && (
             <p className="text-[11.5px] text-[var(--warn-ink)] mt-1 leading-snug">
-              בצורה &quot;רק טקסט&quot; לא רואים אייקונים. אפשר להכין אותם עכשיו, והם יופיעו כשתבחרי צורה אחרת.
+              בצורה &quot;רק טקסט&quot; לא רואים אייקונים. אפשר להכין אותם עכשיו, והם יופיעו כשבוחרים צורה אחרת.
             </p>
           )}
 

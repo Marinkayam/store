@@ -223,7 +223,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <p className="text-[14px] font-bold mt-2">לבנות את הדוכן שלך במחיר מצחיק!</p>
         )}
         <p className="text-[12px] text-[var(--muted)] mt-1.5">
-          בלי מנוי · בלי עמלה על מכירות · כל שקל שתרוויחי נשאר אצלך
+          בלי מנוי · בלי עמלה על מכירות · כל שקל שמרוויחים נשאר אצלכם
         </p>
       </div>
 

@@ -288,7 +288,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     showToast(
       action === "restore" ? "המוצר חזר לחנות"
       : action === "delete" ? "המוצר הוצא מהחנות, אפשר לשחזר"
-      : action === "hide" ? "המוצר מוסתר מהקונות"
+      : action === "hide" ? "המוצר מוסתר מהקונים"
       : action === "show" ? "המוצר חזר להיות מוצג"
       : "המוצר עודכן"
     );
@@ -436,7 +436,7 @@ function SchemaWarning() {
                 <div className="text-3xl">✓</div>
                 <p className="text-[13px] font-bold mt-2">אין חנויות שמחכות</p>
                 <p className="text-[12.5px] text-[var(--muted)] mt-1">
-                  כשילדה תלחץ "שילמנו", היא תופיע כאן.
+                  כשדוכן יסמן "שילמנו", הוא יופיע כאן.
                 </p>
               </div>
             ) : (
@@ -797,7 +797,7 @@ function SchemaWarning() {
               }`}
             >
               <div className="text-[11.5px] text-[var(--muted)] mb-1.5">
-                תשלום הקמה לדוכן, לא קשור לאיך שהיא גובה מקונות
+                תשלום הקמה לדוכן, לא קשור לאיך שהדוכן גובה מקונים
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[12.5px] font-bold flex-1">
@@ -848,13 +848,13 @@ function SchemaWarning() {
                   "הגיעה ישירות"
                 )}
                 {" · "}
-                הביאה {stores.find((x) => x.id === detail.store.id)?.brought ?? 0} · {detail.store.ref_clicks ?? 0} לחיצות על "פתחי חנות"
+                הביאה {stores.find((x) => x.id === detail.store.id)?.brought ?? 0} · {detail.store.ref_clicks ?? 0} לחיצות על "לפתוח דוכן"
               </div>
             </div>
 
-            {/* איך היא גובה מקונות — לידיעה בלבד. הכסף הזה לא עובר דרכנו. */}
+            {/* איך הדוכן גובה מקונים — לידיעה בלבד. הכסף הזה לא עובר דרכנו. */}
             <div className="bg-[var(--canvas)] p-3 mb-3">
-              <div className="text-[12px] text-[var(--muted)] mb-1">איך היא גובה מקונות</div>
+              <div className="text-[12px] text-[var(--muted)] mb-1">איך הדוכן גובה מקונים</div>
               <div className="text-[12.5px]">
                 {payoutSummary(detail.store) || "לא הגדירה עדיין"}
                 {detail.store.payout_note && (
@@ -1216,7 +1216,7 @@ function NetworkTab({
     <>
       <div className="grid grid-cols-2 gap-2">
         <Stat label="הגיעו מחנות" value={totals.referred} sub={`מתוך ${totals.stores}`} icon="🔗" />
-        <Stat label="לחיצות על 'פתחי חנות'" value={totals.refClicks} sub={`${conversion}% נפתחו`} icon="👆" />
+        <Stat label="לחיצות על 'לפתוח דוכן'" value={totals.refClicks} sub={`${conversion}% נפתחו`} icon="👆" />
       </div>
 
       <section className="bg-white border border-[var(--line)] p-3">

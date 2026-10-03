@@ -55,7 +55,7 @@ export default function SellerCoupons({ store }: { store: Store }) {
 
   if (coupons === null) return <p className="text-[12.5px] text-[var(--muted)]">רגע…</p>;
   if (unavailable)
-    return <p className="text-[12.5px] text-[var(--muted)]">הקופונים עוד לא זמינים. נסי שוב מאוחר יותר.</p>;
+    return <p className="text-[12.5px] text-[var(--muted)]">הקופונים עוד לא זמינים. אפשר לנסות שוב מאוחר יותר.</p>;
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 

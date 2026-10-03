@@ -77,12 +77,12 @@ export default function StuckLogins() {
   return (
     <section className="bg-white border-2 border-[var(--danger)] p-3" data-testid="stuck-logins">
       <h2 className="text-sm font-bold">
-        📵 לא מצליחות להיכנס{" "}
+        📵 לא מצליחים להיכנס{" "}
         <span className="bg-[var(--danger)] text-white text-[11px] px-1.5 py-0.5 mr-1">{list.length}</span>
       </h2>
       <p className="text-[12.5px] text-[var(--muted)] mt-0.5 leading-relaxed">
         ביקשו קוד כמה פעמים ולא נכנסו — כנראה הסמס לא מגיע (בקרת הורים, סינון ספאם).
-        שולחים להן קישור כניסה בוואטסאפ. מי שנכנסת יורדת מהרשימה לבד.
+        שולחים קישור כניסה בוואטסאפ. מי שנכנס יורד מהרשימה לבד.
       </p>
 
       <div className="flex flex-col mt-2">

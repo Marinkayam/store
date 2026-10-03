@@ -52,17 +52,17 @@ async function decodeImage(file: File | Blob) {
       img.decoding = "async";
       await new Promise<void>((res, rej) => {
         img.onload = () => res();
-        img.onerror = () => rej(new MediaError("לא הצלחנו לקרוא את התמונה. נסי לצלם מחדש."));
+        img.onerror = () => rej(new MediaError("לא הצלחנו לקרוא את התמונה. אפשר לנסות לצלם מחדש."));
         img.src = url;
       });
       if (!img.naturalWidth) {
-        throw new MediaError("לא הצלחנו לקרוא את התמונה. נסי לצלם מחדש.");
+        throw new MediaError("לא הצלחנו לקרוא את התמונה. אפשר לנסות לצלם מחדש.");
       }
       // ה-URL משוחרר רק אחרי הציור — שחרור מוקדם עלול לרוקן את התמונה
       return { src: img as CanvasImageSource, w: img.naturalWidth, h: img.naturalHeight, done: () => URL.revokeObjectURL(url) };
     } catch (e) {
       URL.revokeObjectURL(url);
-      throw e instanceof MediaError ? e : new MediaError("לא הצלחנו לקרוא את התמונה. נסי לצלם מחדש.");
+      throw e instanceof MediaError ? e : new MediaError("לא הצלחנו לקרוא את התמונה. אפשר לנסות לצלם מחדש.");
     }
   }
 }
@@ -297,7 +297,7 @@ export async function openCamera(): Promise<MediaStream> {
   // המסלול שבו ילדה מגיעה — היא לוחצת על לינק בשיחה. בלי הבדיקה הזו נזרקת
   // שגיאת TypeError סתמית במקום הסבר מה לעשות.
   if (!navigator.mediaDevices?.getUserMedia) {
-    throw new MediaError("הדפדפן הזה לא נותן גישה למצלמה. פתחי את הלינק ב-Safari או ב-Chrome.");
+    throw new MediaError("הדפדפן הזה לא נותן גישה למצלמה. כדאי לפתוח את הלינק ב-Safari או ב-Chrome.");
   }
   try {
     return await navigator.mediaDevices.getUserMedia({

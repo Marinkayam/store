@@ -98,7 +98,7 @@ export default function CouponManager({
     <div className="flex flex-col gap-3" data-testid="coupon-manager">
       {live.length === 0 && !open && (
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed">
-          עוד אין קופונים. קוד שקונה מקלידה בהזמנה ומקבלת הנחה — לתודה ללקוחה חוזרת, למבצע, או לחג.
+          עוד אין קופונים. קוד שמקלידים בהזמנה ומקבלים הנחה — לתודה ללקוחות חוזרים, למבצע, או לחג.
         </p>
       )}
 
@@ -129,7 +129,7 @@ export default function CouponManager({
 
             {confirmDelete === c.id ? (
               <div className="flex items-center gap-2 text-[12.5px]">
-                <span className="flex-1">למחוק את {c.code}? קונות לא יוכלו להשתמש בו.</span>
+                <span className="flex-1">למחוק את {c.code}? קונים לא יוכלו להשתמש בו.</span>
                 <button
                   onClick={() => run(c.id, async () => { const e = await onDelete(c); if (!e) setConfirmDelete(null); return e; })}
                   disabled={busy === c.id}
@@ -176,7 +176,7 @@ export default function CouponManager({
 
           <div>
             <label htmlFor="cp-code" className="block text-[12px] text-[var(--muted)] mb-1.5">
-              הקוד שהקונה מקלידה · בעברית או באנגלית
+              הקוד שמקלידים בהזמנה · בעברית או באנגלית
             </label>
             <div className="flex gap-2">
               <input

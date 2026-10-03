@@ -223,7 +223,7 @@ export default function ProductsPage() {
     const { error } = await supa.from("stores").update({ categories: cleaned }).eq("id", store.id);
     if (error) {
       // העמודה עוד לא בדאטהבייס — אומרים את זה במקום להיכשל בשקט
-      showToast("הקטגוריות עוד לא זמינות, נסי שוב מאוחר יותר");
+      showToast("הקטגוריות עוד לא זמינות, אפשר לנסות שוב מאוחר יותר");
       return;
     }
     setStore({ ...store, categories: cleaned });
@@ -390,7 +390,7 @@ export default function ProductsPage() {
         await videoRef.current.play();
       }
     } catch (e) {
-      showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה, נסי 'מהגלריה'");
+      showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה, אפשר לבחור 'מהגלריה'");
       setRecOpen(false);
     }
   }
@@ -680,7 +680,7 @@ export default function ProductsPage() {
               )}
             </div>
             <p className="text-[11.5px] text-[var(--faint)] mb-2">
-              הקונות יוכלו לסנן לפי זה. אחרי שמגדירים — בוחרים קטגוריה לכל מוצר בעריכה שלו.
+              הקונים יוכלו לסנן לפי זה. אחרי שמגדירים — בוחרים קטגוריה לכל מוצר בעריכה שלו.
             </p>
             <div className="flex gap-1.5 flex-wrap">
               {(store?.categories ?? []).map((c) => (

@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!phone) {
-    return NextResponse.json({ error: "המספר לא נראה תקין, בדקי אותו שוב" }, { status: 400 });
+    return NextResponse.json({ error: "המספר לא נראה תקין, כדאי לבדוק אותו שוב" }, { status: 400 });
   }
 
   const db = supabaseAdmin();
@@ -204,8 +204,8 @@ async function alertIfStuck(phone: string) {
   await notifyAdmins({
     kind: "login_stuck",
     ref: `${phone}:${lastIn}`,
-    title: "📵 מישהי לא מצליחה להיכנס",
-    body: `${displayPhone(phone)}${store ? ` · ${store.display_name}` : ""} ביקשה קוד ${pending.length} פעמים. לשלוח לה קישור בוואטסאפ`,
+    title: "📵 מישהו לא מצליח להיכנס",
+    body: `${displayPhone(phone)}${store ? ` · ${store.display_name}` : ""} ביקשו קוד ${pending.length} פעמים. אפשר לשלוח קישור בוואטסאפ`,
     url: "/admin",
   });
 }
