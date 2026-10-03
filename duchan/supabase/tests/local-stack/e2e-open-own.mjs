@@ -36,8 +36,11 @@ async function bottom(label) {
   await p.waitForTimeout(300);
   check(`${label}: הכותרת "רוצה גם דוכן כזה?" נראית`,
     await p.getByRole("heading", { name: "רוצה גם דוכן כזה?" }).isVisible());
-  check(`${label}: שלושת הצעדים`, (await p.locator("[data-testid=open-own-steps] li").count()) === 3);
+  const cardText = (await card.textContent()) ?? "";
+  check(`${label}: בלי שורת הצעדים ובלי 'בגדים שקטנו'`,
+    (await p.locator("[data-testid=open-own-steps]").count()) === 0 && !cardText.includes("בגדים שקטנו"));
   const cta = p.locator("[data-testid=open-own-cta]");
+  check(`${label}: הכפתור מרובע`, (await cta.evaluate((e) => getComputedStyle(e).borderTopLeftRadius)) === "0px");
   check(`${label}: הכפתור מוביל לפתיחת דוכן עם שיוך`, (await cta.getAttribute("href")) === `/?ref=${store.slug}`);
 
   // פיקסלים: הרקע של הכרטיס באמת לבן במסך (לא מכוסה בתמונה)

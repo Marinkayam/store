@@ -134,22 +134,9 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
           רוצה גם דוכן כזה?
         </h2>
         <p className="text-[13.5px] text-[var(--muted)] mt-2 leading-relaxed max-w-[19rem] mx-auto">
-          מוכרים מה שכבר לא צריכים: סקווישים, צמידים, בגדים שקטנו.
+          מוכרים מה שכבר לא צריכים: סקווישים, צמידים ועוד.
           דוכן משלך מוכן בכמה דקות, מהטלפון.
         </p>
-
-        <ol className="grid grid-cols-3 mt-4 border border-[var(--line)]" data-testid="open-own-steps">
-          {[
-            ["📸", "מצלמים מוצר"],
-            ["🔗", "שולחים לינק לחברים"],
-            ["💬", "מקבלים הזמנות"],
-          ].map(([e, t], i) => (
-            <li key={t} className={`px-1.5 py-3 ${i ? "border-r border-[var(--line)]" : ""}`}>
-              <span className="block text-[20px] leading-none" aria-hidden>{e}</span>
-              <span className="block text-[12px] font-bold mt-1.5 leading-snug">{t}</span>
-            </li>
-          ))}
-        </ol>
 
         {IS_LAUNCH && (
           <p
@@ -168,8 +155,9 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
         <a
           href={`/?ref=${slug}`}
           data-testid="open-own-cta"
-          className="btn btn-primary w-full mt-3 text-[15px]"
-          style={{ fontWeight: 700 }}
+          className="btn btn-primary w-full mt-4 text-[15px]"
+          // מרובע, כמו כל השאר בכרטיס — .btn מעגל פינות, ומרינה לא רוצה את זה כאן
+          style={{ fontWeight: 700, borderRadius: 0 }}
         >
           לפתוח דוכן משלי
         </a>
