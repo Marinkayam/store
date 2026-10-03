@@ -228,7 +228,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
             </div>
           ) : (
             <p className="text-[12.5px] text-[var(--warn-ink)] mt-2" data-testid="team-full">
-              הצוות מלא: ראש הדוכן ועוד {team.maxPartners} שותפים{team.invites.length ? " (כולל הזמנות שמחכות)" : ""}.
+              הצוות מלא: ראש הדוכן ושותף/ה אחד/ת{team.invites.length ? " (יש הזמנה שמחכה — אפשר לבטל אותה למטה)" : ""}.
             </p>
           )}
         </div>

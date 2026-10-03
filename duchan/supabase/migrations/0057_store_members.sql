@@ -237,14 +237,14 @@ grant  execute on function team_accept_transfer(uuid, uuid, text) to service_rol
 grant  execute on function is_store_member(uuid) to authenticated, anon;
 grant  execute on function can_manage_store(uuid) to authenticated, anon;
 
--- ── עד 2 שותפים — גם כששתי הצטרפויות קורות באותו רגע ──
+-- ── שותף/ה אחד/ת לכל היותר (2 אנשים בדוכן) — גם כששתי הצטרפויות קורות באותו רגע ──
 -- /api/team בודק את זה, אבל הבדיקה שם והכתיבה הן שתי פעולות. כאן זה אטומי:
 -- נועלים את שורת הדוכן ואז סופרים.
 create or replace function guard_store_members_cap()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   perform 1 from stores where id = new.store_id for update;
-  if (select count(*) from store_members where store_id = new.store_id) >= 2 then
+  if (select count(*) from store_members where store_id = new.store_id) >= 1 then
     raise exception 'team_full';
   end if;
   return new;

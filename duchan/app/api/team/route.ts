@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, token: same.token, renewed: true });
       }
       if (team.length + live.length >= MAX_PARTNERS) {
-        return err(`בדוכן יכולים להיות עד ${MAX_PARTNERS + 1}: ראש הדוכן ועוד ${MAX_PARTNERS} שותפים`, 409);
+        return err(`בדוכן יכולים להיות עד ${MAX_PARTNERS + 1}: ראש הדוכן ושותף/ה אחד/ת`, 409);
       }
       const token = randomToken(24);
       const { error } = await db.from("store_invites").insert({

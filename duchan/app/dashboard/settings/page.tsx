@@ -42,7 +42,7 @@ const SECTIONS = {
   order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה בוואטסאפ. היא נכתבת לבד, אין מה למלא." },
   app: { icon: "📲", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית. זיהינו את הטלפון ואת הדפדפן — אלה הצעדים בדיוק בשבילו." },
   details: { icon: "📱", title: "הפרטים שלי", intro: "לאן מגיעות ההזמנות, וקצת עליכם. אף פעם לא כתובת." },
-  team: { icon: "👥", title: "צוות הדוכן", intro: "מי מנהל איתך את הדוכן. כל אחד נכנס עם הטלפון שלו." },
+  team: { icon: "🤝", title: "לנהל ביחד", intro: "לא חובה. אפשר לנהל את הדוכן לבד, ואפשר עם עוד אחד/ת — חבר/ה, אח או אחות. כל אחד נכנס עם הטלפון שלו." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
 /* העוגנים של הגרסה הקודמת (גלילה אחת) — קישורים ישנים ממשיכים לעבוד */
@@ -662,10 +662,6 @@ export default function SettingsPage() {
     {
       title: "חשבון",
       rows: [
-        {
-          key: "team", icon: "👥", tint: "#e6eef6", title: "צוות הדוכן",
-          summary: isPartner ? "🤝 את/ה שותף/ה בדוכן הזה" : "להוסיף חבר/ה, אח או אחות שינהלו איתך",
-        },
         { key: "app", icon: "📲", tint: "#efe7f4", title: "אפליקציה בטלפון", summary: "אייקון במסך הבית — כניסה בלחיצה אחת" },
         {
           key: "details", icon: "📱", tint: "#ece6de", title: "הפרטים שלי",
@@ -688,6 +684,30 @@ export default function SettingsPage() {
           status={statusRow}
           groups={groups}
           onOpen={openSection}
+          /* דוכן משותף (0057) — אזור נפרד בסוף, ולא שורה בין ההגדרות, כדי
+             שלא ייראה כמו עוד דבר שחייבים למלא. מרינה: "שלא יחשבו שזה חובה". */
+          optional={
+            <button
+              onClick={() => openSection("team")}
+              data-testid="hub-team"
+              aria-label="לנהל את הדוכן ביחד"
+              className="fx-press w-full text-right border border-dashed border-[var(--line)] bg-transparent px-4 py-3.5 flex items-center gap-3"
+            >
+              <span className="text-[22px]" aria-hidden>🤝</span>
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center gap-2">
+                  <span className="text-[14px] font-bold text-[var(--ink)]">לנהל את הדוכן ביחד</span>
+                  <span className="text-[10.5px] font-bold px-1.5 py-0.5 bg-[var(--sand)] text-[var(--muted)]">לא חובה</span>
+                </span>
+                <span className="block text-[12px] text-[var(--muted)] mt-0.5 leading-snug">
+                  {isPartner
+                    ? "את/ה שותף/ה בדוכן הזה · לראות מי בצוות"
+                    : "אם רוצים — אפשר להזמין חבר/ה, אח או אחות אחד/ת שינהלו איתך"}
+                </span>
+              </span>
+              <span className="text-[var(--faint)] text-[18px] shrink-0" aria-hidden>‹</span>
+            </button>
+          }
           /* התשלום היה מוסתר מאחורי "לפרסם את הדוכן", ולא היה ברור שיש כאן
              שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */
           before={

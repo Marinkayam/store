@@ -5,11 +5,11 @@ import { displayPhone } from "./phone";
 /**
  * דוכן משותף (0057) — הכללים, במקום אחד.
  *
- * ראש הדוכן = stores.owner_id. שותפים = store_members. מקסימום 2 שותפים
- * (3 אנשים בסך הכל). כל פעולה על הצוות עוברת ב-/api/team, בשרת, עם
+ * ראש הדוכן = stores.owner_id. שותפים = store_members. שותף/ה אחד/ת לכל
+ * היותר — 2 אנשים בדוכן, ראש הדוכן ועוד אחד/ת (מרינה: "רק 2 גג"). כל פעולה על הצוות עוברת ב-/api/team, בשרת, עם
  * service role — הדפדפן לא כותב לטבלאות האלה בכלל.
  */
-export const MAX_PARTNERS = 2;
+export const MAX_PARTNERS = 1;
 export const INVITE_DAYS = 7;
 
 export type Role = "owner" | "partner";

@@ -221,31 +221,13 @@ const sGet = await stranger.page.evaluate(async (id) => (await fetch(`/api/team?
 check("API: זר/ה לא רואה את הצוות — 403", sGet === 403);
 
 /* ── 7. צוות מלא ── */
-const i2 = await api(owner.page, { action: "invite", storeId: store.id, phone: P2 });
-check("הזמנה לשותף/ה שני/ה — עוברת (1 בצוות + 1 מחכה)", i2.status === 200);
-const i3 = await api(owner.page, { action: "invite", storeId: store.id, phone: P3 });
-check("שלישי/ת — 'עד 3: ראש הדוכן ועוד 2'", i3.status === 409 && i3.body.error.includes("עד 3"), i3.body.error);
+// "רק 2 גג": ראש הדוכן ושותף/ה אחד/ת
+const i3 = await api(owner.page, { action: "invite", storeId: store.id, phone: P2 });
+check("שותף/ה שני/ה — 'עד 2: ראש הדוכן ושותף/ה אחד/ת'", i3.status === 409 && i3.body.error.includes("עד 2"), i3.body.error);
+const capDb = await db.query("insert into store_members (store_id, user_id, phone) select $1, user_id, phone from phone_accounts where phone=$2 returning 1", [store.id, "972501234567"]).then(() => "inserted", (e) => e.message);
+check("וגם הדאטהבייס עצמו לא מכניס שותף/ה שני/ה", capDb.includes("team_full"), capDb);
 await openTeam(owner.page);
 check("במסך: 'הצוות מלא'", (await owner.page.locator("[data-testid=team-full]").count()) === 1);
-
-/* ── 8. כניסה עם הזמנה פתוחה → ישר לעמוד ההצטרפות ── */
-const p2 = await session(P2, { login: false });
-await p2.page.goto(`${BASE}/login`);
-await verifyPhone(p2.page, P2);
-await p2.page.waitForURL("**/join/**", { timeout: 20000 });
-check("מי שמחכה לו/ה הזמנה ונכנס/ת — מגיע/ה לעמוד ההצטרפות, לא לפתיחת דוכן", p2.page.url().includes("/join/"));
-// ההזמנה בוטלה בינתיים
-await owner.page.locator("[data-testid=invite-cancel]").first().click();
-await owner.page.waitForTimeout(800);
-await p2.page.reload({ waitUntil: "networkidle" });
-check("ראש הדוכן ביטל/ה — 'ההזמנה בוטלה'", ((await p2.page.textContent("[data-testid=join-closed]").catch(() => "")) ?? "").includes("בוטלה"));
-const i2b = await api(owner.page, { action: "invite", storeId: store.id, phone: P2 });
-await db.query("update store_invites set expires_at=now() - interval '1 minute' where token=$1", [i2b.body.token]);
-await p2.page.goto(`${BASE}/join/${i2b.body.token}`, { waitUntil: "networkidle" });
-check("הזמנה שפג תוקפה — 'פג התוקף'", ((await p2.page.textContent("[data-testid=join-closed]").catch(() => "")) ?? "").includes("פג התוקף"));
-const i2c = await api(owner.page, { action: "invite", storeId: store.id, phone: P2 });
-check("והזמנה חדשה לאותו מספר אחרי שפגה — עובדת", i2c.status === 200 && i2c.body.token !== i2b.body.token);
-await api(owner.page, { action: "cancel_invite", storeId: store.id, inviteId: (await db.query("select id from store_invites where token=$1", [i2c.body.token])).rows[0].id });
 
 /* ── 9. לאן מגיעות ההזמנות ── */
 const op = await api(owner.page, { action: "orders_phone", storeId: store.id, userId: p1Id });
@@ -313,6 +295,29 @@ check("ראש הדוכן מוציא/ה — השותף/ה כבר לא בצוות"
 check("וההזמנות שהגיעו לטלפון שלו/ה חוזרות לראש הדוכן", r1.contact_phone === "972501234567", r1.contact_phone);
 const tGone = await (await rest(t1, `products?store_id=eq.${store.id}&select=id`)).json();
 check("והגישה נסגרת מיד (גם ב-REST)", Array.isArray(tGone) && tGone.length === 0);
+
+/* ── 12ב. כניסה עם הזמנה פתוחה → ישר לעמוד ההצטרפות ── */
+// אחרי שהשותף/ה יצא/ה יש מקום — ראש הדוכן מזמין/ה את P2
+const i2 = await api(owner.page, { action: "invite", storeId: store.id, phone: P2 });
+check("אחרי שהצוות התפנה — אפשר להזמין שוב", i2.status === 200);
+await openTeam(owner.page);
+const p2 = await session(P2, { login: false });
+await p2.page.goto(`${BASE}/login`);
+await verifyPhone(p2.page, P2);
+await p2.page.waitForURL("**/join/**", { timeout: 20000 });
+check("מי שמחכה לו/ה הזמנה ונכנס/ת — מגיע/ה לעמוד ההצטרפות, לא לפתיחת דוכן", p2.page.url().includes("/join/"));
+// ההזמנה בוטלה בינתיים
+await owner.page.locator("[data-testid=invite-cancel]").first().click();
+await owner.page.waitForTimeout(800);
+await p2.page.reload({ waitUntil: "networkidle" });
+check("ראש הדוכן ביטל/ה — 'ההזמנה בוטלה'", ((await p2.page.textContent("[data-testid=join-closed]").catch(() => "")) ?? "").includes("בוטלה"));
+const i2b = await api(owner.page, { action: "invite", storeId: store.id, phone: P2 });
+await db.query("update store_invites set expires_at=now() - interval '1 minute' where token=$1", [i2b.body.token]);
+await p2.page.goto(`${BASE}/join/${i2b.body.token}`, { waitUntil: "networkidle" });
+check("הזמנה שפג תוקפה — 'פג התוקף'", ((await p2.page.textContent("[data-testid=join-closed]").catch(() => "")) ?? "").includes("פג התוקף"));
+const i2c = await api(owner.page, { action: "invite", storeId: store.id, phone: P2 });
+check("והזמנה חדשה לאותו מספר אחרי שפגה — עובדת", i2c.status === 200 && i2c.body.token !== i2b.body.token);
+await api(owner.page, { action: "cancel_invite", storeId: store.id, inviteId: (await db.query("select id from store_invites where token=$1", [i2c.body.token])).rows[0].id });
 
 /* ── 13. יציאה ── */
 const i4 = await api(owner.page, { action: "invite", storeId: store.id, phone: P1 });

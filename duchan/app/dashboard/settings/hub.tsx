@@ -36,6 +36,7 @@ export default function SettingsHub({
   groups,
   onOpen,
   before,
+  optional,
   after,
 }: {
   /** הדוכן הקטן בראש המסך */
@@ -46,6 +47,8 @@ export default function SettingsHub({
   onOpen: (key: string) => void;
   /** מה שבא מיד אחרי הדוכן — קריאה לפרסום כשעוד לא פורסם */
   before?: ReactNode;
+  /** אזור נפרד בסוף, לדברים שאינם חובה (לנהל ביחד) */
+  optional?: ReactNode;
   after?: ReactNode;
 }) {
   let i = 0;
@@ -106,6 +109,12 @@ export default function SettingsHub({
       ))}
 
       <div className="fx-rise" style={delay()}>{status}</div>
+      {optional && (
+        <section className="fx-rise mt-2" style={delay()} aria-label="אפשרויות נוספות">
+          <h2 className="text-[12px] font-bold text-[var(--faint)] px-1 mb-1.5 tracking-wide">עוד אפשרויות</h2>
+          {optional}
+        </section>
+      )}
       {after && <div className="fx-rise" style={delay()}>{after}</div>}
     </div>
   );
