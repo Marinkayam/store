@@ -19,6 +19,7 @@ import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
 import SellerCoupons from "../share/seller-coupons";
 import ShareSection from "./share-section";
+import { setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -106,6 +107,11 @@ export default function SettingsPage() {
     { id: string; name: string; price: number; image_key: string | null; poster_key: string | null }[]
   >([]);
 
+  /* הטופס מתמלא מהחנות פעם אחת — כשהיא נטענת (או כשמחליפים חנות).
+     לא בכל עדכון שלה: בחירת קאבר, העלאת תמונה או "בהפסקה" מעדכנות את
+     store מיד, וכשהאפקט רץ על כל עדכון הוא דרס כל מה שהוקלד ועוד לא
+     נשמר — השם, התיאור, הצבעים. בדיקת השמירה המלאה תפסה את זה. */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!store) return;
     setName(store.display_name);
@@ -149,7 +155,7 @@ export default function SettingsPage() {
       payout_paybox_phone: store.payout_paybox_phone ?? "",
       payout_whatsapp: store.payout_whatsapp ?? false,
     });
-  }, [store]);
+  }, [store?.id]);
 
   // המוצרים האמיתיים של הדוכן, להצגה מתחת לעריכה
   useEffect(() => {
@@ -183,7 +189,11 @@ export default function SettingsPage() {
   };
   /* חזרה: אם נכנסנו מכאן — אחורה בהיסטוריה (כמו כפתור החזרה של הטלפון).
      אם הגענו מקישור ישיר למקטע — פשוט למסך הבית, בלי לצאת מהאתר. */
-  const closeSection = () => {
+  const closeSection = async () => {
+    /* "חזרה" שומרת. ילדה שמשנה משהו ולוחצת חזרה מצפה שזה יישאר — לא
+       שתצטרך לזכור כפתור שמירה. אם אי אפשר לשמור (מספר לא תקין וכו'),
+       נשארים במקטע וההודעה אומרת למה. */
+    if (dirty && !(await save())) return;
     if (pushedRef.current) {
       pushedRef.current = false;
       window.history.back();
@@ -194,6 +204,18 @@ export default function SettingsPage() {
     }
   };
 
+
+  useEffect(() => {
+    setUnsaved(dirty);
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = UNSAVED_PROMPT;
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+  useEffect(() => () => setUnsaved(false), []);
 
   const showToast = (m: string) => {
     setToast(m);
@@ -212,32 +234,32 @@ export default function SettingsPage() {
   const lk = lookOrBase(look);
   const previewBg = hasCustomBg(bgPattern, bgPreview);
 
-  async function save() {
-    if (!store) return;
+  async function save(): Promise<boolean> {
+    if (!store) return false;
     const normalized = normalizePhone(phone);
     if (!normalized) {
       showToast("מספר הוואטסאפ לא נראה תקין, לבדוק שוב");
-      return;
+      return false;
     }
     const bitLink = payout.payout_bit_link?.trim();
     if (bitLink && !isBitLink(bitLink)) {
       showToast("לינק הביט לא נראה כמו לינק מאפליקציית ביט");
-      return;
+      return false;
     }
     const payboxLink = payout.payout_paybox_link?.trim();
     if (payboxLink && !isPayboxLink(payboxLink)) {
       showToast("לינק הפייבוקס לא נראה כמו לינק מאפליקציית פייבוקס");
-      return;
+      return false;
     }
     const bitPhone = payout.payout_bit_phone?.trim();
     if (bitPhone && !isPayPhone(bitPhone)) {
       showToast("מספר הביט לא נראה כמו מספר נייד ישראלי");
-      return;
+      return false;
     }
     const payboxPhone = payout.payout_paybox_phone?.trim();
     if (payboxPhone && !isPayPhone(payboxPhone)) {
       showToast("מספר הפייבוקס לא נראה כמו מספר נייד ישראלי");
-      return;
+      return false;
     }
     const supa = supabaseBrowser();
     const patch = {
@@ -295,7 +317,7 @@ export default function SettingsPage() {
       if (!missing || !(missing in attempt) || i === 8) {
         console.error("[settings] save failed:", error.message);
         showToast("השמירה נכשלה, לנסות שוב");
-        return;
+        return false;
       }
       delete attempt[missing];
       dropped.push(missing);
@@ -310,6 +332,7 @@ export default function SettingsPage() {
     } else {
       showToast("נשמר ✨");
     }
+    return true;
   }
 
   async function onCover(file: File) {

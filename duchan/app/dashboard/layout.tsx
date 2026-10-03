@@ -5,6 +5,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import Icon, { type IconName } from "../icons";
 import ReleasePopup from "./release-popup";
+import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 
 // אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
 // הניווט — הדבר שהילדה רואה בכל מסך — לא בשליטתנו.
@@ -28,7 +29,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           return (
             <button
               key={t.href}
-              onClick={() => router.push(t.href)}
+              onClick={() => {
+                if (hasUnsaved() && !window.confirm(UNSAVED_PROMPT)) return;
+                setUnsaved(false);
+                router.push(t.href);
+              }}
               className={`flex-1 flex flex-col items-center gap-0.5 py-1 text-[11px] ${on ? "text-[var(--ink)] font-medium" : "text-[var(--muted)]"}`}
             >
               <Icon

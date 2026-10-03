@@ -145,11 +145,11 @@ await girl.click("[data-testid=section-back]");
 await girl.waitForSelector("[data-testid=settings-hero]");
 const previewBg = await girl.locator("[data-testid=settings-hero]").evaluate((el) => getComputedStyle(el).backgroundImage);
 check("התצוגה המקדימה מקבלת את הרקע מיד", previewBg.includes("svg"), previewBg.slice(0, 60));
+/* "חזרה" שומרת לבד — אין צורך בכפתור, ואין שינוי שנעלם */
+await girl.waitForTimeout(1500);
+check("חזרה למסך הבית שמרה את השינויים (בלי כפתור שמירה)", (await girl.locator("[data-testid=save-settings]").count()) === 0);
 await girl.click("[data-testid=hub-design]");
 await girl.waitForSelector("[data-testid=section-design]");
-
-await girl.click("[data-testid=save-settings]");
-await girl.waitForTimeout(2200);
 const { rows: [s1] } = await db.query("select look, bg_pattern from stores where id=$1", [store.id]);
 check("הסגנון והרקע נשמרו", s1.look === "round" && s1.bg_pattern === "hearts", `${s1.look} · ${s1.bg_pattern}`);
 
