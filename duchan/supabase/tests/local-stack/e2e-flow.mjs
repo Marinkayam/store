@@ -84,7 +84,8 @@ check("share opens for real once a product exists",
   (await empty.locator("textarea").count()) >= 1);
 const shareBox = await empty.locator("textarea").first().inputValue();
 check("and the ready-made message carries the store link",
-  shareBox.includes(`/s/${noa.slug}`), shareBox.slice(0, 60));
+  // הלינק הקצר (duchan.app/<קוד>) — ראה lib/short-link.ts
+  shareBox.includes(`/${noa.slug}`), shareBox.slice(0, 60));
 await empty.screenshot({ path: `${shots}/53-share-open.png`, fullPage: true });
 
 /* ── 5. חברה נכנסת לתצוגה מקדימה ורואה חנות אמיתית ── */
@@ -158,8 +159,9 @@ check("AI button appears once AI on + photo",
 /* ── 8. עריכה של מוצר קיים: אותה תמונה, בלי לצלם מחדש ── */
 await girl.goto(`${BASE}/dashboard/products`);
 await girl.waitForSelector("text=סקוויש חד-קרן");
+// השורה כולה נפתחת לעריכה, עם חץ ‹ בצד (כמו ב"הדוכן שלי")
 check("a product row says out loud that it opens for editing",
-  (await girl.textContent("body")).includes("עריכה"));
+  (await girl.locator("[data-testid=product-row]").first().textContent())?.includes("‹") === true);
 await girl.click("text=סקוויש חד-קרן");
 await girl.waitForSelector("input[aria-label='שם המוצר']");
 check("editing an existing product can still ask for a description",

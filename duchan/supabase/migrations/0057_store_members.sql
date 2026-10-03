@@ -12,6 +12,9 @@
 --   • להזמין / להוציא שותפים או להעביר ראשות (רק דרך /api/team, בשרת)
 --
 -- הכל מוסיף בלבד (CLAUDE.md §9).
+--
+-- בפרודקשן הוחל בחלקים (0057a–f) דרך ה-MCP של Supabase, בלי שורות
+-- drop-if-exists — שם הן מחכות לאישור ידני ונתקעות. התוצאה זהה לקובץ.
 
 create table if not exists store_members (
   store_id          uuid not null references stores(id) on delete cascade,
@@ -219,10 +222,11 @@ begin
     raise exception 'not_member';
   end if;
 
-  delete from store_members where store_id = p_store and user_id = p_user;
-  insert into store_members (store_id, user_id, phone, parent_consent_at)
-    values (p_store, s.owner_id, p_old_phone, s.parent_consent_at)
-    on conflict (store_id, user_id) do nothing;
+  -- שורת השותף/ה הופכת לשורה של ראש הדוכן הקודם/ת — החלפה במקום,
+  -- בלי מחיקה (וגם תקרת השותפים לא נספרת פעמיים)
+  update store_members
+     set user_id = s.owner_id, phone = p_old_phone, parent_consent_at = s.parent_consent_at, joined_at = now()
+   where store_id = p_store and user_id = p_user;
   update stores
      set owner_id = p_user, transfer_to = null, transfer_requested_at = null
    where id = p_store;

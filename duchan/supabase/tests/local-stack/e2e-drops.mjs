@@ -31,8 +31,12 @@ if (!store?.activated_at) {
 }
 await db.query("update stores set status='active', show_sold_out=null where id=$1", [store.id]);
 const { rows: prods } = await db.query(
-  `select id, name from products where store_id=$1 and deleted_at is null and (is_visible is null or is_visible)
-     and options is null order by sort_order, created_at limit 3`, [store.id]);
+  // שם ייחודי בדוכן — הבדיקה מוצאת כרטיסים ושורות לפי השם, ובדיקות אחרות
+  // משאירות כמה מוצרים עם אותו שם
+  `select id, name from products p where store_id=$1 and deleted_at is null and (is_visible is null or is_visible)
+     and options is null
+     and (select count(*) from products q where q.store_id=p.store_id and q.name=p.name and q.deleted_at is null) = 1
+   order by sort_order, created_at limit 3`, [store.id]);
 if (prods.length < 3) {
   console.error("צריך 3 מוצרים בלי אפשרויות");
   process.exit(1);
