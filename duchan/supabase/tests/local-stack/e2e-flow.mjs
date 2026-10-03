@@ -130,7 +130,7 @@ await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 await admin.goto(`${BASE}/admin`);
 await admin.waitForSelector("text=חמ\"ל");
-await admin.click("button:has-text('חנויות')");
+await admin.click("button:has-text('דוכנים')");
 await admin.waitForTimeout(600);
 check("admin list still shows each store's progress", (await admin.textContent("body")).includes("📈 התקדמות:"));
 await admin.locator("button", { hasText: tamar.display_name }).first().click();

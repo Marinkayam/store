@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 import A11yMenu, { A11Y_BOOT } from "./a11y-menu";
 import CookieNote from "./cookie-note";
+import PullRefresh from "./pull-refresh";
 
 export const metadata: Metadata = {
   // בלי metadataBase, Next בונה תגיות OpenGraph עם נתיבים יחסיים
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div id="main" tabIndex={-1} className="outline-none">
           {children}
         </div>
+        <PullRefresh />
         <A11yMenu />
         {/* Vercel Web Analytics — אותו אירוח, בלי עוגייה ובלי סקריפט
             מדומיין זר. האירועים נשלחים דרך lib/squish-analytics.ts, שמסנן

@@ -539,3 +539,14 @@ html.a11y-font p, html.a11y-font li { line-height: 1.8 !important; }
     font-size: 16px !important;
   }
 }
+
+/* משיכה לרענון (pull-refresh.tsx): כיבוי הרענון של הדפדפן עצמו, ונדנוד
+   קטן לגג בזמן הרענון */
+html.ptr-on, html.ptr-on body { overscroll-behavior-y: none; }
+@keyframes ptr-sway {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(2px) rotate(-0.6deg); }
+  70% { transform: translateY(1px) rotate(0.6deg); }
+}
+.ptr-sway { animation: ptr-sway 0.9s ease-in-out infinite; transform-origin: 50% 0; }
+@media (prefers-reduced-motion: reduce) { .ptr-sway { animation: none; } }

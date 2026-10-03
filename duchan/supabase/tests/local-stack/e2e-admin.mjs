@@ -53,7 +53,7 @@ check("overview counts our 3 views", overviewText.includes("3"));
 await admin.screenshot({ path: `${shots}/20-overview.png` });
 
 /* ── 3. תיק חנות: וואטסאפ + ארכיון מוצרים ── */
-await admin.click("button:has-text('חנויות')");
+await admin.click("button:has-text('דוכנים')");
 await admin.waitForTimeout(500);
 await admin.locator("button", { hasText: store.display_name }).first().click();
 await admin.waitForSelector("text=וואטסאפ לבעלי הדוכן");

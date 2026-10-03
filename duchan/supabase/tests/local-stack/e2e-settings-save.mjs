@@ -19,6 +19,8 @@ const check = (n, ok, d = "") => {
   console.log(`${ok ? "PASS" : "FAIL"}: ${n}${d ? " — " + d : ""}`);
 };
 
+// ריצה שנקטעה באמצע יכולה להשאיר את שם הבדיקה — מחזירים לשם של seed.mjs לפני ששומרים את "המקור"
+await db.query("update stores set display_name='החנות של תמר' where contact_phone='972501234567' and display_name='בדיקת שמירה'");
 const { rows: [orig] } = await db.query("select * from stores where contact_phone='972501234567' order by created_at limit 1");
 if (!orig) {
   console.error("צריך את דוכן הבדיקה של 0501234567 (seed.mjs)");

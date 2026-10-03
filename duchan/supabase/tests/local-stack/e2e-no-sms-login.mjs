@@ -53,7 +53,7 @@ const { rows: [{ n: pilotsAfter }] } = await db.query("select count(*)::int as n
 check("בלי טוקן פיילוט של סקוויש", pilotsAfter === pilotsBefore, `${pilotsBefore} → ${pilotsAfter}`);
 
 // בתיק החנות — מקוצר, עם המספר ממולא
-await admin.click("button:has-text('חנויות')");
+await admin.click("button:has-text('דוכנים')");
 await admin.waitForTimeout(500);
 await admin.locator("button", { hasText: store.display_name }).first().click();
 await admin.waitForSelector("[data-testid=no-sms-open]", { timeout: 15000 });
