@@ -19,7 +19,8 @@ interface Props {
   price: number;
   fullPrice: number;
   isLaunch: boolean;
-  launchUntil: string;
+  /** "מבצע חד-פעמי" או "מחיר השקה · עד …" — מ-lib/pricing */
+  dealLabel: string;
   bitUrl: string;
   payboxUrl: string;
   ownerWhatsapp: string;
@@ -31,7 +32,7 @@ const METHODS = [
   { key: "other", label: "דרך אחרת", icon: "🤝" },
 ];
 
-export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, bitUrl, payboxUrl, ownerWhatsapp }: Props) {
+export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bitUrl, payboxUrl, ownerWhatsapp }: Props) {
   const { store, setStore, loading } = useStore();
   const [showParent, setShowParent] = useState(false);
   const [method, setMethod] = useState<string>("bit");
@@ -205,7 +206,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
         </p>
         {isLaunch && (
           <div className="mt-5 inline-block bg-[var(--wood)] text-white px-3 py-1.5 text-[12.5px] font-bold">
-            🎉 מחיר השקה, עד {launchUntil}
+            🎉 {dealLabel}: רק ₪{price}!
           </div>
         )}
         <div data-testid="activation-price" className="mt-3 flex items-baseline justify-center gap-2">
@@ -240,7 +241,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, launchUntil, 
           href={`https://wa.me/?text=${encodeURIComponent(
             `בניתי חנות אמיתית באינטרנט! 🛍️\n` +
               (isLaunch
-                ? `יש עכשיו מחיר השקה, ₪${price} במקום ₪${fullPrice}, עד ${launchUntil}.\n`
+                ? `יש עכשיו ${dealLabel}: רק ₪${price} במקום ₪${fullPrice}.\n`
                 : `כדי לפרסם אותה צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\n`) +
               `כל ההסבר כאן: ${priceUrl}`
           )}`}

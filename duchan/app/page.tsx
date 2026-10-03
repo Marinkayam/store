@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import StallArt from "./stall-art";
 import HelpButton from "./help-button";
+import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 
 // עמוד הנחיתה: שדה אחד. בלי אימייל. הבנייה מתחילה לפני ההרשמה.
 // ?ref=<slug> — הגיעה מחנות של חברה. השיוך נשמר בטיוטה ועובר ליצירת החנות.
@@ -104,6 +105,19 @@ export default function Landing() {
       {/* בלי שדה שם כאן: השם נשאל ממילא במסך הראשון של ההקמה, ושתי
           שאלות לאותו דבר גרמו לתחושה של טופס כפול. */}
       <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-2.5">
+        {IS_LAUNCH && (
+          <a
+            href="/price"
+            data-testid="promo-banner"
+            className="block text-center bg-[var(--wood)] text-white px-4 py-2.5"
+          >
+            <span className="block text-[12px] font-medium opacity-90">🎉 {DEAL_LABEL}</span>
+            <span className="block text-[16px] font-bold leading-snug">
+              רק ₪{ACTIVATION_PRICE} לפתוח דוכן!{" "}
+              <span className="text-[13px] font-medium line-through opacity-75">₪{FULL_PRICE}</span>
+            </span>
+          </a>
+        )}
         <button className="btn btn-primary">לפתוח דוכן ←</button>
         {/* הקישור בשורה נפרדת: כשהוא נגרר לסוף המשפט הוא נשבר באמצע
             ("איך" בשורה אחת ו"זה עובד?" בשנייה) ונראה כמו טעות. */}

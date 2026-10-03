@@ -99,7 +99,12 @@ check("מסך ההפעלה מציג מחיר חד-פעמי", shown.length >= 1 &
    חוזר לבד למחיר המלא, בלי קו חתוך. הבדיקה עוקבת אחרי אותו שעון —
    ב-30.7.2026 בערב היא נפלה בדיוק בגלל שהניחה שתמיד יש מבצע. */
 const launchUntil = new Date(process.env.NEXT_PUBLIC_LAUNCH_UNTIL ?? "2026-07-30T20:59:59Z");
-if (Date.now() <= launchUntil.getTime()) {
+/* המבצע החד-פעמי (lib/pricing PROMO_PRICE, 3.10.2026) גובר על שעון ההשקה */
+const promo = ((await girl.textContent("body")) ?? "").includes("מבצע חד-פעמי");
+if (promo) {
+  check("מבצע חד-פעמי: ₪20 לפתוח דוכן, ולצידו המחיר המלא חתוך",
+    shown.length === 2 && expectedPrice === 20 && shown[1] > 20, priceText);
+} else if (Date.now() <= launchUntil.getTime()) {
   check("ולצידו מחיר מלא גבוה יותר, כדי שיהיה ברור שזו הנחת השקה",
     shown.length === 2 && shown[1] > expectedPrice, priceText);
 } else {

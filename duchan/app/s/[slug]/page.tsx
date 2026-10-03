@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getPublicStore } from "@/lib/store-public";
 import { themeCssVars, themeOrDefault } from "@/lib/themes";
 import { lookCssVars, lookFontHref } from "@/lib/looks";
-import { ACTIVATION_PRICE, FULL_PRICE, IS_LAUNCH, LAUNCH_UNTIL_LABEL } from "@/lib/pricing";
+import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 import StoreView from "./store-view";
 import Icon from "@/app/icons";
 
@@ -116,7 +116,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
     `היי מרינה! 👋\n` +
     `הגעתי מהדוכן "${name}" (${slug}) באתר דוכן,\n` +
     `ואני רוצה גם דוכן מכירות כזה` +
-    (IS_LAUNCH ? ` (ראיתי שיש מחיר השקה ₪${ACTIVATION_PRICE} עד ${LAUNCH_UNTIL_LABEL}).` : ".");
+    (IS_LAUNCH ? ` (ראיתי שיש ${DEAL_LABEL}: רק ₪${ACTIVATION_PRICE}).` : ".");
 
   return (
     <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-8 text-center">
@@ -129,7 +129,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
       </p>
       {IS_LAUNCH && (
         <p className="text-[12.5px] font-bold mt-2.5">
-          🎉 מחיר השקה ₪{ACTIVATION_PRICE} במקום ₪{FULL_PRICE}, עד {LAUNCH_UNTIL_LABEL}
+          🎉 {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi>₪{FULL_PRICE}</bdi>!
         </p>
       )}
 

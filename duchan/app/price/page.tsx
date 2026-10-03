@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ACTIVATION_PRICE, FULL_PRICE, IS_LAUNCH, LAUNCH_UNTIL_LABEL } from "@/lib/pricing";
+import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 import { GetsList, PaybackCard, LearnsTable, AnchorTable, SafetyList } from "./sections";
 import Icon from "@/app/icons";
 
@@ -38,7 +38,7 @@ export default function PricePage() {
           <div className="mt-6 inline-flex flex-col items-center card px-8 py-5">
             {IS_LAUNCH && (
               <div className="t-small font-medium text-[var(--wood)] mb-1.5">
-                🎉 מחיר השקה · עד {LAUNCH_UNTIL_LABEL}
+                🎉 {DEAL_LABEL}!
               </div>
             )}
             <div className="flex items-baseline gap-2">

@@ -43,13 +43,29 @@ export const LAUNCH_UNTIL_LABEL = LAUNCH_UNTIL.toLocaleDateString("he-IL", {
 });
 
 /**
+ * מבצע חד-פעמי — החלטת מרינה, 3.10.2026: "רק ₪20 לפתוח חנות".
+ *
+ * קבוע בקוד ולא במשתנה סביבה בכוונה: משתנה ב-Vercel שנשכח מהשקה קודמת
+ * לא יכול לדרוס אותו בשקט. בלי תאריך סיום — המבצע נגמר כשמחליטים, וזה
+ * שינוי של שורה אחת: PROMO_PRICE = 0 מחזיר הכל למחיר הרגיל.
+ */
+export const PROMO_PRICE: number = 20;
+export const PROMO_ACTIVE = PROMO_PRICE > 0 && PROMO_PRICE < FULL_PRICE;
+
+/**
  * המחיר שגובים בפועל.
  *
  * מחושב פעם אחת בטעינת המודול ולא בכל קריאה: כך אותו מספר מוצג במסך,
  * נכנס להודעה להורה ונרשם בחמ"ל, ואין מצב שהמחיר משתנה באמצע התהליך.
  */
-export const ACTIVATION_PRICE = launchActive() ? LAUNCH_PRICE : FULL_PRICE;
+export const ACTIVATION_PRICE = PROMO_ACTIVE ? PROMO_PRICE : launchActive() ? LAUNCH_PRICE : FULL_PRICE;
 export const IS_LAUNCH = ACTIVATION_PRICE < FULL_PRICE;
+
+/**
+ * שם ההנחה, לכל המסכים: "מבצע חד-פעמי" או "מחיר השקה · עד 30.7.2026".
+ * מקום אחד, כדי שלא יהיה מסך שעוד כתוב בו מחיר השקה שנגמר.
+ */
+export const DEAL_LABEL = PROMO_ACTIVE ? "מבצע חד-פעמי" : `מחיר השקה · עד ${LAUNCH_UNTIL_LABEL}`;
 
 /** לינק תשלום אישי. ריק = מציגים את המספר לביט ידני. */
 export const PAY_BIT_URL = process.env.NEXT_PUBLIC_PAY_BIT_URL ?? "";
