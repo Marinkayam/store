@@ -27,8 +27,7 @@ import SellerCoupons from "../share/seller-coupons";
  * עובד, ואפשר לשלוח קישור ישר למקטע.
  */
 const SECTIONS = {
-  identity: { icon: "🪪", title: "שם ותמונה", intro: "לוחצים על השם, התיאור או התמונה ועורכים במקום. ככה הקונים רואים את הדוכן." },
-  design: { icon: "🎨", title: "עיצוב", intro: "צבעים, סגנון, רקע וקטגוריות. כל לחיצה מופיעה מיד בדוכן הקטן." },
+  design: { icon: "🎨", title: "עיצוב הדוכן", intro: "כל מה שקשור לאיך הדוכן נראה, במקום אחד. לוחצים על השם, התיאור או התמונה כדי לשנות." },
   products: { icon: "⭐", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
   promo: { icon: "📣", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
   coupons: { icon: "🏷️", title: "קופונים", intro: "יוצרים כאן קוד הנחה, ושולחים אותו לחברים." },
@@ -39,7 +38,10 @@ const SECTIONS = {
 } as const;
 type SectionKey = keyof typeof SECTIONS;
 /* העוגנים של הגרסה הקודמת (גלילה אחת) — קישורים ישנים ממשיכים לעבוד */
-const SECTION_ALIASES: Record<string, SectionKey> = { "products-display": "products", about: "details", "order-msg": "order" };
+const SECTION_ALIASES: Record<string, SectionKey> = {
+  "products-display": "products", about: "details", "order-msg": "order",
+  identity: "design", // "שם ותמונה" אוחד לתוך "עיצוב הדוכן"
+};
 const asSection = (hash: string): SectionKey | null => {
   const k = decodeURIComponent(hash.replace(/^#/, ""));
   const key = (SECTION_ALIASES[k] ?? k) as SectionKey;
@@ -189,6 +191,23 @@ export default function SettingsPage() {
       window.scrollTo(0, 0);
     }
   };
+
+  /* בעיצוב יש שני דוכנים: הגדול שעורכים בו, והקטן שצף למעלה בזמן שבוחרים
+     צבע/סגנון/רקע. הקטן מופיע רק כשהגדול כבר לא על המסך — אחרת רואים
+     את אותו דוכן פעמיים. */
+  /* callback ref ולא useRef: הכרטיס נוצר רק אחרי שהחנות נטענה והמקטע
+     נפתח, וכך ה-observer נרשם בדיוק כשהוא קיים — לא תלוי בסדר הטעינה */
+  const [cardEl, setCardEl] = useState<HTMLDivElement | null>(null);
+  const [cardInView, setCardInView] = useState(true);
+  useEffect(() => {
+    if (!cardEl || typeof IntersectionObserver === "undefined") {
+      setCardInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(([e]) => setCardInView(e.isIntersecting), { rootMargin: "-54px 0px 0px 0px" });
+    io.observe(cardEl);
+    return () => io.disconnect();
+  }, [cardEl]);
 
   const showToast = (m: string) => {
     setToast(m);
@@ -580,10 +599,9 @@ export default function SettingsPage() {
     {
       title: "איך הדוכן נראה",
       rows: [
-        { key: "identity", icon: "🪪", tint: "#f2d9dc", title: "שם ותמונה", summary: [name || "בלי שם", tagline].filter(Boolean).join(" · ") },
         {
-          key: "design", icon: "🎨", tint: "#ece2f3", title: "עיצוב",
-          summary: [themeOrDefault(theme).label, lookOrBase(look).label, bgLabel, catCount ? `${catCount} קטגוריות` : null].filter(Boolean).join(" · "),
+          key: "design", icon: "🎨", tint: "#ece2f3", title: "עיצוב הדוכן",
+          summary: [name || "בלי שם", themeOrDefault(theme).label, lookOrBase(look).label, bgLabel].filter(Boolean).join(" · "),
         },
       ],
     },
@@ -666,7 +684,7 @@ export default function SettingsPage() {
       ) : (
         <>
           {/* כותרת המקטע: חזרה, אייקון ושם. דביקה, כדי שהדרך חזרה תמיד על המסך */}
-          <div className="sticky top-0 z-30 h-[54px] flex items-center gap-2 px-1.5 bg-white/95 backdrop-blur border-b border-[var(--line)]">
+          <div className="sticky top-0 z-30 h-[54px] flex items-center gap-2 px-1.5 bg-white border-b border-[var(--line)]">
             <button
               onClick={closeSection}
               aria-label="חזרה להחנות שלי"
@@ -681,7 +699,7 @@ export default function SettingsPage() {
 
           <div key={section} className="fx-slide p-3 flex flex-col gap-3" data-testid={`section-${section}`}>
             <p className="text-[12.5px] text-[var(--muted)] leading-relaxed px-1">{SECTIONS[section].intro}</p>
-          {section === "identity" && (
+          {section === "design" && (
             <>
         {/* הדוכן עצמו, ניתן לעריכה במקום.
             אין כאן "תצוגה מקדימה" למעלה ו"שדות" למטה: השם נערך במקום שבו
@@ -696,6 +714,7 @@ export default function SettingsPage() {
 
           <div
             id="identity"
+            ref={setCardEl}
             className="scroll-mt-14 overflow-hidden border border-[var(--line)]"
             style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
           >
@@ -758,7 +777,7 @@ export default function SettingsPage() {
                   aria-label="שם החנות"
                   placeholder="שם הדוכן שלך"
                   onChange={(e) => { setName(e.target.value); setDirty(true); }}
-                  className="editable block w-full text-center font-bold text-[15px] pe-6"
+                  className="editable editable-quiet block w-full text-center font-bold text-[15px] pe-6"
                   style={{ color: t.ink }}
                 />
                 <span
@@ -778,7 +797,7 @@ export default function SettingsPage() {
                 aria-label="תיאור הדוכן"
                 placeholder="פה כותבים את מה שאתם מוכרים בדוכן"
                 onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
-                className="editable block w-full text-center text-[12px] resize-none leading-snug opacity-85"
+                className="editable editable-quiet block w-full text-center text-[12px] resize-none leading-snug opacity-85"
                 style={{ color: t.ink }}
               />
 
@@ -793,7 +812,7 @@ export default function SettingsPage() {
                   aria-label="עיר"
                   placeholder="עיר (לא חובה)"
                   onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                  className="editable text-center w-28"
+                  className="editable editable-quiet text-center w-28"
                   style={{ color: t.ink }}
                 />
                 {info.ships && (
@@ -849,30 +868,16 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* אפשרויות משניות לקאבר ולתמונה — מתחת לדוכן, לא במקומו */}
-          <div className="bg-white border border-[var(--line)] p-3 mt-2.5">
-            <div className="text-[12px] text-[var(--muted)] mb-1.5">רקע מוכן לקאבר</div>
+          {/* תמונת פרופיל — מתחת לדוכן. הקאבר עבר לשלב "רקע", ליד רקע הדוכן */}
+          <div className="bg-white border border-[var(--line)] p-3 mt-2.5" data-testid="avatar-picker">
+            <div className="text-[12px] font-semibold mb-1.5">תמונת הדוכן</div>
             <div className="flex gap-1.5 flex-wrap">
-              {COVERS.map((c) => (
-                <button
-                  key={c.key}
-                  onClick={() => pickPreset(c.key)}
-                  aria-label={`רקע ${c.label}`}
-                  className={`w-11 h-8 border-2 ${
-                    !coverPreview && preset === c.key ? "border-[var(--ink)]" : "border-[var(--line)]"
-                  }`}
-                  style={{ background: c.css }}
-                />
-              ))}
-              {coverPreview && (
-                <button onClick={removeCover} className="text-[12px] underline text-[var(--muted)] px-2">
-                  הסרת התמונה
-                </button>
-              )}
-            </div>
-
-            <div className="text-[12px] text-[var(--muted)] mt-3 mb-1.5">או אמוג׳י במקום תמונת פרופיל</div>
-            <div className="flex gap-1.5 flex-wrap">
+              <button
+                onClick={() => avatarRef.current?.click()}
+                className="h-9 px-2.5 border-[1.5px] border-dashed border-[var(--line)] bg-white text-[12px] font-semibold"
+              >
+                📷 תמונה שלי
+              </button>
               {EMOJIS.map((e) => (
                 <button key={e} onClick={() => { setEmoji(e); setDirty(true); }}
                   aria-label={`אמוג׳י ${e}`}
@@ -889,10 +894,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-            </>
-          )}
-          {section === "design" && (
-            <>
+
         {/* ── עיצוב הדוכן ──
             שלוש בחירות עצמאיות, בסדר שבו ילדה חושבת עליהן: קודם צבע, אחר
             כך צורה, ובסוף מה מאחורה. כל לחיצה משנה מיד את הדוכן שלמעלה,
@@ -918,9 +920,22 @@ export default function SettingsPage() {
           <div
             data-testid="design-preview"
             aria-label="תצוגה מקדימה של הדוכן"
-            className="sticky top-[54px] z-20 border border-[var(--line)] overflow-hidden"
+            aria-hidden={cardInView}
+            className={`fixed top-[58px] inset-x-3 max-w-[calc(28rem-24px)] mx-auto z-20 border border-[var(--line)] overflow-hidden transition-opacity duration-200 ${
+              cardInView ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
             style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
           >
+            {/* הפס למעלה (קאבר) — כדי שגם בחירת הקאבר תיראה מיד, ליד הרקע */}
+            <div
+              className="h-5"
+              data-testid="design-preview-cover"
+              style={
+                coverPreview
+                  ? { backgroundImage: `url(${coverPreview})`, backgroundSize: "cover", backgroundPosition: "center" }
+                  : previewBg ? undefined : { background: coverCss(preset) }
+              }
+            />
             <div className="p-2.5 flex flex-col gap-2">
               <div
                 className="text-center px-2 py-1.5"
@@ -1083,6 +1098,34 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+
+            {/* רקע הקאבר — הפס שבראש הדוכן. כאן, ליד רקע הדוכן: שני הרקעים
+                באותו מקום, ולא אחד בעיצוב ואחד מתחת לשם */}
+            <div className="text-[12px] text-[var(--faint)] mt-4 mb-1.5">והפס למעלה (קאבר):</div>
+            <div className="flex gap-1.5 flex-wrap" data-testid="cover-picker">
+              <button
+                onClick={() => coverRef.current?.click()}
+                className="h-8 px-2.5 border-[1.5px] border-dashed border-[var(--line)] bg-white text-[12px] font-semibold"
+              >
+                📷 תמונה שלי
+              </button>
+              {COVERS.map((c) => (
+                <button
+                  key={c.key}
+                  onClick={() => pickPreset(c.key)}
+                  aria-label={`קאבר ${c.label}`}
+                  className={`w-11 h-8 border-2 ${
+                    !coverPreview && preset === c.key ? "border-[var(--ink)]" : "border-[var(--line)]"
+                  }`}
+                  style={{ background: c.css }}
+                />
+              ))}
+              {coverPreview && (
+                <button onClick={removeCover} className="text-[12px] underline text-[var(--muted)] px-2">
+                  הסרת התמונה
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 4. קטגוריות — אותו עורך שיש בדף המוצרים. כאן כי זה המקום שבו
@@ -1203,52 +1246,58 @@ export default function SettingsPage() {
             />
           </div>
 
-          <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">כותרת קצרה</label>
-          <input
-            value={promo.promo_title}
-            onChange={(e) => { setPromo({ ...promo, promo_title: e.target.value }); setDirty(true); }}
-            placeholder="מבצע החודש"
-            aria-label="כותרת ההודעה"
-            maxLength={40}
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-          />
-
-          <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">מה ההודעה?</label>
-          <textarea
-            value={promo.promo_text}
-            onChange={(e) => { setPromo({ ...promo, promo_text: e.target.value }); setDirty(true); }}
-            placeholder="למשל: בקנייה מעל ₪50 מקבלים מחזיק מפתחות מתנה 🎁"
-            aria-label="תוכן ההודעה"
-            maxLength={180}
-            rows={3}
-            className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
-          />
-          <div className="text-[11.5px] text-[var(--faint)] mt-1 text-start">
-            {promo.promo_text.length}/180
-          </div>
-
-          {/* תצוגה מקדימה בערכת הנושא של הדוכן — כדי שלא צריך לפרסם
-              ואז לבדוק איך זה נראה */}
-          {promo.promo_text.trim() && (
+          {/* כבויה = רק הבחירה. השדות מופיעים כשבוחרים "מופיעה בדוכן" —
+              שדות פתוחים להודעה כבויה רק בלבלו ("למה לכתוב אם זה לא מופיע?") */}
+          {promo.promo_on ? (
             <>
-              <div className="text-[12px] text-[var(--muted)] mt-2 mb-1">ככה זה ייראה:</div>
-              <div
-                data-testid="promo-preview"
-                className="border-[1.5px] px-3.5 py-3 text-center"
-                style={{ background: t.surface, borderColor: t.primary, color: t.ink }}
-              >
-                <div className="text-[12px] font-bold" style={{ color: t.primary }}>
-                  {promo.promo_title.trim() || "מבצע החודש"}
-                </div>
-                <p className="text-[13.5px] leading-relaxed mt-1 whitespace-pre-line">{promo.promo_text}</p>
-              </div>
-            </>
-          )}
+            <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">כותרת קצרה</label>
+            <input
+              value={promo.promo_title}
+              onChange={(e) => { setPromo({ ...promo, promo_title: e.target.value }); setDirty(true); }}
+              placeholder="מבצע החודש"
+              aria-label="כותרת ההודעה"
+              maxLength={40}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+            />
 
-          {!promo.promo_on && promo.promo_text.trim() && (
-            <p className="text-[12px] text-[var(--warn-ink)] mt-2">
-              ההודעה כבויה כרגע ולא מופיעה בדוכן. מה שכתבת נשמר.
-            </p>
+            <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">מה ההודעה?</label>
+            <textarea
+              value={promo.promo_text}
+              onChange={(e) => { setPromo({ ...promo, promo_text: e.target.value }); setDirty(true); }}
+              placeholder="למשל: בקנייה מעל ₪50 מקבלים מחזיק מפתחות מתנה 🎁"
+              aria-label="תוכן ההודעה"
+              maxLength={180}
+              rows={3}
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
+            />
+            <div className="text-[11.5px] text-[var(--faint)] mt-1 text-start">
+              {promo.promo_text.length}/180
+            </div>
+
+            {/* תצוגה מקדימה בערכת הנושא של הדוכן — כדי שלא צריך לפרסם
+                ואז לבדוק איך זה נראה */}
+            {promo.promo_text.trim() && (
+              <>
+                <div className="text-[12px] text-[var(--muted)] mt-2 mb-1">ככה זה ייראה:</div>
+                <div
+                  data-testid="promo-preview"
+                  className="border-[1.5px] px-3.5 py-3 text-center"
+                  style={{ background: t.surface, borderColor: t.primary, color: t.ink }}
+                >
+                  <div className="text-[12px] font-bold" style={{ color: t.primary }}>
+                    {promo.promo_title.trim() || "מבצע החודש"}
+                  </div>
+                  <p className="text-[13.5px] leading-relaxed mt-1 whitespace-pre-line">{promo.promo_text}</p>
+                </div>
+              </>
+            )}
+            </>
+          ) : (
+            promo.promo_text.trim() && (
+              <p className="text-[12px] text-[var(--muted)] mt-2.5" data-testid="promo-saved-note">
+                יש לך הודעה שמורה. בוחרים &quot;מופיעה בדוכן&quot; כדי לראות ולערוך אותה.
+              </p>
+            )
           )}
         </div>
 

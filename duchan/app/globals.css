@@ -400,14 +400,16 @@ h3 {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: none; }
 }
-.fx-rise { animation: fx-rise 0.42s cubic-bezier(.2,.8,.2,1) both; }
+.fx-rise { animation: fx-rise 0.42s cubic-bezier(.2,.8,.2,1) backwards; }
 
 /* כניסה למקטע: נכנס מצד שמאל, כמו "קדימה" בעברית */
 @keyframes fx-slide {
   from { opacity: 0; transform: translateX(-22px); }
   to   { opacity: 1; transform: none; }
 }
-.fx-slide { animation: fx-slide 0.32s cubic-bezier(.2,.8,.2,1) both; }
+/* backwards ולא both: אחרי האנימציה לא נשאר transform על העטיפה. transform
+   שנשאר הופך כל position:fixed בפנים (הדוכן הקטן שצף) לצמוד לעטיפה ולא למסך */
+.fx-slide { animation: fx-slide 0.32s cubic-bezier(.2,.8,.2,1) backwards; }
 
 /* מבצע: ברק שעובר על הבאנר כל כמה שניות */
 @keyframes fx-shine {
@@ -452,3 +454,10 @@ h3 {
   .fx-shine::after, .fx-confetti { animation: none; display: none; }
   .fx-press:active { transform: none; }
 }
+
+/* "החנות שלי": עריכה במקום בלי קו מתחת — מרינה: "מה זה הקווים האלו?".
+   העיפרון ליד השם, והכותרת של המקטע, אומרים שאפשר ללחוץ. בפוקוס יש
+   רקע עדין, כדי שיהיה ברור איפה מקלידים. */
+.editable.editable-quiet,
+.editable.editable-quiet:hover { border-bottom-color: transparent; }
+.editable.editable-quiet:focus { border-bottom-color: transparent; background: color-mix(in srgb, currentColor 8%, transparent); }

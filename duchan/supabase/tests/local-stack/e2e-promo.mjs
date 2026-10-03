@@ -49,13 +49,21 @@ await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 20000 });
 await girl.goto(`${BASE}/dashboard/settings#promo`);
-await girl.waitForSelector("input[aria-label='כותרת ההודעה']", { timeout: 20000 });
+await girl.waitForSelector("[data-testid=promo-toggle]", { timeout: 20000 });
 
 check("המתג כבוי כברירת מחדל",
   (await girl.getAttribute("[data-testid=promo-toggle]", "data-on")) === "false");
 check("ואין תצוגה מקדימה כשאין טקסט",
   (await girl.locator("[data-testid=promo-preview]").count()) === 0);
 
+/* כבויה = בלי שדות. מרינה: "אם ההודעה כבויה אפשר פשוט לא להראות את כל זה" */
+check("כשההודעה כבויה — אין שדות למלא",
+  (await girl.locator("input[aria-label='כותרת ההודעה']").count()) === 0 &&
+  (await girl.locator("textarea[aria-label='תוכן ההודעה']").count()) === 0);
+
+await girl.click("[data-testid=promo-toggle-on]");
+await girl.waitForTimeout(300);
+check("הדלקת המתג נרשמת", (await girl.getAttribute("[data-testid=promo-toggle]", "data-on")) === "true");
 await girl.fill("input[aria-label='כותרת ההודעה']", TITLE);
 await girl.fill("textarea[aria-label='תוכן ההודעה']", TEXT);
 await girl.waitForTimeout(400);
@@ -63,12 +71,6 @@ check("תצוגה מקדימה מופיעה תוך כדי כתיבה",
   (await girl.locator("[data-testid=promo-preview]").count()) === 1);
 check("והיא מראה את מה שנכתב",
   (await girl.textContent("[data-testid=promo-preview]")).includes(TEXT));
-check("המסך מזהיר שההודעה עדיין כבויה",
-  (await girl.textContent("body")).includes("ההודעה כבויה כרגע"));
-
-await girl.click("[data-testid=promo-toggle-on]");
-await girl.waitForTimeout(300);
-check("הדלקת המתג נרשמת", (await girl.getAttribute("[data-testid=promo-toggle]", "data-on")) === "true");
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2200);
 
@@ -122,6 +124,9 @@ check("גם בתוך הקופסה הרווח מאוזן",
 /* ── 4. כיבוי מסתיר ולא מוחק ── */
 await girl.click("[data-testid=promo-toggle-off]");
 await girl.waitForTimeout(300);
+check("כיבוי מעלים את השדות, ואומר שההודעה שמורה",
+  (await girl.locator("textarea[aria-label='תוכן ההודעה']").count()) === 0 &&
+  (await girl.locator("[data-testid=promo-saved-note]").count()) === 1);
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2200);
 const { rows: [off] } = await db.query("select promo_on, promo_text from stores where id=$1", [store.id]);

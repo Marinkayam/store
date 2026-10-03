@@ -76,7 +76,7 @@ const openSection = async (key) => {
 };
 
 const STORY = "אני תמר, בת 11, ואני מכינה צמידים.";
-await openSection("identity");
+await openSection("design"); // השם, התיאור והתמונה — ב"עיצוב הדוכן"
 await girl.fill("textarea[aria-label='תיאור הדוכן']", STORY);
 await openSection("details");
 await girl.fill("input[aria-label='עיר בארץ']", "רמת גן");
