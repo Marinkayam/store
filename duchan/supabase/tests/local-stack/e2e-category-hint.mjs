@@ -91,6 +91,23 @@ await girl.screenshot({ path: `${process.env.SHOTS ?? "/tmp"}/rows-clean.png` })
 await row.click();
 await girl.waitForSelector("[data-testid=editor-close]");
 check("והמלאי נערך בתוך המוצר", (await girl.locator("[data-testid=editor-stock]").count()) === 1);
+// "כמה יש לי כאלה" מעל הבחירה אם לספור
+const stockAbove = await girl.evaluate(() => {
+  const a = document.querySelector("[data-testid=editor-stock]");
+  const b = document.querySelector("[data-testid=track-stock-choice]");
+  return !!a && !!b && !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+});
+check("בעורך: הכמות מופיעה מעל 'לספור?'", stockAbove);
+await girl.click("[data-testid=track-stock-choice-off]");
+check("'בלי הגבלה' מחליף את הכמות", (await girl.locator("[data-testid=editor-stock-unlimited]").count()) === 1 && (await girl.locator("[data-testid=editor-stock]").count()) === 0);
+await girl.click("[data-testid=track-stock-choice-on]");
+const visOn = (await girl.textContent("[data-testid=visible-help]")) ?? "";
+check("'רואים אותו בדוכן?' מוסבר: מוצג = הקונים רואים", visOn.includes("הקונים רואים"), visOn);
+await girl.click("[data-testid=visible-choice-off]");
+const visOff = (await girl.textContent("[data-testid=visible-help]")) ?? "";
+check("ומוסתר = נשאר שמור, לא רואים, אפשר להחזיר", visOff.includes("לא רואים") && visOff.includes("להחזיר"), visOff);
+await girl.locator("[data-testid=visible-help]").scrollIntoViewIfNeeded();
+await girl.screenshot({ path: `${process.env.SHOTS ?? "/tmp"}/editor-stock.png` });
 await girl.click("[data-testid=editor-close]");
 
 /* ── ניקוי ── */
