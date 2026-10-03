@@ -128,8 +128,13 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
         דוכן משלך נבנה בכמה דקות, מהטלפון.
       </p>
       {IS_LAUNCH && (
-        <p className="text-[12.5px] font-bold mt-2.5">
-          🎉 {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi>₪{FULL_PRICE}</bdi>!
+        <p
+          className="fx-shine inline-block text-[12.5px] font-bold mt-3 text-white rounded-full px-3.5 py-1.5"
+          style={{ background: "linear-gradient(135deg, #9b6d3e 0%, #b47fb0 100%)" }}
+        >
+          <span className="relative z-[3]">
+            <span className="fx-wiggle">🎉</span> {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi className="line-through opacity-75">₪{FULL_PRICE}</bdi>!
+          </span>
         </p>
       )}
 

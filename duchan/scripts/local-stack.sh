@@ -85,6 +85,8 @@ psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0040_fun
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0051_close_legacy_place_order.sql >/dev/null 2>&1
 # ו-0054: הקופונים מקבלים הרשאות ברמת עמודות (אין עדכון של used_count)
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0054_coupons.sql >/dev/null 2>&1
+# ו-0055: טבלאות הפוש של המנהלת — של השרת בלבד, בלי הרשאות לדפדפן
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0055_admin_push.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
 up 3001 || { say "מפעיל PostgREST"; ("$PGREST" "$PGREST_CONF" >"$LOGS/postgrest.log" 2>&1 &); sleep 5; }

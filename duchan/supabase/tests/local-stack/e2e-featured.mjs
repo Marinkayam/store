@@ -86,7 +86,7 @@ const { rows: [f1] } = await db.query("select featured from products where id=$1
 check("מומלץ נשמר", f1.featured === true, String(f1.featured));
 check("וברשימת המוצרים מופיע ★", (await girl.locator("[aria-label='מומלץ']").count()) >= 1);
 
-await girl.goto(`${BASE}/dashboard/settings`);
+await girl.goto(`${BASE}/dashboard/settings#products`);
 await girl.waitForSelector("[data-testid=products-display]", { timeout: 20000 });
 check("בהגדרות: הצגת 'אזל' כבויה כברירת מחדל",
   (await girl.getAttribute("[data-testid=show-sold-out-toggle]", "aria-pressed")) === "false");

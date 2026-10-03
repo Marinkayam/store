@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { normalizePhone } from "@/lib/phone";
+import { displayPhone, normalizePhone } from "@/lib/phone";
+import { notifyAdmins } from "@/lib/admin-notify";
 import { sendSms, smsConfigured } from "@/lib/sms";
 import { generateCode, hashCode, OTP_TTL_MINUTES } from "@/lib/otp";
 
@@ -143,9 +144,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  /* בקשה שנייה בלי כניסה ביניהן = כנראה הסמס לא מגיע. מודיעים למנהלת
+     פעם אחת לכל "תקיעה" (המפתח הוא הכניסה המוצלחת האחרונה), כדי שתשלח
+     קישור בוואטסאפ לפני שהילדה מוותרת. */
+  after(() => alertIfStuck(phone));
+
   const sent = await sendSms(phone, `קוד הכניסה שלך לדוכן: ${code}. תקף ל-${OTP_TTL_MINUTES} דקות.`);
   if (!sent.ok) {
     console.error("[sms] send failed:", sent.reason, sent.code ?? "");
+    after(() =>
+      notifyAdmins({
+        kind: "sms_failed",
+        ref: `${phone}:${new Date().toISOString().slice(0, 13)}`, // פעם בשעה לכל מספר
+        title: "⚠️ סמס לא נשלח",
+        body: `${displayPhone(phone)} · ${sent.reason}${sent.code ? ` (${sent.code})` : ""}. אפשר לשלוח קישור כניסה מהחמ"ל`,
+        url: "/admin",
+      })
+    );
     return NextResponse.json(
       {
         error: owner
@@ -157,4 +172,40 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, ttlMinutes: OTP_TTL_MINUTES });
+}
+
+/**
+ * האם המספר "תקוע": 2+ בקשות קוד מאז הכניסה המוצלחת האחרונה (בקוד או
+ * בקישור), ב-72 השעות האחרונות. אותה הגדרה כמו ברשימה בחמ"ל
+ * (/api/admin/stuck-logins), כדי שהפוש והרשימה יספרו אותו דבר.
+ */
+async function alertIfStuck(phone: string) {
+  const db = supabaseAdmin();
+  const since = new Date(Date.now() - 72 * 3600_000).toISOString();
+  const [{ data: otps }, { data: links }] = await Promise.all([
+    db.from("phone_otps").select("created_at, consumed_at").eq("phone", phone).gte("created_at", since),
+    db.from("login_links").select("used_at").eq("phone", phone).not("used_at", "is", null).gte("created_at", since),
+  ]);
+  const lastIn = Math.max(
+    0,
+    ...(otps ?? []).filter((o) => o.consumed_at).map((o) => new Date(o.consumed_at!).getTime()),
+    ...(links ?? []).map((l) => new Date(l.used_at!).getTime())
+  );
+  const pending = (otps ?? []).filter((o) => !o.consumed_at && new Date(o.created_at).getTime() > lastIn);
+  if (pending.length < 2) return;
+
+  const { data: store } = await db
+    .from("stores")
+    .select("display_name")
+    .eq("contact_phone", phone)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  await notifyAdmins({
+    kind: "login_stuck",
+    ref: `${phone}:${lastIn}`,
+    title: "📵 מישהי לא מצליחה להיכנס",
+    body: `${displayPhone(phone)}${store ? ` · ${store.display_name}` : ""} ביקשה קוד ${pending.length} פעמים. לשלוח לה קישור בוואטסאפ`,
+    url: "/admin",
+  });
 }

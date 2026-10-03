@@ -3,7 +3,13 @@ import AdminView from "./admin-view";
 
 // role-gated: אימייל מתוך ADMIN_EMAILS בלבד. כל השאר מקבלים 404-סגנון.
 
-export const metadata = { robots: { index: false, follow: false } };
+export const metadata = {
+  robots: { index: false, follow: false },
+  /* "הוספה למסך הבית" מתוך החמ"ל פותחת את החמ"ל, לא את הדשבורד של ילדה.
+     באייפון התראות פוש עובדות רק מתוך אפליקציה במסך הבית — אז זה תנאי. */
+  manifest: "/admin-manifest.json",
+  appleWebApp: { capable: true, title: "חמ\"ל דוכן", statusBarStyle: "default" as const },
+};
 
 export default async function AdminPage() {
   const admin = await requireAdmin();

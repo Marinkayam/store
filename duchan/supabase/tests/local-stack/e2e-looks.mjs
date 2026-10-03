@@ -121,7 +121,7 @@ await buyer.waitForTimeout(400);
 check("פס הסל מציג ₪10.90", ((await buyer.textContent("[data-testid=cart-bar]")) ?? "").includes("₪10.90"));
 
 /* ── 4. סגנון ורקע ── */
-await girl.goto(`${BASE}/dashboard/settings`);
+await girl.goto(`${BASE}/dashboard/settings#design`);
 await girl.waitForSelector("[data-testid=look-picker]", { timeout: 20000 });
 check("אין 'חזרה לבסיס' כשעוד לא נבחר כלום",
   (await girl.locator("[data-testid=reset-design]").count()) === 0);
@@ -139,9 +139,14 @@ const mini = await girl.locator("[data-testid=design-preview]").boundingBox();
 check("הדוכן הקטן נשאר על המסך בזמן הבחירה", !!mini && mini.y >= 0 && mini.y < 120, `${mini?.y}`);
 check("והוא כבר מראה את הלבבות",
   (await girl.locator("[data-testid=design-preview]").evaluate((el) => getComputedStyle(el).backgroundImage)).includes("svg"));
-const previewBg = await girl.locator("#identity").evaluate((el) => getComputedStyle(el).backgroundImage);
-check("התצוגה המקדימה מקבלת את הרקע מיד", previewBg.includes("svg"), previewBg.slice(0, 60));
 await girl.screenshot({ path: "/tmp/looks-settings.png", fullPage: true });
+/* חזרה למסך הבית של "החנות שלי": הדוכן שבראשו כבר עם הרקע, עוד לפני שמירה */
+await girl.click("[data-testid=section-back]");
+await girl.waitForSelector("[data-testid=settings-hero]");
+const previewBg = await girl.locator("[data-testid=settings-hero]").evaluate((el) => getComputedStyle(el).backgroundImage);
+check("התצוגה המקדימה מקבלת את הרקע מיד", previewBg.includes("svg"), previewBg.slice(0, 60));
+await girl.click("[data-testid=hub-design]");
+await girl.waitForSelector("[data-testid=section-design]");
 
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2200);

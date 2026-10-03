@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "דוכן",
   description: "דוכן קטן שפותחים לבד",
+  /* דרך metadata ולא <link> ידני: כך מקטע יכול להחליף אותו (סקוויש, חמ"ל)
+     במקום ששני manifest-ים יישבו בדף והדפדפן ייקח את הראשון. */
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -28,7 +31,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        <link rel="manifest" href="/manifest.json" />
         {/* אייפון מתעלם מ-manifest ומ-SVG כשמוסיפים למסך הבית. בלי
             apple-touch-icon הוא שם צילום מסך מוקטן של הדף במקום אייקון,
             ובלי apple-mobile-web-app-capable הוא פותח בספארי עם הכתובת

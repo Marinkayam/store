@@ -48,7 +48,7 @@ const girl = await phone();
 await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 20000 });
-await girl.goto(`${BASE}/dashboard/settings`);
+await girl.goto(`${BASE}/dashboard/settings#promo`);
 await girl.waitForSelector("input[aria-label='כותרת ההודעה']", { timeout: 20000 });
 
 check("המתג כבוי כברירת מחדל",

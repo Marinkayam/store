@@ -74,7 +74,7 @@ const girl = await phone();
 await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 20000 });
-await girl.goto(`${BASE}/dashboard/settings`);
+await girl.goto(`${BASE}/dashboard/settings#payment`);
 await girl.waitForSelector("text=איך משלמים לי", { timeout: 15000 });
 check("the settings screen has a place for payment options", true);
 

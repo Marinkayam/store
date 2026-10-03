@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import StallArt from "./stall-art";
 import HelpButton from "./help-button";
+import PromoBurst from "./promo-burst";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 
 // עמוד הנחיתה: שדה אחד. בלי אימייל. הבנייה מתחילה לפני ההרשמה.
@@ -109,12 +110,16 @@ export default function Landing() {
           <a
             href="/price"
             data-testid="promo-banner"
-            className="block text-center bg-[var(--wood)] text-white px-4 py-2.5"
+            className="fx-shine fx-press fx-rise block text-center text-white px-4 pt-3 pb-3.5 rounded-2xl shadow-[0_10px_24px_rgba(155,109,62,0.35)]"
+            style={{ background: "linear-gradient(135deg, #9b6d3e 0%, #b47fb0 100%)", animationDelay: ".1s" }}
           >
-            <span className="block text-[12px] font-medium opacity-90">🎉 {DEAL_LABEL}</span>
-            <span className="block text-[16px] font-bold leading-snug">
-              רק ₪{ACTIVATION_PRICE} לפתוח דוכן!{" "}
-              <span className="text-[13px] font-medium line-through opacity-75">₪{FULL_PRICE}</span>
+            <PromoBurst />
+            <span className="relative z-[3] inline-block text-[11.5px] font-bold bg-white/20 rounded-full px-2.5 py-0.5">
+              <span className="fx-wiggle">🎉</span> {DEAL_LABEL}
+            </span>
+            <span className="relative z-[3] block text-[17px] font-bold leading-snug mt-1">
+              רק <bdi className="fx-pop text-[24px] align-[-2px]">₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן!{" "}
+              <bdi className="text-[13px] font-medium line-through opacity-70">₪{FULL_PRICE}</bdi>
             </span>
           </a>
         )}

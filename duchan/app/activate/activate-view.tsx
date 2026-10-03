@@ -205,12 +205,15 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות, תשלום אחד.
         </p>
         {isLaunch && (
-          <div className="mt-5 inline-block bg-[var(--wood)] text-white px-3 py-1.5 text-[12.5px] font-bold">
-            🎉 {dealLabel}: רק ₪{price}!
+          <div
+            className="fx-shine mt-5 inline-block text-white px-3.5 py-1.5 text-[12.5px] font-bold rounded-full"
+            style={{ background: "linear-gradient(135deg, #9b6d3e 0%, #b47fb0 100%)" }}
+          >
+            <span className="relative z-[3]"><span className="fx-wiggle">🎉</span> {dealLabel}: רק ₪{price}!</span>
           </div>
         )}
         <div data-testid="activation-price" className="mt-3 flex items-baseline justify-center gap-2">
-          <span className="text-5xl font-bold">₪{price}</span>
+          <span className={`text-5xl font-bold ${isLaunch ? "fx-pop" : ""}`}>₪{price}</span>
           {isLaunch && (
             <span className="text-2xl text-[var(--faint)] line-through">₪{fullPrice}</span>
           )}

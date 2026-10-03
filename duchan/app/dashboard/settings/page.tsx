@@ -15,8 +15,33 @@ import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
 import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
+import SettingsHub, { type HubGroup } from "./hub";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
+
+/**
+ * המקטעים של "החנות שלי". כל אחד נפתח במסך משלו מתוך מסך הבית (hub.tsx).
+ * המפתח הוא גם ה-hash בכתובת (#design), כך שכפתור "חזרה" של הטלפון
+ * עובד, ואפשר לשלוח קישור ישר למקטע.
+ */
+const SECTIONS = {
+  identity: { icon: "🪪", title: "שם ותמונה", intro: "לוחצים על השם, התיאור או התמונה ועורכים במקום. ככה הקונים רואים את הדוכן." },
+  design: { icon: "🎨", title: "עיצוב", intro: "צבעים, סגנון, רקע וקטגוריות. כל לחיצה מופיעה מיד בדוכן הקטן." },
+  products: { icon: "⭐", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
+  promo: { icon: "📣", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
+  payment: { icon: "💳", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
+  shipping: { icon: "🚚", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
+  order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה אלייך. היא נכתבת לבד, אין מה למלא." },
+  details: { icon: "📱", title: "הפרטים שלי", intro: "לאן מגיעות ההזמנות, וקצת עלייך. אף פעם לא כתובת." },
+} as const;
+type SectionKey = keyof typeof SECTIONS;
+/* העוגנים של הגרסה הקודמת (גלילה אחת) — קישורים ישנים ממשיכים לעבוד */
+const SECTION_ALIASES: Record<string, SectionKey> = { "products-display": "products", about: "details", "order-msg": "order" };
+const asSection = (hash: string): SectionKey | null => {
+  const k = decodeURIComponent(hash.replace(/^#/, ""));
+  const key = (SECTION_ALIASES[k] ?? k) as SectionKey;
+  return key in SECTIONS ? key : null;
+};
 
 const EMOJIS = ["🦄", "🍩", "🐼", "🍦", "🌈", "🍓", "🐻", "⭐", "🧁", "🐸"];
 
@@ -131,6 +156,36 @@ export default function SettingsPage() {
       .limit(6)
       .then(({ data }) => setProducts(data ?? []));
   }, [store]);
+
+  /* איזה מקטע פתוח. null = מסך הבית. מסונכרן עם ה-hash בכתובת. */
+  const [section, setSection] = useState<SectionKey | null>(null);
+  const pushedRef = useRef(false);
+  useEffect(() => {
+    const read = () => {
+      setSection(asSection(window.location.hash));
+      window.scrollTo(0, 0);
+    };
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+  const openSection = (key: string) => {
+    if (!(key in SECTIONS)) return;
+    pushedRef.current = true;
+    window.location.hash = key;
+  };
+  /* חזרה: אם נכנסנו מכאן — אחורה בהיסטוריה (כמו כפתור החזרה של הטלפון).
+     אם הגענו מקישור ישיר למקטע — פשוט למסך הבית, בלי לצאת מהאתר. */
+  const closeSection = () => {
+    if (pushedRef.current) {
+      pushedRef.current = false;
+      window.history.back();
+    } else {
+      window.history.replaceState(null, "", window.location.pathname);
+      setSection(null);
+      window.scrollTo(0, 0);
+    }
+  };
 
   const showToast = (m: string) => {
     setToast(m);
@@ -421,77 +476,232 @@ export default function SettingsPage() {
     price: info.shipping_price === "" ? null : Number(info.shipping_price),
   });
 
-  return (
-    <div>
-      {/* בלי כותרת "החנות שלי" מעל: היא לא אמרה כלום שהמסך לא אומר בעצמו,
-          ודחפה את הניווט המהיר מטה. הניווט הוא הדבר הראשון שרואים. */}
-      <div className="sticky top-0 z-30 flex gap-1.5 px-3 py-2.5 bg-white border-b border-[var(--line)] overflow-x-auto">
-        <a
-          href="/dashboard/products"
-          className="shrink-0 flex items-center gap-1 bg-[var(--ink)] text-white px-3 py-1.5 text-[12px] font-bold"
-        >
-          📦 עריכת מוצרים
-        </a>
-        <a href="#identity" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
-          זהות
-        </a>
-        <a href="#design" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
-          עיצוב
-        </a>
-        <a href="#about" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
-          פרטי הדוכן
-        </a>
-        <a href="#order-msg" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
-          הודעת הזמנה
-        </a>
-        <a href="#promo" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
-          הודעה לקונות
-        </a>
-        <a href="#payment" className="shrink-0 border border-[var(--line)] bg-white px-3 py-1.5 text-[12px] font-medium">
-          תשלום
-        </a>
-      </div>
+  /* ── מסך הבית ── */
+  const statusChip =
+    store.status === "blocked" ? { t: "⛔ הושבת", bg: "var(--danger-bg)", fg: "var(--danger)" }
+    : store.status !== "active" ? { t: "⏸️ בהפסקה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
+    : !store.activated_at ? { t: "👀 תצוגה מקדימה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
+    : { t: "🟢 פתוח להזמנות", bg: "var(--ok-bg)", fg: "var(--ok-ink)" };
+  const shareText = `בואו לראות את הדוכן שלי! ${storeUrl}`;
 
-      <div className="p-3 flex flex-col gap-3">
-        {/* מצב חופשה */}
-        {store.status === "blocked" ? (
-          <div className="bg-[var(--danger-bg)] border border-[var(--danger-line)] p-3 text-[13px] text-[var(--danger)]">
-            החנות הושבתה על ידי הנהלת דוכן.
-          </div>
-        ) : (
-          <div className="bg-white border border-[var(--line)] p-3 flex items-center justify-between">
-            <div>
-              <div className="text-[13px] font-medium">
-                {store.status === "active" ? "הדוכן פתוח" : "הדוכן בהפסקה"}
-              </div>
-              {/* הטוגל לבדו לא אמר שאפשר לחזור אחורה, וזה מה שגרם להיסוס:
-                  צריך לכתוב במפורש שסגירה היא זמנית ושום דבר לא נמחק. */}
-              <div className="text-[12px] text-[var(--muted)] leading-relaxed">
-                {store.status === "active"
-                  ? "כולם יכולים להיכנס ולהזמין. אפשר לסגור את הדוכן מתי שרוצים בלחיצה כאן, ולפתוח שוב אחר כך."
-                  : "הלינק מציג 'הדוכן סגור כרגע'. המוצרים וההזמנות נשמרו, לחיצה כאן פותחת שוב."}
-              </div>
-            </div>
-            <button
-              onClick={togglePause}
-              className={`w-11 h-6.5 relative transition ${store.status === "active" ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-              style={{ width: 44, height: 26 }}
-              aria-label="פתיחה או סגירה של הדוכן"
-            >
-              <i
-                className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all"
-                style={{ right: store.status === "active" ? 21 : 3 }}
-              />
-            </button>
+  const hero = (
+    <div
+      className="rounded-3xl overflow-hidden border border-[var(--line)] shadow-[0_10px_28px_rgba(38,38,38,0.08)]"
+      style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
+      data-testid="settings-hero"
+    >
+      <div
+        className="h-20"
+        style={
+          coverPreview
+            ? { backgroundImage: `url(${coverPreview})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : previewBg ? undefined : { background: coverCss(preset) }
+        }
+      />
+      <div className="px-4 pb-4 -mt-9 text-center">
+        <span
+          className="inline-flex w-[72px] h-[72px] items-center justify-center text-4xl overflow-hidden"
+          style={{ background: t.surface, border: `3px solid ${t.bg}`, borderRadius: 20, boxShadow: "0 4px 12px rgba(0,0,0,.08)" }}
+        >
+          {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
+        </span>
+        <div
+          className={previewBg ? "mt-2 px-3 py-2 inline-block" : "mt-1"}
+          style={previewBg ? { ...readablePlate(t), borderRadius: 14 } : undefined}
+        >
+          <div className="text-[19px] font-bold leading-tight">{name || "הדוכן שלך"}</div>
+          <span
+            className="inline-block mt-1.5 text-[11.5px] font-bold px-2.5 py-1 rounded-full"
+            style={{ background: statusChip.bg, color: statusChip.fg, fontFamily: "var(--font-body)" }}
+            data-testid="store-status-chip"
+          >
+            {statusChip.t}
+          </span>
+        </div>
+        {!store.activated_at && (
+          <div
+            data-testid="preview-notice"
+            className="mt-3 rounded-xl bg-white/90 px-3 py-2 text-[12px] text-[var(--warn-ink)] leading-relaxed"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            אפשר כבר לשלוח את הלינק והחברים יראו הכל — ההזמנות נפתחות אחרי הפרסום.
           </div>
         )}
+        <div className="grid grid-cols-2 gap-2 mt-3" style={{ fontFamily: "var(--font-body)" }}>
+          <a
+            href={storeUrl}
+            className="fx-press rounded-xl bg-white/95 border border-black/5 py-2.5 text-[13px] font-bold text-[var(--ink)]"
+          >
+            👀 לראות את הדוכן
+          </a>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+            className="fx-press rounded-xl py-2.5 text-[13px] font-bold"
+            style={{ background: t.primary, color: t.onPrimary }}
+          >
+            📤 לשלוח לחברים
+          </a>
+        </div>
+        <button
+          onClick={() => { navigator.clipboard?.writeText(storeUrl).then(() => showToast("הלינק הועתק 🔗"), () => {}); }}
+          className="mt-2 text-[12px] underline opacity-75 min-h-9"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          🔗 העתקת הקישור
+        </button>
+      </div>
+    </div>
+  );
 
+  const statusRow =
+    store.status === "blocked" ? (
+      <div className="rounded-2xl bg-[var(--danger-bg)] border border-[var(--danger-line)] p-3.5 text-[13px] text-[var(--danger)]">
+        החנות הושבתה על ידי הנהלת דוכן.
+      </div>
+    ) : (
+      <div className="rounded-2xl bg-white border border-[var(--line)] p-3.5 flex items-center gap-3">
+        <span className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-[19px] bg-[var(--sand)]" aria-hidden>
+          {store.status === "active" ? "🟢" : "⏸️"}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-bold">{store.status === "active" ? "הדוכן פתוח" : "הדוכן בהפסקה"}</div>
+          {/* הטוגל לבדו לא אמר שאפשר לחזור אחורה, וזה מה שגרם להיסוס:
+              צריך לכתוב במפורש שסגירה היא זמנית ושום דבר לא נמחק. */}
+          <div className="text-[12px] text-[var(--muted)] leading-snug mt-0.5">
+            {store.status === "active"
+              ? "צריכה הפסקה? סוגרים כאן, ופותחים שוב מתי שרוצים."
+              : "הלינק מציג 'סגור כרגע'. הכל נשמר — לחיצה פותחת שוב."}
+          </div>
+        </div>
+        <button
+          onClick={togglePause}
+          className={`shrink-0 relative rounded-full transition ${store.status === "active" ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
+          style={{ width: 46, height: 28 }}
+          aria-label="פתיחה או סגירה של הדוכן"
+          aria-pressed={store.status === "active"}
+        >
+          <i
+            className="absolute top-[3px] w-[22px] h-[22px] rounded-full bg-white shadow transition-all"
+            style={{ right: store.status === "active" ? 21 : 3 }}
+          />
+        </button>
+      </div>
+    );
+
+  const bgLabel = bgPattern === "photo" ? "התמונה שלי" : bgPattern && isPatternKey(bgPattern) ? PATTERNS[bgPattern].label : "בלי רקע";
+  const catCount = store.categories?.length ?? 0;
+  const groups: HubGroup[] = [
+    {
+      title: "איך הדוכן נראה",
+      rows: [
+        { key: "identity", icon: "🪪", tint: "#f2d9dc", title: "שם ותמונה", summary: [name || "בלי שם", tagline].filter(Boolean).join(" · ") },
+        {
+          key: "design", icon: "🎨", tint: "#ece2f3", title: "עיצוב",
+          summary: [themeOrDefault(theme).label, lookOrBase(look).label, bgLabel, catCount ? `${catCount} קטגוריות` : null].filter(Boolean).join(" · "),
+        },
+      ],
+    },
+    {
+      title: "מה רואים בדוכן",
+      rows: [
+        {
+          key: "products", icon: "⭐", tint: "#f8f1e3", title: "המוצרים בדוכן",
+          summary: `${featuredTitle.trim() || "המומלצים שלי"} · ${showSoldOut ? "מציג גם מה שאזל" : "מה שאזל מוסתר"}`,
+        },
+        {
+          key: "promo", icon: "📣", tint: "#eef3ec", title: "הודעה לקונים",
+          summary: promo.promo_on && promo.promo_text.trim() ? `מופיעה: ${promo.promo_title.trim() || promo.promo_text.trim()}` : "כבויה",
+        },
+        {
+          key: "coupons", icon: "🏷️", tint: "#e6eef6", title: "קופונים",
+          summary: "קוד הנחה לקונים · יצירה בדף להפיץ", href: "/dashboard/share#coupons", testid: "settings-coupons-link",
+        },
+      ],
+    },
+    {
+      title: "הזמנות וכסף",
+      rows: [
+        { key: "payment", icon: "💳", tint: "#e9efe3", title: "איך משלמים לי", summary: payLabels.length ? payLabels.join(" · ") : "עוד לא סומן" },
+        {
+          key: "shipping", icon: "🚚", tint: "#f6efe6", title: "משלוחים",
+          summary: info.ships ? (info.shipping_price !== "" ? `משלוח ₪${formatPrice(parsePrice(info.shipping_price))}` : "משלוח · המחיר בתיאום") : "מסירה ביד בלבד",
+        },
+        { key: "order", icon: "💬", tint: "#e3f5ea", title: "ההזמנה בוואטסאפ", summary: "ככה נראית הזמנה שמגיעה אלייך" },
+      ],
+    },
+    {
+      title: "חשבון",
+      rows: [
+        { key: "details", icon: "📱", tint: "#ece6de", title: "הפרטים שלי", summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, info.city].filter(Boolean).join(" · ") },
+      ],
+    },
+  ];
+
+  return (
+    <div>
+      {/* הגופנים של כל הסגנונות — לדוכן הקטן בכל המקטעים. בלי precedence:
+          כשל טעינה צריך להיות שקט, לא שגיאת JS */}
+      <link rel="stylesheet" href={ALL_LOOK_FONTS_HREF} />
+
+      {!section ? (
+        <SettingsHub
+          hero={hero}
+          status={statusRow}
+          groups={groups}
+          onOpen={openSection}
+          /* התשלום היה מוסתר מאחורי "לפרסם את הדוכן", ולא היה ברור שיש כאן
+             שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */
+          before={
+            !store.activated_at ? (
+              <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 rounded-2xl block shadow-[0_8px_22px_rgba(38,38,38,0.18)]">
+                <div className="text-[13px] font-bold">
+                  {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
+                </div>
+                {store.payment_claimed_at ? (
+                  <div className="text-[12px] opacity-80 leading-relaxed mt-1">
+                    סימנתם ששילמתם. ברגע שמרינה תאשר, הדוכן יתחיל לקבל הזמנות.
+                  </div>
+                ) : (
+                  <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
+                    <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (חינם) או בביט</li>
+                    <li>2. מרינה מאשרת שהתשלום הגיע</li>
+                    <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
+                  </ol>
+                )}
+              </a>
+            ) : null
+          }
+          after={
+            <button onClick={logout} className="w-full text-center text-[13px] text-[var(--muted)] py-3">
+              יציאה מהחשבון
+            </button>
+          }
+        />
+      ) : (
+        <>
+          {/* כותרת המקטע: חזרה, אייקון ושם. דביקה, כדי שהדרך חזרה תמיד על המסך */}
+          <div className="sticky top-0 z-30 h-[54px] flex items-center gap-2 px-1.5 bg-white/95 backdrop-blur border-b border-[var(--line)]">
+            <button
+              onClick={closeSection}
+              aria-label="חזרה להחנות שלי"
+              data-testid="section-back"
+              className="w-11 h-11 flex items-center justify-center text-[20px] text-[var(--ink)]"
+            >
+              →
+            </button>
+            <span className="text-[19px]" aria-hidden>{SECTIONS[section].icon}</span>
+            <h1 className="text-[16px] font-bold text-[var(--ink)]">{SECTIONS[section].title}</h1>
+          </div>
+
+          <div key={section} className="fx-slide p-3 flex flex-col gap-3" data-testid={`section-${section}`}>
+            <p className="text-[12.5px] text-[var(--muted)] leading-relaxed px-1">{SECTIONS[section].intro}</p>
+          {section === "identity" && (
+            <>
         {/* הדוכן עצמו, ניתן לעריכה במקום.
             אין כאן "תצוגה מקדימה" למעלה ו"שדות" למטה: השם נערך במקום שבו
             הוא מופיע, וכך גם המשפט, התיאור, העיר, התמונה והקאבר. מה שרואים
             זה מה שהקונות יראו, ומתחת המוצרים האמיתיים. */}
         <div>
-          <div className="t-label mb-1.5">הדוכן שלך — לחיצה על השם, התיאור או התמונה עורכת אותם</div>
 
           <input ref={coverRef} type="file" accept="image/*" hidden
             onChange={(e) => e.target.files?.[0] && onCover(e.target.files[0])} />
@@ -654,7 +864,7 @@ export default function SettingsPage() {
           </div>
 
           {/* אפשרויות משניות לקאבר ולתמונה — מתחת לדוכן, לא במקומו */}
-          <div className="bg-white border border-[var(--line)] p-3 mt-2.5">
+          <div className="bg-white rounded-2xl border border-[var(--line)] p-3 mt-2.5">
             <div className="text-[12px] text-[var(--muted)] mb-1.5">רקע מוכן לקאבר</div>
             <div className="flex gap-1.5 flex-wrap">
               {COVERS.map((c) => (
@@ -693,6 +903,10 @@ export default function SettingsPage() {
           </div>
         </div>
 
+            </>
+          )}
+          {section === "design" && (
+            <>
         {/* ── עיצוב הדוכן ──
             שלוש בחירות עצמאיות, בסדר שבו ילדה חושבת עליהן: קודם צבע, אחר
             כך צורה, ובסוף מה מאחורה. כל לחיצה משנה מיד את הדוכן שלמעלה,
@@ -700,13 +914,8 @@ export default function SettingsPage() {
         <div id="design" className="scroll-mt-14 flex flex-col gap-4">
           {/* הגופנים של כל הסגנונות — כדי שהאריחים והתצוגה יראו אותם באמת.
               בלי precedence: כשל טעינה צריך להיות שקט, לא שגיאת JS */}
-          <link rel="stylesheet" href={ALL_LOOK_FONTS_HREF} />
 
-          <div className="flex items-baseline justify-between gap-2">
-            <div>
-              <div className="text-[13px] font-bold">🎨 עיצוב הדוכן</div>
-              <p className="text-[12px] text-[var(--faint)] mt-0.5">כל לחיצה מופיעה מיד בדוכן הקטן.</p>
-            </div>
+          <div className="flex items-baseline justify-end gap-2 -mb-2">
             {(look || bgPattern) && (
               <button
                 onClick={resetDesign}
@@ -935,26 +1144,11 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* המוצרים בדוכן — כותרת המומלצים, ומה קורה למוצר שאזל */}
-        {/* קופונים יושבים ב"להפיץ"; כאן קיצור, כי בהגדרות מחפשים כל אפשרות של הדוכן */}
-        <a
-          href="/dashboard/share#coupons"
-          data-testid="settings-coupons-link"
-          className="bg-white border border-[var(--line)] p-4 flex items-center gap-3"
-        >
-          <span className="text-xl" aria-hidden>🏷️</span>
-          <span className="flex-1">
-            <span className="block text-[13px] font-bold">קופונים</span>
-            <span className="block text-[12px] text-[var(--muted)] leading-snug">
-              קוד שקונה מקלידה בהזמנה ומקבלת הנחה. יצירה וניהול בדף &quot;להפיץ&quot;.
-            </span>
-          </span>
-          <span className="text-[12.5px] font-bold underline shrink-0">לקופונים ←</span>
-        </a>
-
-        <div id="products-display" className="scroll-mt-14 bg-white border border-[var(--line)] p-4 flex flex-col gap-4" data-testid="products-display">
-          <div className="text-[13px] font-bold">🛍️ המוצרים בדוכן</div>
-
+            </>
+          )}
+          {section === "products" && (
+            <>
+        <div id="products-display" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-4 flex flex-col gap-4" data-testid="products-display">
           <div>
             <label htmlFor="featured-title" className="block text-[12px] text-[var(--muted)] mb-1.5">
               כותרת לחלק המומלצים
@@ -999,169 +1193,18 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        {catDesignOpen && (
-          <CategoryDesigner
-            store={store}
-            onClose={() => setCatDesignOpen(false)}
-            onSaved={(patch) => {
-              setStore({ ...store, ...patch });
-              setCatDesignOpen(false);
-              showToast("עיצוב הקטגוריות נשמר ✨");
-            }}
-          />
-        )}
-
-        {/* שלושת הפרטים שאינם חלק מהתצוגה של הדוכן, בכרטיס אחד.
-            הטלפון ישב קודם לבדו באמצע המסך עם רווחים גדולים סביבו ובלי
-            להסביר למה הוא שם. העיר מופיעה כאן וגם על הדוכן למעלה, ושתי
-            התיבות קשורות לאותו ערך — מה שמקלידים בזו מתעדכן בזו. */}
-        <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">פרטים שלך</div>
-
-          <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">
-            הטלפון שלך בוואטסאפ, לשם מגיעות ההזמנות
-          </label>
-          <input
-            value={phone}
-            inputMode="tel"
-            dir="ltr"
-            aria-label="טלפון וואטסאפ"
-            onChange={(e) => { setPhone(e.target.value); setDirty(true); }}
-            className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-[13px] text-right text-[var(--ink)]"
-          />
-          {normalizePhone(phone) && (
-            <a
-              href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה, זו אני 🙂")}`}
-              target="_blank"
-              rel="noreferrer"
-              className="block text-[12px] text-[var(--ok-ink)] underline mt-1"
-            >
-              בדיקה: פתיחת וואטסאפ למספר {displayPhone(normalizePhone(phone)!)}
-            </a>
-          )}
-
-          <div className="flex gap-2 mt-3">
-            <div className="w-24">
-              <label className="block text-[12px] text-[var(--muted)] mb-1">גיל</label>
-              <input
-                value={info.age}
-                onChange={(e) => { setInfo({ ...info, age: e.target.value.replace(/\D/g, "").slice(0, 2) }); setDirty(true); }}
-                placeholder="11"
-                inputMode="numeric"
-                maxLength={2}
-                aria-label="גיל"
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-[12px] text-[var(--muted)] mb-1">עיר בארץ</label>
-              <input
-                value={info.city}
-                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                placeholder="למשל: רמת גן"
-                maxLength={30}
-                aria-label="עיר בארץ"
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-              />
-            </div>
-          </div>
-          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
-            הגיל לא מופיע בדוכן ולא בקוד המקור. העיר כן מופיעה, למעלה מתחת
-            לשם, כדי שהקונים ידעו אם המסירה הגיונית. אף פעם לא כתובת.
-          </p>
-        </div>
-
-        {/* משלוחים */}
-        <div className="bg-white border border-[var(--line)] p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[13px] font-bold">משלוחים</div>
-              <div className="text-[12px] text-[var(--muted)]">
-                {info.ships ? "מוצג בדף החנות ובהודעת ההזמנה" : "כרגע: מסירה ביד בלבד"}
-              </div>
-            </div>
-            <button
-              onClick={() => { setInfo({ ...info, ships: !info.ships }); setDirty(true); }}
-              aria-label="יש משלוחים"
-              aria-pressed={info.ships}
-              className={`relative ${info.ships ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-              style={{ width: 44, height: 26 }}
-            >
-              <i
-                className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all"
-                style={{ right: info.ships ? 21 : 3 }}
-              />
-            </button>
-          </div>
-          {info.ships && (
-            <>
-              <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">איך ולאן</label>
-              <textarea
-                value={info.shipping_note}
-                onChange={(e) => { setInfo({ ...info, shipping_note: e.target.value }); setDirty(true); }}
-                placeholder="שולחת בדואר לכל הארץ, מגיע תוך שבוע. באזור שלי אפשר גם למסור ביד."
-                maxLength={200}
-                rows={2}
-                aria-label="פרטי משלוח"
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
-              />
-              <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">מחיר משלוח (₪)</label>
-              <input
-                value={info.shipping_price}
-                onChange={(e) => { setInfo({ ...info, shipping_price: typedPrice(e.target.value, 3) }); setDirty(true); }}
-                inputMode="decimal"
-                placeholder="למשל: 15 או 12.90"
-                maxLength={6}
-                aria-label="מחיר משלוח"
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
-              />
-              <p className="text-[12px] text-[var(--muted)] mt-1">
-                אפשר להשאיר ריק, ואז כתוב רק שיש משלוח והמחיר נסגר בוואטסאפ.
-              </p>
             </>
           )}
-        </div>
-
-        {/* איך ההזמנה מגיעה אליך */}
-        <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">
-            זה מה שיגיע לך בוואטסאפ כשמישהו רוצה להזמין
-          </div>
-          <ol className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5 flex flex-col gap-1">
-            <li>1. בוחרים מוצרים בדוכן ולוחצים "שליחה בוואטסאפ".</li>
-            <li>2. וואטסאפ נפתח <b>אצלם</b>, וההודעה כבר כתובה בפנים.</li>
-            <li>3. לוחצים שלח, וההודעה נוחתת אצלך כהודעת וואטסאפ רגילה.</li>
-          </ol>
-          <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
-            ההודעה נכתבת לבד, אין מה למלא כאן. השם ומספר ההזמנה בשורה הראשונה,
-            כדי שתדעי איזו הודעה שייכת לאיזו הזמנה כבר מרשימת השיחות:
-          </p>
-          {/* בלי "שורת פתיחה" ו"שורת סיום": שתי תיבות שביקשו טקסט לפני
-              שבכלל היה ברור מה ההודעה, וההודעה מסתדרת מצוין בלעדיהן. */}
-          <div className="mt-2 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12.5px] leading-relaxed whitespace-pre-line">
-            {`היי! 👋 אני נועה · הזמנה #7
-ראיתי את הדוכן שלך ואני רוצה להזמין:
-
-• סקוויש אבוקדו × 1 · ₪18
-• צמיד קשת × 2 · ₪30
-
-סה"כ: ₪48${shipExampleLine ? `\n${shipExampleLine}` : ""}${payExampleLine ? `\n${payExampleLine}` : ""}`}
-          </div>
-          <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
-            {payLabels.length
-              ? `הקונה בוחרת בקופה מתוך מה שסימנת למטה (${payLabels.join(" / ")}), ומה שהיא בחרה מופיע בהודעה.`
-              : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
-          </p>
-        </div>
-
+          {section === "promo" && (
+            <>
         {/* ── הודעה לקונות ──
             המקום היחיד לכתוב "בקנייה מעל ₪50 מקבלים מתנה" היה עד היום
             התיאור, והוא מיועד לספר מה יש בדוכן — לא להכריז על מבצע
             שנגמר בסוף החודש. */}
-        <div id="promo" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
+        <div id="promo" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <div className="text-[13px] font-bold">הודעה לקונות</div>
+              <div className="text-[13px] font-bold">להציג בדוכן</div>
               <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
                 מופיעה בדוכן מתחת לשם, מעל המוצרים.
               </p>
@@ -1228,12 +1271,16 @@ export default function SettingsPage() {
           )}
         </div>
 
+            </>
+          )}
+          {section === "payment" && (
+            <>
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
-        <div id="payment" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">איך משלמים לי</div>
+        <div id="payment" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
+          <div className="text-[13px] font-bold">מה מקבלים ממך?</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-            מה שמסומן כאן יופיע לקונים לפני שהם שולחים את ההזמנה, וגם בהודעת
-            הוואטסאפ. הכסף עובר ישירות אליך, דוכן לא נוגע בו ולא לוקח עמלה.
+            מה שמסומן מופיע לקונים לפני ההזמנה וגם בהודעה. הכסף עובר ישירות
+            אלייך — דוכן לא נוגע בו ולא לוקח עמלה.
           </p>
           <div className="flex flex-col gap-1.5 mt-2.5">
             {([
@@ -1356,83 +1403,190 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* הכפתור ישב פעם בתחתית הדף הארוך — מי ששינתה את השם למעלה לא
-            ידעה שיש בכלל מה ללחוץ, ריעננה, והשינוי נעלם. עכשיו הוא צף
-            מעל שורת הניווט ברגע שיש שינוי, תמיד על המסך. */}
-        {dirty && <div className="h-12" aria-hidden />}
-        {dirty && (
-          <div className="fixed bottom-[64px] inset-x-0 max-w-md mx-auto px-3 z-40">
-            <button
-              data-testid="save-settings"
-              onClick={save}
-              className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold shadow-[0_4px_16px_rgba(31,27,45,0.25)]"
-            >
-              שמירת שינויים
-            </button>
-          </div>
-        )}
-
-        {/* הקופסה הזו הייתה כתובת אינטרנט ערומה ושני כפתורים, ולילד זה לא
-            אמר כלום. עכשיו היא אומרת קודם *מתי* משתמשים בה, ורק אחר כך
-            מראה את הקישור. */}
-        <div className="bg-white border border-[var(--line)] p-3 mt-1">
-          <div className="text-[13px] font-bold leading-relaxed">
-            {products.length
-              ? "יש כבר מוצרים בדוכן, ואתם מוכנים לשתף את החברים? לחצו כאן"
-              : "אחרי שתכניסו כמה מוצרים לדוכן, פה משתפים אותו עם החברים"}
-          </div>
-          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1">
-            זה הקישור לדוכן שלך. כל מי שלוחץ עליו רואה את המוצרים ויכול להזמין.
-          </p>
-          {!store.activated_at && (
-            <div data-testid="preview-notice" className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-1.5">
-              👀 כרגע זו תצוגה מקדימה: אפשר לשלוח והחברים יראו הכל, אבל עדיין
-              אי אפשר להזמין. הפרסום למטה פותח את ההזמנות.
-            </div>
+            </>
           )}
-          <div className="text-[12px] text-[var(--muted)] font-mono my-2" dir="ltr">{storeUrl}</div>
-          <div className="flex gap-2">
+          {section === "shipping" && (
+            <>
+        {/* משלוחים */}
+        <div className="bg-white rounded-2xl border border-[var(--line)] p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[13px] font-bold">יש משלוחים</div>
+              <div className="text-[12px] text-[var(--muted)]">
+                {info.ships ? "מוצג בדף החנות ובהודעת ההזמנה" : "כרגע: מסירה ביד בלבד"}
+              </div>
+            </div>
             <button
-              onClick={() => { navigator.clipboard.writeText(storeUrl); showToast("הלינק הועתק"); }}
-              className="flex-1 border border-[var(--line)] py-2.5 text-[12px] font-medium">
-              העתקת הקישור
+              onClick={() => { setInfo({ ...info, ships: !info.ships }); setDirty(true); }}
+              aria-label="יש משלוחים"
+              aria-pressed={info.ships}
+              className={`relative ${info.ships ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
+              style={{ width: 44, height: 26 }}
+            >
+              <i
+                className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all"
+                style={{ right: info.ships ? 21 : 3 }}
+              />
             </button>
-            <a href={`https://wa.me/?text=${encodeURIComponent(`בואו לראות את הדוכן שלי! ${storeUrl}`)}`}
-              className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12px] font-medium text-center">
-              שליחה לחברים
-            </a>
           </div>
+          {info.ships && (
+            <>
+              <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">איך ולאן</label>
+              <textarea
+                value={info.shipping_note}
+                onChange={(e) => { setInfo({ ...info, shipping_note: e.target.value }); setDirty(true); }}
+                placeholder="שולחת בדואר לכל הארץ, מגיע תוך שבוע. באזור שלי אפשר גם למסור ביד."
+                maxLength={200}
+                rows={2}
+                aria-label="פרטי משלוח"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] resize-none"
+              />
+              <label className="block text-[12px] text-[var(--muted)] mt-2 mb-1">מחיר משלוח (₪)</label>
+              <input
+                value={info.shipping_price}
+                onChange={(e) => { setInfo({ ...info, shipping_price: typedPrice(e.target.value, 3) }); setDirty(true); }}
+                inputMode="decimal"
+                placeholder="למשל: 15 או 12.90"
+                maxLength={6}
+                aria-label="מחיר משלוח"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
+              <p className="text-[12px] text-[var(--muted)] mt-1">
+                אפשר להשאיר ריק, ואז כתוב רק שיש משלוח והמחיר נסגר בוואטסאפ.
+              </p>
+            </>
+          )}
         </div>
 
-        {/* התשלום היה מוסתר מאחורי "לפרסם את הדוכן", ולא היה ברור שיש כאן
-            שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */}
-        {!store.activated_at && (
-          <a href="/activate" data-testid="publish-cta" className="bg-[var(--ink)] text-white p-3.5 mt-1 block">
-            <div className="text-[13px] font-bold">
-              {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
+            </>
+          )}
+          {section === "order" && (
+            <>
+        {/* איך ההזמנה מגיעה אליך */}
+        <div id="order-msg" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
+          <ol className="text-[12.5px] text-[var(--muted)] leading-relaxed flex flex-col gap-1">
+            <li>1. בוחרים מוצרים בדוכן ולוחצים "שליחה בוואטסאפ".</li>
+            <li>2. וואטסאפ נפתח <b>אצלם</b>, וההודעה כבר כתובה בפנים.</li>
+            <li>3. לוחצים שלח, וההודעה נוחתת אצלך כהודעת וואטסאפ רגילה.</li>
+          </ol>
+          <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
+            ההודעה נכתבת לבד, אין מה למלא כאן. השם ומספר ההזמנה בשורה הראשונה,
+            כדי שתדעי איזו הודעה שייכת לאיזו הזמנה כבר מרשימת השיחות:
+          </p>
+          {/* בלי "שורת פתיחה" ו"שורת סיום": שתי תיבות שביקשו טקסט לפני
+              שבכלל היה ברור מה ההודעה, וההודעה מסתדרת מצוין בלעדיהן. */}
+          <div className="mt-2 bg-[var(--canvas)] border border-[var(--line)] p-3 text-[12.5px] leading-relaxed whitespace-pre-line">
+            {`היי! 👋 אני נועה · הזמנה #7
+ראיתי את הדוכן שלך ואני רוצה להזמין:
+
+• סקוויש אבוקדו × 1 · ₪18
+• צמיד קשת × 2 · ₪30
+
+סה"כ: ₪48${shipExampleLine ? `\n${shipExampleLine}` : ""}${payExampleLine ? `\n${payExampleLine}` : ""}`}
+          </div>
+          <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
+            {payLabels.length
+              ? `הקונה בוחרת בקופה מתוך מה שסימנת למטה (${payLabels.join(" / ")}), ומה שהיא בחרה מופיע בהודעה.`
+              : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
+          </p>
+        </div>
+
+            </>
+          )}
+          {section === "details" && (
+            <>
+        {/* שלושת הפרטים שאינם חלק מהתצוגה של הדוכן, בכרטיס אחד.
+            הטלפון ישב קודם לבדו באמצע המסך עם רווחים גדולים סביבו ובלי
+            להסביר למה הוא שם. העיר מופיעה כאן וגם על הדוכן למעלה, ושתי
+            התיבות קשורות לאותו ערך — מה שמקלידים בזו מתעדכן בזו. */}
+        <div id="about" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
+          <label className="block text-[12px] text-[var(--muted)] mb-1">
+            הטלפון שלך בוואטסאפ, לשם מגיעות ההזמנות
+          </label>
+          <input
+            value={phone}
+            inputMode="tel"
+            dir="ltr"
+            aria-label="טלפון וואטסאפ"
+            onChange={(e) => { setPhone(e.target.value); setDirty(true); }}
+            className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-[13px] text-right text-[var(--ink)]"
+          />
+          {normalizePhone(phone) && (
+            <a
+              href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה, זו אני 🙂")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="block text-[12px] text-[var(--ok-ink)] underline mt-1"
+            >
+              בדיקה: פתיחת וואטסאפ למספר {displayPhone(normalizePhone(phone)!)}
+            </a>
+          )}
+
+          <div className="flex gap-2 mt-3">
+            <div className="w-24">
+              <label className="block text-[12px] text-[var(--muted)] mb-1">גיל</label>
+              <input
+                value={info.age}
+                onChange={(e) => { setInfo({ ...info, age: e.target.value.replace(/\D/g, "").slice(0, 2) }); setDirty(true); }}
+                placeholder="11"
+                inputMode="numeric"
+                maxLength={2}
+                aria-label="גיל"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
             </div>
-            {store.payment_claimed_at ? (
-              <div className="text-[12px] opacity-80 leading-relaxed mt-1">
-                סימנתם ששילמתם. ברגע שמרינה תאשר, הדוכן יתחיל לקבל הזמנות.
-              </div>
-            ) : (
-              <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
-                <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (חינם) או בביט</li>
-                <li>2. מרינה מאשרת שהתשלום הגיע</li>
-                <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
-              </ol>
-            )}
-          </a>
-        )}
+            <div className="flex-1">
+              <label className="block text-[12px] text-[var(--muted)] mb-1">עיר בארץ</label>
+              <input
+                value={info.city}
+                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
+                placeholder="למשל: רמת גן"
+                maxLength={30}
+                aria-label="עיר בארץ"
+                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+              />
+            </div>
+          </div>
+          <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
+            הגיל לא מופיע בדוכן ולא בקוד המקור. העיר כן מופיעה, למעלה מתחת
+            לשם, כדי שהקונים ידעו אם המסירה הגיונית. אף פעם לא כתובת.
+          </p>
+        </div>
 
-        <a href={storeUrl} className="text-center text-xs text-[var(--muted)] underline py-1">
-          צפייה בחנות כמו שקונות רואות אותה ←
-        </a>
+            </>
+          )}
+          </div>
+        </>
+      )}
 
-        <button onClick={logout} className="text-center text-xs text-[var(--muted)] py-2">
-          יציאה מהחשבון
-        </button>
-      </div>
+      {catDesignOpen && (
+        <CategoryDesigner
+          store={store}
+          onClose={() => setCatDesignOpen(false)}
+          onSaved={(patch) => {
+            setStore({ ...store, ...patch });
+            setCatDesignOpen(false);
+            showToast("עיצוב הקטגוריות נשמר ✨");
+          }}
+        />
+      )}
+
+      {/* הכפתור ישב פעם בתחתית הדף הארוך — מי ששינתה את השם למעלה לא
+          ידעה שיש בכלל מה ללחוץ, ריעננה, והשינוי נעלם. עכשיו הוא צף
+          מעל שורת הניווט ברגע שיש שינוי, תמיד על המסך. */}
+      {dirty && <div className="h-12" aria-hidden />}
+      {dirty && (
+        <div className="fixed bottom-[64px] inset-x-0 max-w-md mx-auto px-3 z-40">
+          <button
+            data-testid="save-settings"
+            onClick={save}
+            className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold shadow-[0_4px_16px_rgba(31,27,45,0.25)]"
+          >
+            שמירת שינויים
+          </button>
+        </div>
+      )}
+
 
       {toast && (
         <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">

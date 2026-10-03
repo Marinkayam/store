@@ -54,11 +54,24 @@ await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 20000 });
 await girl.goto(`${BASE}/dashboard/settings`);
-await girl.waitForSelector("textarea[aria-label='תיאור הדוכן']", { timeout: 20000 });
+await girl.waitForSelector("[data-testid=settings-hub]", { timeout: 20000 });
+/* "החנות שלי" היא מסך בית עם מקטעים — עוברים ביניהם כמו ילדה אמיתית.
+   מה שהוקלד נשמר בין המקטעים, ו"שמירת שינויים" שומרת הכל יחד. */
+const openSection = async (key) => {
+  if (await girl.locator("[data-testid=section-back]").count()) {
+    await girl.click("[data-testid=section-back]");
+    await girl.waitForSelector("[data-testid=settings-hub]");
+  }
+  await girl.click(`[data-testid=hub-${key}]`);
+  await girl.waitForSelector(`[data-testid=section-${key}]`);
+};
 
 const STORY = "אני תמר, בת 11, ואני מכינה צמידים.";
+await openSection("identity");
 await girl.fill("textarea[aria-label='תיאור הדוכן']", STORY);
+await openSection("details");
 await girl.fill("input[aria-label='עיר בארץ']", "רמת גן");
+await openSection("shipping");
 await girl.click("button[aria-label='יש משלוחים']");
 await girl.waitForTimeout(400);
 await girl.fill("textarea[aria-label='פרטי משלוח']", "שולחת בדואר לכל הארץ");

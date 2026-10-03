@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
@@ -6,8 +6,7 @@ import { randomSlug } from "@/lib/slug";
 import { QUOTAS } from "@/lib/quotas";
 import { THEMES } from "@/lib/themes";
 import { COVERS, DEFAULT_COVER } from "@/lib/covers";
-import { notifyTelegram } from "@/lib/telegram";
-import { absolute } from "@/lib/site";
+import { notifyAdmins } from "@/lib/admin-notify";
 import { parsePrice } from "@/lib/money";
 
 // POST /api/stores — נקרא בסוף האונבורדינג, אחרי supabase.auth.signUp.
@@ -156,15 +155,17 @@ export async function POST(req: NextRequest) {
     firstProductId = prod?.id ?? null;
   }
 
-  // לא חוסמים את התשובה לילדה בשביל התראה למרינה
-  notifyTelegram(
-    `🆕 חנות חדשה נפתחה: <b>${escapeHtml(displayName)}</b>\n${absolute(`/s/${store.slug}`)}`
+  // לא חוסמים את התשובה לילדה בשביל התראה למרינה — after() רץ אחרי שהיא קיבלה תשובה
+  const created = store;
+  after(() =>
+    notifyAdmins({
+      kind: "store_created",
+      ref: created.id,
+      title: "🆕 נפתח דוכן חדש!",
+      body: `${displayName} · מחכה לפרסום`,
+      url: `/s/${created.slug}`,
+    })
   );
 
   return NextResponse.json({ slug: store.slug, storeId: store.id, firstProductId });
-}
-
-/** טלגרם מפרש HTML ב-parse_mode — לא סומכים על שם חנות שהילדה הקלידה */
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

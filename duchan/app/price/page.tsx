@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
+import PromoBurst from "../promo-burst";
 import { GetsList, PaybackCard, LearnsTable, AnchorTable, SafetyList } from "./sections";
 import Icon from "@/app/icons";
 
@@ -35,14 +36,16 @@ export default function PricePage() {
             לפתוח את הלינק ולשלוח אותו לחברים.
           </p>
 
-          <div className="mt-6 inline-flex flex-col items-center card px-8 py-5">
+          <div className={`mt-6 inline-flex flex-col items-center card px-8 py-5 ${IS_LAUNCH ? "fx-shine relative rounded-2xl" : ""}`}>
+            {IS_LAUNCH && <PromoBurst />}
             {IS_LAUNCH && (
-              <div className="t-small font-medium text-[var(--wood)] mb-1.5">
-                🎉 {DEAL_LABEL}!
+              <div className="relative z-[3] t-small font-bold text-white mb-2 rounded-full px-3 py-1"
+                style={{ background: "linear-gradient(135deg, #9b6d3e 0%, #b47fb0 100%)" }}>
+                <span className="fx-wiggle">🎉</span> {DEAL_LABEL}!
               </div>
             )}
-            <div className="flex items-baseline gap-2">
-              <span className="text-[2.5rem] leading-none font-semibold tracking-[-0.02em]">
+            <div className="relative z-[3] flex items-baseline gap-2">
+              <span className={`text-[2.5rem] leading-none font-semibold tracking-[-0.02em] ${IS_LAUNCH ? "fx-pop" : ""}`}>
                 ₪{ACTIVATION_PRICE}
               </span>
               {IS_LAUNCH && (

@@ -263,7 +263,7 @@ await db.query(
   "update stores set payout_bit=true, payout_paybox=false, payout_cash=true, payout_note=null where id=$1",
   [seed.id]
 );
-await girl.goto(`${BASE}/dashboard/settings`);
+await girl.goto(`${BASE}/dashboard/settings#payment`);
 await girl.waitForSelector("#payment", { timeout: 15000 });
 const payUi = await girl.textContent("#payment");
 // זו הבטחה, לא ניסוח: דוכן לא נוגע בכסף של הקונות ולא לוקח ממנו אחוז

@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
-import { notifyTelegram } from "@/lib/telegram";
-import { absolute } from "@/lib/site";
+import { notifyAdmins } from "@/lib/admin-notify";
 
 // POST /api/stores/notify-payment { storeId } — נקרא מהצד לקוח מיד אחרי
 // claim_store_payment RPC. לא מקבל טקסט חופשי מהלקוח: קורא בעצמו את
@@ -32,16 +31,18 @@ export async function POST(req: NextRequest) {
 
   if (!store?.payment_claimed_at) return NextResponse.json({ ok: true }); // אין מה לדווח
 
-  notifyTelegram(
-    `⏳ ${escapeHtml(store.display_name)} הצהירה ששילמה, ממתינה לאישור\n` +
-      `${METHOD_LABEL[store.payment_method ?? ""] ?? "לא צוין"}` +
-      `${store.payment_ref ? ` · ${escapeHtml(store.payment_ref)}` : ""}\n` +
-      absolute("/admin")
+  after(() =>
+    notifyAdmins({
+      kind: "payment_claimed",
+      // הצהרה חדשה (אחרי ביטול) היא אירוע חדש — לכן גם הזמן במפתח
+      ref: `${store.id}:${store.payment_claimed_at}`,
+      title: `💰 ${store.display_name} מחכה לאישור`,
+      body:
+        `הצהירה ששילמה · ${METHOD_LABEL[store.payment_method ?? ""] ?? "לא צוין"}` +
+        `${store.payment_ref ? ` · ${store.payment_ref}` : ""}. לאשר בחמ"ל`,
+      url: "/admin",
+    })
   );
 
   return NextResponse.json({ ok: true });
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

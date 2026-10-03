@@ -158,7 +158,7 @@ check("בלי שגיאות JS בכל הצורות", errors.length === 0, errors[
 
 /* ── 5. גם מהגדרות → עיצוב הדוכן ── */
 await db.query("update stores set category_layout=null, category_size=null where id=$1", [store.id]);
-await girl.goto(`${BASE}/dashboard/settings`);
+await girl.goto(`${BASE}/dashboard/settings#design`);
 await girl.waitForSelector("[data-testid=settings-categories]", { timeout: 20000 });
 check("בעיצוב הדוכן יש שלב קטגוריות עם תצוגה", (await girl.locator("[data-testid=settings-categories] [data-testid=category-chips]").count()) === 1);
 await girl.click("[data-testid=settings-open-category-designer]");
