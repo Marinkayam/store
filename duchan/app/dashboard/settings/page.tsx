@@ -1345,8 +1345,8 @@ export default function SettingsPage() {
               נפתחת התיבה"). מזומן לא צריך פרטים. */}
           <div className="flex flex-col gap-1.5 mt-2.5">
             {([
-              ["payout_bit", "ביט", "למספר הוואטסאפ שלך"],
-              ["payout_paybox", "פייבוקס", "אם יש לך"],
+              ["payout_bit", "ביט", "מספר או לינק"],
+              ["payout_paybox", "פייבוקס", "מספר או לינק"],
               ["payout_cash", "מזומן", "במסירה, פנים אל פנים"],
             ] as const).map(([key, label, hint]) => (
               <div key={key} className={`border-[1.5px] ${payout[key] ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)]"}`}>
@@ -1393,6 +1393,13 @@ export default function SettingsPage() {
                       זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר רק אותו.
                     </p>
                   )}
+                  <PayDetailsMissing
+                    method="ביט"
+                    testid="bit-missing"
+                    show={!payout.payout_bit_phone?.trim() && !payout.payout_bit_link?.trim()}
+                    myPhone={localPhone(phone)}
+                    onUseMine={(v) => { setPayout({ ...payout, payout_bit_phone: v }); setDirty(true); }}
+                  />
                   <p className="text-[11.5px] text-[var(--muted)] mt-1.5 leading-relaxed">
                     מספיק מספר. לינק מ&quot;בקשת תשלום&quot; פותח את האפליקציה ישר — אם יש, עדיף.
                   </p>
@@ -1428,6 +1435,13 @@ export default function SettingsPage() {
                       זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר רק אותו.
                     </p>
                   )}
+                  <PayDetailsMissing
+                    method="פייבוקס"
+                    testid="paybox-missing"
+                    show={!payout.payout_paybox_phone?.trim() && !payout.payout_paybox_link?.trim()}
+                    myPhone={localPhone(phone)}
+                    onUseMine={(v) => { setPayout({ ...payout, payout_paybox_phone: v }); setDirty(true); }}
+                  />
                   <p className="text-[11.5px] text-[var(--muted)] mt-1.5 leading-relaxed">
                     מספיק מספר. לינק מ&quot;בקשת תשלום&quot; פותח את האפליקציה ישר — אם יש, עדיף.
                   </p>
@@ -1648,6 +1662,45 @@ export default function SettingsPage() {
         <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
           {toast}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** 05XXXXXXXX מהמספר שבשדה הוואטסאפ, או null אם הוא לא נייד ישראלי תקין */
+function localPhone(raw: string): string | null {
+  const n = normalizePhone(raw);
+  return n && /^9725\d{8}$/.test(n) ? "0" + n.slice(3) : null;
+}
+
+/**
+ * ביט/פייבוקס מסומן בלי מספר ובלי לינק: הקונים לא יכולים לשלם ישר, והם
+ * מקבלים כפתור "לקבל את פרטי הביט בוואטסאפ" — בדיוק המסך שבלבל קונה
+ * (מרינה: "בהזמנה סימנתי שאני רוצה לשלם בביט והופיע לי ככה").
+ * לחיצה אחת ממלאת את מספר הוואטסאפ — אבל רק בלחיצה: המספר הזה לא נחשף
+ * לקונים אם לא בחרו בזה במפורש.
+ */
+function PayDetailsMissing({
+  method, testid, show, myPhone, onUseMine,
+}: {
+  method: string; testid: string; show: boolean; myPhone: string | null; onUseMine: (v: string) => void;
+}) {
+  if (!show) return null;
+  return (
+    <div className="mt-2 border-[1.5px] border-[var(--warn-line)] bg-[var(--warn-bg)] text-[var(--warn-ink)] px-3 py-2.5" data-testid={testid}>
+      <p className="text-[12.5px] font-bold leading-snug">⚠️ עוד לא כתבת לאן מעבירים</p>
+      <p className="text-[12px] mt-1 leading-relaxed">
+        בלי מספר או לינק, מי שבוחר/ת {method} לא יוכל/תוכל לשלם ישר, ויצטרך/תצטרך לשאול אותך בוואטסאפ.
+      </p>
+      {myPhone && (
+        <button
+          type="button"
+          onClick={() => onUseMine(myPhone)}
+          data-testid={`${testid}-use-mine`}
+          className="mt-2 w-full bg-white border border-[var(--ink)] text-[var(--ink)] px-3 py-2 text-[12.5px] font-bold"
+        >
+          ה{method} שלי על המספר <bdi dir="ltr">{myPhone.slice(0, 3)}-{myPhone.slice(3)}</bdi>
+        </button>
       )}
     </div>
   );

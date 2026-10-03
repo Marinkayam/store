@@ -97,10 +97,19 @@ check("הודעה: דלוקה עם כותרת וטקסט", r.promo_on === true &
 await open("payment");
 check("תשלום: ביט מסומן — הפרטים שלו פתוחים", (await page.locator("[data-testid=bit-details]").count()) === 1);
 check("ופייבוקס לא מסומן — בלי שדות", (await page.locator("[data-testid=paybox-details]").count()) === 0);
+// ביט מסומן בלי מספר ובלי לינק — זה מה ששלח קונה למסך "לקבל את פרטי הביט בוואטסאפ"
+check("ביט בלי פרטים: אזהרה ברורה", await page.locator("[data-testid=bit-missing]").isVisible());
+await page.click("[data-testid=bit-missing-use-mine]");
+check("לחיצה אחת ממלאת את מספר הוואטסאפ שלי כמספר ביט",
+  /^05\d{8}$/.test(await page.inputValue("input[aria-label='מספר ביט']")), await page.inputValue("input[aria-label='מספר ביט']"));
+check("ואז האזהרה נעלמת", (await page.locator("[data-testid=bit-missing]").count()) === 0);
 await page.fill("input[aria-label='מספר ביט']", "052-123-4567");
 await page.click("#payment button:has-text('פייבוקס')");
 check("סימון פייבוקס פותח את הפרטים שלו", (await page.locator("[data-testid=paybox-details]").count()) === 1);
+await page.fill("input[aria-label='מספר פייבוקס']", "");
+check("פייבוקס בלי פרטים: גם כאן אזהרה", await page.locator("[data-testid=paybox-missing]").isVisible());
 await page.fill("input[aria-label='לינק פייבוקס']", "https://link.payboxapp.com/test42");
+check("לינק מספיק — האזהרה נעלמת", (await page.locator("[data-testid=paybox-missing]").count()) === 0);
 await page.click("button[aria-label='לסגור תשלום בוואטסאפ']");
 await back();
 r = await row();
