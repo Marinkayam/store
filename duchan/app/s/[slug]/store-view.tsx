@@ -1115,7 +1115,7 @@ export default function StoreView({
               ליצירה. קונות לא רואות כלום עד שיש קופון חי. */}
           {!hasCoupons && owner && cart.length > 0 && (
             <a
-              href="/dashboard/share#coupons"
+              href="/dashboard/settings#coupons"
               data-testid="coupon-owner-hint"
               className="mt-4 flex items-center gap-2 border-[1.5px] border-dashed px-3.5 py-3 text-[12.5px] leading-snug"
               style={{ borderColor: "color-mix(in srgb, currentColor 30%, transparent)" }}

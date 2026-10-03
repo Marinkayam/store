@@ -17,6 +17,7 @@ import CategoryDesigner from "../products/category-designer";
 import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
+import SellerCoupons from "../share/seller-coupons";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -30,6 +31,7 @@ const SECTIONS = {
   design: { icon: "🎨", title: "עיצוב", intro: "צבעים, סגנון, רקע וקטגוריות. כל לחיצה מופיעה מיד בדוכן הקטן." },
   products: { icon: "⭐", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
   promo: { icon: "📣", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
+  coupons: { icon: "🏷️", title: "קופונים", intro: "יוצרים כאן קוד הנחה, ושולחים אותו לחברים." },
   payment: { icon: "💳", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
   shipping: { icon: "🚚", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
   order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה אלייך. היא נכתבת לבד, אין מה למלא." },
@@ -483,7 +485,6 @@ export default function SettingsPage() {
     : store.status !== "active" ? { t: "⏸️ בהפסקה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
     : !store.activated_at ? { t: "👀 תצוגה מקדימה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
     : { t: "🟢 פתוח להזמנות", bg: "var(--ok-bg)", fg: "var(--ok-ink)" };
-  const shareText = `בואו לראות את הדוכן שלי! ${storeUrl}`;
 
   const hero = (
     <div
@@ -525,31 +526,17 @@ export default function SettingsPage() {
             className="mt-3 bg-white/90 px-3 py-2 text-[12px] text-[var(--warn-ink)] leading-relaxed"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            אפשר כבר לשלוח את הלינק והחברים יראו הכל — ההזמנות נפתחות אחרי הפרסום.
+            הדוכן בתצוגה מקדימה: רואים הכל, וההזמנות נפתחות אחרי הפרסום.
           </div>
         )}
-        <div className="grid grid-cols-2 gap-2 mt-3" style={{ fontFamily: "var(--font-body)" }}>
-          <a
-            href={storeUrl}
-            className="fx-press bg-white/95 border border-black/5 py-2.5 text-[13px] font-bold text-[var(--ink)]"
-          >
-            👀 לראות את הדוכן
-          </a>
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
-            className="fx-press py-2.5 text-[13px] font-bold"
-            style={{ background: t.primary, color: t.onPrimary }}
-          >
-            📤 לשלוח לחברים
-          </a>
-        </div>
-        <button
-          onClick={() => { navigator.clipboard?.writeText(storeUrl).then(() => showToast("הלינק הועתק 🔗"), () => {}); }}
-          className="mt-2 text-[12px] underline opacity-75 min-h-9"
+        <a
+          href={storeUrl}
+          className="fx-press block mt-3 bg-white/95 border border-black/10 py-2.5 text-[13px] font-bold text-[var(--ink)]"
           style={{ fontFamily: "var(--font-body)" }}
+          data-testid="view-store"
         >
-          🔗 העתקת הקישור
-        </button>
+          👀 לראות את הדוכן כמו שהקונים רואים
+        </a>
       </div>
     </div>
   );
@@ -613,7 +600,7 @@ export default function SettingsPage() {
         },
         {
           key: "coupons", icon: "🏷️", tint: "#e6eef6", title: "קופונים",
-          summary: "קוד הנחה לקונים · יצירה בדף להפיץ", href: "/dashboard/share#coupons", testid: "settings-coupons-link",
+          summary: "קוד הנחה שקונים מקלידים בהזמנה", testid: "settings-coupons-link",
         },
       ],
     },
@@ -1266,6 +1253,11 @@ export default function SettingsPage() {
         </div>
 
             </>
+          )}
+          {section === "coupons" && (
+            <div className="bg-white border border-[var(--line)] p-3" id="coupons" data-testid="seller-coupons">
+              <SellerCoupons store={store} />
+            </div>
           )}
           {section === "payment" && (
             <>

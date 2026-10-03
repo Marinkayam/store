@@ -96,15 +96,22 @@ await girl.waitForURL("**/dashboard", { timeout: 20000 });
 await openCheckout(girl);
 check("בעלת הדוכן רואה 'עוד אין לך קופון' עם קישור ליצירה",
   (await girl.locator("[data-testid=coupon-owner-hint]").count()) === 1 &&
-  ((await girl.getAttribute("[data-testid=coupon-owner-hint]", "href")) ?? "").includes("/dashboard/share#coupons"));
+  ((await girl.getAttribute("[data-testid=coupon-owner-hint]", "href")) ?? "").includes("/dashboard/settings#coupons"));
 check("וקונה לא רואה את ההודעה הזו", (await buyer.locator("[data-testid=coupon-owner-hint]").count()) === 0);
 await girl.goto(`${BASE}/dashboard/settings`);
 await girl.waitForSelector("[data-testid=settings-coupons-link]", { timeout: 20000 });
 check("בהגדרות יש קיצור לקופונים", true);
 
-await girl.goto(`${BASE}/dashboard/share`);
+// הקופונים גרים ב"החנות שלי" — מקטע משלהם, לא קישור לדף אחר
+await girl.click("[data-testid=settings-coupons-link]");
 await girl.waitForSelector("[data-testid=seller-coupons]", { timeout: 20000 });
-check("ב'להפיץ' יש חלק קופונים", (await girl.locator("[data-testid=coupon-manager]").count()) === 1);
+check("ב'החנות שלי' יש מקטע קופונים", (await girl.locator("[data-testid=coupon-manager]").count()) === 1);
+check("והכתובת היא #coupons", girl.url().endsWith("#coupons"), girl.url());
+await girl.goto(`${BASE}/dashboard/share`);
+await girl.waitForSelector("text=הודעות מוכנות", { timeout: 20000 });
+check("וב'להפיץ' אין עוד קופונים כפולים", (await girl.locator("[data-testid=coupon-manager]").count()) === 0);
+await girl.goto(`${BASE}/dashboard/settings#coupons`);
+await girl.waitForSelector("[data-testid=seller-coupons]", { timeout: 20000 });
 
 await girl.click("[data-testid=coupon-new]");
 await girl.fill("input[aria-label='קוד הקופון']", "A");
@@ -231,7 +238,7 @@ check("כרטיס ההזמנה מציג 'קופון SALE10'",
   ((await girl.locator("[data-testid=order-coupon]").allTextContents()).join(" ")).includes("SALE10"));
 
 /* ── 7. המוכרת מכבה ומוחקת ── */
-await girl.goto(`${BASE}/dashboard/share`);
+await girl.goto(`${BASE}/dashboard/settings#coupons`);
 await girl.waitForSelector("[data-testid=coupon-row][data-code=SALE10]", { timeout: 20000 });
 await girl.click("button[aria-label='כיבוי SALE10']");
 await girl.waitForTimeout(1000);
@@ -264,7 +271,8 @@ const { rows: [v] } = await db.query("select created_by, value from coupons wher
 check("המנהלת יצרה קופון לחנות (created_by=admin)", v?.created_by === "admin" && Number(v?.value) === 20);
 await admin.screenshot({ path: "/tmp/coupon-admin.png" });
 
-await girl.goto(`${BASE}/dashboard/share`);
+await girl.goto(`${BASE}/dashboard/settings#coupons`);
+await girl.reload(); // אותה כתובת בדיוק — goto לבד לא טוען מחדש
 await girl.waitForSelector("[data-testid=coupon-row][data-code=VIP20]", { timeout: 20000 });
 check("והמוכרת רואה אותו אצלה, עם 'נוצר ע״י דוכן'",
   ((await girl.textContent("[data-testid=coupon-row][data-code=VIP20]")) ?? "").includes("נוצר ע״י דוכן"));
