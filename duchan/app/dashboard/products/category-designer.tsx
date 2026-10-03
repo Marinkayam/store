@@ -173,7 +173,7 @@ export default function CategoryDesigner({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-5 flex flex-col gap-8 pb-32">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-5 flex flex-col gap-8 pb-[calc(8rem+env(safe-area-inset-bottom))]">
         {/* 1. צורה */}
         <section>
           <div className="text-[14px] font-bold mb-3">1. צורה</div>
@@ -310,7 +310,7 @@ export default function CategoryDesigner({
       </div>
 
       {/* שמירה */}
-      <div className="absolute bottom-0 inset-x-0 bg-white border-t border-[var(--line)] p-3">
+      <div className="absolute bottom-0 inset-x-0 bg-white border-t border-[var(--line)] px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <button
           onClick={save}
           disabled={saving || uploading !== null}

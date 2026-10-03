@@ -18,6 +18,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  /* cover: באייפון בלי זה env(safe-area-inset-bottom) הוא 0, וכפתורים
+     שיושבים בתחתית המסך נדחסים מתחת לפס הבית ("הכפתור לא נראה טוב").
+     שורת הסטטוס למעלה לא מושפעת — status-bar-style הוא default. */
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

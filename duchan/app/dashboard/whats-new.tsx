@@ -58,7 +58,7 @@ export default function WhatsNew() {
       {open && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-8 max-h-[80%] overflow-y-auto">
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-[calc(2rem+env(safe-area-inset-bottom))] max-h-[80%] overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">מה חדש בדוכן ✨</h2>
             <div className="flex flex-col gap-2.5">

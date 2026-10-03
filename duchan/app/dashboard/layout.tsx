@@ -22,8 +22,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto">
       <ReleasePopup />
-      <div className="flex-1 pb-20">{children}</div>
-      <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] flex pt-1.5 pb-3 z-40">
+      <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">{children}</div>
+      <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] flex pt-1.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] z-40">
         {TABS.map((t) => {
           const on = path === t.href;
           return (

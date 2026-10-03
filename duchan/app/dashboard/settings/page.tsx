@@ -19,6 +19,7 @@ import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
 import SellerCoupons from "../share/seller-coupons";
 import ShareSection from "./share-section";
+import InstallCard from "@/app/install-card";
 import { setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
@@ -37,6 +38,7 @@ const SECTIONS = {
   payment: { icon: "💳", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
   shipping: { icon: "🚚", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
   order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה בוואטסאפ. היא נכתבת לבד, אין מה למלא." },
+  app: { icon: "📲", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית. זיהינו את הטלפון ואת הדפדפן — אלה הצעדים בדיוק בשבילו." },
   details: { icon: "📱", title: "הפרטים שלי", intro: "לאן מגיעות ההזמנות, וקצת עליכם. אף פעם לא כתובת." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
@@ -649,6 +651,7 @@ export default function SettingsPage() {
     {
       title: "חשבון",
       rows: [
+        { key: "app", icon: "📲", tint: "#efe7f4", title: "אפליקציה בטלפון", summary: "אייקון במסך הבית — כניסה בלחיצה אחת" },
         { key: "details", icon: "📱", tint: "#ece6de", title: "הפרטים שלי", summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, info.city].filter(Boolean).join(" · ") },
       ],
     },
@@ -669,24 +672,28 @@ export default function SettingsPage() {
           /* התשלום היה מוסתר מאחורי "לפרסם את הדוכן", ולא היה ברור שיש כאן
              שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */
           before={
-            !store.activated_at ? (
-              <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block">
-                <div className="text-[13px] font-bold">
-                  {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
-                </div>
-                {store.payment_claimed_at ? (
-                  <div className="text-[12px] opacity-80 leading-relaxed mt-1">
-                    סימנתם ששילמתם. ברגע שמרינה תאשר, הדוכן יתחיל לקבל הזמנות.
+            <div className="flex flex-col gap-3">
+              {!store.activated_at ? (
+                <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block">
+                  <div className="text-[13px] font-bold">
+                    {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
                   </div>
-                ) : (
-                  <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
-                    <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (חינם) או בביט</li>
-                    <li>2. מרינה מאשרת שהתשלום הגיע</li>
-                    <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
-                  </ol>
-                )}
-              </a>
-            ) : null
+                  {store.payment_claimed_at ? (
+                    <div className="text-[12px] opacity-80 leading-relaxed mt-1">
+                      סימנתם ששילמתם. ברגע שמרינה תאשר, הדוכן יתחיל לקבל הזמנות.
+                    </div>
+                  ) : (
+                    <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
+                      <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (חינם) או בביט</li>
+                      <li>2. מרינה מאשרת שהתשלום הגיע</li>
+                      <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
+                    </ol>
+                  )}
+                </a>
+              ) : null}
+              {/* הצעה להוסיף למסך הבית — נעלמת כשכבר מותקן או כשסוגרים */}
+              <InstallCard />
+            </div>
           }
           after={
             <button onClick={logout} className="w-full text-center text-[13px] text-[var(--muted)] py-3">
@@ -1262,6 +1269,7 @@ export default function SettingsPage() {
             </>
           )}
           {section === "share" && <ShareSection store={store} onToast={showToast} />}
+          {section === "app" && <InstallCard force />}
           {section === "coupons" && (
             <div className="bg-white border border-[var(--line)] p-3" id="coupons" data-testid="seller-coupons">
               <SellerCoupons store={store} />
@@ -1568,7 +1576,7 @@ export default function SettingsPage() {
           מעל שורת הניווט ברגע שיש שינוי, תמיד על המסך. */}
       {dirty && <div className="h-12" aria-hidden />}
       {dirty && (
-        <div className="fixed bottom-[64px] inset-x-0 max-w-md mx-auto px-3 z-40">
+        <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] inset-x-0 max-w-md mx-auto px-3 z-40">
           <button
             data-testid="save-settings"
             onClick={save}

@@ -844,7 +844,7 @@ export default function StoreView({
       <div
         data-testid="cart-bar"
         role="button"
-        className={`s-sheet fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-4 pb-5 cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
+        className={`s-sheet fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
         style={{ background: "var(--s-primary)", color: "var(--s-onprimary)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)" }}
         onClick={() => cartCount && setOrderOpen(true)}
       >
@@ -871,7 +871,7 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-5 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
           style={{
             background: "var(--s-surface)",
             color: "var(--s-ink)",
@@ -1444,7 +1444,7 @@ export default function StoreView({
 
           {/* ── הסיכום והשליחה — קבועים בתחתית, לא נעלמים בגלילה ── */}
           <div
-            className="px-5 pt-3 pb-6 border-t border-black/10"
+            className="px-5 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] border-t border-black/10"
             style={{ background: "var(--s-surface)" }}
           >
             {coupon && (
@@ -1495,7 +1495,7 @@ export default function StoreView({
       {confirmed?.payFirst && (payTarget || confirmed.waPayUrl) && (
         <div
           data-testid="order-pay-first"
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <div className="text-4xl mb-2" aria-hidden>💳</div>
@@ -1577,7 +1577,7 @@ export default function StoreView({
       {confirmed && !confirmed.payFirst && (
         <div
           data-testid="order-confirmed"
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-7 text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <div className="text-4xl mb-2" aria-hidden>🎉</div>

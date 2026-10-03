@@ -52,7 +52,7 @@ export default function ReleasePopup() {
       <div className="fixed inset-0 bg-black/45 z-[70]" onClick={dismiss} />
       <div
         data-testid="release-popup"
-        className="fixed bottom-0 inset-x-0 z-[80] max-w-md mx-auto bg-white px-5 pt-5 pb-6 max-h-[85%] overflow-y-auto"
+        className="fixed bottom-0 inset-x-0 z-[80] max-w-md mx-auto bg-white px-5 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[85%] overflow-y-auto"
       >
         <div className="w-9 h-1 bg-black/15 mx-auto mb-4" />
         <h2 className="text-lg font-bold text-center mb-3">{WHATSNEW.title}</h2>
