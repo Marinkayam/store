@@ -31,27 +31,51 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin();
 
-  const { data: otp } = await db
+  /*
+   * כל הקודים החיים של המספר, לא רק האחרון.
+   *
+   * סמס יכול להתעכב דקה-שתיים. הילדה לא מחכה — לוחצת "שלחי שוב", ואז
+   * מגיע הסמס הראשון והיא מקלידה אותו. כשבדקנו רק את הקוד האחרון, קוד
+   * אמיתי שהיא קיבלה נדחה כ"לא נכון", והיא ביקשה עוד ועוד — וזה נראה
+   * בדיוק כמו "האפליקציה לא שולחת קוד".
+   *
+   * הספירה של הניסיונות יושבת על הקוד האחרון, כך שקודים ישנים לא נותנים
+   * עוד ניסיונות. עד 5 קודים בתוקף של 10 דקות: סיכוי ניחוש של 5 למיליון
+   * לניסיון, עם 5 ניסיונות — עדיין זניח.
+   */
+  const { data: live } = await db
     .from("phone_otps")
     .select("id, code_hash, expires_at, attempts, consumed_at")
     .eq("phone", phone)
     .is("consumed_at", null)
+    .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(5);
 
-  if (!otp) return NextResponse.json({ error: "לא ביקשנו קוד למספר הזה. לנסות שוב" }, { status: 400 });
-  if (new Date(otp.expires_at).getTime() < Date.now()) {
-    return NextResponse.json({ error: "הקוד פג. אפשר לבקש חדש" }, { status: 400 });
+  const candidates = live ?? [];
+  const newest = candidates[0];
+  if (!newest) {
+    const { data: stale } = await db
+      .from("phone_otps")
+      .select("id")
+      .eq("phone", phone)
+      .is("consumed_at", null)
+      .limit(1)
+      .maybeSingle();
+    return NextResponse.json(
+      { error: stale ? "הקוד פג. אפשר לבקש חדש" : "לא ביקשנו קוד למספר הזה. לנסות שוב" },
+      { status: 400 }
+    );
   }
-  if (otp.attempts >= OTP_MAX_ATTEMPTS) {
+  if (newest.attempts >= OTP_MAX_ATTEMPTS) {
     return NextResponse.json({ error: "יותר מדי ניסיונות. בקשי קוד חדש" }, { status: 429 });
   }
 
-  if (!codeMatches(phone, code, otp.code_hash)) {
+  const otp = candidates.find((c) => codeMatches(phone, code, c.code_hash));
+  if (!otp) {
     // הספירה עולה לפני התשובה, אחרת אפשר לנסות בלי הגבלה במקביל
-    await db.from("phone_otps").update({ attempts: otp.attempts + 1 }).eq("id", otp.id);
-    const left = OTP_MAX_ATTEMPTS - otp.attempts - 1;
+    await db.from("phone_otps").update({ attempts: newest.attempts + 1 }).eq("id", newest.id);
+    const left = OTP_MAX_ATTEMPTS - newest.attempts - 1;
     return NextResponse.json(
       { error: left > 0 ? `הקוד לא נכון. נשארו ${left} ניסיונות` : "יותר מדי ניסיונות. בקשי קוד חדש" },
       { status: 400 }
@@ -59,7 +83,11 @@ export async function POST(req: NextRequest) {
   }
 
   // הקוד נשרף מיד. גם אם כל השאר ייכשל, אי אפשר להשתמש בו פעמיים.
-  await db.from("phone_otps").update({ consumed_at: new Date().toISOString() }).eq("id", otp.id);
+  // וגם שאר הקודים החיים של המספר — אחרי כניסה אין סיבה שיישארו פתוחים.
+  await db
+    .from("phone_otps")
+    .update({ consumed_at: new Date().toISOString() })
+    .in("id", candidates.map((c) => c.id));
 
   // מי המשתמשת:
   // 1. מספר שכבר אומת בעבר

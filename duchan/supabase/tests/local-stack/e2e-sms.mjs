@@ -139,6 +139,52 @@ if (tamar) {
   check("a store that signed up by email opens with its phone", false, "לא נמצאה חנות ותיקה לבדיקה");
 }
 
+/* ── 6ב. סמס שהתעכב: קוד מהסמס הראשון עובד גם אחרי "שלחי שוב" ──
+   הבאג מהשטח: הסמס הראשון הגיע אחרי שהיא כבר ביקשה שני, היא הקלידה
+   אותו — ונדחתה כ"קוד לא נכון", כי בדקנו רק את האחרון. */
+const LATE = "972521110003";
+await db.query("delete from phone_otps where phone=$1", [LATE]);
+await db.query("delete from phone_accounts where phone=$1", [LATE]);
+await db.query("delete from auth.users where email like $1", [`${LATE}@%`]);
+const start = () => fetch(`${BASE}/api/auth/sms/start`, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ phone: "0521110003" }),
+});
+const verify = (c) => fetch(`${BASE}/api/auth/sms/verify`, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ phone: "0521110003", code: c }),
+});
+await start();
+const firstCode = await lastCode(LATE);
+// דקה וחצי עברו, היא ביקשה שוב
+await db.query("update phone_otps set created_at = now() - interval '90 seconds' where phone=$1", [LATE]);
+const again = await start();
+const secondCode = await lastCode(LATE);
+check("a resend after a minute is allowed", again.status === 200 && !!secondCode && secondCode !== firstCode,
+  `status=${again.status}`);
+const wrongAfterResend = await verify(firstCode === "000000" ? "111111" : "000000");
+const { rows: lateRows } = await db.query(
+  "select attempts from phone_otps where phone=$1 order by created_at desc", [LATE]);
+check("a wrong code still counts, on the newest code", wrongAfterResend.status === 400 && lateRows[0].attempts === 1,
+  `status=${wrongAfterResend.status} attempts=${lateRows.map((r) => r.attempts)}`);
+const lateOk = await verify(firstCode);
+check("the code from the first (late) sms still logs in", lateOk.status === 200, `status=${lateOk.status}`);
+const { rows: [{ open }] } = await db.query(
+  "select count(*)::int as open from phone_otps where phone=$1 and consumed_at is null", [LATE]);
+check("after logging in, every open code of the number is burned", open === 0, `open=${open}`);
+const secondReplay = await verify(secondCode);
+check("so the second code no longer works either", secondReplay.status === 400, `status=${secondReplay.status}`);
+
+// קוד שפג לא עובד גם כשהוא היחיד
+await db.query("update phone_otps set created_at = now() - interval '20 minutes' where phone=$1", [LATE]);
+await start();
+const expiredCode = await lastCode(LATE);
+await db.query("update phone_otps set expires_at = now() - interval '1 second' where phone=$1 and consumed_at is null", [LATE]);
+const expired = await verify(expiredCode);
+const expiredBody = await expired.json().catch(() => ({}));
+check("an expired code is refused, and says so", expired.status === 400 && /פג/.test(expiredBody.error ?? ""),
+  `${expired.status} ${expiredBody.error ?? ""}`);
+
 /* ── 7. הגבלת קצב — כל הודעה עולה כסף ── */
 await db.query("delete from phone_otps where phone='972521110002'");
 const first = await fetch(`${BASE}/api/auth/sms/start`, {
