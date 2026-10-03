@@ -1,5 +1,6 @@
 "use client";
 
+import RoleGuide from "@/app/role-guide";
 import { useCallback, useEffect, useState } from "react";
 import type { Store } from "@/lib/types";
 import { STORE_PICK_KEY } from "../use-store";
@@ -285,10 +286,8 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
       )}
 
       {/* מה כל אחד יכול */}
-      <div className="bg-[var(--canvas)] border border-[var(--line)] p-3.5 text-[12.5px] leading-relaxed" data-testid="team-rules">
-        <div className="font-bold mb-1">מי יכול מה</div>
-        <div>🤝 <b>כולם:</b> מוצרים, הזמנות, עיצוב, קופונים, משלוחים ושיתוף.</div>
-        <div className="mt-0.5">👑 <b>רק ראש הדוכן:</b> מי בצוות, לאן מגיעות ההזמנות, איך משלמים, והתשלום על הדוכן.</div>
+      <div data-testid="team-rules">
+        <RoleGuide who={isOwner ? "owner" : "partner"} />
       </div>
 
       {/* שותף/ה: לצאת */}

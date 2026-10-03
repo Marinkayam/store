@@ -1,5 +1,6 @@
 "use client";
 
+import RoleGuide from "@/app/role-guide";
 import { use, useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { pickStore } from "@/app/dashboard/use-store";
@@ -117,10 +118,7 @@ export default function JoinPage({ params }: { params: Promise<{ token: string }
               </div>
             ) : loggedIn ? (
               <div className="bg-white border border-[var(--line)] p-4 flex flex-col gap-3 text-right">
-                <div className="text-[13px] leading-relaxed">
-                  <div>🤝 <b>תוכלו:</b> להוסיף מוצרים, לטפל בהזמנות, לעצב ולשתף.</div>
-                  <div className="mt-1">👑 <b>ראש הדוכן מחליט/ה:</b> מי בצוות, לאן מגיעות ההזמנות ואיך משלמים.</div>
-                </div>
+                <RoleGuide who="invitee" compact />
                 <label className="flex items-start gap-2.5 text-[13.5px] cursor-pointer">
                   <input
                     type="checkbox"

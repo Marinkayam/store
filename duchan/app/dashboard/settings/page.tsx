@@ -1,5 +1,6 @@
 "use client";
 
+import RoleGuide from "@/app/role-guide";
 import Chevron from "@/app/chevron";
 import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -702,7 +703,7 @@ export default function SettingsPage() {
                 </span>
                 <span className="block text-[12px] text-[var(--muted)] mt-0.5 leading-snug">
                   {isPartner
-                    ? "את/ה שותף/ה בדוכן הזה · לראות מי בצוות"
+                    ? "את/ה שותף/ה בדוכן הזה · מה אני יכול/ה לעשות, ומי בצוות"
                     : "אם רוצים — אפשר להזמין חבר/ה, אח או אחות אחד/ת שינהלו איתך"}
                 </span>
               </span>
@@ -1315,12 +1316,13 @@ export default function SettingsPage() {
           {section === "share" && <ShareSection store={store} onToast={showToast} />}
           {section === "team" && <TeamSection store={store} onToast={showToast} />}
           {isPartner && (OWNER_ONLY_SECTIONS as readonly string[]).includes(section) && (
-            <div className="bg-white border border-[var(--line)] p-4 text-center" data-testid="owner-only">
-              <div className="text-3xl" aria-hidden>👑</div>
-              <div className="text-[14px] font-bold mt-1">רק ראש הדוכן משנה את זה</div>
-              <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
-                איך משלמים, לאן מגיעות ההזמנות והפרטים האישיים — אצל ראש הדוכן. אפשר לראות מי זה ב&quot;צוות הדוכן&quot;.
-              </p>
+            <div className="flex flex-col gap-3" data-testid="owner-only">
+              <div className="bg-white border border-[var(--line)] p-4 text-center">
+                <div className="text-3xl" aria-hidden>🔒</div>
+                <div className="text-[15px] font-bold mt-1">את זה משנה רק ראש הדוכן</div>
+                <p className="text-[12.5px] text-[var(--muted)] mt-1">כאן אפשר לראות בדיוק מה את/ה יכול/ה לעשות בדוכן:</p>
+              </div>
+              <RoleGuide who="partner" />
             </div>
           )}
           {section === "app" && <InstallCard force />}
