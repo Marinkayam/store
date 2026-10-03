@@ -42,6 +42,15 @@ export function dropWhen(dropAt: string): string {
   return `${day} ${date} ב-${time}`;
 }
 
+/** קצר, לשורת מוצר צרה: "7.10" ו-"18:00" בנפרד (כל אחד ב-bdi אצל המציג) */
+export function dropShort(dropAt: string): { date: string; time: string } {
+  const d = new Date(dropAt);
+  return {
+    date: d.toLocaleDateString("he-IL", { day: "numeric", month: "numeric", timeZone: DROP_TZ }),
+    time: d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: DROP_TZ }),
+  };
+}
+
 /* ── שדה הזמן בעורך: תמיד שעון ישראל ──
    datetime-local הוא "שעה על הקיר" בלי אזור זמן. אם מפרשים אותו לפי
    הטלפון, טלפון שמכוון לאזור אחר קובע דרופ בשעה אחרת ממה שנכתב. לכן

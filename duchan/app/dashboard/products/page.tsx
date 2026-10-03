@@ -23,7 +23,7 @@ import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryDesigner from "./category-designer";
-import { defaultDropInput, dropProblem, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
+import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -95,6 +95,11 @@ const EMPTY_EDIT: EditState = {
 
 /** הקטגוריות של מוצר — המערך החדש, או הקטגוריה הישנה היחידה (0045) */
 const productCats = (p: Product) => (p.categories?.length ? p.categories : p.category ? [p.category] : []);
+
+/** תגית בשורת מוצר. לכולן אותו גובה ואותה מסגרת (שקופה כשאין קו), כדי
+ *  שהמקווקווה לא תצא גבוהה מהשאר; והטקסט נשבר לשורה במקום להיחתך. */
+const CHIP =
+  "inline-flex items-center gap-1 min-h-[26px] max-w-full px-2 py-0.5 border border-transparent text-[12px] leading-snug text-right break-words";
 
 export default function ProductsPage() {
   const { store, setStore, loading } = useStore();
@@ -844,14 +849,16 @@ export default function ProductsPage() {
           const hidden = p.is_visible === false;
           const img = mediaUrl(p.poster_key) ?? mediaUrl(p.image_key);
           const cats = productCats(p);
+          const low = p.track_stock && !out && p.stock <= 2;
+          const upcoming = isUpcoming(p.drop_at, Date.now());
           return (
             <div
               key={p.id}
               onClick={() => !sorting && openEditor(p)}
               data-testid="product-row"
-              className={`bg-white border border-[var(--line)] p-4 flex gap-4 items-center text-right ${sorting ? "" : "cursor-pointer"} ${out || hidden ? "opacity-60" : ""}`}
+              className={`bg-white border border-[var(--line)] p-4 flex gap-4 items-center text-right max-[340px]:p-3 max-[340px]:gap-2.5 ${sorting ? "" : "cursor-pointer"} ${out || hidden ? "opacity-60" : ""}`}
             >
-              <div className="w-[72px] h-[72px] shrink-0 bg-[var(--canvas)] flex items-center justify-center text-3xl overflow-hidden relative">
+              <div className="w-[72px] h-[72px] max-[340px]:w-12 max-[340px]:h-12 shrink-0 bg-[var(--canvas)] flex items-center justify-center text-3xl overflow-hidden relative">
                 {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                 {p.video_key && (
                   <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1">וידאו</span>
@@ -863,45 +870,55 @@ export default function ProductsPage() {
                   <span className="truncate">{p.name}</span>
                 </div>
                 <div className="text-[14px] text-[var(--ink)] mt-0.5">₪{formatPrice(p.price)}</div>
-                {(out || hidden || (p.track_stock && !out && p.stock <= 2) || !!store.categories?.length || !!p.drop_at || !!p.is_mystery) && (
-                  <div className="flex gap-1.5 items-center mt-2 flex-wrap">
-                    {out && (
-                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
-                    )}
-                    {isUpcoming(p.drop_at, Date.now()) && (
-                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--ink)] text-white font-bold" data-testid="row-drop">
-                        🔥 נפתח {dropWhen(p.drop_at!)}
+                {/* שתי שורות נפרדות, כדי שיהיה ברור מה זה מה (מרינה: "מה מציגים
+                    מה רואים"): קודם מצב המוצר בתגיות באותו גודל בדיוק, ואז
+                    הקטגוריות כטקסט — לא עוד תגית שנראית כמו מצב. */}
+                {(out || hidden || low || upcoming || !!p.is_mystery) && (
+                  <div className="flex gap-1.5 items-center mt-2 flex-wrap" data-testid="row-status">
+                    {out && <span className={`${CHIP} bg-[var(--danger-bg)] text-[var(--danger)] font-bold`}>אזל</span>}
+                    {upcoming && (
+                      <span className={`${CHIP} bg-[var(--ink)] text-white font-bold`} data-testid="row-drop">
+                        <Icon name="hourglass" size={13} tone="transparent" />
+                        {/* טקסט אחד בתוך span: ב-inline-flex כל קטע טקסט הופך לפריט נפרד,
+                            והשבירה לשורות מערבבת את הסדר */}
+                        <span>
+                          נפתח ב-<bdi>{dropShort(p.drop_at!).date}</bdi> · <bdi>{dropShort(p.drop_at!).time}</bdi>
+                        </span>
                       </span>
                     )}
                     {p.is_mystery && (
-                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--canvas)] text-[var(--ink)]" data-testid="row-mystery">🎁 הפתעה</span>
+                      <span className={`${CHIP} bg-[var(--canvas)] text-[var(--ink)]`} data-testid="row-mystery">
+                        <Icon name="gift" size={13} tone="transparent" />
+                        שקית הפתעה
+                      </span>
                     )}
-                    {p.track_stock && !out && p.stock <= 2 && (
-                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
+                    {low && (
+                      <span className={`${CHIP} bg-[var(--warn-bg)] text-[var(--warn-ink)]`}>
+                        {p.stock === 1 ? "נשאר אחרון" : `נשארו ${p.stock}`}
+                      </span>
                     )}
-                    {hidden && (
-                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
-                    )}
-                    {!!store.categories?.length &&
-                      (cats.length ? (
-                        cats.map((c) => (
-                          <span key={c} className="text-[11.5px] px-2 py-0.5 bg-[var(--canvas)] text-[var(--ink)]">{c}</span>
-                        ))
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFocusCats(true);
-                            openEditor(p);
-                          }}
-                          data-testid="row-add-category"
-                          className="text-[11.5px] px-2 py-0.5 border border-dashed border-[var(--warn-ink)] text-[var(--warn-ink)] font-medium"
-                        >
-                          + קטגוריה
-                        </button>
-                      ))}
+                    {hidden && <span className={`${CHIP} bg-[var(--sub)] text-[var(--muted)]`}>מוסתר מהקונים</span>}
                   </div>
                 )}
+                {!!store.categories?.length &&
+                  (cats.length ? (
+                    <div className="text-[12.5px] text-[var(--muted)] mt-1.5 leading-snug" data-testid="row-cats">
+                      קטגוריה: <span className="text-[var(--ink)]">{cats.join(" · ")}</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFocusCats(true);
+                        openEditor(p);
+                      }}
+                      data-testid="row-add-category"
+                      className={`${CHIP} mt-2 border-dashed text-[var(--warn-ink)] font-medium`}
+                      style={{ borderColor: "var(--warn-ink)" }}
+                    >
+                      + קטגוריה
+                    </button>
+                  ))}
               </div>
               {sorting ? (
                 <div className="flex flex-col gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>

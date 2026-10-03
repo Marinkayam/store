@@ -283,7 +283,8 @@ check("והעברה בחזרה עובדת", back.status === 200 && (await after(
 /* ── 11. בחירת דוכן (דוכן משלי + שותפות) ── */
 await p1.page.goto(`${BASE}/dashboard/products`, { waitUntil: "networkidle" });
 await p1.page.waitForSelector("[data-testid=store-switcher]");
-check("הפס: 'עובדים עכשיו על' ושם הדוכן", ((await p1.page.textContent("[data-testid=store-switcher]")) ?? "").includes("עובדים עכשיו על"));
+const swText = (await p1.page.textContent("[data-testid=store-switcher]")) ?? "";
+check("הפס: 'פתוח עכשיו', של מי הדוכן, ו'לדוכן אחר'", swText.includes("פתוח עכשיו") && swText.includes("לדוכן אחר") && /הדוכן שלי|דוכן בשותפות/.test(swText), swText);
 await p1.page.click("[data-testid=store-switcher]");
 await p1.page.waitForSelector("[data-testid=store-switcher-sheet]");
 await p1.page.screenshot({ path: `${SHOTS}/switcher-sheet.png` });
