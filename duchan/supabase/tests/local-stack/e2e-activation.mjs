@@ -142,7 +142,15 @@ const { rows: [claimed] } = await db.query("select * from stores where id=$1", [
 check("ההצהרה נרשמה עם אמצעי התשלום שנבחר",
   !!claimed.payment_claimed_at && claimed.payment_method === "paybox", claimed.payment_ref ?? "");
 check("והצהרה לבדה לא מפעילה את הדוכן", claimed.activated_at === null);
-await girl.screenshot({ path: `${shots}/43-pending.png` });
+// "לא מבינה אם כבר שילמה ומה קורה עכשיו" — המסך אומר את שלושתם
+const steps = (await girl.textContent("[data-testid=payment-steps]")) ?? "";
+check("מסך ההמתנה: 'סימנתם ששילמתם' עם סכום, איך ומי", steps.includes("סימנתם ששילמתם") &&
+  (await girl.textContent("[data-testid=payment-claim-details]")).match(/₪\d+ בפייבוקס/) !== null && steps.includes("אמא של תמר"), steps.slice(0, 120));
+check("ואומר מה קורה עכשיו: מרינה בודקת, לא צריך לעשות כלום", steps.includes("מרינה בודקת") && steps.includes("לא צריך לעשות כלום"));
+check("ומה יקרה אחר כך: הדוכן נפתח להזמנות", steps.includes("הדוכן נפתח להזמנות"));
+await girl.click("[data-testid=not-paid-yet] summary");
+check("'עוד לא שילמתם בפועל?' פותח את הדרכים לשלם", (await girl.locator("[data-testid=not-paid-yet] a").count()) >= 1);
+await girl.screenshot({ path: `${shots}/43-pending.png`, fullPage: true });
 
 const stillDraft = await (await fetch(`${BASE}/s/${seed.slug}`, { headers: { "Cache-Control": "no-cache" } })).text();
 check("הלינק עדיין תצוגה מקדימה אחרי ההצהרה", stillDraft.includes("תצוגה מקדימה"));
