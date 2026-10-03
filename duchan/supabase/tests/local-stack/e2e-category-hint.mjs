@@ -106,6 +106,17 @@ check("'רואים אותו בדוכן?' מוסבר: מוצג = הקונים ר�
 await girl.click("[data-testid=visible-choice-off]");
 const visOff = (await girl.textContent("[data-testid=visible-help]")) ?? "";
 check("ומוסתר = נשאר שמור, לא רואים, אפשר להחזיר", visOff.includes("לא רואים") && visOff.includes("להחזיר"), visOff);
+// קטגוריה חדשה ישר מהעורך — נשמרת לדוכן ונבחרת למוצר
+await girl.click("[data-testid=visible-choice-on]");
+await girl.click("[data-testid=editor-new-category]");
+await girl.fill("input[aria-label='שם הקטגוריה החדשה']", "ג-קט");
+await girl.click("[data-testid=editor-new-category-add]");
+await girl.waitForTimeout(800);
+const { rows: [sc] } = await db.query("select categories from stores where id=$1", [store.id]);
+check("'+ קטגוריה חדשה' בעורך: נשמרת לדוכן", (sc.categories ?? []).includes("ג-קט"), String(sc.categories));
+check("ונבחרת למוצר מיד", (await girl.getAttribute("button[aria-label='קטגוריה ג-קט']", "aria-pressed")) === "true");
+await girl.locator("#editor-categories").scrollIntoViewIfNeeded();
+await girl.screenshot({ path: `${process.env.SHOTS ?? "/tmp"}/editor-newcat.png` });
 await girl.locator("[data-testid=visible-help]").scrollIntoViewIfNeeded();
 await girl.screenshot({ path: `${process.env.SHOTS ?? "/tmp"}/editor-stock.png` });
 await girl.click("[data-testid=editor-close]");

@@ -231,17 +231,30 @@ export default function ProductsPage() {
   }, [store, autoOpened]);
 
   /* ---------- קטגוריות של החנות ---------- */
-  async function saveCategories(next: string[]) {
-    if (!store) return;
+  async function saveCategories(next: string[]): Promise<boolean> {
+    if (!store) return false;
     const cleaned = [...new Set(next.map((c) => c.trim()).filter(Boolean))].slice(0, 20);
     const supa = supabaseBrowser();
     const { error } = await supa.from("stores").update({ categories: cleaned }).eq("id", store.id);
     if (error) {
       // העמודה עוד לא בדאטהבייס — אומרים את זה במקום להיכשל בשקט
       showToast("הקטגוריות עוד לא זמינות, אפשר לנסות שוב מאוחר יותר");
-      return;
+      return false;
     }
     setStore({ ...store, categories: cleaned });
+    return true;
+  }
+
+  /* קטגוריה חדשה מתוך עורך המוצר: נשמרת לדוכן ונבחרת למוצר הזה מיד,
+     בלי לצאת מהעורך ולחזור לכרטיס הקטגוריות */
+  const [catDraft, setCatDraft] = useState<string | null>(null);
+  async function addCategoryFromEditor() {
+    const name = (catDraft ?? "").trim();
+    if (!name) return setCatDraft(null);
+    const exists = (store?.categories ?? []).includes(name);
+    if (!exists && !(await saveCategories([...(store?.categories ?? []), name]))) return;
+    setEdit((s) => s && { ...s, categories: s.categories.includes(name) ? s.categories : [...s.categories, name] });
+    setCatDraft(null);
   }
 
   function addCategory() {
@@ -255,6 +268,7 @@ export default function ProductsPage() {
   const draftKey = (id: string | null) => `duchan-product-draft-${id ?? "new"}`;
 
   function openEditor(p: Product | null) {
+    setCatDraft(null);
     let base: EditState;
     if (p) {
       base = {
@@ -1101,13 +1115,15 @@ export default function ProductsPage() {
 
             {/* קטגוריה — מתוך הרשימה שהמוכרת הגדירה למעלה. מוצר בלי
                 קטגוריה תקין לגמרי; הצ'יפים בחנות פשוט לא יסננו אותו. */}
-            {!!store?.categories?.length && (
+            {store && (
               <>
                 <label id="editor-categories" className="block text-[12px] text-[var(--muted)] mb-1 scroll-mt-24">
-                  באיזו קטגוריה המוצר יופיע בדוכן? (אפשר כמה)
+                  {store.categories?.length
+                    ? "באיזו קטגוריה המוצר יופיע בדוכן? (אפשר כמה)"
+                    : "קטגוריה (לא חובה) — הקונים יוכלו לסנן לפיה"}
                 </label>
                 <div className="flex gap-1.5 flex-wrap mb-3" role="group" aria-labelledby="editor-categories">
-                  {store.categories.map((c) => {
+                  {(store.categories ?? []).map((c) => {
                     const on = edit.categories.includes(c);
                     return (
                       <button
@@ -1132,6 +1148,38 @@ export default function ProductsPage() {
                       </button>
                     );
                   })}
+                  {catDraft === null ? (
+                    <button
+                      onClick={() => setCatDraft("")}
+                      data-testid="editor-new-category"
+                      className="border-[1.5px] border-dashed border-[var(--line)] px-3 py-2 text-[12.5px] font-semibold text-[var(--muted)]"
+                    >
+                      + קטגוריה חדשה
+                    </button>
+                  ) : (
+                    <span className="flex basis-full gap-1.5">
+                      <input
+                        autoFocus
+                        value={catDraft}
+                        onChange={(e) => setCatDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") addCategoryFromEditor();
+                          if (e.key === "Escape") setCatDraft(null);
+                        }}
+                        placeholder="למשל: צמידים"
+                        aria-label="שם הקטגוריה החדשה"
+                        maxLength={20}
+                        className="flex-1 min-w-0 border-[1.5px] border-[var(--ink)] px-3 py-2 text-[13px]"
+                      />
+                      <button
+                        onClick={addCategoryFromEditor}
+                        data-testid="editor-new-category-add"
+                        className="shrink-0 bg-[var(--ink)] text-white px-4 text-[12.5px] font-bold"
+                      >
+                        הוספה
+                      </button>
+                    </span>
+                  )}
                 </div>
               </>
             )}
