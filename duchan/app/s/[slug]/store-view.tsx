@@ -1,7 +1,7 @@
 "use client";
 
 import CloseX from "@/app/close-x";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { deliveryLine, formatPayPhone, payMethods, paymentLinkLine, payoutLine, payoutSummary, payoutTarget, type PayMethod } from "@/lib/payouts";
@@ -37,6 +37,7 @@ export default function StoreView({
   soldIds,
   preview = false,
   hasCoupons = false,
+  footer,
 }: {
   store: PublicStore;
   products: PublicProduct[];
@@ -47,6 +48,9 @@ export default function StoreView({
   hasCoupons?: boolean;
   /** הדוכן עוד לא פורסם: רואים הכל, אי אפשר להזמין. */
   preview?: boolean;
+  /** מה שבא אחרי המוצרים ("רוצה גם דוכן כזה?"). חייב לשבת בתוך השכבה של
+   *  הדוכן: מחוץ לה, תמונת הרקע הקבועה נצבעת מעליו ומעלימה אותו. */
+  footer?: ReactNode;
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [current, setCurrent] = useState<PublicProduct | null>(null);
@@ -922,7 +926,7 @@ export default function StoreView({
       )}
 
       {/* grid */}
-      <div className="flex-1 px-4 pb-24" ref={gridRef}>
+      <div className={`flex-1 px-4 ${footer ? "pb-6" : "pb-24"}`} ref={gridRef}>
         {sorted.length === 0 ? (
           <div className="text-center pt-14">
             <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-75"} style={plate}>
@@ -958,6 +962,7 @@ export default function StoreView({
           <a href="/terms" className="underline">תנאים</a>
         </p>
       </div>
+      {footer}
 
       {/* cart bar */}
       <div

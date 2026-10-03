@@ -92,9 +92,9 @@ export default async function StorePage({ params }: Props) {
         soldIds={data.soldIds}
         hasCoupons={data.hasCoupons}
         preview={data.state === "preview"}
+        /* הלולאה: מי שראתה דוכן של חבר/ה יכול/ה לפתוח אחד משלו/ה, והשיוך נשמר */
+        footer={<OpenYourOwn slug={data.store.slug} name={data.store.display_name} />}
       />
-      {/* הלולאה: מי שראתה חנות של חברה יכולה לפתוח אחת משלה, והשיוך נשמר */}
-      <OpenYourOwn slug={data.store.slug} name={data.store.display_name} />
     </div>
   );
 }
@@ -118,41 +118,69 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
     `ואני רוצה גם דוכן מכירות כזה` +
     (IS_LAUNCH ? ` (ראיתי שיש ${DEAL_LABEL}: רק ₪${ACTIVATION_PRICE}).` : ".");
 
+  // כרטיס לבן ואטום, בגופן ובצבעים של דוכן ולא של הדוכן הספציפי: זו הפנייה
+  // שלנו, והיא צריכה להיקרא על כל רקע — גם על תמונה (מרינה: "לא רואים את
+  // הפרטים... זה חשוב מאוד ומביא לקוחות"). pb גדול בשביל פס הסל הקבוע.
   return (
-    <div className="bg-[var(--canvas)] border-t border-[var(--line)] px-6 py-8 text-center">
-      <Icon name="stall" size={36} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
-      <h2 className="text-[15px] font-bold text-[var(--ink)] mt-2">רוצה גם דוכן מכירות כזה?</h2>
-      <p className="text-[12.5px] text-[var(--muted)] mt-1.5 leading-relaxed max-w-xs mx-auto">
-        סקווישים שכבר לא בשימוש, צמידים, בגדים שקטנו.
-        <br />
-        דוכן משלך נבנה בכמה דקות, מהטלפון.
-      </p>
-      {IS_LAUNCH && (
-        <p
-          className="fx-shine inline-block text-[12.5px] font-bold mt-3 text-white px-3.5 py-1.5"
-          style={{ background: "var(--wood)" }}
-        >
-          <span className="relative z-[3]">
-            <span className="fx-wiggle">🎉</span> {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi className="line-through opacity-75">₪{FULL_PRICE}</bdi>!
-          </span>
+    <div className="px-4 pt-2 pb-28">
+      <section
+        data-testid="open-own"
+        aria-labelledby="open-own-title"
+        className="bg-white border border-[var(--line)] text-[var(--ink)] px-5 pt-6 pb-5 text-center"
+        style={{ fontFamily: "var(--font-body)" }}
+      >
+        <Icon name="stall" size={40} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
+        <h2 id="open-own-title" className="text-[20px] font-extrabold mt-2 leading-tight">
+          רוצה גם דוכן כזה?
+        </h2>
+        <p className="text-[13.5px] text-[var(--muted)] mt-2 leading-relaxed max-w-[19rem] mx-auto">
+          מוכרים מה שכבר לא צריכים: סקווישים, צמידים, בגדים שקטנו.
+          דוכן משלך מוכן בכמה דקות, מהטלפון.
         </p>
-      )}
 
-      {/* פתיחת דוכן היא הפעולה העיקרית — הכפתור הבולט. פנייה בוואטסאפ היא
-          לשאלה, ולכן קישור טקסט קטן מתחתיו, לא כפתור מתחרה. */}
-      <a
-        href={`/?ref=${slug}`}
-        className="btn btn-primary inline-block mt-4 px-8 py-3 text-[13.5px]"
-      >
-        לפתוח דוכן משלך
-      </a>
+        <ol className="grid grid-cols-3 mt-4 border border-[var(--line)]" data-testid="open-own-steps">
+          {[
+            ["📸", "מצלמים מוצר"],
+            ["🔗", "שולחים לינק לחברים"],
+            ["💬", "מקבלים הזמנות"],
+          ].map(([e, t], i) => (
+            <li key={t} className={`px-1.5 py-3 ${i ? "border-r border-[var(--line)]" : ""}`}>
+              <span className="block text-[20px] leading-none" aria-hidden>{e}</span>
+              <span className="block text-[12px] font-bold mt-1.5 leading-snug">{t}</span>
+            </li>
+          ))}
+        </ol>
 
-      <a
-        href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
-        className="block mt-3 text-[12px] text-[var(--muted)] underline"
-      >
-        יש לך שאלות? אשמח לענות בוואטסאפ
-      </a>
+        {IS_LAUNCH && (
+          <p
+            className="fx-shine text-[13px] font-bold mt-4 text-white px-3.5 py-2"
+            style={{ background: "var(--wood)" }}
+            data-testid="open-own-deal"
+          >
+            <span className="relative z-[3]">
+              <span className="fx-wiggle">🎉</span> {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi className="line-through opacity-75">₪{FULL_PRICE}</bdi>!
+            </span>
+          </p>
+        )}
+
+        {/* פתיחת דוכן היא הפעולה העיקרית — הכפתור הבולט. פנייה בוואטסאפ היא
+            לשאלה, ולכן קישור טקסט קטן מתחתיו, לא כפתור מתחרה. */}
+        <a
+          href={`/?ref=${slug}`}
+          data-testid="open-own-cta"
+          className="btn btn-primary w-full mt-3 text-[15px]"
+          style={{ fontWeight: 700 }}
+        >
+          לפתוח דוכן משלי
+        </a>
+
+        <a
+          href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
+          className="inline-block mt-3 py-1 text-[12.5px] text-[var(--muted)] underline"
+        >
+          יש לך שאלות? אשמח לענות בוואטסאפ
+        </a>
+      </section>
     </div>
   );
 }
