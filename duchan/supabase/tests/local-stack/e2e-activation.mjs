@@ -146,7 +146,7 @@ check("והצהרה לבדה לא מפעילה את הדוכן", claimed.activat
 const steps = (await girl.textContent("[data-testid=payment-steps]")) ?? "";
 check("מסך ההמתנה: 'סימנתם ששילמתם' עם סכום, איך ומי", steps.includes("סימנתם ששילמתם") &&
   (await girl.textContent("[data-testid=payment-claim-details]")).match(/₪\d+ בפייבוקס/) !== null && steps.includes("אמא של תמר"), steps.slice(0, 120));
-check("ואומר מה קורה עכשיו: מרינה בודקת, לא צריך לעשות כלום", steps.includes("מרינה בודקת") && steps.includes("לא צריך לעשות כלום"));
+check("ואומר מה קורה עכשיו: אנחנו בודקים, לא צריך לעשות כלום", steps.includes("אנחנו בודקים שהכסף הגיע") && !steps.includes("מרינה") && steps.includes("לא צריך לעשות כלום"));
 check("ומה יקרה אחר כך: הדוכן נפתח להזמנות", steps.includes("הדוכן נפתח להזמנות"));
 await girl.click("[data-testid=not-paid-yet] summary");
 check("'עוד לא שילמתם בפועל?' פותח את הדרכים לשלם", (await girl.locator("[data-testid=not-paid-yet] a").count()) >= 1);

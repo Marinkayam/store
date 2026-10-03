@@ -677,16 +677,16 @@ export default function SettingsPage() {
               {!store.activated_at ? (
                 <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block">
                   <div className="text-[13px] font-bold">
-                    {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
+                    {store.payment_claimed_at ? "⏳ התשלום בבדיקה" : "🚀 לפתוח את הדוכן להזמנות"}
                   </div>
                   {store.payment_claimed_at ? (
                     <div className="text-[12px] opacity-80 leading-relaxed mt-1">
-                      סימנתם ששילמתם. ברגע שמרינה תאשר, הדוכן יתחיל לקבל הזמנות.
+                      סימנתם ששילמתם. ברגע שנראה שהכסף הגיע, הדוכן יתחיל לקבל הזמנות.
                     </div>
                   ) : (
                     <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
                       <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (חינם) או בביט</li>
-                      <li>2. מרינה מאשרת שהתשלום הגיע</li>
+                      <li>2. אנחנו בודקים שהכסף הגיע</li>
                       <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
                     </ol>
                   )}

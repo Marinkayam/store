@@ -157,7 +157,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
   /* ── הצהרנו ששילמנו, מחכים לאישור ──
      "קיבלנו, בודקים" לבד לא אמר מה קיבלנו ומה קורה עכשיו — לקוחה לא ידעה אם
      בכלל שילמה. אז זה מסלול של שלושה שלבים, עם מה שסומן (סכום, איך, מתי),
-     מה קורה עכשיו (מרינה בודקת, לא צריך לעשות כלום), ומה יקרה אחר כך. */
+     מה קורה עכשיו (אנחנו בודקים, לא צריך לעשות כלום), ומה יקרה אחר כך. */
   if (store.payment_claimed_at) {
     const methodLabel = METHODS.find((m) => m.key === store.payment_method)?.label ?? "דרך אחרת";
     const when = new Date(store.payment_claimed_at).toLocaleString("he-IL", {
@@ -171,7 +171,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
             התשלום בבדיקה
           </h1>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed mt-1.5">
-            סימנתם ששילמתם. עכשיו מרינה בודקת שהכסף הגיע, ואז הדוכן נפתח להזמנות.
+            סימנתם ששילמתם. עכשיו אנחנו בודקים שהכסף הגיע, ואז הדוכן נפתח להזמנות.
           </p>
         </div>
 
@@ -189,7 +189,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <li className="flex gap-3 p-4 border-b border-[var(--line)] bg-[var(--warn-bg)]" aria-current="step">
             <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-white text-[15px]" aria-hidden>⏳</span>
             <div className="min-w-0">
-              <div className="text-[14px] font-bold">עכשיו: מרינה בודקת שהתשלום הגיע</div>
+              <div className="text-[14px] font-bold">עכשיו: אנחנו בודקים שהכסף הגיע</div>
               <div className="text-[12.5px] text-[var(--ink)] leading-relaxed mt-0.5">
                 לרוב תוך כמה שעות. <b>לא צריך לעשות כלום</b> ולא צריך לשלם שוב.
               </div>
@@ -213,8 +213,8 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           </summary>
           <div className="px-4 pb-4 text-[12.5px] text-[var(--muted)] leading-relaxed">
             <p>
-              ההורים משלמים ₪{amount} פעם אחת, וכותבים בהערה את שם הדוכן: <b className="text-[var(--ink)]">{store.display_name}</b>.
-              אחרי שזה נשלח לא צריך לסמן שוב. מרינה תראה את התשלום.
+              התשלום הוא ₪{amount}, פעם אחת. בהערה לתשלום כותבים את שם הדוכן: <b className="text-[var(--ink)]">{store.display_name}</b>.
+              אחרי ששולחים, לא צריך לסמן שוב. אנחנו נראה את התשלום.
             </p>
             <div className="flex flex-col gap-2 mt-3">
               {payboxUrl && (
@@ -237,11 +237,11 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
             בינתיים אפשר להוסיף עוד מוצרים
           </a>
           <a
-            href={waOwner(`היי מרינה! שילמנו על הדוכן "${store.display_name}" (${store.slug}). אפשר לבדוק?`)}
+            href={waOwner(`היי! שילמנו על הדוכן "${store.display_name}" (${store.slug}). אפשר לבדוק?`)}
             className="text-center text-[13px] text-[var(--muted)] underline py-2"
             data-testid="ask-marina"
           >
-            עברו יותר מכמה שעות? לכתוב למרינה בוואטסאפ
+            עברו יותר מכמה שעות? לכתוב לנו בוואטסאפ
           </a>
         </div>
       </Shell>
