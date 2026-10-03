@@ -177,14 +177,14 @@ check("the product sheet tells the buyer how many are left",
 /* ── שלב 7: מצב חופשה ← החנות סגורה ← חזרה ── */
 await page.goto(`${BASE}/dashboard/settings`);
 await page.waitForSelector("text=הדוכן פתוח", { timeout: 20000 });
-await page.click("button[aria-label='פתיחה או סגירה של הדוכן']");
+await page.click("[data-testid=store-open-off]");
 await page.waitForSelector("text=הדוכן בהפסקה", { timeout: 15000 });
 await new Promise((r) => setTimeout(r, 400));
 const closedRes = await fetch(`${BASE}/s/${slug}`, { headers: { "Cache-Control": "no-cache" } });
 const closedHtml = await closedRes.text();
 check("paused store shows closed page to buyers",
   closedHtml.includes("סגור") && !closedHtml.includes("סקוויש חד-קרן"));
-await page.click("button[aria-label='פתיחה או סגירה של הדוכן']");
+await page.click("[data-testid=store-open-on]");
 await page.waitForSelector("text=הדוכן פתוח", { timeout: 15000 });
 check("store reopens",
   (await db.query("select status from stores where id=$1", [seedStore.id])).rows[0].status === "active");

@@ -30,6 +30,13 @@ if (!store) {
 }
 await db.query("delete from orders where ip_hash is not null and created_at > now() - interval '1 day'");
 await db.query("delete from products where name='גרבי צבעים'");
+/* מוצרים שאזלו יורדים מהדוכן (0053). ריצות קודמות מורידות מלאי, ובלי
+   מילוי כאן "הוספה מהירה" הראשונה נופלת על הגרביים עם הצבעים — ונפתחת
+   בחירת צבע במקום סל. הבדיקה לא אמורה להיות תלויה בריצה הקודמת. */
+await db.query(
+  "update products set stock=greatest(stock,10) where store_id=$1 and deleted_at is null and track_stock",
+  [store.id]
+);
 await db.query(
   `insert into products (store_id,name,price,track_stock,stock,option_label,options,created_at)
    values ($1,'גרבי צבעים',15,true,9,'צבע',$2, now() - interval '40 days')`,
@@ -39,7 +46,9 @@ await db.query(
   `update stores set tagline=null, about=null, city=null, ships=false, shipping_note=null,
    shipping_price=null, order_intro=null, order_outro=null,
    payout_bit=true, payout_paybox=true, payout_cash=true,
-   payout_link='https://link.payboxapp.com/abc123' where id=$1`,
+   payout_link='https://link.payboxapp.com/abc123',
+   payout_bit_link=null, payout_paybox_link=null, payout_bit_phone=null, payout_paybox_phone=null
+   where id=$1`, /* השדות החדשים (0046) — ריצה של e2e-activation משאירה לינק ביט */
   [store.id]
 );
 
@@ -72,7 +81,7 @@ await girl.fill("textarea[aria-label='תיאור הדוכן']", STORY);
 await openSection("details");
 await girl.fill("input[aria-label='עיר בארץ']", "רמת גן");
 await openSection("shipping");
-await girl.click("button[aria-label='יש משלוחים']");
+await girl.click("[data-testid=ships-choice-on]");
 await girl.waitForTimeout(400);
 await girl.fill("textarea[aria-label='פרטי משלוח']", "שולחת בדואר לכל הארץ");
 await girl.fill("input[aria-label='מחיר משלוח']", "15");
@@ -193,7 +202,8 @@ check("אמצעי התשלום שנבחר נשמר", order?.pay_method === "payb
 /* ── 5. ביט בהודעה, אבל המספר לא בקוד המקור ── */
 const buyer2 = await phone();
 await buyer2.goto(fresh(), { waitUntil: "networkidle" });
-await buyer2.locator("button[aria-label^='הוספה מהירה']").first().click();
+// מוצר בלי צבעים — "הוספה מהירה" על הגרביים פותחת בחירת צבע ולא סל
+await buyer2.locator("button[aria-label^='הוספה מהירה']:not([aria-label*='גרבי צבעים'])").first().click();
 await buyer2.waitForTimeout(700);
 await buyer2.click("[data-testid=cart-bar]");
 await buyer2.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });

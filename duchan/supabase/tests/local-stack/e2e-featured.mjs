@@ -89,7 +89,8 @@ check("וברשימת המוצרים מופיע ★", (await girl.locator("[aria
 await girl.goto(`${BASE}/dashboard/settings#products`);
 await girl.waitForSelector("[data-testid=products-display]", { timeout: 20000 });
 check("בהגדרות: הצגת 'אזל' כבויה כברירת מחדל",
-  (await girl.getAttribute("[data-testid=show-sold-out-toggle]", "aria-pressed")) === "false");
+  // הבחירה היא "להסתיר אותו" (data-on=true) או "להציג עם 'אזל'"
+  (await girl.getAttribute("[data-testid=show-sold-out-toggle]", "data-on")) === "true");
 await girl.fill("input[aria-label='כותרת המומלצים']", "הכי שווים עכשיו");
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2200);
@@ -117,7 +118,7 @@ check("בבחירת קטגוריה — בלי חלק המומלצים", (await b
 check("ורק המוצרים שלה", (await card(buyer, plainP.name).count()) === 1 && (await card(buyer, featP.name).count()) === 0);
 
 /* ── 4. חנות שבוחרת להציג אזל ── */
-await girl.click("[data-testid=show-sold-out-toggle]");
+await girl.click("[data-testid=show-sold-out-toggle-off]");
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2200);
 const { rows: [s2] } = await db.query("select show_sold_out from stores where id=$1", [store.id]);

@@ -52,7 +52,7 @@ await girl.goto(`${BASE}/dashboard/settings#promo`);
 await girl.waitForSelector("input[aria-label='כותרת ההודעה']", { timeout: 20000 });
 
 check("המתג כבוי כברירת מחדל",
-  (await girl.getAttribute("[data-testid=promo-toggle]", "aria-pressed")) === "false");
+  (await girl.getAttribute("[data-testid=promo-toggle]", "data-on")) === "false");
 check("ואין תצוגה מקדימה כשאין טקסט",
   (await girl.locator("[data-testid=promo-preview]").count()) === 0);
 
@@ -66,9 +66,9 @@ check("והיא מראה את מה שנכתב",
 check("המסך מזהיר שההודעה עדיין כבויה",
   (await girl.textContent("body")).includes("ההודעה כבויה כרגע"));
 
-await girl.click("[data-testid=promo-toggle]");
+await girl.click("[data-testid=promo-toggle-on]");
 await girl.waitForTimeout(300);
-check("הדלקת המתג נרשמת", (await girl.getAttribute("[data-testid=promo-toggle]", "aria-pressed")) === "true");
+check("הדלקת המתג נרשמת", (await girl.getAttribute("[data-testid=promo-toggle]", "data-on")) === "true");
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2200);
 
@@ -120,7 +120,7 @@ check("גם בתוך הקופסה הרווח מאוזן",
   Math.abs(gaps.inTop - gaps.inBottom) <= 2, `מעל ${gaps.inTop} · מתחת ${gaps.inBottom}`);
 
 /* ── 4. כיבוי מסתיר ולא מוחק ── */
-await girl.click("[data-testid=promo-toggle]");
+await girl.click("[data-testid=promo-toggle-off]");
 await girl.waitForTimeout(300);
 await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2200);

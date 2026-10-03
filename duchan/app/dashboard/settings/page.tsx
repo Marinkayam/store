@@ -16,6 +16,7 @@ import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
 import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import SettingsHub, { type HubGroup } from "./hub";
+import Choice from "@/app/choice";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -559,7 +560,8 @@ export default function SettingsPage() {
         החנות הושבתה על ידי הנהלת דוכן.
       </div>
     ) : (
-      <div className="rounded-2xl bg-white border border-[var(--line)] p-3.5 flex items-center gap-3">
+      <div className="rounded-2xl bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
+        <div className="flex items-center gap-3">
         <span className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-[19px] bg-[var(--sand)]" aria-hidden>
           {store.status === "active" ? "🟢" : "⏸️"}
         </span>
@@ -573,18 +575,15 @@ export default function SettingsPage() {
               : "הלינק מציג 'סגור כרגע'. הכל נשמר — לחיצה פותחת שוב."}
           </div>
         </div>
-        <button
-          onClick={togglePause}
-          className={`shrink-0 relative rounded-full transition ${store.status === "active" ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-          style={{ width: 46, height: 28 }}
-          aria-label="פתיחה או סגירה של הדוכן"
-          aria-pressed={store.status === "active"}
-        >
-          <i
-            className="absolute top-[3px] w-[22px] h-[22px] rounded-full bg-white shadow transition-all"
-            style={{ right: store.status === "active" ? 21 : 3 }}
-          />
-        </button>
+        </div>
+        <Choice
+          value={store.status === "active"}
+          onChange={() => togglePause()}
+          on="🟢 פתוח להזמנות"
+          off="⏸️ בהפסקה"
+          label="הדוכן פתוח או בהפסקה"
+          testid="store-open"
+        />
       </div>
     );
 
@@ -1167,30 +1166,24 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => { setShowSoldOut((v) => !v); setDirty(true); }}
-            aria-pressed={showSoldOut}
-            aria-label="להציג גם מוצרים שאזלו"
-            data-testid="show-sold-out-toggle"
-            className="flex items-center justify-between gap-3 text-right min-h-11"
-          >
-            <span className="flex-1">
-              <span className="block text-[13px] font-semibold">להציג גם מוצרים שאזלו</span>
+          <div className="flex flex-col gap-2">
+            <div>
+              <span className="block text-[13px] font-semibold">מוצר שאזל</span>
               <span className="block text-[11.5px] text-[var(--muted)] leading-snug mt-0.5">
                 {showSoldOut
-                  ? "מוצר שאזל מופיע בסוף הדוכן עם תווית \"אזל\"."
-                  : "כבוי: מוצר שאזל יורד מהדוכן לבד, וחוזר כשמוסיפים מלאי. לא צריך למחוק אותו."}
+                  ? "מופיע בסוף הדוכן עם תווית \"אזל\"."
+                  : "יורד מהדוכן לבד, וחוזר כשמוסיפים מלאי. לא צריך למחוק אותו."}
               </span>
-            </span>
-            <span
-              className={`w-11 shrink-0 relative transition ${showSoldOut ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-              style={{ height: 26 }}
-              aria-hidden
-            >
-              <i className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all" style={{ right: showSoldOut ? 21 : 3 }} />
-            </span>
-          </button>
+            </div>
+            <Choice
+              value={!showSoldOut}
+              onChange={(hide) => { setShowSoldOut(!hide); setDirty(true); }}
+              on="🙈 להסתיר אותו"
+              off="🏷️ להציג עם 'אזל'"
+              label="מה קורה למוצר שאזל"
+              testid="show-sold-out-toggle"
+            />
+          </div>
         </div>
 
             </>
@@ -1204,22 +1197,23 @@ export default function SettingsPage() {
         <div id="promo" className="scroll-mt-14 bg-white rounded-2xl border border-[var(--line)] p-3">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <div className="text-[13px] font-bold">להציג בדוכן</div>
+              <div className="text-[13px] font-bold">ההודעה בדוכן</div>
               <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
                 מופיעה בדוכן מתחת לשם, מעל המוצרים.
               </p>
             </div>
-            <button
-              onClick={() => { setPromo({ ...promo, promo_on: !promo.promo_on }); setDirty(true); }}
-              aria-pressed={promo.promo_on}
-              aria-label="הצגת ההודעה בדוכן"
-              data-testid="promo-toggle"
-              className={`shrink-0 w-12 h-7 border-[1.5px] flex items-center px-0.5 ${
-                promo.promo_on ? "bg-[var(--ink)] border-[var(--ink)] justify-end" : "border-[var(--line)] justify-start"
-              }`}
-            >
-              <span className={`w-5 h-5 ${promo.promo_on ? "bg-white" : "bg-[#D3D5DC]"}`} />
-            </button>
+
+          </div>
+
+          <div className="mt-2.5">
+            <Choice
+              value={promo.promo_on}
+              onChange={(v) => { setPromo({ ...promo, promo_on: v }); setDirty(true); }}
+              on="📣 מופיעה בדוכן"
+              off="💤 כבויה"
+              label="להציג את ההודעה בדוכן"
+              testid="promo-toggle"
+            />
           </div>
 
           <label className="block text-[12px] text-[var(--muted)] mt-3 mb-1">כותרת קצרה</label>
@@ -1409,26 +1403,18 @@ export default function SettingsPage() {
             <>
         {/* משלוחים */}
         <div className="bg-white rounded-2xl border border-[var(--line)] p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[13px] font-bold">יש משלוחים</div>
-              <div className="text-[12px] text-[var(--muted)]">
-                {info.ships ? "מוצג בדף החנות ובהודעת ההזמנה" : "כרגע: מסירה ביד בלבד"}
-              </div>
-            </div>
-            <button
-              onClick={() => { setInfo({ ...info, ships: !info.ships }); setDirty(true); }}
-              aria-label="יש משלוחים"
-              aria-pressed={info.ships}
-              className={`relative ${info.ships ? "bg-[var(--ok-ink)]" : "bg-[var(--stone)]"}`}
-              style={{ width: 44, height: 26 }}
-            >
-              <i
-                className="absolute top-[3px] w-[20px] h-[20px] bg-white transition-all"
-                style={{ right: info.ships ? 21 : 3 }}
-              />
-            </button>
+          <div className="text-[13px] font-bold">איך המוצרים מגיעים לקונים?</div>
+          <div className="text-[12px] text-[var(--muted)] mb-2.5">
+            {info.ships ? "המשלוח מופיע בדוכן ובהודעת ההזמנה." : "הקונים יודעים שמוסרים ביד ומתאמים בוואטסאפ."}
           </div>
+          <Choice
+            value={info.ships}
+            onChange={(v) => { setInfo({ ...info, ships: v }); setDirty(true); }}
+            on="🚚 גם משלוח"
+            off="🤝 רק מסירה ביד"
+            label="יש משלוחים"
+            testid="ships-choice"
+          />
           {info.ships && (
             <>
               <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">איך ולאן</label>
