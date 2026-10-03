@@ -550,3 +550,28 @@ html.ptr-on, html.ptr-on body { overscroll-behavior-y: none; }
 }
 .ptr-sway { animation: ptr-sway 0.9s ease-in-out infinite; transform-origin: 50% 0; }
 @media (prefers-reduced-motion: reduce) { .ptr-sway { animation: none; } }
+
+/* ── מסך השגיאה: הדוכן שהתפרק (app/oops-stall.tsx) ──
+   השלט תלוי על חוט אחד ומתנדנד; "לרענן" מיישר הכל בקפיצה. נקודות הסיבוב
+   ביחידות של ה-viewBox (240×210). */
+.oops-awning { transform-origin: 40px 40px; transform: rotate(-6deg); transition: transform .6s cubic-bezier(.3, 1.7, .5, 1); }
+.oops-sign { transform-origin: 95px 58px; transform: rotate(26deg); animation: oops-swing 2.6s ease-in-out infinite; }
+@keyframes oops-swing { 0%, 100% { transform: rotate(21deg); } 50% { transform: rotate(32deg); } }
+.oops-string2 { opacity: 0; }
+.oops-jar { transform-origin: 150px 146px; transition: transform .5s cubic-bezier(.3, 1.6, .5, 1) .15s; }
+.oops-ball { transform-box: fill-box; transform-origin: center; animation: oops-roll 3.2s ease-in-out infinite; }
+.oops-ball2 { animation-delay: -1.1s; }
+@keyframes oops-roll { 0%, 100% { transform: translateX(0) rotate(0); } 50% { transform: translateX(4px) rotate(40deg); } }
+.oops-fixing .oops-awning { transform: rotate(0); }
+.oops-fixing .oops-sign { transform: rotate(0); animation: oops-fix .7s cubic-bezier(.3, 1.7, .5, 1) both; }
+@keyframes oops-fix { from { transform: rotate(27deg); } to { transform: rotate(0); } }
+.oops-fixing .oops-string2 { opacity: 1; transition: opacity .2s .45s; }
+.oops-fixing .oops-stub { opacity: 0; }
+.oops-fixing .oops-jar { transform: rotate(-90deg); }
+.oops-spin { animation: oops-spin .8s linear infinite; }
+@keyframes oops-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .oops-sign, .oops-ball, .oops-spin, .oops-fixing .oops-sign { animation: none; }
+}
+html.a11y-still .oops-sign { transform: rotate(26deg); }
+html.a11y-still .oops-fixing .oops-sign { transform: rotate(0); }
