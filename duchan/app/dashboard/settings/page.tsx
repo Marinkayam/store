@@ -1,5 +1,6 @@
 "use client";
 
+import Chevron from "@/app/chevron";
 import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../use-store";
@@ -705,7 +706,7 @@ export default function SettingsPage() {
                     : "אם רוצים — אפשר להזמין חבר/ה, אח או אחות אחד/ת שינהלו איתך"}
                 </span>
               </span>
-              <span className="text-[var(--faint)] text-[18px] shrink-0" aria-hidden>‹</span>
+              <Chevron className="text-[var(--faint)]" />
             </button>
           }
           /* התשלום היה מוסתר מאחורי "לפרסם את הדוכן", ולא היה ברור שיש כאן

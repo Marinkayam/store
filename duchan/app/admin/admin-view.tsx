@@ -4,6 +4,7 @@
 // לאישור (חנויות ששילמו ומחכות) · סקירה (מספרים חיים) · חנויות (תיק חנות + וואטסאפ)
 // · רשת (מי הביאה את מי) · מה מוכרות (גלריה) · עדכונים (הודעות לבנות)
 
+import Chevron from "@/app/chevron";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { milestones, reachedCount } from "@/lib/milestones";
@@ -656,7 +657,7 @@ function SchemaWarning() {
                         {s.ai_enabled && <span className="text-[var(--ok-ink)]"> · ✨ פרימיום</span>}
                       </div>
                     </div>
-                    <span className="text-[var(--muted)]">‹</span>
+                    <Chevron className="text-[var(--muted)]" size={14} />
                   </div>
                 </button>
               ))}

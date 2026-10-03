@@ -1,5 +1,6 @@
 "use client";
 
+import Chevron from "@/app/chevron";
 import type { CSSProperties, ReactNode } from "react";
 
 /**
@@ -82,7 +83,7 @@ export default function SettingsHub({
                     <span className="block text-[14px] font-bold text-[var(--ink)]">{r.title}</span>
                     <span className="block text-[12px] text-[var(--muted)] truncate mt-0.5">{r.locked ? `🔒 ${r.locked}` : r.summary}</span>
                   </span>
-                  <span className="text-[var(--faint)] text-[18px] shrink-0" aria-hidden>{r.locked ? "🔒" : "‹"}</span>
+                  {r.locked ? <span className="text-[var(--faint)] text-[16px] shrink-0" aria-hidden>🔒</span> : <Chevron className="text-[var(--faint)]" />}
                 </>
               );
               const cls = `fx-press w-full flex items-center gap-3 px-3.5 py-3 min-h-[60px] ${

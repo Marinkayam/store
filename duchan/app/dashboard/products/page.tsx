@@ -1,5 +1,6 @@
 "use client";
 
+import Chevron from "@/app/chevron";
 import CloseX from "@/app/close-x";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Choice from "@/app/choice";
@@ -787,7 +788,7 @@ export default function ProductsPage() {
                 className="w-full mt-4 pt-3 border-t border-[var(--line)] min-h-11 flex items-center justify-between text-[13px] font-medium text-[var(--ink)]"
               >
                 <span>עיצוב הקטגוריות</span>
-                <span aria-hidden className="text-[var(--muted)] text-[18px] leading-none">‹</span>
+                <Chevron className="text-[var(--muted)]" />
               </button>
             )}
           </div>
@@ -923,7 +924,7 @@ export default function ProductsPage() {
                 </div>
               ) : (
                 /* כמו בשורות של "הדוכן שלי": החץ אומר שלוחצים ונכנסים */
-                <span aria-hidden className="text-[var(--faint)] text-[20px] shrink-0">‹</span>
+                <Chevron className="text-[var(--faint)]" size={18} />
               )}
             </div>
           );

@@ -159,9 +159,9 @@ check("AI button appears once AI on + photo",
 /* ── 8. עריכה של מוצר קיים: אותה תמונה, בלי לצלם מחדש ── */
 await girl.goto(`${BASE}/dashboard/products`);
 await girl.waitForSelector("text=סקוויש חד-קרן");
-// השורה כולה נפתחת לעריכה, עם חץ ‹ בצד (כמו ב"הדוכן שלי")
+// השורה כולה נפתחת לעריכה, עם חץ שמצביע שמאלה (ציור, לא תו שמתהפך ב-RTL)
 check("a product row says out loud that it opens for editing",
-  (await girl.locator("[data-testid=product-row]").first().textContent())?.includes("‹") === true);
+  (await girl.locator("[data-testid=product-row]").first().locator("svg[data-chevron=left]").count()) === 1);
 await girl.click("text=סקוויש חד-קרן");
 await girl.waitForSelector("input[aria-label='שם המוצר']");
 check("editing an existing product can still ask for a description",
