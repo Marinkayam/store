@@ -33,7 +33,7 @@ const RESTORE = [
   "payout_bit_link", "payout_paybox_link", "payout_link", "payout_whatsapp",
   "ships", "shipping_note", "shipping_price", "city", "age", "status", "contact_phone",
 ];
-await db.query("update stores set status='active', payout_bit=true, payout_paybox=false, payout_bit_link=null, payout_bit_phone=null, payout_whatsapp=false where id=$1", [orig.id]);
+await db.query("update stores set status='active', payout_bit=true, payout_paybox=false, payout_bit_link=null, payout_bit_phone=null, payout_paybox_link=null, payout_paybox_phone=null, payout_link=null, payout_whatsapp=false where id=$1", [orig.id]);
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const page = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();

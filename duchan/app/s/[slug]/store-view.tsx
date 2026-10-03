@@ -409,7 +409,7 @@ export default function StoreView({
     // טלפון חובה: ההזמנה כבר לא עוברת בוואטסאפ, ובלי מספר אין למוכרת
     // דרך לחזור לקונה. אותה בדיקה רצה גם בשרת.
     if (!buyerPhone.trim()) {
-      showToast("צריך מספר טלפון, כדי שהדוכן יוכל לחזור אליכם");
+      showToast("צריך מספר טלפון, כדי שבעלי הדוכן יוכלו לחזור אליכם");
       return;
     }
     const shipping = store.ships && wantsShipping;
@@ -1381,7 +1381,7 @@ export default function StoreView({
                     sub: [store.shipping_note || "עד הבית", typeof store.shipping_price === "number" ? `₪${formatPrice(store.shipping_price)}` : ""]
                       .filter(Boolean).join(" · "),
                   },
-                  { key: "pickup", title: "🤝 מסירה אישית", sub: "קובעים עם הדוכן איפה ומתי" },
+                  { key: "pickup", title: "🤝 מסירה אישית", sub: "קובעים עם בעלי הדוכן איפה ומתי" },
                 ]}
               />
               {/* כתובת — טופס רגיל: עיר, רחוב, ואם גרים בבניין גם קומה ודירה.
@@ -1490,7 +1490,7 @@ export default function StoreView({
                 </label>
               </div>
               <label className="block">
-                <span className="block text-[11.5px] opacity-75 mb-1.5">הערה לדוכן (לא חובה)</span>
+                <span className="block text-[11.5px] opacity-75 mb-1.5">הערה לבעלי הדוכן (לא חובה)</span>
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -1535,8 +1535,8 @@ export default function StoreView({
                       : payTarget?.kind === "phone"
                         ? `👉 אחרי שליחת ההזמנה יופיע המספר להעברה ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
                         : store.payout_whatsapp
-                          ? `👉 אחרי שליחת ההזמנה כותבים לדוכן בוואטסאפ, והם שולחים לאן להעביר ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
-                          : `👉 אחרי שליחת ההזמנה הדוכן יחזור אליך עם פרטי התשלום ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`}
+                          ? `👉 אחרי שליחת ההזמנה כותבים לבעלי הדוכן בוואטסאפ, והם שולחים לאן להעביר ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
+                          : `👉 אחרי שליחת ההזמנה בעלי הדוכן יחזרו אליך עם פרטי התשלום ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`}
                 </p>
               )}
             </section>
@@ -1575,7 +1575,7 @@ export default function StoreView({
               {sending ? "רגע…" : "שליחת ההזמנה"}
             </button>
             <p className="text-[11.5px] opacity-75 text-center mt-2">
-              ההזמנה נשלחת ישר לדוכן, והאישור יופיע כאן.
+              ההזמנה נשלחת ישר לבעלי הדוכן, והאישור יופיע כאן.
             </p>
           </div>
         </div>
@@ -1599,10 +1599,10 @@ export default function StoreView({
           className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
-          <div className="text-4xl mb-2" aria-hidden>{!payTarget ? "💬" : "💳"}</div>
+          <OrderBadge pending />
           <h2 className="text-lg font-bold">
             {/* ההזמנה כבר נשלחה — זה רק התשלום */}
-            ✅ ההזמנה נשלחה · נשאר לשלם
+            ההזמנה נשלחה · נשאר לשלם
           </h2>
           <p className="text-[13px] opacity-75 mt-1 leading-relaxed">
             הזמנה #{confirmed.orderNumber} · ₪{formatPrice(confirmed.total)}
@@ -1611,8 +1611,8 @@ export default function StoreView({
           {!payTarget && confirmed.waPayUrl && (
             <p className="text-[13.5px] mt-3 leading-relaxed" data-testid="pay-whatsapp-explain">
               {chosenPay === "bit" || chosenPay === "paybox"
-                ? `הדוכן שולח את פרטי ה${chosenPay === "bit" ? "ביט" : "פייבוקס"} בוואטסאפ. לוחצים כאן, ההודעה כבר כתובה — רק לשלוח:`
-                : "קובעים עם הדוכן בוואטסאפ איך משלמים. ההודעה כבר כתובה — רק לשלוח:"}
+                ? `בעלי הדוכן שולחים את פרטי ה${chosenPay === "bit" ? "ביט" : "פייבוקס"} בוואטסאפ. לוחצים כאן, ההודעה כבר כתובה — רק לשלוח:`
+                : "קובעים עם בעלי הדוכן בוואטסאפ איך משלמים. ההודעה כבר כתובה — רק לשלוח:"}
             </p>
           )}
           {!payTarget && confirmed.waPayUrl ? (
@@ -1621,19 +1621,20 @@ export default function StoreView({
               target="_blank"
               rel="noopener noreferrer nofollow"
               data-testid="pay-whatsapp"
-              className="mt-4 block py-3.5 text-[15px] font-bold text-white"
+              className="s-r mt-4 flex items-center justify-center gap-2 py-3.5 text-[15px] font-bold text-white"
               style={{ background: "var(--whatsapp)" }}
             >
+              <Icon name="chat" size={20} tone="transparent" />
               {chosenPay === "bit" || chosenPay === "paybox"
-                ? `💬 לקבל את פרטי ה${chosenPay === "bit" ? "ביט" : "פייבוקס"} בוואטסאפ`
-                : "💬 לקבוע את התשלום בוואטסאפ"}
+                ? `לקבל את פרטי ה${chosenPay === "bit" ? "ביט" : "פייבוקס"} בוואטסאפ`
+                : "לקבוע את התשלום בוואטסאפ"}
             </a>
           ) : payTarget?.kind === "link" ? (
             <a
               href={payTarget.url}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="mt-4 block py-3.5 text-[15px] font-bold"
+              className="s-r mt-4 block py-3.5 text-[15px] font-bold"
               style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             >
               {payTarget.label} · ₪{formatPrice(confirmed.total)} ←
@@ -1643,7 +1644,7 @@ export default function StoreView({
               {/* אין לביט ולפייבוקס כתובת שפותחת העברה עם מספר וסכום —
                   אז נותנים את הדבר הכי קרוב: המספר בענק, והעתקה בלחיצה. */}
               <div
-                className="py-3 border-[1.5px]"
+                className="s-r py-3 border-[1.5px]"
                 style={{ borderColor: "var(--s-primary)" }}
                 data-testid="pay-phone"
               >
@@ -1660,7 +1661,7 @@ export default function StoreView({
                 className="mt-2 w-full py-3.5 text-[15px] font-bold"
                 style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
               >
-                העתקת המספר 📋
+                העתקת המספר
               </button>
               <p className="text-[12px] opacity-75 mt-2 leading-relaxed">
                 פותחים את {payTarget.method === "bit" ? "ביט" : "פייבוקס"} → העברה →
@@ -1670,7 +1671,7 @@ export default function StoreView({
           ) : null}
           <button
             onClick={() => setConfirmed({ ...confirmed, payFirst: false })}
-            className="mt-2 w-full py-3 text-[13.5px] font-bold border-[1.5px]"
+            className="s-r mt-2 w-full py-3 text-[13.5px] font-bold border-[1.5px]"
             style={{ borderColor: "currentColor", opacity: 0.85 }}
           >
             {/* בוואטסאפ עוד לא שילמו — רק שלחו הודעה */}
@@ -1684,7 +1685,7 @@ export default function StoreView({
               rel="noopener noreferrer nofollow"
               className="mt-3 block text-[12.5px] opacity-75 underline"
             >
-              משהו לא מסתדר? אפשר לכתוב לדוכן בוואטסאפ
+              משהו לא מסתדר? אפשר לכתוב לבעלי הדוכן בוואטסאפ
             </a>
           )}
         </div>
@@ -1696,20 +1697,20 @@ export default function StoreView({
           className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
-          <div className="text-4xl mb-2" aria-hidden>🎉</div>
+          <OrderBadge />
           <h2 className="text-lg font-bold">ההזמנה נשלחה!</h2>
           <p className="text-[13.5px] opacity-75 mt-1">
             הזמנה #{confirmed.orderNumber} · ₪{formatPrice(confirmed.total)}
           </p>
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
-            הדוכן קיבל את כל הפרטים, ויחזרו אליכם לטלפון שהשארתם.
+            בעלי הדוכן קיבלו את כל הפרטים, ויחזרו אליכם לטלפון שהשארתם.
           </p>
           {payTarget?.kind === "link" && (
             <a
               href={payTarget.url}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="mt-4 block py-3 text-[14px] font-bold"
+              className="s-r mt-4 block py-3 text-[14px] font-bold"
               style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             >
               {payTarget.label} · ₪{formatPrice(confirmed.total)} ←
@@ -1722,7 +1723,7 @@ export default function StoreView({
               className="mt-4 w-full py-3 text-[14px] font-bold"
               style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             >
-              {payTarget.method === "bit" ? "ביט" : "פייבוקס"} · {formatPayPhone(payTarget.phone)} · העתקה 📋
+              {payTarget.method === "bit" ? "ביט" : "פייבוקס"} · {formatPayPhone(payTarget.phone)} · העתקה
             </button>
           )}
           {/* וואטסאפ נשאר כדרך קשר, לא כדרך הזמנה — ההודעה המוכנה נושאת
@@ -1731,10 +1732,10 @@ export default function StoreView({
             href={confirmed.waUrl}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="mt-2 block py-3 text-[13.5px] font-bold border-[1.5px]"
+            className="s-r mt-2 block py-3 text-[13.5px] font-bold border-[1.5px]"
             style={{ borderColor: "currentColor", opacity: 0.85 }}
           >
-            יצירת קשר עם הדוכן בוואטסאפ
+            יצירת קשר עם בעלי הדוכן בוואטסאפ
           </a>
           <button
             onClick={() => setConfirmed(null)}
@@ -1828,5 +1829,29 @@ function SectionTitle({
       {star && <span aria-hidden style={{ color: "var(--s-primary-text)" }}>★</span>}
       {text}
     </h2>
+  );
+}
+
+/**
+ * הסמל של מסך "ההזמנה נשלחה": קבלה שנוחתת, ועליה ✓ — או שעון חול כשעוד
+ * נשאר לשלם. בשפת האייקונים של דוכן ובצבעי הדוכן, ובפינות של הסגנון
+ * שנבחר (s-r) — מרינה: "איקון כמו בשפה של הדוכן, איזושהי אנימציה".
+ */
+function OrderBadge({ pending = false }: { pending?: boolean }) {
+  return (
+    <div className="order-land relative w-16 h-16 mx-auto mb-3" aria-hidden data-testid="order-badge">
+      <div
+        className="s-r order-sway w-16 h-16 flex items-center justify-center"
+        style={{ background: "var(--s-thumb)", color: "var(--s-primary-text)" }}
+      >
+        <Icon name="receipt" size={38} tone="var(--s-surface)" />
+      </div>
+      <span
+        className="s-r order-mark absolute -bottom-1.5 -left-1.5 w-7 h-7 flex items-center justify-center"
+        style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
+      >
+        <Icon name={pending ? "hourglass" : "check"} size={16} tone="transparent" />
+      </span>
+    </div>
   );
 }

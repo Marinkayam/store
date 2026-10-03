@@ -24,7 +24,7 @@ const check = (n, ok, d = "") => {
 
 const { rows: [store] } = await db.query("select * from stores where contact_phone='972501234567' order by created_at limit 1");
 const COLS = ["theme", "look", "bg_pattern", "payout_bit", "payout_paybox", "payout_cash", "payout_whatsapp", "payout_bit_link",
-  "payout_bit_phone", "payout_paybox_link", "payout_paybox_phone", "ships", "shipping_price", "shipping_note", "status"];
+  "payout_bit_phone", "payout_paybox_link", "payout_paybox_phone", "payout_link", "ships", "shipping_price", "shipping_note", "status"];
 const orig = Object.fromEntries(COLS.map((c) => [c, store[c]]));
 async function config(patch) {
   const keys = Object.keys(patch);
@@ -32,7 +32,7 @@ async function config(patch) {
 }
 const NANA = {
   theme: "minimal", look: "soft", bg_pattern: "stars", payout_bit: true, payout_paybox: true, payout_cash: false,
-  payout_whatsapp: true, payout_bit_link: null, payout_bit_phone: null, payout_paybox_link: null, payout_paybox_phone: null,
+  payout_whatsapp: true, payout_bit_link: null, payout_bit_phone: null, payout_paybox_link: null, payout_paybox_phone: null, payout_link: null,
   ships: true, shipping_price: 30, shipping_note: "משלוחים לכל הארץ עם שליח עד הבית", status: "active",
 };
 await config(NANA);
@@ -121,7 +121,18 @@ check("בית פרטי (בלי קומה ודירה) — נשמר כבית פרט
 /* ── 6. אחרי ההזמנה: ביט דרך וואטסאפ ── */
 const sheet = (await p.textContent("[data-testid=order-pay-first]")) ?? "";
 check("כתוב שההזמנה נשלחה, ושנשאר לשלם — בביט", sheet.includes("ההזמנה נשלחה") && sheet.includes("ביט"), sheet.slice(0, 90));
-check("ומוסבר: הדוכן שולח את פרטי הביט בוואטסאפ", ((await p.textContent("[data-testid=pay-whatsapp-explain]")) ?? "").includes("פרטי הביט"));
+const explain = (await p.textContent("[data-testid=pay-whatsapp-explain]")) ?? "";
+check("ומוסבר: בעלי הדוכן שולחים את פרטי הביט בוואטסאפ", explain.includes("פרטי הביט") && explain.includes("בעלי הדוכן"), explain);
+// מרינה: "שפה נקייה... איקון כמו בשפה של הדוכן, איזושהי אנימציה"
+check("בלי אימוג'י במסך", !/\p{Extended_Pictographic}/u.test(sheet), sheet.match(/\p{Extended_Pictographic}/u)?.[0] ?? "");
+check("הסמל הוא אייקון של דוכן (svg) עם אנימציה",
+  (await p.locator("[data-testid=order-pay-first] [data-testid=order-badge] svg").count()) >= 2 &&
+    (await p.locator("[data-testid=order-pay-first] [data-testid=order-badge]").evaluate((e) => getComputedStyle(e).animationName)) !== "none");
+// מרינה: "למה פעם עגול פעם מרובע" — כל הכפתורים והקופסאות באותן פינות של הסגנון
+const radii = await p.locator("[data-testid=order-pay-first] a.s-r, [data-testid=order-pay-first] button, [data-testid=order-pay-first] [data-testid=pay-phone]")
+  .evaluateAll((els) => [...new Set(els.map((e) => getComputedStyle(e).borderTopLeftRadius))]);
+const sheetRadius = await p.locator("[data-testid=order-pay-first]").evaluate((e) => getComputedStyle(e).borderTopLeftRadius);
+check("הכפתורים: אותן פינות כמו הגיליון", radii.length === 1 && radii[0] === sheetRadius, `${radii.join(" / ")} · גיליון ${sheetRadius}`);
 const wa = p.locator("[data-testid=pay-whatsapp]");
 check("הכפתור: 'לקבל את פרטי הביט בוואטסאפ'", ((await wa.textContent()) ?? "").includes("לקבל את פרטי הביט"));
 const href = decodeURIComponent((await wa.getAttribute("href")) ?? "");

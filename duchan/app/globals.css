@@ -575,3 +575,21 @@ html.ptr-on, html.ptr-on body { overscroll-behavior-y: none; }
 }
 html.a11y-still .oops-sign { transform: rotate(26deg); }
 html.a11y-still .oops-fixing .oops-sign { transform: rotate(0); }
+
+/* אישור הזמנה בדוכן: הקבלה נוחתת, ✓ (או שעון חול, כשנשאר לשלם) קופץ עליה,
+   ואז היא מתנדנדת קלות כמו פתק תלוי. בשפה של האייקונים, לא אימוג'י. */
+@keyframes order-land {
+  0%   { transform: translateY(-16px) rotate(-8deg); opacity: 0; }
+  60%  { transform: translateY(2px) rotate(2deg); opacity: 1; }
+  100% { transform: none; }
+}
+@keyframes order-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+.order-land { animation: order-land .55s cubic-bezier(.2,.8,.2,1.2) both; }
+.order-sway { transform-origin: 50% 0; animation: order-sway 3.2s ease-in-out .7s infinite; }
+.order-mark { animation: fx-pop .45s cubic-bezier(.2,.9,.3,1.3) .45s both; }
+@media (prefers-reduced-motion: reduce) {
+  .order-land, .order-sway, .order-mark { animation: none; }
+}
