@@ -234,7 +234,7 @@ const { rows: [edited] } = await db.query("select price, stock from products whe
 check("admin edits price and stock", Number(edited.price) === 44 && edited.stock === 9, `₪${edited.price} · ${edited.stock}`);
 
 // מחיקה — רכה בלבד. השורה נשארת.
-await rowBtn("הוצאה מהחנות").click();
+await rowBtn("הוצאה מהדוכן").click();
 await admin.waitForTimeout(1800);
 const { rows: [gone] } = await db.query("select deleted_at from products where id=$1", [bracelet.id]);
 check("admin delete is soft — the row is still there", !!gone?.deleted_at);

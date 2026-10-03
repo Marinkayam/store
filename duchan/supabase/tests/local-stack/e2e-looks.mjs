@@ -166,7 +166,7 @@ const font = await b2.locator(".s-look").first().evaluate((el) => getComputedSty
 check("והגופן מתחלף", font.includes("Varela Round"), font);
 const plateBg = await b2.locator("[data-testid=store-header]").evaluate((el) => getComputedStyle(el).backgroundColor);
 check("על רקע, השם והתיאור יושבים על לוח קריא", /^rgba?\(255, 255, 255/.test(plateBg), plateBg);
-const credit = b2.locator("text=נבנתה בדוכן").locator("xpath=..");
+const credit = b2.locator("text=נבנה בדוכן").locator("xpath=..");
 check("וגם הקרדיט בתחתית", /^rgba?\(255, 255, 255/.test(await credit.evaluate((el) => getComputedStyle(el).backgroundColor)));
 /* הלוח (עם טשטוש) יוצר שכבה משלו — בלי z על התמונה העגולה הוא מכסה את חציה */
 const avatarOnTop = await b2.evaluate(() => {
