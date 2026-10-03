@@ -488,7 +488,7 @@ export default function SettingsPage() {
 
   const hero = (
     <div
-      className=" overflow-hidden border border-[var(--line)] shadow-[0_10px_28px_rgba(38,38,38,0.08)]"
+      className="overflow-hidden border border-[var(--line)]"
       style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
       data-testid="settings-hero"
     >
@@ -503,7 +503,7 @@ export default function SettingsPage() {
       <div className="px-4 pb-4 -mt-9 text-center">
         <span
           className="inline-flex w-[72px] h-[72px] items-center justify-center text-4xl overflow-hidden"
-          style={{ background: t.surface, border: `3px solid ${t.bg}`, borderRadius: lk.radius, boxShadow: "0 4px 12px rgba(0,0,0,.08)" }}
+          style={{ background: t.surface, border: `3px solid ${t.bg}`, borderRadius: lk.radius }}
         >
           {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
         </span>
@@ -639,7 +639,7 @@ export default function SettingsPage() {
              שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */
           before={
             !store.activated_at ? (
-              <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block shadow-[0_8px_22px_rgba(38,38,38,0.18)]">
+              <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block">
                 <div className="text-[13px] font-bold">
                   {store.payment_claimed_at ? "⏳ מחכים לאישור ממרינה" : "🚀 לפתוח את הדוכן להזמנות"}
                 </div>
@@ -918,7 +918,7 @@ export default function SettingsPage() {
           <div
             data-testid="design-preview"
             aria-label="תצוגה מקדימה של הדוכן"
-            className="sticky top-[54px] z-20 border border-[var(--line)] overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.08)]"
+            className="sticky top-[54px] z-20 border border-[var(--line)] overflow-hidden"
             style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
           >
             <div className="p-2.5 flex flex-col gap-2">
@@ -1558,7 +1558,7 @@ export default function SettingsPage() {
           <button
             data-testid="save-settings"
             onClick={save}
-            className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold shadow-[0_4px_16px_rgba(31,27,45,0.25)]"
+            className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold"
           >
             שמירת שינויים
           </button>

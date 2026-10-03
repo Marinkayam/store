@@ -110,7 +110,7 @@ export default function Landing() {
           <a
             href="/price"
             data-testid="promo-banner"
-            className="fx-shine fx-press fx-rise block text-center text-white px-4 pt-3 pb-3.5 shadow-[0_10px_24px_rgba(155,109,62,0.35)]"
+            className="fx-shine fx-press fx-rise block text-center text-white px-4 pt-3 pb-3.5"
             style={{ background: "var(--wood)", animationDelay: ".1s" }}
           >
             <PromoBurst />

@@ -52,8 +52,8 @@ export default function Choice({
             onClick={() => !sel && onChange(v)}
             className={`min-h-11 px-2 text-[13px] leading-tight transition disabled:opacity-50 ${
               sel
-                ? "bg-white font-bold text-[var(--ink)] shadow-[0_1px_4px_rgba(0,0,0,0.12)]"
-                : "text-[var(--muted)] font-medium"
+                ? "bg-white font-bold text-[var(--ink)] border border-[var(--ink)]"
+                : "text-[var(--muted)] font-medium border border-transparent"
             }`}
           >
             {sel && <span aria-hidden className="text-[var(--ok-ink)]">✓ </span>}
