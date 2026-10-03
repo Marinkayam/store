@@ -132,7 +132,7 @@ check("קופונים נפתחים במקום", (await page.locator("[data-testi
 await back();
 await open("share");
 const link = (await page.textContent("[data-testid=share-link]")) ?? "";
-check("לשתף: הלינק הנכון לדוכן", link.trim().endsWith(`/s/${orig.slug}`), link.trim());
+check("לשתף: הלינק הנכון לדוכן", (link.trim().endsWith(`/${orig.slug}`)), link.trim());
 await back();
 
 /* ── 8. טעינה מחדש — הכל עדיין שם, גם על המסך ── */

@@ -2,239 +2,154 @@
 
 import { useState } from "react";
 import type { Store } from "@/lib/types";
+import { shortStoreLink } from "@/lib/short-link";
 
 /**
- * 🎵 לשתף בטיקטוק — "רוב הקהל בטיקטוק".
+ * 🎵 טיקטוק — "רוב הקהל בטיקטוק".
  *
- * בטיקטוק לינק בכיתוב של סרטון לא לחיץ. מה שעובד:
- *   1. לינק בביו (שדה "אתר" בעריכת הפרופיל) — העתקה + איפה מדביקים.
- *   2. תמונה מוכנה לסרטון/פוסט תמונות (1080×1920): שם הדוכן, האייקון והלינק
- *      בגדול, ו"הלינק בביו". נוצרת בקנבס בטלפון — שום דבר לא עולה לשרת,
- *      ואין עליה שום פרט חוץ ממה שכבר פומבי בדוכן (שם ולינק).
- *   3. כיתוב מוכן עם האשטגים.
- *
- * בטלפון "לשתף את התמונה" פותח את חלון השיתוף של המכשיר, ושם טיקטוק.
- * בלי זה (מחשב) — התמונה פשוט נשמרת.
+ * מה באמת מותר שם (נבדק 10/2026):
+ *   • לינק לחיץ בביו — רק מגיל 18, ורק עם 1,000 עוקבים או חשבון עסקי.
+ *     כלומר כמעט אף ילד/ה לא יכול/ה לשים לינק לחיץ.
+ *   • לינק בכיתוב או בתגובה — מופיע, אבל לא לחיץ.
+ *   • 13–15 בלי הודעות פרטיות.
+ * לכן הדרך שעובדת לכולם: לינק קצר שכתוב על הסרטון עצמו, והקונים מקלידים
+ * אותו. מכאן הלינק הקצר (duchan.app/qkubk) וכפתור העתקה אחד גדול, ורעיונות
+ * לסרטון עם טקסט למסך וכיתוב מוכנים — כי "מה מצלמים?" הוא מה שעוצר.
  */
-export default function TikTokCard({ store, onToast }: { store: Store; onToast: (m: string) => void }) {
-  const [img, setImg] = useState<{ url: string; blob: Blob } | null>(null);
-  const [busy, setBusy] = useState(false);
+const IDEAS = [
+  {
+    key: "pack",
+    label: "📦 אורזים הזמנה",
+    screen: "אורזים הזמנה מהדוכן שלי 📦💜",
+    caption: "עוד הזמנה יוצאת לדרך 💜",
+    tags: "#packingorders #smallbusiness #דוכן #עבודתיד",
+    tip: "מצלמים מלמעלה את הידיים אורזות. בלי פנים, בלי שמות.",
+  },
+  {
+    key: "three",
+    label: "✨ 3 מוצרים ב-10 שניות",
+    screen: "3 דברים שאפשר להזמין אצלי ✨",
+    caption: "איזה מהם הכי שלכם? 👇",
+    tags: "#smallbusiness #handmade #דוכן #עבודתיד",
+    tip: "כל מוצר 3 שניות, קרוב למצלמה, באור יום.",
+  },
+  {
+    key: "drop",
+    label: "🔥 דרופ חדש",
+    screen: "דרופ חדש בדוכן! 🔥 מי ראשון?",
+    caption: "יש מעט מכל אחד, אז מהר 🏃",
+    tags: "#newdrop #smallbusiness #דוכן",
+    tip: "מראים את כל החדשים ביחד, ואז אחד-אחד מקרוב.",
+  },
+  {
+    key: "make",
+    label: "🛠️ מכינים מאפס",
+    screen: "מכינים מאפס ⏱️ חכו לסוף",
+    caption: "ככה זה נראה מההתחלה ועד הסוף ✨",
+    tags: "#handmade #satisfying #עבודתיד #דוכן",
+    tip: "מצלמים כמה רגעים קצרים בזמן ההכנה, ומחברים לסרטון אחד.",
+  },
+] as const;
 
+export default function TikTokCard({ store, onToast }: { store: Store; onToast: (m: string) => void }) {
+  const [idea, setIdea] = useState<(typeof IDEAS)[number]["key"]>("pack");
   const host = typeof window !== "undefined" ? window.location.host : "duchan.app";
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const link = `${origin}/s/${store.slug}`;
-  const shortLink = `${host}/s/${store.slug}`;
-  const caption = `הדוכן שלי פתוח! 🛍️ ${store.display_name}\nהלינק בביו ✨\n#דוכן #הדוכןשלי #עבודתיד`;
+  const short = shortStoreLink(host, store.slug);
+  const cur = IDEAS.find((i) => i.key === idea) ?? IDEAS[0];
+  const onScreen = `${cur.screen}\n👇 ${short}`;
+  const caption = `${cur.caption}\nהדוכן: ${short}\n${cur.tags}`;
 
   const copy = (t: string, msg: string) =>
     navigator.clipboard?.writeText(t).then(() => onToast(msg), () => onToast("לא הצלחנו להעתיק"));
 
-  async function makeImage() {
-    setBusy(true);
-    try {
-      const blob = await drawStoryImage({ name: store.display_name, emoji: store.emoji || "🛍️", shortLink });
-      if (img) URL.revokeObjectURL(img.url);
-      setImg({ url: URL.createObjectURL(blob), blob });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function shareImage() {
-    if (!img) return;
-    const file = new File([img.blob], `duchan-${store.slug}.png`, { type: "image/png" });
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], text: caption });
-        return;
-      } catch {
-        return; // סגרו את חלון השיתוף — זה בסדר
-      }
-    }
-    const a = document.createElement("a");
-    a.href = img.url;
-    a.download = file.name;
-    a.click();
-    onToast("התמונה נשמרה 📸");
-  }
-
   return (
-    <div className="bg-white border border-[var(--line)] p-3.5" data-testid="tiktok-card">
-      <div className="text-[13.5px] font-bold">🎵 לשתף בטיקטוק</div>
-      <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-        בטיקטוק לינק בסרטון לא לחיץ. לכן שמים אותו בביו, ובסרטון כותבים &quot;הלינק בביו&quot;.
+    <div className="bg-[var(--ink)] text-white p-4" data-testid="tiktok-card">
+      <div className="text-[15px] font-bold">🎵 לשתף בטיקטוק</div>
+      <p className="text-[12.5px] text-white/80 leading-relaxed mt-1">
+        כותבים את הלינק <b className="text-white">על הסרטון</b>, והקונים מקלידים אותו. בגלל זה הוא קצר.
       </p>
 
-      {/* 1. לינק בביו */}
-      <div className="mt-3 border-t border-[var(--line)] pt-3">
-        <div className="text-[12.5px] font-bold">1. הלינק בביו</div>
-        <ol className="text-[12px] text-[var(--muted)] leading-relaxed mt-1 list-decimal ps-4" data-testid="tiktok-bio-steps">
-          <li>מעתיקים את הלינק</li>
-          <li>בטיקטוק: פרופיל ← עריכת פרופיל ← &quot;אתר&quot;</li>
-          <li>מדביקים ושומרים</li>
-        </ol>
-        <p className="text-[11.5px] text-[var(--faint)] leading-relaxed mt-1">
-          אין שדה &quot;אתר&quot;? אפשר לשלוח את הלינק בהודעה פרטית, או לכתוב אותו על הסרטון.
-        </p>
+      {/* הלינק — גדול, ולוחצים עליו כדי להעתיק */}
+      <button
+        onClick={() => copy(short, "הלינק הועתק 🎵 עכשיו מדביקים על הסרטון")}
+        data-testid="tiktok-copy-link"
+        aria-label={`העתקת הלינק ${short}`}
+        className="fx-press mt-3 w-full bg-white text-[var(--ink)] px-4 py-3.5 flex items-center justify-between gap-3"
+      >
+        <span className="text-[20px] font-extrabold tracking-tight truncate" dir="ltr" data-testid="tiktok-link">
+          {short}
+        </span>
+        <span className="shrink-0 text-[12.5px] font-bold border border-[var(--ink)] px-2.5 py-1">📋 העתקה</span>
+      </button>
+
+      {/* איפה שמים — לפי מה שטיקטוק באמת מאפשר */}
+      <ul className="mt-4 flex flex-col gap-2.5 text-[12.5px] leading-relaxed" data-testid="tiktok-where">
+        <li className="flex gap-2.5">
+          <span className="shrink-0 w-6 text-center" aria-hidden>✅</span>
+          <span><b>על הסרטון</b> <span className="text-white/75">— בעריכה לוחצים על Aa ומדביקים. עובד לכולם.</span></span>
+        </li>
+        <li className="flex gap-2.5">
+          <span className="shrink-0 w-6 text-center" aria-hidden>✅</span>
+          <span><b>בכיתוב</b> <span className="text-white/75">— לא לחיץ, אבל רואים אותו ואפשר להעתיק.</span></span>
+        </li>
+        <li className="flex gap-2.5">
+          <span className="shrink-0 w-6 text-center" aria-hidden>🔒</span>
+          <span>
+            <b>לינק לחיץ בביו</b>{" "}
+            <span className="text-white/75">— בטיקטוק רק מגיל 18, עם 1,000 עוקבים או חשבון עסקי.</span>
+          </span>
+        </li>
+      </ul>
+
+      {/* רעיונות לסרטון */}
+      <div className="mt-5 border-t border-white/20 pt-4">
+        <div className="text-[13.5px] font-bold">🎬 מה מצלמים?</div>
+        <div className="flex flex-wrap gap-1.5 mt-2.5" role="radiogroup" aria-label="רעיון לסרטון">
+          {IDEAS.map((i) => (
+            <button
+              key={i.key}
+              role="radio"
+              aria-checked={idea === i.key}
+              onClick={() => setIdea(i.key)}
+              data-testid={`tiktok-idea-${i.key}`}
+              className={`px-2.5 py-1.5 text-[12.5px] border ${
+                idea === i.key ? "bg-white text-[var(--ink)] border-white font-bold" : "border-white/35 text-white"
+              }`}
+            >
+              {i.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-[12px] text-white/75 leading-relaxed mt-2.5" data-testid="tiktok-tip">💡 {cur.tip}</p>
+
+        <div className="mt-3 text-[11.5px] font-bold text-white/70">טקסט על המסך</div>
+        <div className="mt-1 bg-white/10 px-3 py-2.5 text-[13.5px] font-bold leading-relaxed whitespace-pre-line" data-testid="tiktok-screen">
+          {onScreen}
+        </div>
         <button
-          onClick={() => copy(link, "הלינק הועתק — עכשיו לביו 🎵")}
-          data-testid="tiktok-copy-link"
-          className="fx-press mt-2 w-full bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
+          onClick={() => copy(onScreen, "הטקסט הועתק — מדביקים ב-Aa")}
+          data-testid="tiktok-copy-screen"
+          className="fx-press mt-1.5 w-full bg-white text-[var(--ink)] py-2.5 text-[12.5px] font-bold"
         >
-          📋 העתקת הלינק לביו
+          העתקת הטקסט למסך
         </button>
-      </div>
 
-      {/* 2. תמונה לסרטון */}
-      <div className="mt-3 border-t border-[var(--line)] pt-3">
-        <div className="text-[12.5px] font-bold">2. תמונה מוכנה לסרטון</div>
-        <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-          שם הדוכן והלינק בגדול, בגודל של טיקטוק. מעלים כפוסט תמונות או שמים בסוף סרטון.
-        </p>
-        {img ? (
-          <div className="mt-2 flex gap-3 items-end">
-            <img
-              src={img.url}
-              alt={`תמונה לטיקטוק: ${store.display_name} והלינק לדוכן`}
-              data-testid="tiktok-image"
-              className="w-[96px] h-auto border border-[var(--line)]"
-            />
-            <div className="flex-1 flex flex-col gap-2">
-              <button
-                onClick={shareImage}
-                data-testid="tiktok-share-image"
-                className="fx-press bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
-              >
-                📲 לשתף / לשמור את התמונה
-              </button>
-              <button onClick={makeImage} className="border border-[var(--line)] py-2 text-[12px] text-[var(--muted)]">
-                ליצור מחדש
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={makeImage}
-            disabled={busy}
-            data-testid="tiktok-make-image"
-            className="fx-press mt-2 w-full border border-[var(--ink)] py-2.5 text-[12.5px] font-bold disabled:opacity-60"
-          >
-            {busy ? "יוצרים…" : "🖼️ ליצור תמונה לטיקטוק"}
-          </button>
-        )}
-      </div>
-
-      {/* 3. כיתוב מוכן */}
-      <div className="mt-3 border-t border-[var(--line)] pt-3">
-        <div className="text-[12.5px] font-bold">3. כיתוב מוכן לסרטון</div>
-        <div className="mt-1.5 bg-[var(--canvas)] border border-[var(--line)] px-3 py-2 text-[12.5px] leading-relaxed whitespace-pre-line" data-testid="tiktok-caption">
+        <div className="mt-3 text-[11.5px] font-bold text-white/70">כיתוב</div>
+        <div className="mt-1 bg-white/10 px-3 py-2.5 text-[12.5px] leading-relaxed whitespace-pre-line" data-testid="tiktok-caption">
           {caption}
         </div>
         <button
           onClick={() => copy(caption, "הכיתוב הועתק ✨")}
           data-testid="tiktok-copy-caption"
-          className="fx-press mt-2 w-full border border-[var(--line)] py-2.5 text-[12.5px] font-semibold"
+          className="fx-press mt-1.5 w-full border border-white/50 py-2.5 text-[12.5px] font-bold"
         >
           העתקת הכיתוב
         </button>
       </div>
 
-      <p className="text-[11px] text-[var(--faint)] leading-relaxed mt-3">
-        טיקטוק מותר מגיל 13. מי שצעיר יותר יכול לשתף דרך חשבון של מבוגר במשפחה.
+      <p className="text-[11px] text-white/60 leading-relaxed mt-4">
+        טיקטוק מותר מגיל 13. בסרטונים לא מראים פנים, בית ספר או כתובת. רק את המוצרים.
       </p>
     </div>
   );
-}
-
-/** התמונה לטיקטוק: 1080×1920, הסוכך של הדוכן למעלה, האייקון, השם והלינק. */
-async function drawStoryImage({ name, emoji, shortLink }: { name: string; emoji: string; shortLink: string }): Promise<Blob> {
-  const W = 1080;
-  const H = 1920;
-  const c = document.createElement("canvas");
-  c.width = W;
-  c.height = H;
-  const g = c.getContext("2d")!;
-  const css = getComputedStyle(document.documentElement);
-  const v = (k: string, fb: string) => css.getPropertyValue(k).trim() || fb;
-  const wood = v("--wood", "#9b6d3e");
-  const lavender = v("--lavender", "#b89ac8");
-  const cream = v("--cream", "#f6f0e8");
-  const ink = v("--ink", "#262626");
-  const font = getComputedStyle(document.body).fontFamily || "sans-serif";
-  try {
-    await document.fonts?.ready;
-  } catch {}
-  (g as CanvasRenderingContext2D & { direction?: string }).direction = "rtl";
-
-  // רקע
-  g.fillStyle = cream;
-  g.fillRect(0, 0, W, H);
-
-  // הסוכך
-  g.fillStyle = wood;
-  g.fillRect(0, 0, W, 70);
-  const n = 9;
-  const sw = W / n;
-  g.lineWidth = 5;
-  g.strokeStyle = wood;
-  for (let i = 0; i < n; i++) {
-    g.beginPath();
-    g.moveTo(i * sw, 70);
-    g.lineTo((i + 1) * sw, 70);
-    g.lineTo((i + 1) * sw, 150);
-    g.ellipse(i * sw + sw / 2, 150, sw / 2, 52, 0, 0, Math.PI, false);
-    g.closePath();
-    g.fillStyle = i % 2 ? cream : lavender;
-    g.fill();
-    g.stroke();
-  }
-
-  // הכרטיס
-  const cx = W / 2;
-  g.fillStyle = "#ffffff";
-  g.fillRect(110, 430, W - 220, 1000);
-  g.lineWidth = 8;
-  g.strokeStyle = wood;
-  g.strokeRect(110, 430, W - 220, 1000);
-
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.font = `220px ${font}`;
-  g.fillText(emoji, cx, 650);
-
-  // השם — מוקטן עד שנכנס
-  g.fillStyle = ink;
-  let size = 92;
-  do {
-    g.font = `800 ${size}px ${font}`;
-    size -= 4;
-  } while (g.measureText(name).width > W - 320 && size > 40);
-  g.fillText(name, cx, 880);
-
-  g.font = `500 54px ${font}`;
-  g.fillStyle = v("--muted", "#5b564e");
-  g.fillText("הדוכן שלי פתוח! 🛍️", cx, 985);
-
-  // הלינק
-  g.fillStyle = ink;
-  g.fillRect(170, 1110, W - 340, 170);
-  g.fillStyle = "#ffffff";
-  (g as CanvasRenderingContext2D & { direction?: string }).direction = "ltr";
-  size = 60;
-  do {
-    g.font = `700 ${size}px ${font}`;
-    size -= 2;
-  } while (g.measureText(shortLink).width > W - 400 && size > 30);
-  g.fillText(shortLink, cx, 1195);
-  (g as CanvasRenderingContext2D & { direction?: string }).direction = "rtl";
-
-  // למטה
-  g.fillStyle = ink;
-  g.font = `800 76px ${font}`;
-  g.fillText("הלינק בביו ✨", cx, 1600);
-  g.fillStyle = wood;
-  g.font = `500 44px ${font}`;
-  g.fillText("נכנסים, בוחרים ומזמינים", cx, 1700);
-
-  return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("toBlob"))), "image/png"));
 }

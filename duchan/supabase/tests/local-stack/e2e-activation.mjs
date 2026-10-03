@@ -334,7 +334,7 @@ await girl.goto(`${BASE}/dashboard/settings#share`);
 await girl.waitForSelector("[data-testid=share-section] textarea", { timeout: 15000 });
 const box = await girl.locator("textarea").first().inputValue();
 check("ההודעה המוכנה נושאת את שם הדוכן ואת הלינק",
-  box.includes(seed.display_name) && box.includes(`/s/${seed.slug}`));
+  box.includes(seed.display_name) && box.includes(`/${seed.slug}`));
 check("ואפשר לשלוח אותה בוואטסאפ בלחיצה", await usable(girl, "[data-testid=share-send]"));
 await girl.screenshot({ path: `${shots}/46-share.png`, fullPage: true });
 

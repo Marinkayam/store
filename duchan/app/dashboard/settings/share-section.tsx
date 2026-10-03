@@ -5,6 +5,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { SHARE_TEXTS, inviteText, type ShareContext } from "@/lib/share-texts";
 import type { Store } from "@/lib/types";
 import TikTokCard from "./tiktok-card";
+import { storePath } from "@/lib/short-link";
 
 /**
  * "לשתף את הדוכן" — מקטע ב"החנות שלי". בא במקום הלשונית "להפיץ".
@@ -54,7 +55,8 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
     );
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const link = `${origin}/s/${store.slug}`;
+  // הלינק הקצר (duchan.app/qkubk) — אותו לינק בכל מקום בשיתוף, גם בטיקטוק
+  const link = `${origin}${storePath(store.slug)}`;
   const refLink = `${origin}/?ref=${store.slug}`;
   const ctx: ShareContext = { name: store.display_name, link, products, topProduct };
   const current = SHARE_TEXTS.find((t) => t.key === pick) ?? SHARE_TEXTS[0];
