@@ -1203,22 +1203,23 @@ export default function ProductsPage() {
             {/* כמה יש לי — הכמות קודם (זו השאלה שבאמת שואלים), ומתחתיה
                 הבחירה אם בכלל לספור. "בלי הגבלה" מחליף את הכמות. */}
             <div className="border border-[var(--line)] px-3 py-3 mb-3">
-              <div className="text-[13px] font-semibold mb-2">כמה יש לי כאלה?</div>
-              {edit.trackStock ? (
-                <div className="flex items-center gap-3 mb-3">
-                  <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
-                    aria-label="הורדה מהמלאי"
-                    className="w-11 h-11 border border-[var(--line)] bg-[var(--canvas)] text-base">−</button>
-                  <span className="flex-1 text-center text-[20px] font-bold tabular-nums" data-testid="editor-stock">{edit.stock}</span>
-                  <button onClick={() => setEdit((s) => s && { ...s, stock: s.stock + 1 })}
-                    aria-label="הוספה למלאי"
-                    className="w-11 h-11 border border-[var(--line)] bg-[var(--canvas)] text-base">+</button>
-                </div>
-              ) : (
-                <div className="h-11 mb-3 flex items-center justify-center text-[15px] font-bold" data-testid="editor-stock-unlimited">
-                  ♾️ בלי הגבלה
-                </div>
-              )}
+              {/* שורה אחת: השאלה מימין, ובצד שמאל מונה קטן — לא מספר ענק באמצע */}
+              <div className="flex items-center justify-between gap-3 mb-2.5">
+                <div className="text-[13px] font-semibold">כמה יש לי כאלה?</div>
+                {edit.trackStock ? (
+                  <div className="flex items-center border border-[var(--line)]">
+                    <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
+                      aria-label="הורדה מהמלאי"
+                      className="w-9 h-9 text-[15px] text-[var(--ink)]">−</button>
+                    <span className="min-w-9 text-center text-[14px] font-bold tabular-nums" data-testid="editor-stock">{edit.stock}</span>
+                    <button onClick={() => setEdit((s) => s && { ...s, stock: s.stock + 1 })}
+                      aria-label="הוספה למלאי"
+                      className="w-9 h-9 text-[15px] text-[var(--ink)]">+</button>
+                  </div>
+                ) : (
+                  <span className="text-[13px] text-[var(--muted)]" data-testid="editor-stock-unlimited">בלי הגבלה</span>
+                )}
+              </div>
               <Choice
                 value={edit.trackStock}
                 onChange={(v) => setEdit((s) => s && { ...s, trackStock: v })}
