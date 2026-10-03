@@ -1,5 +1,6 @@
 "use client";
 
+import CloseX from "@/app/close-x";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -882,7 +883,11 @@ export default function StoreView({
             touchAction: "pan-y",
           }}
         >
-          <div className="w-9 h-1 bg-current opacity-15 mx-auto -mb-1" />
+          <div className="flex items-center justify-between -mb-2">
+            <span className="w-11" aria-hidden />
+            <div className="w-9 h-1 bg-current opacity-15" />
+            <CloseX onClick={() => setCurrent(null)} testid="product-close" />
+          </div>
           <div>
             <div
               className="s-r h-52 flex items-center justify-center text-6xl overflow-hidden"
@@ -1048,8 +1053,11 @@ export default function StoreView({
           <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-5" />
           <div className="flex items-baseline justify-between mb-4">
             <h2 className="text-[19px] font-bold">ההזמנה שלך</h2>
-            <span className="text-[12.5px] opacity-55">
-              {cartCount === 1 ? "פריט אחד" : `${cartCount} פריטים`}
+            <span className="flex items-center gap-2">
+              <span className="text-[12.5px] opacity-55">
+                {cartCount === 1 ? "פריט אחד" : `${cartCount} פריטים`}
+              </span>
+              <CloseX onClick={() => setOrderOpen(false)} testid="order-close" />
             </span>
           </div>
           {/* כל שורה ניתנת לעריכה כאן. קונה שרוצה שניים במקום אחד לא אמורה

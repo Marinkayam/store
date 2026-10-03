@@ -1,5 +1,6 @@
 "use client";
 
+import CloseX from "@/app/close-x";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Choice from "@/app/choice";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -852,7 +853,10 @@ export default function ProductsPage() {
           <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white max-h-[90%] flex flex-col">
           <div className="px-4 pt-3 overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
-            <h2 className="text-base font-bold mb-3">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h2 className="text-base font-bold">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
+              <CloseX onClick={() => setEdit(null)} testid="editor-close" />
+            </div>
 
             {/* מה מותר למכור — רק במוצר חדש, לפני שמעלים תמונה. בתקנון זה
                 קיים, אבל אף אחת לא קוראת תקנון; כאן זה נראה ברגע הנכון. */}
@@ -1208,7 +1212,10 @@ export default function ProductsPage() {
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setDeletedOpen(false)} />
           <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[70%] overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
-            <h2 className="text-base font-bold mb-3">מוצרים שנמחקו</h2>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h2 className="text-base font-bold">מוצרים שנמחקו</h2>
+              <CloseX onClick={() => setDeletedOpen(false)} />
+            </div>
             {deleted.length === 0 && (
               <p className="text-sm text-[var(--muted)] py-4 text-center">אין מוצרים לשחזור.</p>
             )}
