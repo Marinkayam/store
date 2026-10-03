@@ -95,6 +95,8 @@ export interface Product {
   categories?: string[] | null; // מוצר יכול לשבת בכמה קטגוריות (0046)
   badge: "rare" | "sale" | null; // תגית שהילדה בחרה. המחושבות נגזרות בקריאה.
   featured?: boolean | null; // מופיע בחלק "המומלצים" בראש הדוכן (0053)
+  drop_at?: string | null; // דרופ: נפתח להזמנה בזמן הזה (0056). null = פתוח
+  is_mystery?: boolean | null; // שקית הפתעה (0056)
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
   created_at: string;
@@ -106,6 +108,7 @@ export interface OrderItem {
   qty: number;
   price: number;
   option?: string; // הבחירה של הקונה: "ורוד". נשמר ב-snapshot ההזמנה.
+  mystery?: true; // שקית הפתעה (0056) — כדי שהמוכר/ת יזכרו להכין הפתעה
 }
 
 export interface Order {
@@ -199,5 +202,7 @@ export interface PublicProduct {
   categories?: string[] | null;
   badge: "rare" | "sale" | null;
   featured?: boolean | null;
+  drop_at?: string | null; // דרופ — נפתח להזמנה בזמן הזה (0056)
+  is_mystery?: boolean | null; // שקית הפתעה (0056)
   created_at: string; // דרוש לתגית "חדש"
 }

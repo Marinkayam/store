@@ -22,6 +22,7 @@ import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryDesigner from "./category-designer";
+import { defaultDropInput, dropProblem, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -43,6 +44,11 @@ interface EditState {
   badge: "rare" | "sale" | null;
   /** ⭐ מומלץ — בחלק המומלצים בראש הדוכן (0053) */
   featured: boolean;
+  /** 🎁 שקית הפתעה (0056) */
+  isMystery: boolean;
+  /** 🔥 דרופ (0056): נפתח בזמן קבוע. dropInput בפורמט של datetime-local */
+  dropOn: boolean;
+  dropInput: string;
   imageKey: string | null;
   videoKey: string | null;
   posterKey: string | null;
@@ -71,6 +77,9 @@ const EMPTY_EDIT: EditState = {
   categories: [],
   badge: null,
   featured: false,
+  isMystery: false,
+  dropOn: false,
+  dropInput: "",
   imageKey: null,
   videoKey: null,
   posterKey: null,
@@ -286,6 +295,10 @@ export default function ProductsPage() {
         categories: p.categories?.length ? p.categories : p.category ? [p.category] : [],
         badge: p.badge ?? null,
         featured: p.featured === true,
+        isMystery: p.is_mystery === true,
+        // דרופ שכבר נפתח הוא מוצר רגיל — לא מציגים זמן שעבר
+        dropOn: isUpcoming(p.drop_at, Date.now()),
+        dropInput: isUpcoming(p.drop_at, Date.now()) ? toLocalInput(p.drop_at) : "",
         stock: p.stock,
         isVisible: p.is_visible !== false,
         imageKey: p.image_key,
@@ -481,6 +494,15 @@ export default function ProductsPage() {
   /* ---------- שמירה ---------- */
   async function save() {
     if (!edit || !store || busy) return;
+    // דרופ: בודקים את הזמן לפני שמעלים מדיה — זמן שעבר היה פותח את המוצר מיד
+    if (edit.dropOn) {
+      const problem = dropProblem(edit.dropInput);
+      if (problem) {
+        showToast(problem);
+        document.getElementById("editor-drop")?.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+    }
     setBusy(true);
     try {
       const supa = supabaseBrowser();
@@ -523,6 +545,8 @@ export default function ProductsPage() {
         category: edit.categories[0] ?? null,
         badge: edit.badge,
         featured: edit.featured,
+        is_mystery: edit.isMystery,
+        drop_at: edit.dropOn ? israelInputToIso(edit.dropInput) : null,
         stock: Math.max(0, edit.stock),
         is_visible: edit.isVisible,
         image_key: imageKey,
@@ -537,13 +561,23 @@ export default function ProductsPage() {
 
       let { error } = await write(row);
       if (error) {
+        // 0056 עוד לא בדאטהבייס. דרופ אסור לאבד בשקט — מוצר שאמור להיות
+        // נעול היה נפתח מיד. אז עוצרים ואומרים.
+        if (edit.dropOn) {
+          showToast("דרופ עוד לא זמין כרגע. אפשר לשמור בלי דרופ");
+          return;
+        }
+        const { is_mystery: _m, drop_at: _d, ...noDrops } = row;
+        ({ error } = await write(noDrops));
+      }
+      if (error) {
         // עמודה חדשה שאולי עוד לא בפרודקשן — שומרים בלעדיה במקום להפיל
         // את כל השמירה (אותו דפוס כמו בקריאות הציבוריות)
-        const { featured: _f, ...noFeatured } = row;
+        const { featured: _f, is_mystery: _m2, drop_at: _d2, ...noFeatured } = row;
         ({ error } = await write(noFeatured));
       }
       if (error) {
-        const { categories: _cs, featured: _f2, ...noCats } = row;
+        const { categories: _cs, featured: _f2, is_mystery: _m3, drop_at: _d3, ...noCats } = row;
         ({ error } = await write(noCats));
         if (error) {
           const { category: _c, ...noCategory } = noCats;
@@ -600,6 +634,9 @@ export default function ProductsPage() {
       ...(src.categories?.length ? { categories: src.categories } : {}),
       badge: src.badge,
       ...(src.featured ? { featured: true } : {}),
+      ...(src.is_mystery ? { is_mystery: true } : {}),
+      // דרופ שעוד לא נפתח עובר לעותק; דרופ שעבר — לא (העותק פשוט פתוח)
+      ...(isUpcoming(src.drop_at, Date.now()) ? { drop_at: src.drop_at } : {}),
       stock: src.stock,
       is_visible: src.is_visible,
       image_key: src.image_key,
@@ -825,10 +862,18 @@ export default function ProductsPage() {
                   <span className="truncate">{p.name}</span>
                 </div>
                 <div className="text-[14px] text-[var(--ink)] mt-0.5">₪{formatPrice(p.price)}</div>
-                {(out || hidden || (p.track_stock && !out && p.stock <= 2) || !!store.categories?.length) && (
+                {(out || hidden || (p.track_stock && !out && p.stock <= 2) || !!store.categories?.length || !!p.drop_at || !!p.is_mystery) && (
                   <div className="flex gap-1.5 items-center mt-2 flex-wrap">
                     {out && (
                       <span className="text-[11.5px] px-2 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
+                    )}
+                    {isUpcoming(p.drop_at, Date.now()) && (
+                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--ink)] text-white font-bold" data-testid="row-drop">
+                        🔥 נפתח {dropWhen(p.drop_at!)}
+                      </span>
+                    )}
+                    {p.is_mystery && (
+                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--canvas)] text-[var(--ink)]" data-testid="row-mystery">🎁 הפתעה</span>
                     )}
                     {p.track_stock && !out && p.stock <= 2 && (
                       <span className="text-[11.5px] px-2 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
@@ -1019,7 +1064,7 @@ export default function ProductsPage() {
                 </button>
               )}
             </div>
-            <textarea value={edit.description} maxLength={120} rows={2} placeholder="רך במיוחד, חוזר לאט"
+            <textarea value={edit.description} maxLength={120} rows={2} placeholder={edit.isMystery ? "מה יכול להיות בפנים? למשל: 3 סקווישים מפתיעים" : "רך במיוחד, חוזר לאט"}
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3 resize-none" />
 
@@ -1229,6 +1274,73 @@ export default function ProductsPage() {
                 {edit.featured ? "כן" : "לא"}
               </span>
             </button>
+
+            {/* 🎁 שקית הפתעה — הקונים לא יודעים מה בפנים */}
+            <button
+              type="button"
+              onClick={() => setEdit((s) => s && { ...s, isMystery: !s.isMystery })}
+              aria-pressed={edit.isMystery}
+              aria-label="שקית הפתעה"
+              data-testid="mystery-toggle"
+              className={`w-full flex items-center gap-3 border-2 px-3 py-3 mb-3 text-right ${
+                edit.isMystery ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)] bg-white"
+              }`}
+            >
+              <span className="text-xl leading-none" aria-hidden>🎁</span>
+              <span className="flex-1">
+                <span className="block text-[13px] font-bold">שקית הפתעה</span>
+                <span className="block text-[11.5px] text-[var(--muted)] leading-snug">
+                  {edit.isMystery
+                    ? "הקונים לא יודעים מה בפנים. בתיאור כותבים מה יכול להיות, למשל: 3 סקווישים מפתיעים"
+                    : "הקונים לא יודעים מה בפנים, וזה כל הכיף"}
+                </span>
+              </span>
+              <span className={`text-[11px] font-bold px-2 py-1 ${edit.isMystery ? "bg-[var(--ink)] text-white" : "border border-[var(--line)] text-[var(--muted)]"}`}>
+                {edit.isMystery ? "כן" : "לא"}
+              </span>
+            </button>
+
+            {/* 🔥 דרופ — נפתח להזמנה בזמן קבוע, עם ספירה לאחור בדוכן */}
+            <div id="editor-drop" className="border border-[var(--line)] px-3 py-3 mb-3 scroll-mt-24">
+              <div className="text-[13px] font-semibold mb-2">🔥 מתי אפשר להזמין?</div>
+              <Choice
+                value={!edit.dropOn}
+                onChange={(v) =>
+                  setEdit((s) => s && { ...s, dropOn: !v, dropInput: !v && !s.dropInput ? defaultDropInput() : s.dropInput })
+                }
+                on="✅ כבר עכשיו"
+                off="🔥 דרופ בשעה קבועה"
+                label="מתי אפשר להזמין"
+                testid="drop-choice"
+              />
+              {edit.dropOn && (
+                <div className="mt-2.5">
+                  <label htmlFor="drop-at" className="block text-[12px] text-[var(--muted)] mb-1">נפתח ב (שעון ישראל):</label>
+                  <input
+                    id="drop-at"
+                    type="datetime-local"
+                    value={edit.dropInput}
+                    min={toLocalInput(new Date().toISOString())}
+                    onChange={(e) => setEdit((s) => s && { ...s, dropInput: e.target.value })}
+                    data-testid="drop-at"
+                    className="w-full border border-[var(--line)] px-3 py-2.5 text-[14px] bg-white"
+                  />
+                  {dropProblem(edit.dropInput) ? (
+                    <p className="text-[12px] text-[var(--danger)] mt-1.5" data-testid="drop-problem">{dropProblem(edit.dropInput)}</p>
+                  ) : (
+                    <p className="text-[12px] text-[var(--muted)] mt-1.5 leading-relaxed" data-testid="drop-help">
+                      עד אז הקונים רואים את המוצר עם ספירה לאחור, ולא יכולים להזמין. נפתח{" "}
+                      {dropWhen(israelInputToIso(edit.dropInput)!)}.
+                    </p>
+                  )}
+                </div>
+              )}
+              {!edit.dropOn && (
+                <p className="text-[12px] text-[var(--muted)] mt-1.5 leading-relaxed">
+                  דרופ = המוצר מופיע עם ספירה לאחור, ונפתח להזמנה בשעה שבוחרים. מושלם לטיקטוק.
+                </p>
+              )}
+            </div>
 
             {/* רואים אותו? — עם הסבר מה זה "מוסתר", כדי שיהיה ברור שזה לא מחיקה */}
             <div className="border border-[var(--line)] px-3 py-3 mb-3">

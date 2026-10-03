@@ -15,6 +15,9 @@ import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import type { PublicProduct, PublicStore } from "@/lib/types";
+import { dropTime, dropWhen } from "@/lib/drop";
+import DropCountdown from "@/app/drop-countdown";
+import MysteryBag from "@/app/mystery-bag";
 
 interface CartLine {
   id: string;
@@ -207,6 +210,60 @@ export default function StoreView({
   const featured = category ? [] : sorted.filter((p) => p.featured);
   const rest = featured.length ? sorted.filter((p) => !p.featured) : sorted;
 
+  /* ── דרופ (0056) ──
+     מוצר עם drop_at בעתיד מוצג עם ספירה לאחור ונעול להזמנה. השעון: שעון
+     הטלפון, מתוקן לפי שעון השרת (/api/time). הדף מתרנדר רק ברגע שדרופ
+     נפתח — המספרים עצמם מתקתקים בקומפוננטה משלהם (DropCountdown).
+     לפני שהדף עלה בדפדפן (SSR) כל דרופ נחשב נעול ובלי שעה — אחרת השרת
+     והדפדפן מציירים טקסט שונה. */
+  const hasDrops = products.some((p) => p.drop_at);
+  const [clock, setClock] = useState<{ now: number; offset: number } | null>(null);
+  useEffect(() => {
+    if (!hasDrops) return;
+    let alive = true;
+    setClock({ now: Date.now(), offset: 0 });
+    const t0 = Date.now();
+    fetch("/api/time", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive || typeof d?.now !== "number") return;
+        const offset = Math.round(d.now - (t0 + Date.now()) / 2);
+        setClock({ now: Date.now() + offset, offset });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [hasDrops]);
+  const locked = (p: PublicProduct) => {
+    const t = dropTime(p.drop_at);
+    return t !== null && (clock ? t > clock.now : true);
+  };
+  // הדרופ הקרוב — לבאנר בראש הדוכן
+  const nextDrop = useMemo(() => {
+    if (!clock) return null;
+    return (
+      visibleProducts
+        .filter((p) => (dropTime(p.drop_at) ?? 0) > clock.now)
+        .sort((a, b) => dropTime(a.drop_at)! - dropTime(b.drop_at)!)[0] ?? null
+    );
+  }, [visibleProducts, clock]);
+  // ברגע שהדרופ הקרוב נפתח — מרנדרים מחדש (הכפתור נפתח) ואומרים את זה
+  useEffect(() => {
+    if (!clock) return;
+    const upcoming = products.map((p) => dropTime(p.drop_at)).filter((t): t is number => t !== null && t > clock.now);
+    if (!upcoming.length) return;
+    const next = Math.min(...upcoming);
+    // setTimeout מוגבל ל-~24.8 ימים; דרופ רחוק יותר פשוט מתוזמן מחדש
+    const id = setTimeout(() => {
+      const n = Date.now() + clock.offset;
+      setClock((c) => c && { ...c, now: n });
+      if (n >= next) showToast("🔥 הדרופ נפתח! אפשר להזמין");
+    }, Math.min(next - clock.now + 300, 2_000_000_000));
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clock, products]);
+
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
   const cartTotal = sumPrices(cart.map((l) => lineTotal(l.price, l.qty)));
 
@@ -289,7 +346,7 @@ export default function StoreView({
   }
 
   function addToCart() {
-    if (!current) return;
+    if (!current || locked(current)) return;
     addLine(current, qty, choice ?? undefined);
     setCurrent(null);
     setChoice(null);
@@ -324,6 +381,10 @@ export default function StoreView({
    */
   function quickAdd(p: PublicProduct) {
     if (preview) return;
+    if (locked(p)) {
+      showToast(p.drop_at && clock ? `נפתח ${dropWhen(p.drop_at)}` : "עוד לא נפתח");
+      return;
+    }
     if (p.options?.length) {
       openProduct(p);
       return;
@@ -416,10 +477,10 @@ export default function StoreView({
       }
 
       // בונים את הלינק רק אחרי שהשרת ענה — המספר לא יושב ב-HTML
-      const lines = (data.items as { name: string; qty: number; price: number; option?: string }[])
+      const lines = (data.items as { name: string; qty: number; price: number; option?: string; mystery?: boolean }[])
         .map(
           (i) =>
-            `• ${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${formatPrice(lineTotal(i.price, i.qty))}`
+            `• ${i.mystery ? "🎁 " : ""}${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${formatPrice(lineTotal(i.price, i.qty))}`
         )
         .join("\n");
       // שתי השורות האלה מתארות את מה ש*הקונה בחרה*, ולא את מה שהדוכן
@@ -513,6 +574,7 @@ export default function StoreView({
   /** כרטיס מוצר אחד ברשת. משותף לחלק המומלצים ולשאר המוצרים. */
   const renderCard = (p: PublicProduct, i: number) => {
               const out = p.track_stock && p.stock === 0;
+              const isLocked = !out && locked(p);
               const img = mediaUrl(p.image_key);
               const vid = mediaUrl(p.video_key);
               const poster = mediaUrl(p.poster_key);
@@ -540,6 +602,29 @@ export default function StoreView({
                     // רצועה על התמונה — קונה סורקת רשת ולא קוראת שבבים קטנים
                     <span className="absolute inset-x-0 top-1/4 z-10 bg-[var(--ink)]/78 text-white text-[13px] font-semibold text-center py-1.5 tracking-wide">
                       אזל
+                    </span>
+                  ) : isLocked ? (
+                    // דרופ שעוד לא נפתח: רצועה עם ספירה לאחור, באותו מקום של "אזל"
+                    <span
+                      className="absolute inset-x-0 top-1/4 z-10 bg-[var(--ink)]/85 text-white text-[13px] font-bold text-center py-1.5"
+                      data-testid="drop-strip"
+                    >
+                      🔥 דרופ{" "}
+                      {clock && p.drop_at ? (
+                        <>· <DropCountdown at={dropTime(p.drop_at)!} offset={clock.offset} /></>
+                      ) : (
+                        "· בקרוב"
+                      )}
+                    </span>
+                  ) : p.is_mystery ? (
+                    <span
+                      className={`absolute z-10 bg-white text-[11px] font-semibold px-1.5 py-0.5 ${
+                        roundedLook ? "top-2 right-2 border s-r" : "top-0 right-0 border-b border-r-0 border-t-0 border-l"
+                      }`}
+                      style={{ color: "var(--s-primary-text)", borderColor: "currentColor" }}
+                      data-testid="mystery-chip"
+                    >
+                      🎁 הפתעה
                     </span>
                   ) : (
                     (() => {
@@ -576,6 +661,8 @@ export default function StoreView({
                       <video src={vid} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
                     ) : img ? (
                       <img src={img} alt={p.name} className="w-full h-full object-cover" />
+                    ) : p.is_mystery ? (
+                      <MysteryBag className="w-24 h-24" />
                     ) : (
                       <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
                     )}
@@ -592,7 +679,16 @@ export default function StoreView({
                 </button>
 
                 {/* הוספה מהירה — הכפתור שמאפשר לקנות בלי לפתוח כלום */}
-                {!out && !preview && (
+                {!out && !preview && isLocked && (
+                  <div
+                    className="mt-auto mx-3.5 mb-3.5 py-2.5 text-[12px] font-bold text-center"
+                    style={{ background: "var(--s-thumb)", color: "var(--s-ink)" }}
+                    data-testid="drop-locked"
+                  >
+                    🔒 {clock && p.drop_at ? `נפתח ${dropWhen(p.drop_at)}` : "נפתח בקרוב"}
+                  </div>
+                )}
+                {!out && !preview && !isLocked && (
                   <button
                     onClick={() => quickAdd(p)}
                     aria-label={`הוספה מהירה, ${p.name}`}
@@ -803,6 +899,26 @@ export default function StoreView({
         />
       )}
 
+      {/* באנר הדרופ הקרוב — לוחצים ופותחים את המוצר */}
+      {nextDrop && clock && !category && (
+        <div className="px-4 mb-3.5">
+          <button
+            onClick={() => openProduct(nextDrop)}
+            data-testid="drop-banner"
+            className="s-r w-full px-4 py-3 text-right flex items-center justify-between gap-3"
+            style={{ background: "var(--s-ink)", color: "var(--s-surface)" }}
+          >
+            <span className="min-w-0">
+              <span className="block text-[14px] font-extrabold">🔥 דרופ: {nextDrop.name}</span>
+              <span className="block text-[12px] opacity-80">{dropWhen(nextDrop.drop_at!)}</span>
+            </span>
+            <span className="shrink-0 text-[16px] font-extrabold">
+              <DropCountdown at={dropTime(nextDrop.drop_at)!} offset={clock.offset} />
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* grid */}
       <div className="flex-1 px-4 pb-24" ref={gridRef}>
         {sorted.length === 0 ? (
@@ -902,6 +1018,8 @@ export default function StoreView({
                 />
               ) : mediaUrl(current.image_key) ? (
                 <img src={mediaUrl(current.image_key)!} alt="" className="w-full h-full object-cover" />
+              ) : current.is_mystery ? (
+                <MysteryBag className="w-32 h-32" />
               ) : (
                 "🛍️"
               )}
@@ -915,6 +1033,26 @@ export default function StoreView({
             </p>
             {current.track_stock && current.stock <= 3 && (
               <p className="text-[12px] opacity-75 text-center mt-1">נשארו {current.stock} במלאי</p>
+            )}
+            {current.is_mystery && (
+              <p className="text-[13px] font-semibold text-center mt-2" data-testid="mystery-note">
+                🤫 מה בפנים? זו ההפתעה!
+              </p>
+            )}
+            {locked(current) && (
+              <div className="s-r mt-3 px-4 py-3 text-center" style={{ background: "var(--s-thumb)" }} data-testid="drop-box">
+                <div className="text-[15px] font-extrabold">
+                  🔥 דרופ!{" "}
+                  {clock && current.drop_at ? (
+                    <>נפתח בעוד <DropCountdown at={dropTime(current.drop_at)!} offset={clock.offset} /></>
+                  ) : (
+                    "נפתח בקרוב"
+                  )}
+                </div>
+                {clock && current.drop_at && (
+                  <div className="text-[12.5px] opacity-80 mt-0.5">{dropWhen(current.drop_at)}</div>
+                )}
+              </div>
             )}
           </div>
 
@@ -1023,14 +1161,16 @@ export default function StoreView({
             onClick={addToCart}
             aria-label="הוספה לסל"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
-            disabled={preview || maxQty(current) === 0 || (!!current.options?.length && !choice)}
+            disabled={preview || locked(current) || maxQty(current) === 0 || (!!current.options?.length && !choice)}
             className="w-full py-4 text-[16px] font-bold disabled:opacity-40 sticky bottom-0"
           >
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
                 לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
             {preview
               ? "הדוכן עוד לא נפתח להזמנות"
-              : maxQty(current) === 0
+              : locked(current)
+                ? "🔒 עוד לא נפתח"
+                : maxQty(current) === 0
                 ? "אין יותר במלאי"
                 : current.options?.length && !choice
                   ? `קודם בוחרים ${safeOptionLabel(current.option_label)}`

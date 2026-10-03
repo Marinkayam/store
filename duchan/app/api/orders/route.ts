@@ -7,6 +7,7 @@ import type { OrderItem } from "@/lib/types";
 import { lineTotal, sumPrices } from "@/lib/money";
 import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
 import { findCoupon } from "@/lib/coupons-server";
+import { countdown, dropTime } from "@/lib/drop";
 
 // POST /api/orders  { slug, items:[{productId, qty}], note?, buyerPhone? }
 // המספר של הילדה לא יושב ב-HTML — הוא מוחזר מכאן, רק אחרי שההזמנה נוצרה.
@@ -69,12 +70,24 @@ export async function POST(req: NextRequest) {
 
   // מאמתים מחירים ומלאי מול ה-DB. לעולם לא סומכים על הלקוח.
   const ids = items.map((i) => i.productId);
-  const { data: products } = await db
-    .from("products")
-    .select("id, name, price, track_stock, stock, option_label, options")
-    .eq("store_id", store.id)
-    .in("id", ids)
-    .is("deleted_at", null);
+  type Row = {
+    id: string; name: string; price: number; track_stock: boolean; stock: number;
+    option_label: string | null; options: string[] | null;
+    drop_at?: string | null; is_mystery?: boolean | null;
+  };
+  const readProducts = (cols: string) =>
+    db.from("products").select(cols).eq("store_id", store.id).in("id", ids).is("deleted_at", null);
+  // דרופ ושקית הפתעה (0056). אם הקוד עלה לפני המיגרציה — בלי השדות האלה,
+  // ולא הזמנה שנופלת (ראה ההסבר על p_buyer_phone למטה)
+  let { data: productRows, error: prodErr } = await readProducts(
+    "id, name, price, track_stock, stock, option_label, options, drop_at, is_mystery"
+  );
+  if (prodErr) {
+    console.error("[orders] product select failed, falling back:", prodErr.message);
+    ({ data: productRows } = await readProducts("id, name, price, track_stock, stock, option_label, options"));
+  }
+  const products = (productRows ?? []) as unknown as Row[];
+  const now = Date.now();
 
   const byId = new Map((products ?? []).map((p) => [p.id, p]));
   const snapshot: OrderItem[] = [];
@@ -88,6 +101,14 @@ export async function POST(req: NextRequest) {
     const p = byId.get(item.productId);
     if (!p) {
       return NextResponse.json({ error: "אחד המוצרים כבר לא בדוכן" }, { status: 409 });
+    }
+    // דרופ שעוד לא נפתח: השרת הוא השעון הקובע, לא הטלפון של הקונה
+    const opensAt = dropTime(p.drop_at);
+    if (opensAt !== null && opensAt > now) {
+      return NextResponse.json(
+        { error: `"${p.name}" עוד לא נפתח. נפתח בעוד ${countdown(opensAt - now)}`, field: "drop", productId: p.id },
+        { status: 409 }
+      );
     }
     if (p.track_stock && p.stock < qty) {
       return NextResponse.json({ error: `נשארו רק ${p.stock} מ"${p.name}"` }, { status: 409 });
@@ -110,7 +131,11 @@ export async function POST(req: NextRequest) {
     // המזהה נשמר כדי שתגית "הכי נמכר" תוכל להיגזר מהזמנות אמיתיות.
     // השם לבדו נשבר ברגע שילדה משנה שם מוצר.
     const price = Number(p.price);
-    snapshot.push({ id: p.id, name: p.name, qty, price, ...(option ? { option } : {}) });
+    snapshot.push({
+      id: p.id, name: p.name, qty, price,
+      ...(option ? { option } : {}),
+      ...(p.is_mystery ? { mystery: true as const } : {}),
+    });
     lines.push(lineTotal(price, qty));
   }
   // באגורות שלמות: 10.90 × 3 בנקודה צפה זה 32.699999…
