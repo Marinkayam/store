@@ -12,6 +12,7 @@ import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { QUOTAS } from "@/lib/quotas";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import AdminCoupons from "./admin-coupons";
+import NoSmsLogin from "./no-sms-login";
 
 /* ---------- types ---------- */
 
@@ -382,6 +383,9 @@ function SchemaWarning() {
             {totals.activeStores}/{totals.stores} חנויות פעילות
           </div>
         )}
+
+        {/* תמיד גלוי: "הקוד לא מגיע" הוא פנייה שמגיעה בוואטסאפ, ועונים עליה מיד */}
+        <NoSmsLogin />
 
         <div className="flex bg-[var(--sub)] p-0.5 sticky top-2 z-20 ">
           {([
@@ -927,6 +931,9 @@ function SchemaWarning() {
                 >
                   איפוס עכשיו
                 </button>
+              </div>
+              <div className="mt-2">
+                <NoSmsLogin key={detail.store.id} phone={displayPhone(detail.store.contact_phone)} compact />
               </div>
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--line)]">
                 <span className="text-[12px] flex-1">

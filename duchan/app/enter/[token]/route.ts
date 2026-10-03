@@ -37,12 +37,19 @@ border-radius:999px;background:#756192;color:#fff;text-decoration:none;font-weig
   );
 }
 
+/**
+ * ?to=store — קישור שנוצר בחמ"ל של דוכן, למוכרת שהסמס לא מגיע אליה.
+ * בלי זה הקישור מכוון לסקוויש. הטוקן הוא הסוד; הפרמטר רק בוחר לאן לנחות.
+ * הטופס שולח POST לאותה כתובת, כך שהפרמטר עובר הלאה לבד.
+ */
+const forStore = (req: NextRequest) => req.nextUrl.searchParams.get("to") === "store";
+
 /** מסך הכניסה: כפתור אחד. קיים כדי שרק לחיצה אנושית תשרוף את הטוקן. */
-function welcomePage(token: string) {
+function welcomePage(token: string, store = false) {
   return new NextResponse(
     `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow"><title>סקוויש קלאב · דוכן</title>
+<meta name="robots" content="noindex, nofollow"><title>${store ? "דוכן" : "סקוויש קלאב · דוכן"}</title>
 <style>body{font-family:Heebo,system-ui,sans-serif;background:#fbf8f3;color:#262626;
 display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center}
 .c{max-width:22rem}.m{font-size:56px;margin-bottom:4px}h1{font-size:1.3rem;margin:0 0 8px}
@@ -50,7 +57,7 @@ p{color:#5b564e;line-height:1.7;margin:0 0 22px}
 button{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 34px;
 border-radius:999px;background:#756192;color:#fff;border:0;font:inherit;font-weight:500;font-size:1rem;cursor:pointer;width:100%}
 button:active{transform:translateY(1px)}</style></head>
-<body><div class="c"><div class="m">🧸</div><h1>הקישור שלך מוכן</h1>
+<body><div class="c"><div class="m">${store ? "🛍️" : "🧸"}</div><h1>הקישור שלך מוכן</h1>
 <p>לוחצים פעם אחת — ונכנסים. בלי קוד ובלי סיסמה.</p>
 <form method="post"><button type="submit">להיכנס ←</button></form></div></body></html>`,
     { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } }
@@ -79,7 +86,7 @@ export async function GET(
       "קישור כניסה עובד פעם אחת בלבד, ל-24 שעות. בקשי חדש ממי ששלחה לך אותו."
     );
   }
-  return welcomePage(token);
+  return welcomePage(token, forStore(_req));
 }
 
 export async function POST(
@@ -188,7 +195,8 @@ export async function POST(
     db.from("stores").select("id").eq("owner_id", userId).limit(1).maybeSingle(),
     db.from("squish_profiles").select("id").eq("user_id", userId).limit(1).maybeSingle(),
   ]);
-  const dest = profile ? "/squish/collection"
+  const dest = forStore(_req) ? (store ? "/dashboard" : "/onboarding")
+    : profile ? "/squish/collection"
     : link.pilot_token ? "/squish"
     : store ? "/dashboard"
     : "/squish";

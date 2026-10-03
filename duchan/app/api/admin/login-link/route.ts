@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "אין גישה" }, { status: 403 });
 
-  let body: { phone?: string };
+  let body: { phone?: string; for?: "store" | "squish" };
   try {
     body = await req.json();
   } catch {
@@ -36,12 +36,15 @@ export async function POST(req: NextRequest) {
   /* ילדה שעוד אין לה פרופיל סקוויש = ילדה שמנסה את המוצר. מצמידים
      לקישור טוקן פיילוט, כדי שברגע שתיכנס היא תסומן — תופיע בחמ"ל,
      ואישור ההורה יחול עליה — בדיוק כמו במסלול קישור-פיילוט + סמס. */
+  /* קישור מהחמ"ל של דוכן (for: "store") — למוכרת, לא לניסיון סקוויש:
+     בלי טוקן פיילוט, והנחיתה בדשבורד של הדוכן. */
+  const storeLink = body.for === "store";
   let pilotToken: string | null = null;
   const { data: acct } = await db.from("phone_accounts").select("user_id").eq("phone", phone).maybeSingle();
   const { data: prof } = acct
     ? await db.from("squish_profiles").select("id").eq("user_id", acct.user_id).maybeSingle()
     : { data: null };
-  if (!prof) {
+  if (!prof && !storeLink) {
     pilotToken = "trial-" + randomBytes(12).toString("base64url");
     const { error: ptErr } = await db.from("squish_pilot_tokens").insert({
       token: pilotToken,
@@ -69,7 +72,7 @@ export async function POST(req: NextRequest) {
 
   const origin = req.nextUrl.origin;
   return NextResponse.json({
-    url: `${origin}/enter/${token}`,
+    url: `${origin}/enter/${token}${storeLink ? "?to=store" : ""}`,
     phone,
     expiresHours: LINK_TTL_HOURS,
   });
