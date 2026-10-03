@@ -32,6 +32,9 @@ export async function verifyPhone(page, local) {
   // "כבר ראיתי" כברירת מחדל. הבדיקה של הפופאפ עצמו מוחקת את הסימון.
   await page.evaluate(() => {
     try { localStorage.setItem("duchan-whatsnew-2026-09-looks", "1"); } catch {}
+    // אותו דבר לחגיגות של קופת הדוכן (app/dashboard/kupa/celebrate.tsx).
+    // e2e-kupa.mjs מוחק את הסימון ובודק אותן.
+    try { localStorage.setItem("kupa-quiet", "1"); } catch {}
   }).catch(() => {});
 }
 

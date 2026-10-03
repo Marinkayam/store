@@ -8,6 +8,7 @@ import WhatsNew from "./whats-new";
 import InstallCard from "../install-card";
 import type { Order } from "@/lib/types";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
+import { kupaCheck } from "./kupa/use-kupa";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
 // "שולם" מנכה מלאי (בפונקציית DB אטומית). "נמסר" מקבל קונפטי — המיקרו-אינטראקציה היחידה.
@@ -87,6 +88,7 @@ export default function OrdersPage() {
     }
     showToast("המלאי עודכן");
     refresh();
+    kupaCheck(); // מכירה = מטבעות, ואולי אות "המכירה הראשונה"
   }
 
   async function markDelivered(o: Order, e: React.MouseEvent) {
@@ -94,6 +96,7 @@ export default function OrdersPage() {
     await supa.from("orders").update({ status: "delivered" }).eq("id", o.id);
     confettiBurst(e.clientX, e.clientY);
     refresh();
+    kupaCheck();
   }
 
   // ביטול דרך פונקציית DB — אם המלאי כבר נוכה ("שולם"), הוא חוזר אטומית

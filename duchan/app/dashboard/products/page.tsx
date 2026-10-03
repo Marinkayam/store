@@ -24,6 +24,7 @@ import Icon from "@/app/icons";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryDesigner from "./category-designer";
 import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
+import { kupaCheck } from "../kupa/use-kupa";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -604,6 +605,7 @@ export default function ProductsPage() {
       setEdit(null);
       refresh();
       refreshStorePage();
+      kupaCheck(); // אולי אות חדש (מוצר ראשון, תמונה, חמישה מוצרים)
     } finally {
       setBusy(false);
     }

@@ -81,7 +81,7 @@ await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 20000 });
 for (const [path, label] of [
-  ["/dashboard", "הזמנות"], ["/dashboard/products", "מוצרים"], ["/dashboard/settings", "החנות שלי"],
+  ["/dashboard", "הזמנות"], ["/dashboard/products", "מוצרים"], ["/dashboard/settings", "החנות שלי"], ["/dashboard/kupa", "קופת הדוכן"],
   ["/activate", "פרסום"],
 ]) {
   await girl.goto(`${BASE}${path}`, { waitUntil: "networkidle" });

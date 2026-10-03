@@ -593,3 +593,54 @@ html.a11y-still .oops-fixing .oops-sign { transform: rotate(0); }
 @media (prefers-reduced-motion: reduce) {
   .order-land, .order-sway, .order-mark { animation: none; }
 }
+
+/* ── קופת הדוכן (app/kupa-art.tsx, app/dashboard/kupa) ──
+   הבנייה: כל חלק של הרמה החדשה נוחת מלמעלה וקופץ קצת, אחד אחרי השני.
+   העגלה של הרמה הראשונה מתגלגלת פנימה. אחרי זה הכל נח, חוץ מתנועות
+   קטנות של "חיים": שלט שמתנדנד, נורות שמהבהבות, כוכב שקופץ. */
+@keyframes kp-drop {
+  0%   { transform: translateY(-34px); opacity: 0; }
+  60%  { transform: translateY(3px); opacity: 1; }
+  80%  { transform: translateY(-2px); }
+  100% { transform: none; }
+}
+.kp-drop { animation: kp-drop .6s cubic-bezier(.2,.8,.3,1.2) both; }
+@keyframes kp-roll { from { transform: translateX(-150px); } to { transform: none; } }
+.kp-roll { animation: kp-roll 1s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes kp-wheel { from { transform: rotate(-540deg); } to { transform: none; } }
+.kp-roll .kp-wheel { animation: kp-wheel 1s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes kp-swing { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+.kp-swing { transform-box: fill-box; transform-origin: 50% 0; animation: kp-swing 3.2s ease-in-out infinite; }
+@keyframes kp-twinkle { 50% { opacity: .3; } }
+.kp-twinkle { animation: kp-twinkle 1.5s ease-in-out infinite; }
+
+/* מטבעות שקופצים מהמדליה לקופה */
+@keyframes kp-coin-pop {
+  0%   { transform: translate(0, 0) scale(.4); opacity: 0; }
+  25%  { opacity: 1; }
+  55%  { transform: translate(calc(var(--dx) * .6), -64px) scale(1); }
+  100% { transform: translate(var(--dx), 12px) scale(.7); opacity: 0; }
+}
+.kp-coin-pop { position: absolute; animation: kp-coin-pop 1.1s cubic-bezier(.3,.6,.5,1) both; pointer-events: none; }
+/* המדליה מסתובבת כשאות נפתח */
+@keyframes kp-flip {
+  0%   { transform: perspective(300px) rotateY(180deg) scale(.6); }
+  70%  { transform: perspective(300px) rotateY(-12deg) scale(1.08); }
+  100% { transform: none; }
+}
+.kp-flip { animation: kp-flip .8s cubic-bezier(.2,.8,.3,1) both; }
+/* הקופה קופצת כשמטבעות נכנסים */
+@keyframes kp-bump { 40% { transform: scale(1.16); } }
+.kp-bump { animation: kp-bump .45s cubic-bezier(.2,.9,.3,1.4); }
+/* הפס מתמלא בכניסה למסך */
+.kp-fill { transition: width .9s cubic-bezier(.2,.8,.2,1); }
+@keyframes kp-sheet-up { from { transform: translateY(100%); } }
+.kp-sheet-up { animation: kp-sheet-up .38s cubic-bezier(.2,.8,.2,1); }
+@keyframes kp-shake { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+.kp-shake { animation: kp-shake .35s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kp-drop, .kp-roll, .kp-roll .kp-wheel, .kp-swing, .kp-twinkle, .kp-flip, .kp-bump, .kp-sheet-up, .kp-shake { animation: none; }
+  .kp-coin-pop { display: none; }
+  .kp-fill { transition: none; }
+}

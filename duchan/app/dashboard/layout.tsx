@@ -7,6 +7,7 @@ import Icon, { type IconName } from "../icons";
 import ReleasePopup from "./release-popup";
 import StoreSwitcher from "./store-switcher";
 import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
+import KupaCelebrate from "./kupa/celebrate";
 
 // אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
 // הניווט — הדבר שהילדה רואה בכל מסך — לא בשליטתנו.
@@ -24,6 +25,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto">
       <ReleasePopup />
+      {/* חגיגות של קופת הדוכן: אות חדש, עלייה ברמה */}
+      <KupaCelebrate />
       <StoreSwitcher />
       <div className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">{children}</div>
       {/* באייפון: רק כמה פיקסלים מעל פס הבית, לא כל אזור הבטיחות + ריווח —
