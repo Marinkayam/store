@@ -94,6 +94,7 @@ export default function ProductsPage() {
   const [edit, setEdit] = useState<EditState | null>(null);
   // "+ קטגוריה" בשורת מוצר: פותחים את העורך וגוללים ישר לבחירת הקטגוריה
   const [focusCats, setFocusCats] = useState(false);
+  const [sorting, setSorting] = useState(false);
   useEffect(() => {
     if (!edit || !focusCats) return;
     const t = setTimeout(() => {
@@ -622,15 +623,6 @@ export default function ProductsPage() {
     refreshStorePage();
   }
 
-  /* ---------- מלאי מהיר ---------- */
-  async function quickStock(p: Product, delta: number) {
-    const stock = Math.max(0, p.stock + delta);
-    setProducts((list) => list.map((x) => (x.id === p.id ? { ...x, stock } : x))); // אופטימי
-    const supa = supabaseBrowser();
-    const { error } = await supa.from("products").update({ stock }).eq("id", p.id);
-    if (error) refresh();
-    else refreshStorePage();
-  }
 
   /* ---------- שחזור ---------- */
   const [deleted, setDeleted] = useState<Product[]>([]);
@@ -780,109 +772,99 @@ export default function ProductsPage() {
             </button>
           </div>
         )}
+        {/* מעל הרשימה: כותרת קטנה ו"לשנות סדר". החצים ▲▼ מופיעים רק במצב
+            סידור — בשאר הזמן השורה נקייה: תמונה, שם, מחיר, ומה שחשוב לדעת. */}
+        {products.length > 1 && (
+          <div className="flex items-center justify-between -mb-1 px-0.5">
+            <span className="text-[13px] font-bold text-[var(--ink)]">המוצרים בדוכן</span>
+            <button
+              onClick={() => setSorting((v) => !v)}
+              data-testid="sort-toggle"
+              aria-pressed={sorting}
+              className="min-h-11 px-1 text-[13px] font-medium text-[var(--muted)]"
+            >
+              {sorting ? "✓ סיימתי לסדר" : "↕ לשנות סדר"}
+            </button>
+          </div>
+        )}
         {products.map((p, idx) => {
           const out = p.track_stock && p.stock === 0;
           const hidden = p.is_visible === false;
           const img = mediaUrl(p.poster_key) ?? mediaUrl(p.image_key);
+          const cats = productCats(p);
           return (
             <div
               key={p.id}
-              onClick={() => openEditor(p)}
-              className={`bg-white border border-[var(--line)] p-4 flex gap-3.5 items-center text-right cursor-pointer ${out || hidden ? "opacity-55" : ""}`}
+              onClick={() => !sorting && openEditor(p)}
+              data-testid="product-row"
+              className={`bg-white border border-[var(--line)] p-4 flex gap-4 items-center text-right ${sorting ? "" : "cursor-pointer"} ${out || hidden ? "opacity-60" : ""}`}
             >
-              {/* סידור */}
-              <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={() => move(p, -1)}
-                  disabled={idx === 0}
-                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[11px] leading-none disabled:opacity-25"
-                  aria-label="להזיז למעלה"
-                >
-                  ▲
-                </button>
-                <button
-                  onClick={() => move(p, 1)}
-                  disabled={idx === products.length - 1}
-                  className="w-6 h-6 border border-[var(--line)] bg-[var(--canvas)] text-[11px] leading-none disabled:opacity-25"
-                  aria-label="להזיז למטה"
-                >
-                  ▼
-                </button>
-              </div>
-              <div className="w-13 h-13 min-w-13 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden relative">
+              <div className="w-[72px] h-[72px] shrink-0 bg-[var(--canvas)] flex items-center justify-center text-3xl overflow-hidden relative">
                 {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
                 {p.video_key && (
-                  <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1 ">
-                    וידאו
-                  </span>
+                  <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1">וידאו</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                {/* השורה כולה פותחת עריכה, אבל בלי סימן אי אפשר לדעת את זה */}
-                <div className="text-sm font-medium flex items-center gap-1.5">
-                  {p.featured && <span aria-label="מומלץ" title="מומלץ" className="text-[var(--warn-ink)]">★</span>}
-                  {p.name}
-                  <span className="text-[11px] text-[var(--faint)] font-normal">✎ עריכה</span>
+                <div className="text-[15px] font-bold leading-snug flex items-center gap-1.5 min-w-0">
+                  {p.featured && <span aria-label="מומלץ" title="מומלץ" className="text-[var(--warn-ink)] shrink-0">★</span>}
+                  <span className="truncate">{p.name}</span>
                 </div>
-                {p.description && (
-                  <div className="text-[12px] text-[var(--muted)] truncate">{p.description}</div>
+                <div className="text-[14px] text-[var(--ink)] mt-0.5">₪{formatPrice(p.price)}</div>
+                {(out || hidden || (p.track_stock && !out && p.stock <= 2) || !!store.categories?.length) && (
+                  <div className="flex gap-1.5 items-center mt-2 flex-wrap">
+                    {out && (
+                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
+                    )}
+                    {p.track_stock && !out && p.stock <= 2 && (
+                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
+                    )}
+                    {hidden && (
+                      <span className="text-[11.5px] px-2 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
+                    )}
+                    {!!store.categories?.length &&
+                      (cats.length ? (
+                        cats.map((c) => (
+                          <span key={c} className="text-[11.5px] px-2 py-0.5 bg-[var(--canvas)] text-[var(--ink)]">{c}</span>
+                        ))
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFocusCats(true);
+                            openEditor(p);
+                          }}
+                          data-testid="row-add-category"
+                          className="text-[11.5px] px-2 py-0.5 border border-dashed border-[var(--warn-ink)] text-[var(--warn-ink)] font-medium"
+                        >
+                          + קטגוריה
+                        </button>
+                      ))}
+                  </div>
                 )}
-                <div className="flex gap-1.5 items-center mt-1 flex-wrap">
-                  <span className="text-[13px] font-medium">₪{formatPrice(p.price)}</span>
-                  {!!store.categories?.length &&
-                    (productCats(p).length ? (
-                      productCats(p).map((c) => (
-                        <span key={c} className="text-[11px] px-1.5 py-0.5 border border-[var(--line)] text-[var(--ink)]">{c}</span>
-                      ))
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFocusCats(true);
-                          openEditor(p);
-                        }}
-                        data-testid="row-add-category"
-                        className="text-[11px] px-1.5 py-0.5 border border-dashed border-[var(--warn-ink)] text-[var(--warn-ink)] font-medium"
-                      >
-                        + קטגוריה
-                      </button>
-                    ))}
-                  {hidden && (
-                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
-                  )}
-                  {!p.track_stock ? (
-                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">בלי מעקב</span>
-                  ) : out ? (
-                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
-                  ) : p.stock <= 2 ? (
-                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
-                  ) : null /* הכמות עצמה כתובה בין ה-+ וה-− בצד */}
-                </div>
               </div>
-              {/* מלאי מהיר. ה-+ וה-− לבד בצד לא אמרו כלום ("מה זה הפלוס והמינוס
-                  האלה?") — עכשיו כתוב "מלאי" והכמות יושבת ביניהם */}
-              {p.track_stock && (
-                <div className="flex flex-col items-center shrink-0" onClick={(e) => e.stopPropagation()} data-testid="stock-stepper">
-                  <span className="text-[10.5px] text-[var(--muted)] mb-0.5">מלאי</span>
+              {sorting ? (
+                <div className="flex flex-col gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={() => quickStock(p, 1)}
-                    className="w-8 h-7 border border-[var(--line)] bg-white text-sm"
-                    aria-label="הוספה למלאי"
+                    onClick={() => move(p, -1)}
+                    disabled={idx === 0}
+                    className="w-10 h-10 border border-[var(--line)] bg-[var(--canvas)] text-[12px] disabled:opacity-25"
+                    aria-label="להזיז למעלה"
                   >
-                    +
+                    ▲
                   </button>
-                  <span className="h-6 flex items-center text-[14px] font-bold tabular-nums" aria-label={`במלאי: ${p.stock}`} data-testid="stock-count">
-                    {p.stock}
-                  </span>
                   <button
-                    onClick={() => quickStock(p, -1)}
-                    disabled={p.stock === 0}
-                    className="w-8 h-7 border border-[var(--line)] bg-white text-sm disabled:opacity-25"
-                    aria-label="הורדה מהמלאי"
+                    onClick={() => move(p, 1)}
+                    disabled={idx === products.length - 1}
+                    className="w-10 h-10 border border-[var(--line)] bg-[var(--canvas)] text-[12px] disabled:opacity-25"
+                    aria-label="להזיז למטה"
                   >
-                    −
+                    ▼
                   </button>
                 </div>
+              ) : (
+                /* כמו בשורות של "הדוכן שלי": החץ אומר שלוחצים ונכנסים */
+                <span aria-hidden className="text-[var(--faint)] text-[20px] shrink-0">‹</span>
               )}
             </div>
           );
@@ -1234,10 +1216,12 @@ export default function ProductsPage() {
                 <label className="block text-[12px] text-[var(--muted)] mb-1">כמה יש לי כאלה</label>
                 <div className="flex items-center gap-3 border border-[var(--line)] px-3 py-2 mb-3">
                   <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
-                    className="w-8 h-8 border border-[var(--line)] bg-[var(--canvas)] text-base">−</button>
-                  <span className="flex-1 text-center text-base font-semibold">{edit.stock}</span>
+                    aria-label="הורדה מהמלאי"
+                    className="w-10 h-10 border border-[var(--line)] bg-[var(--canvas)] text-base">−</button>
+                  <span className="flex-1 text-center text-base font-semibold" data-testid="editor-stock">{edit.stock}</span>
                   <button onClick={() => setEdit((s) => s && { ...s, stock: s.stock + 1 })}
-                    className="w-8 h-8 border border-[var(--line)] bg-[var(--canvas)] text-base">+</button>
+                    aria-label="הוספה למלאי"
+                    className="w-10 h-10 border border-[var(--line)] bg-[var(--canvas)] text-base">+</button>
                 </div>
               </>
             )}

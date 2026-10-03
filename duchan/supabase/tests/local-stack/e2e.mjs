@@ -77,16 +77,21 @@ check("uploaded image is webp/jpeg (canvas re-encode, EXIF gone)",
 check("media_bytes quota updated",
   (await db.query("select media_bytes from stores where id=$1", [storeRow.id])).rows[0].media_bytes > 0);
 
-/* ── שלב 2.5: מלאי מהיר — תמר מעלה מלאי מ-1 ל-4 בלי לפתוח עורך ── */
+/* ── שלב 2.5: מלאי — תמר מעלה מלאי מ-1 ל-4 בעורך המוצר (המלאי המהיר
+   בשורה הוסר: השורה נקייה, והמלאי נערך במוצר עצמו) ── */
 await page.goto(`${BASE}/dashboard/products`);
 await page.waitForSelector("text=סקוויש חד-קרן");
+await page.click("[data-testid=product-row]:has-text('סקוויש חד-קרן')");
+await page.waitForSelector("[data-testid=editor-close]");
 const plusBtn = page.locator("button[aria-label='הוספה למלאי']");
 await plusBtn.click();
 await plusBtn.click();
 await plusBtn.click();
-await page.waitForTimeout(1200);
+await page.click("button:has-text('שמירה')");
+await page.waitForSelector("[data-testid=editor-close]", { state: "detached", timeout: 15000 });
+await page.waitForTimeout(800);
 const quickStock = (await db.query("select stock from products where id=$1", [prodRow.id])).rows[0].stock;
-check("quick stock +/- persists (1 → 4)", quickStock === 4, `stock=${quickStock}`);
+check("stock edited in the product editor persists (1 → 4)", quickStock === 4, `stock=${quickStock}`);
 await page.screenshot({ path: `${shots}/10b-products.png` });
 
 /* ── שלב 3: קונה אנונימית — חנות, סל, הזמנה במערכת (2026-09: בלי מעבר
