@@ -990,7 +990,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <span className="block text-[12.5px] font-bold mt-1.5" style={{ color: t.ink }}>{l.label}</span>
-                    <span className="block text-[10.5px] leading-tight opacity-60" style={{ color: t.ink }}>{l.hint}</span>
+                    <span className="block text-[10.5px] leading-tight opacity-80" style={{ color: t.ink }}>{l.hint}</span>
                   </button>
                 );
               })}
@@ -1249,7 +1249,7 @@ export default function SettingsPage() {
                   className="border-[1.5px] px-3.5 py-3 text-center"
                   style={{ background: t.surface, borderColor: t.primary, color: t.ink }}
                 >
-                  <div className="text-[12px] font-bold" style={{ color: t.primary }}>
+                  <div className="text-[12px] font-bold" style={{ color: t.primaryText }}>
                     {promo.promo_title.trim() || "מבצע החודש"}
                   </div>
                   <p className="text-[13.5px] leading-relaxed mt-1 whitespace-pre-line">{promo.promo_text}</p>

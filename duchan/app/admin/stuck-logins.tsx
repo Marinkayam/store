@@ -129,7 +129,7 @@ export default function StuckLogins() {
                     rel="noopener noreferrer"
                     data-testid="stuck-whatsapp"
                     onClick={() => setTimeout(load, 1500)}
-                    className="flex-1 text-center bg-[#25d366] text-white px-3 py-2 text-[12.5px] font-bold"
+                    className="flex-1 text-center bg-[var(--whatsapp)] text-white px-3 py-2 text-[12.5px] font-bold"
                   >
                     לשלוח בוואטסאפ
                   </a>

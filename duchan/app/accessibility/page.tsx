@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { contactWhatsappUrl } from "@/lib/site";
+import { CONTACT_EMAIL, contactWhatsappUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "הצהרת נגישות · דוכן" };
 
@@ -11,7 +11,7 @@ export default function AccessibilityPage() {
       <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
         <a href="/" className="text-xs text-[var(--muted)] underline">← חזרה לדוכן</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">הצהרת נגישות</h1>
-        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.0</p>
+        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.1 · עודכן באוקטובר 2026</p>
 
         <Section title="המחויבות שלנו">
           אנחנו רואים חשיבות בהנגשת דוכן לכל המשתמשות והמשתמשים, כולל אנשים
@@ -20,12 +20,21 @@ export default function AccessibilityPage() {
           הנחיות WCAG 2.0 ברמה AA).
         </Section>
 
+        <Section title="♿ תפריט נגישות">
+          בכל עמוד באתר יש כפתור ♿ בצד המסך. אפשר לבחור בו: אותיות גדולות
+          (גדול / ענק), צבעים חזקים (שחור-לבן ברור), בלי תנועה (עוצר
+          אנימציות), סימון קישורים, ואותיות פשוטות. הבחירה נשמרת בטלפון, וחלה
+          בכל האתר — גם בדוכנים עצמם.
+        </Section>
+
         <Section title="מה נעשה כדי להנגיש את האתר">
-          תמיכה בקריאת מסך וניווט מקלדת בטפסים ובכפתורים המרכזיים · תיאורי
-          טקסט חלופיים לתמונות מוצרים ולסמלים בעלי משמעות · ניגודיות צבעים
-          נבדקת לטקסט מרכזי · מבנה עמודים סמנטי עם כותרות מדורגות ואזורי
-          תוכן מזוהים · תמיכה בהגדלת טקסט של הדפדפן בלי שבירת עיצוב · האתר
-          מותאם לעברית ולכיווניות RTL באופן מלא.
+          ניווט מלא במקלדת עם מסגרת מיקוד בולטת · קישור &quot;דילוג לתוכן&quot; בתחילת כל
+          עמוד · תמיכה בקוראי מסך: תוויות לכל שדה וכפתור, חלונות וגיליונות
+          מזוהים, וכפתור ✕ לסגירה בכל אחד · תיאורי טקסט לתמונות ולסמלים בעלי
+          משמעות · ניגודיות צבעים לפי AA · אזורי לחיצה של 44 פיקסלים לפחות ·
+          כיבוד הגדרת &quot;פחות תנועה&quot; של הטלפון · האתר מותאם לעברית ולכיווניות
+          RTL, ולמסכי טלפון כולל אייפון עם פס בית. כל עדכון נבדק אוטומטית
+          (axe, WCAG 2.1 AA) בכל העמודים המרכזיים.
         </Section>
 
         <Section title="מגבלות ידועות">
@@ -36,7 +45,11 @@ export default function AccessibilityPage() {
           המגבלות האלה בהדרגה.
         </Section>
 
-        <Section title="נתקלת בבעיית נגישות?">
+        <Section title="רכזת הנגישות">
+          מרינה, מנהלת דוכן · <a href={`mailto:${CONTACT_EMAIL}`} className="underline">{CONTACT_EMAIL}</a>
+        </Section>
+
+        <Section title="נתקלתם בבעיית נגישות?">
           נשמח לדעת ולתקן. אפשר לפנות אלינו ב
           <a
             href={contactWhatsappUrl("היי! נתקלתי בבעיית נגישות באתר של דוכן.")}

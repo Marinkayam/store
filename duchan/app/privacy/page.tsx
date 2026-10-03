@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
         <a href="/" className="text-xs text-[var(--muted)] underline">← חזרה לדוכן</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">מדיניות פרטיות</h1>
-        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.1</p>
+        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.2 · עודכן באוקטובר 2026</p>
 
         <Section title="העיקרון">
           דוכן נבנתה סביב איסוף מידע מינימלי. אנחנו אוספים רק את מה שנדרש כדי
@@ -62,9 +62,22 @@ export default function PrivacyPage() {
           החנות שלה.
         </Section>
 
-        <Section title="עוגיות (Cookies)">
-          נעשה שימוש בעוגיות הנחוצות לתפעול בלבד, שמירת התחברות לחשבון. אין
-          עוגיות פרסום, אין כלי מעקב של צדדים שלישיים ואין אנליטיקס חיצוני.
+        <Section title="🍪 עוגיות (Cookies)" id="cookies">
+          <b className="text-[var(--ink)]">בקצרה:</b> עוגייה היא פתק קטן שהאתר שומר בטלפון,
+          כדי לזכור שנכנסתם. בדוכן יש רק את מה שצריך — בלי פרסומות ובלי מעקב.
+          <br />
+          <br />
+          <b className="text-[var(--ink)]">מה יש:</b>
+          <br />• עוגיית התחברות — כדי שלא תצטרכו קוד בסמס בכל כניסה.
+          <br />• הגדרות קטנות שנשמרות רק בטלפון שלכם (לא אצלנו): הגדרות
+          נגישות, טיוטה של מוצר שעוד לא נשמר, ו&quot;לא עכשיו&quot; על הודעות.
+          <br />• ספירת ביקורים אנונימית של Vercel (שמאחסנת את האתר) — בלי עוגייה,
+          בלי שם ובלי מעקב בין אתרים. רואים רק כמה פעמים נפתח כל עמוד.
+          <br />
+          <br />
+          <b className="text-[var(--ink)]">מה אין:</b> עוגיות פרסום, כלי מעקב של חברות
+          אחרות, או מכירה של מידע. אפשר למחוק עוגיות בהגדרות הדפדפן — ואז פשוט
+          נכנסים שוב עם קוד.
         </Section>
 
         <Section title="מחיקה ושחזור">
@@ -101,9 +114,9 @@ export default function PrivacyPage() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
-    <section className="mb-6">
+    <section className="mb-6 scroll-mt-6" id={id}>
       <h2 className="font-bold mb-1.5">{title}</h2>
       <p className="text-[14px] text-[var(--muted)]">{children}</p>
     </section>

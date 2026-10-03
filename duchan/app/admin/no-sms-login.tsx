@@ -92,7 +92,7 @@ export default function NoSmsLogin({ phone: initial = "", compact = false }: { p
         <div data-testid="no-sms-result" className="mt-2 border-t border-[var(--line)] pt-2">
           <div className="text-[11.5px] text-[var(--muted)] break-all" dir="ltr">{url}</div>
           <div className="flex gap-2 mt-2">
-            <button onClick={whatsapp} className="bg-[#25d366] text-white px-3 py-1.5 text-[12.5px] font-bold">
+            <button onClick={whatsapp} className="bg-[var(--whatsapp)] text-white px-3 py-1.5 text-[12.5px] font-bold">
               לשלוח בוואטסאפ
             </button>
             <button

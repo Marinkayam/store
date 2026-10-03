@@ -16,13 +16,13 @@ export type BadgeKey = "last" | "best" | "sale" | "rare" | "new";
 // הצבעים מהדיזיין סיסטם: נמכר=אפרסק, חדש=לבנדר, נדיר=זית, מומלץ=שמנת.
 export const BADGES: Record<
   BadgeKey,
-  { icon: IconName; label: string; bg: string; fg: string }
+  { icon: IconName; label: string; bg: string; fg: string; /** הצבע כשהתגית היא טקסט על לבן — AA */ text: string }
 > = {
-  last: { icon: "hourglass", label: "אחרון במלאי", bg: "#E3C26F", fg: "#3A2E12" },
-  best: { icon: "star", label: "הכי נמכר", bg: "#D9967A", fg: "#FFFFFF" },
-  sale: { icon: "gift", label: "מבצע", bg: "#B9824A", fg: "#FFFFFF" },
-  rare: { icon: "gem", label: "נדיר", bg: "#A8A46D", fg: "#FFFFFF" },
-  new:  { icon: "leaf", label: "חדש", bg: "#B89AC8", fg: "#FFFFFF" },
+  last: { icon: "hourglass", label: "אחרון במלאי", bg: "#E3C26F", fg: "#3A2E12", text: "#7A5A0E" },
+  best: { icon: "star", label: "הכי נמכר", bg: "#D9967A", fg: "#FFFFFF", text: "#A65330" },
+  sale: { icon: "gift", label: "מבצע", bg: "#B9824A", fg: "#FFFFFF", text: "#8D6236" },
+  rare: { icon: "gem", label: "נדיר", bg: "#A8A46D", fg: "#FFFFFF", text: "#716E43" },
+  new:  { icon: "leaf", label: "חדש", bg: "#B89AC8", fg: "#FFFFFF", text: "#8858A2" },
 };
 
 /** מוצר נחשב חדש בשבוע הראשון שלו. */

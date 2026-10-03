@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
+import A11yMenu, { A11Y_BOOT } from "./a11y-menu";
+import CookieNote from "./cookie-note";
 
 export const metadata: Metadata = {
   // בלי metadataBase, Next בונה תגיות OpenGraph עם נתיבים יחסיים
@@ -17,7 +19,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  /* בלי maximumScale: חסימת הגדלה בצביטה היא הפרת נגישות (WCAG 1.4.4).
+     היא הייתה שם כדי שאייפון לא יעשה זום לבד כשנכנסים לשדה — את זה
+     פותרים בשדות של 16px במסכי מגע (globals.css). */
   /* cover: באייפון בלי זה env(safe-area-inset-bottom) הוא 0, וכפתורים
      שיושבים בתחתית המסך נדחסים מתחת לפס הבית ("הכפתור לא נראה טוב").
      שורת הסטטוס למעלה לא מושפעת — status-bar-style הוא default. */
@@ -44,9 +48,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="דוכן" />
+        {/* הגדרות הנגישות השמורות — לפני הציור הראשון, בלי קפיצה */}
+        <script dangerouslySetInnerHTML={{ __html: A11Y_BOOT }} />
       </head>
       <body>
-        {children}
+        {/* דילוג לתוכן — לניווט במקלדת. מוסתר עד שמגיעים אליו בטאב */}
+        <a href="#main" className="skip-link">דילוג לתוכן</a>
+        <div id="main" tabIndex={-1} className="outline-none">
+          {children}
+        </div>
+        <A11yMenu />
+        <CookieNote />
         {/* Vercel Web Analytics — אותו אירוח, בלי עוגייה ובלי סקריפט
             מדומיין זר. האירועים נשלחים דרך lib/squish-analytics.ts, שמסנן
             כל מה שאינו ברשימה לבנה. */}

@@ -238,7 +238,7 @@ function Glyph({
 
 function Initial({ name, px }: { name: string | null; px: number }) {
   return (
-    <span aria-hidden style={{ fontSize: px * 0.45, fontWeight: 800, color: "var(--s-primary)" }}>
+    <span aria-hidden style={{ fontSize: px * 0.45, fontWeight: 800, color: "var(--s-primary-text)" }}>
       {(name ?? "").trim().charAt(0)}
     </span>
   );

@@ -560,7 +560,7 @@ export default function StoreView({
                             // בסגנון עגול הפינה נחתכת — אז השבב זז פנימה והופך לגלולה
                             roundedLook ? "top-2 right-2 border s-r" : "top-0 right-0 border-b border-r-0 border-t-0 border-l"
                           }`}
-                          style={{ color: b.bg, borderColor: b.bg }}
+                          style={{ color: b.text, borderColor: b.bg }}
                         >
                           <Icon name={b.icon} size={12} tone="none" className="inline-block align-[-1px] ms-0.5" />{" "}
                           {b.label}
@@ -583,9 +583,9 @@ export default function StoreView({
                   <div className="px-3.5 pt-3 pb-2 text-right">
                     <div className="text-[13.5px] font-semibold leading-snug">{p.name}</div>
                     {p.description && (
-                      <div className="text-[12px] opacity-60 truncate">{p.description}</div>
+                      <div className="text-[12px] opacity-75 truncate">{p.description}</div>
                     )}
-                    <div className="text-[17px] font-bold mt-1.5" style={{ color: "var(--s-primary)" }}>
+                    <div className="text-[17px] font-bold mt-1.5" style={{ color: "var(--s-primary-text)" }}>
                       ₪{formatPrice(p.price)}
                     </div>
                   </div>
@@ -780,7 +780,7 @@ export default function StoreView({
             className="s-r mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"
             style={{ background: "var(--s-surface)", borderColor: "var(--s-primary)" }}
           >
-            <div className="text-[12px] font-bold tracking-wide" style={{ color: "var(--s-primary)" }}>
+            <div className="text-[12px] font-bold tracking-wide" style={{ color: "var(--s-primary-text)" }}>
               {store.promo_title?.trim() || "מבצע החודש"}
             </div>
             <p className="text-[13.5px] leading-relaxed mt-1 whitespace-pre-line">
@@ -807,7 +807,7 @@ export default function StoreView({
       <div className="flex-1 px-4 pb-24" ref={gridRef}>
         {sorted.length === 0 ? (
           <div className="text-center pt-14">
-            <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-60"} style={plate}>
+            <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-75"} style={plate}>
               {/* יש מוצרים אבל כולם אזלו — לא "אין כאן כלום", שנראה כמו דוכן נטוש */}
               {products.length > 0 ? "הכל נמכר! 🎉 מוצרים חדשים בקרוב" : "עוד אין כאן מוצרים."}
             </p>
@@ -829,7 +829,7 @@ export default function StoreView({
           <div className="grid grid-cols-2 gap-3.5">{sorted.map((p, i) => renderCard(p, i))}</div>
         )}
         <p
-          className={customBg ? "s-r w-fit mx-auto mt-6 mb-1 px-3 py-1.5 text-center text-[11px]" : "text-center text-[11px] opacity-45 pt-6 pb-1"}
+          className={customBg ? "s-r w-fit mx-auto mt-6 mb-1 px-3 py-1.5 text-center text-[11px]" : "text-center text-[11px] opacity-75 pt-6 pb-1"}
           style={plate}
         >
           {store.display_name} ·{" "}
@@ -910,11 +910,11 @@ export default function StoreView({
             {current.description && (
               <p className="text-[13px] opacity-70 text-center mt-1 leading-relaxed">{current.description}</p>
             )}
-            <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary)" }}>
+            <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary-text)" }}>
               ₪{formatPrice(current.price)}
             </p>
             {current.track_stock && current.stock <= 3 && (
-              <p className="text-[12px] opacity-60 text-center mt-1">נשארו {current.stock} במלאי</p>
+              <p className="text-[12px] opacity-75 text-center mt-1">נשארו {current.stock} במלאי</p>
             )}
           </div>
 
@@ -946,7 +946,7 @@ export default function StoreView({
                           background: "var(--s-surface)",
                           borderColor: on ? "var(--s-primary)" : "currentColor",
                           color: "var(--s-ink)",
-                          opacity: on ? 1 : 0.65,
+                          opacity: on ? 1 : 0.75,
                           fontWeight: on ? 700 : 500,
                         }}
                       >
@@ -964,7 +964,7 @@ export default function StoreView({
                         background: "var(--s-surface)",
                         borderColor: on ? "var(--s-primary)" : "currentColor",
                         color: "var(--s-ink)",
-                        opacity: on ? 1 : 0.65,
+                        opacity: on ? 1 : 0.75,
                         fontWeight: on ? 700 : 500,
                       }}
                     >
@@ -989,7 +989,7 @@ export default function StoreView({
                 })}
               </div>
               {!choice && (
-                <p className="text-[12px] text-center mt-2.5 opacity-60">
+                <p className="text-[12px] text-center mt-2.5 opacity-75">
                   צריך לבחור {safeOptionLabel(current.option_label)} לפני שמוסיפים לסל
                 </p>
               )}
@@ -997,13 +997,13 @@ export default function StoreView({
           )}
 
           <div className="border-t border-current/10 pt-3.5">
-            <div className="text-[12px] opacity-60 text-center mb-2">כמות</div>
+            <div className="text-[12px] opacity-75 text-center mb-2">כמות</div>
             <div className="flex items-center justify-center gap-6">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
                 disabled={qty <= 1}
                 aria-label="פחות"
-                className="w-11 h-11 border-2 border-current opacity-55 disabled:opacity-20 text-xl"
+                className="w-11 h-11 border-2 border-current opacity-75 disabled:opacity-20 text-xl"
               >
                 −
               </button>
@@ -1012,7 +1012,7 @@ export default function StoreView({
                 onClick={() => setQty((q) => Math.min(maxQty(current), q + 1))}
                 disabled={qty >= maxQty(current)}
                 aria-label="עוד"
-                className="w-11 h-11 border-2 border-current opacity-55 disabled:opacity-20 text-xl"
+                className="w-11 h-11 border-2 border-current opacity-75 disabled:opacity-20 text-xl"
               >
                 +
               </button>
@@ -1054,7 +1054,7 @@ export default function StoreView({
           <div className="flex items-baseline justify-between mb-4">
             <h2 className="text-[19px] font-bold">ההזמנה שלך</h2>
             <span className="flex items-center gap-2">
-              <span className="text-[12.5px] opacity-55">
+              <span className="text-[12.5px] opacity-75">
                 {cartCount === 1 ? "פריט אחד" : `${cartCount} פריטים`}
               </span>
               <CloseX onClick={() => setOrderOpen(false)} testid="order-close" />
@@ -1076,7 +1076,7 @@ export default function StoreView({
                     {l.name}
                     {l.option ? ` (${l.option})` : ""}
                   </div>
-                  <div className="opacity-50 text-[12px] mt-0.5">₪{formatPrice(l.price)} ליחידה</div>
+                  <div className="opacity-75 text-[12px] mt-0.5">₪{formatPrice(l.price)} ליחידה</div>
                 </div>
 
                 <div className="flex items-center border-[1.5px] border-black/10">
@@ -1112,7 +1112,7 @@ export default function StoreView({
           </div>
 
           {cart.length === 0 && (
-            <p className="text-[13px] opacity-60 py-8 text-center">
+            <p className="text-[13px] opacity-75 py-8 text-center">
               הסל ריק. אפשר לסגור ולהמשיך לבחור.
             </p>
           )}
@@ -1131,7 +1131,7 @@ export default function StoreView({
               <span aria-hidden>🏷️</span>
               <span className="flex-1">
                 <b>קופונים:</b> עוד אין לך קופון בדוכן, אז הקונים לא רואים כאן שדה קוד.
-                <span className="block opacity-60">רק את רואה את ההודעה הזו.</span>
+                <span className="block opacity-75">ההודעה הזו מופיעה רק לך.</span>
               </span>
               <span className="font-bold underline shrink-0">ליצירה ←</span>
             </a>
@@ -1220,7 +1220,7 @@ export default function StoreView({
                   style={
                     wantsShipping
                       ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
+                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
                   }
                 >
                   משלוח
@@ -1232,14 +1232,14 @@ export default function StoreView({
                   style={
                     !wantsShipping
                       ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
+                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
                   }
                 >
                   מסירה אישית
                 </button>
               </div>
               {wantsShipping && (
-                <p className="opacity-55 text-[12.5px] mt-2 leading-relaxed">
+                <p className="opacity-75 text-[12.5px] mt-2 leading-relaxed">
                   {store.shipping_note || "בתיאום"}
                   {typeof store.shipping_price === "number" && ` · ₪${formatPrice(store.shipping_price)}`}
                 </p>
@@ -1250,7 +1250,7 @@ export default function StoreView({
                 <div className="mt-4 flex flex-col gap-4">
                   <div className="flex gap-3">
                     <label className="flex-1 min-w-0 block">
-                      <span className="block text-[11.5px] opacity-60 mb-1.5">עיר *</span>
+                      <span className="block text-[11.5px] opacity-75 mb-1.5">עיר *</span>
                       <input
                         value={shipCity}
                         onChange={(e) => setShipCity(e.target.value)}
@@ -1261,7 +1261,7 @@ export default function StoreView({
                       />
                     </label>
                     <label className="flex-1 min-w-0 block">
-                      <span className="block text-[11.5px] opacity-60 mb-1.5">רחוב ומספר *</span>
+                      <span className="block text-[11.5px] opacity-75 mb-1.5">רחוב ומספר *</span>
                       <input
                         value={shipStreet}
                         onChange={(e) => setShipStreet(e.target.value)}
@@ -1285,7 +1285,7 @@ export default function StoreView({
                           style={
                             on
                               ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
+                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
                           }
                         >
                           {label}
@@ -1296,7 +1296,7 @@ export default function StoreView({
                   {homeType === "building" && (
                     <div className="flex gap-3">
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-60 mb-1.5">קומה *</span>
+                        <span className="block text-[11.5px] opacity-75 mb-1.5">קומה *</span>
                         <input
                           value={shipFloor}
                           onChange={(e) => setShipFloor(e.target.value)}
@@ -1308,7 +1308,7 @@ export default function StoreView({
                         />
                       </label>
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-60 mb-1.5">דירה *</span>
+                        <span className="block text-[11.5px] opacity-75 mb-1.5">דירה *</span>
                         <input
                           value={shipApartment}
                           onChange={(e) => setShipApartment(e.target.value)}
@@ -1320,7 +1320,7 @@ export default function StoreView({
                         />
                       </label>
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-60 mb-1.5">קוד כניסה</span>
+                        <span className="block text-[11.5px] opacity-75 mb-1.5">קוד כניסה</span>
                         <input
                           value={shipEntryCode}
                           onChange={(e) => setShipEntryCode(e.target.value)}
@@ -1344,7 +1344,7 @@ export default function StoreView({
             <div className="flex flex-col gap-4">
               <div className="flex gap-3">
                 <label className="flex-1 min-w-0 block">
-                  <span className="block text-[11.5px] opacity-60 mb-1.5">איך קוראים לך? *</span>
+                  <span className="block text-[11.5px] opacity-75 mb-1.5">איך קוראים לך? *</span>
                   <input
                     value={buyerName}
                     onChange={(e) => setBuyerName(e.target.value)}
@@ -1355,7 +1355,7 @@ export default function StoreView({
                   />
                 </label>
                 <label className="flex-1 min-w-0 block">
-                  <span className="block text-[11.5px] opacity-60 mb-1.5">מספר טלפון *</span>
+                  <span className="block text-[11.5px] opacity-75 mb-1.5">מספר טלפון *</span>
                   <input
                     value={buyerPhone}
                     onChange={(e) => setBuyerPhone(e.target.value)}
@@ -1368,7 +1368,7 @@ export default function StoreView({
                 </label>
               </div>
               <label className="block">
-                <span className="block text-[11.5px] opacity-60 mb-1.5">הערה לדוכן (לא חובה)</span>
+                <span className="block text-[11.5px] opacity-75 mb-1.5">הערה לדוכן (לא חובה)</span>
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -1399,7 +1399,7 @@ export default function StoreView({
                           style={
                             on
                               ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.55 }
+                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
                           }
                         >
                           {m.label}
@@ -1415,7 +1415,7 @@ export default function StoreView({
                 </p>
               )}
               {store.payout_note && (
-                <p className="opacity-60 text-[12.5px] mt-2">{store.payout_note}</p>
+                <p className="opacity-75 text-[12.5px] mt-2">{store.payout_note}</p>
               )}
               {/* לינק נפתח בלשונית חדשה; מספר מוצג עם העתקה. הסל והטופס
                   נשארים כאן, והקונה חוזרת לשלוח אחרי ששילמה. */}
@@ -1440,7 +1440,7 @@ export default function StoreView({
                     onClick={() => copyPayPhone(payTarget.phone)}
                     aria-label="העתקת מספר התשלום"
                     className="shrink-0 px-3 py-2 text-[12.5px] font-bold border-[1.5px]"
-                    style={{ borderColor: "var(--s-primary)", color: "var(--s-primary)" }}
+                    style={{ borderColor: "var(--s-primary)", color: "var(--s-primary-text)" }}
                   >
                     העתקה 📋
                   </button>
@@ -1461,7 +1461,7 @@ export default function StoreView({
                   <span>סכום המוצרים</span>
                   <span>₪{formatPrice(cartTotal)}</span>
                 </div>
-                <div className="flex justify-between font-semibold" style={{ color: "var(--s-primary)" }}>
+                <div className="flex justify-between font-semibold" style={{ color: "var(--s-primary-text)" }}>
                   <span>קופון <bdi>{coupon.code}</bdi></span>
                   <bdi dir="ltr">−₪{formatPrice(coupon.discount)}</bdi>
                 </div>
@@ -1481,7 +1481,7 @@ export default function StoreView({
             >
               {sending ? "רגע…" : "שליחת ההזמנה"}
             </button>
-            <p className="text-[11.5px] opacity-50 text-center mt-2">
+            <p className="text-[11.5px] opacity-75 text-center mt-2">
               ההזמנה נשלחת ישר לדוכן, והאישור יופיע כאן.
             </p>
           </div>
@@ -1543,7 +1543,7 @@ export default function StoreView({
                 style={{ borderColor: "var(--s-primary)" }}
                 data-testid="pay-phone"
               >
-                <div className="text-[12px] opacity-60 mb-0.5">
+                <div className="text-[12px] opacity-75 mb-0.5">
                   {payTarget.method === "bit" ? "מעבירים בביט למספר" : "מעבירים בפייבוקס למספר"}
                 </div>
                 <div dir="ltr" className="text-[24px] font-bold tracking-wide">
@@ -1558,7 +1558,7 @@ export default function StoreView({
               >
                 העתקת המספר 📋
               </button>
-              <p className="text-[12px] opacity-60 mt-2 leading-relaxed">
+              <p className="text-[12px] opacity-75 mt-2 leading-relaxed">
                 פותחים את {payTarget.method === "bit" ? "ביט" : "פייבוקס"} → העברה →
                 מדביקים את המספר → ₪{formatPrice(confirmed.total)}
               </p>
@@ -1575,7 +1575,7 @@ export default function StoreView({
             href={confirmed.waUrl}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="mt-3 block text-[12.5px] opacity-60 underline"
+            className="mt-3 block text-[12.5px] opacity-75 underline"
           >
             משהו לא מסתדר? אפשר לכתוב לדוכן בוואטסאפ
           </a>
@@ -1630,7 +1630,7 @@ export default function StoreView({
           </a>
           <button
             onClick={() => setConfirmed(null)}
-            className="mt-3 text-[13px] opacity-60 underline"
+            className="mt-3 text-[13px] opacity-75 underline"
           >
             סגירה
           </button>
@@ -1665,7 +1665,7 @@ function SectionTitle({
       className={`text-[17px] font-bold leading-tight flex items-center gap-2 ${plate ? "s-r w-fit px-3.5 py-2" : ""}`}
       style={plate}
     >
-      {star && <span aria-hidden style={{ color: "var(--s-primary)" }}>★</span>}
+      {star && <span aria-hidden style={{ color: "var(--s-primary-text)" }}>★</span>}
       {text}
     </h2>
   );
