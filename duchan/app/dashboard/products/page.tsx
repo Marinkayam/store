@@ -83,12 +83,25 @@ const EMPTY_EDIT: EditState = {
   imagePos: { x: 50, y: 50 },
 };
 
+/** הקטגוריות של מוצר — המערך החדש, או הקטגוריה הישנה היחידה (0045) */
+const productCats = (p: Product) => (p.categories?.length ? p.categories : p.category ? [p.category] : []);
+
 export default function ProductsPage() {
   const { store, setStore, loading } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [designOpen, setDesignOpen] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);
+  // "+ קטגוריה" בשורת מוצר: פותחים את העורך וגוללים ישר לבחירת הקטגוריה
+  const [focusCats, setFocusCats] = useState(false);
+  useEffect(() => {
+    if (!edit || !focusCats) return;
+    const t = setTimeout(() => {
+      document.getElementById("editor-categories")?.scrollIntoView({ block: "center", behavior: "smooth" });
+      setFocusCats(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [edit, focusCats]);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
   // המוצר הראשון נשמר עכשיו — הרגע שבו הדוכן מפסיק להיות ריק
@@ -650,6 +663,14 @@ export default function ProductsPage() {
     loadDeleted();
   }
 
+  // כמה מוצרים (גלויים) יש בכל קטגוריה — כמו בדוכן עצמו, שמציג רק קטגוריה שיש בה מוצר
+  const catCount = new Map<string, number>();
+  for (const p of products) {
+    if (p.is_visible === false) continue;
+    for (const c of productCats(p)) catCount.set(c, (catCount.get(c) ?? 0) + 1);
+  }
+  const emptyCats = (store?.categories ?? []).filter((c) => !catCount.get(c));
+
   if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
   if (!store) return null;
 
@@ -674,8 +695,15 @@ export default function ProductsPage() {
             </p>
             <div className="flex gap-2 flex-wrap">
               {(store?.categories ?? []).map((c) => (
-                <span key={c} className="inline-flex items-center gap-1 border border-[var(--line)] bg-[var(--canvas)] px-2.5 py-1.5 text-[12.5px]">
+                <span
+                  key={c}
+                  data-testid="category-chip"
+                  className={`inline-flex items-center gap-1 border px-2.5 py-1.5 text-[12.5px] ${
+                    (catCount.get(c) ?? 0) > 0 ? "border-[var(--line)] bg-[var(--canvas)]" : "border-dashed border-[var(--line)] bg-white text-[var(--muted)]"
+                  }`}
+                >
                   {c}
+                  <span className="text-[11px] text-[var(--muted)]">· {catCount.get(c) ?? 0}</span>
                   <button
                     onClick={() => saveCategories((store?.categories ?? []).filter((x) => x !== c))}
                     aria-label={`הסרת הקטגוריה ${c}`}
@@ -696,6 +724,18 @@ export default function ProductsPage() {
                 className="flex-1 min-w-28 border border-dashed border-[#D3D5DC] px-2.5 py-1.5 text-[12.5px]"
               />
             </div>
+            {/* קטגוריה מופיעה בדוכן רק כשיש בה מוצר. בלי ההסבר הזה הגדירו
+                קטגוריות, לא ראו אותן בדוכן, ולא הבינו למה. */}
+            {emptyCats.length > 0 && (
+              <div data-testid="categories-hint" className="mt-4 bg-[var(--warn-bg)] text-[var(--warn-ink)] px-3.5 py-3 text-[12.5px] leading-relaxed">
+                <div className="font-bold mb-0.5">
+                  {emptyCats.length === (store?.categories?.length ?? 0)
+                    ? "הקטגוריות עוד לא מופיעות בדוכן"
+                    : `${emptyCats.join(", ")} ${emptyCats.length === 1 ? "עוד ריקה, ולכן לא מופיעה" : "עוד ריקות, ולכן לא מופיעות"} בדוכן`}
+                </div>
+                קטגוריה מופיעה לקונים רק כשיש בה מוצר. כדי לשייך: לוחצים על מוצר ברשימה למטה, בוחרים לו קטגוריה, ושומרים.
+              </div>
+            )}
             {/* שורה שקטה בתחתית הכרטיס, כמו השורות ב"הדוכן שלי" — לא עוד כפתור עם מסגרת ליד הכותרת */}
             {(store?.categories?.length ?? 0) > 0 && (
               <button
@@ -789,6 +829,24 @@ export default function ProductsPage() {
                 )}
                 <div className="flex gap-1.5 items-center mt-1 flex-wrap">
                   <span className="text-[13px] font-medium">₪{formatPrice(p.price)}</span>
+                  {!!store.categories?.length &&
+                    (productCats(p).length ? (
+                      productCats(p).map((c) => (
+                        <span key={c} className="text-[11px] px-1.5 py-0.5 border border-[var(--line)] text-[var(--ink)]">{c}</span>
+                      ))
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFocusCats(true);
+                          openEditor(p);
+                        }}
+                        data-testid="row-add-category"
+                        className="text-[11px] px-1.5 py-0.5 border border-dashed border-[var(--warn-ink)] text-[var(--warn-ink)] font-medium"
+                      >
+                        + קטגוריה
+                      </button>
+                    ))}
                   {hidden && (
                     <span className="text-[11px] px-1.5 py-0.5 bg-[var(--sub)] text-[var(--muted)]">מוסתר</span>
                   )}
@@ -1060,8 +1118,10 @@ export default function ProductsPage() {
                 קטגוריה תקין לגמרי; הצ'יפים בחנות פשוט לא יסננו אותו. */}
             {!!store?.categories?.length && (
               <>
-                <label className="block text-[12px] text-[var(--muted)] mb-1">קטגוריות (לא חובה, אפשר כמה)</label>
-                <div className="flex gap-1.5 flex-wrap mb-3">
+                <label id="editor-categories" className="block text-[12px] text-[var(--muted)] mb-1 scroll-mt-24">
+                  באיזו קטגוריה המוצר יופיע בדוכן? (אפשר כמה)
+                </label>
+                <div className="flex gap-1.5 flex-wrap mb-3" role="group" aria-labelledby="editor-categories">
                   {store.categories.map((c) => {
                     const on = edit.categories.includes(c);
                     return (
