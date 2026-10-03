@@ -9,10 +9,11 @@ import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 
 // אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
 // הניווט — הדבר שהילדה רואה בכל מסך — לא בשליטתנו.
+// "הדוכן שלי" ראשון = מימין למטה (RTL), איפה שהאגודל נוח.
 const TABS: { href: string; label: string; icon: IconName }[] = [
-  { href: "/dashboard", label: "הזמנות", icon: "receipt" },
-  { href: "/dashboard/products", label: "מוצרים", icon: "bag" },
   { href: "/dashboard/settings", label: "הדוכן שלי", icon: "shop" },
+  { href: "/dashboard/products", label: "מוצרים", icon: "bag" },
+  { href: "/dashboard", label: "הזמנות", icon: "receipt" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -22,8 +23,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto">
       <ReleasePopup />
-      <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">{children}</div>
-      <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] flex pt-1.5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] z-40">
+      <div className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">{children}</div>
+      {/* באייפון: רק כמה פיקסלים מעל פס הבית, לא כל אזור הבטיחות + ריווח —
+          אחרת נשאר רווח לבן גדול מתחת לשורה */}
+      <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] flex pt-1.5 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.875rem))] z-40">
         {TABS.map((t) => {
           const on = path === t.href;
           return (

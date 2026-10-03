@@ -531,14 +531,15 @@ export default function SettingsPage() {
         }
       />
       <div className="px-4 pb-4 -mt-9 text-center">
+        {/* התמונה מעל השם, אחד מתחת לשני — לא זה ליד זה */}
         <span
-          className="inline-flex w-[72px] h-[72px] items-center justify-center text-4xl overflow-hidden"
+          className="flex mx-auto w-[72px] h-[72px] items-center justify-center text-4xl overflow-hidden"
           style={{ background: t.surface, border: `3px solid ${t.bg}`, borderRadius: lk.radius }}
         >
           {avatarPreview ? <img src={avatarPreview} alt="" className="w-full h-full object-cover" /> : emoji}
         </span>
         <div
-          className={previewBg ? "mt-2 px-3 py-2 inline-block" : "mt-1"}
+          className={previewBg ? "mt-2 px-3 py-2 w-fit mx-auto" : "mt-1"}
           style={previewBg ? { ...readablePlate(t), borderRadius: lk.radius } : undefined}
         >
           <div className="text-[19px] font-bold leading-tight">{name || "הדוכן שלך"}</div>

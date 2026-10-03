@@ -662,28 +662,17 @@ export default function ProductsPage() {
         </p>
       </header>
 
-      <div className="px-4 pt-4 pb-6 flex flex-col gap-3">
+      <div className="px-4 pt-5 pb-8 flex flex-col gap-4">
         {/* ── קטגוריות של החנות ──
             המוכרת מגדירה כאן רשימה משלה (נידו, מים, קרח...), מתייגת
             מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות. */}
         {products.length > 0 && (
-          <div className="bg-white border border-[var(--line)] p-4 mb-2" data-testid="categories-box">
-            <div className="flex items-center justify-between gap-2 mb-0.5">
-              <div className="text-[13px] font-bold">קטגוריות בדוכן</div>
-              {(store?.categories?.length ?? 0) > 0 && (
-                <button
-                  onClick={() => setDesignOpen(true)}
-                  data-testid="open-category-designer"
-                  className="shrink-0 border border-[var(--ink)] px-2.5 min-h-9 text-[12px] font-bold"
-                >
-                  🎨 עיצוב הקטגוריות
-                </button>
-              )}
-            </div>
-            <p className="text-[11.5px] text-[var(--faint)] mb-2">
-              הקונים יוכלו לסנן לפי זה. אחרי שמגדירים — בוחרים קטגוריה לכל מוצר בעריכה שלו.
+          <div className="bg-white border border-[var(--line)] p-5 mb-2" data-testid="categories-box">
+            <div className="text-[14px] font-bold mb-1">קטגוריות בדוכן</div>
+            <p className="text-[12px] text-[var(--faint)] leading-relaxed mb-4">
+              הקונים יוכלו לסנן לפי זה. אחרי שמגדירים, בוחרים קטגוריה לכל מוצר בעריכה שלו.
             </p>
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-2 flex-wrap">
               {(store?.categories ?? []).map((c) => (
                 <span key={c} className="inline-flex items-center gap-1 border border-[var(--line)] bg-[var(--canvas)] px-2.5 py-1.5 text-[12.5px]">
                   {c}
@@ -707,6 +696,17 @@ export default function ProductsPage() {
                 className="flex-1 min-w-28 border border-dashed border-[#D3D5DC] px-2.5 py-1.5 text-[12.5px]"
               />
             </div>
+            {/* שורה שקטה בתחתית הכרטיס, כמו השורות ב"הדוכן שלי" — לא עוד כפתור עם מסגרת ליד הכותרת */}
+            {(store?.categories?.length ?? 0) > 0 && (
+              <button
+                onClick={() => setDesignOpen(true)}
+                data-testid="open-category-designer"
+                className="w-full mt-4 pt-3 border-t border-[var(--line)] min-h-11 flex items-center justify-between text-[13px] font-medium text-[var(--ink)]"
+              >
+                <span>עיצוב הקטגוריות</span>
+                <span aria-hidden className="text-[var(--muted)] text-[18px] leading-none">‹</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -748,7 +748,7 @@ export default function ProductsPage() {
             <div
               key={p.id}
               onClick={() => openEditor(p)}
-              className={`bg-white border border-[var(--line)] p-3 flex gap-3 items-center text-right cursor-pointer ${out || hidden ? "opacity-55" : ""}`}
+              className={`bg-white border border-[var(--line)] p-4 flex gap-3.5 items-center text-right cursor-pointer ${out || hidden ? "opacity-55" : ""}`}
             >
               {/* סידור */}
               <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>

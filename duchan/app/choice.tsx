@@ -51,9 +51,8 @@ export default function Choice({
             data-testid={testid ? `${testid}-${v ? "on" : "off"}` : undefined}
             onClick={() => !sel && onChange(v)}
             className={`min-h-11 px-2 text-[13px] leading-tight transition disabled:opacity-50 ${
-              sel
-                ? "bg-white font-bold text-[var(--ink)] border border-[var(--ink)]"
-                : "text-[var(--muted)] font-medium border border-transparent"
+              /* בלי קו מתאר: הנבחר הוא משטח לבן על הפס, עם ✓ ובהדגשה */
+              sel ? "bg-white font-bold text-[var(--ink)]" : "text-[var(--muted)] font-medium"
             }`}
           >
             {sel && <span aria-hidden className="text-[var(--ok-ink)]">✓ </span>}
