@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { SHARE_TEXTS, inviteText, type ShareContext } from "@/lib/share-texts";
 import type { Store } from "@/lib/types";
+import TikTokCard from "./tiktok-card";
 
 /**
  * "לשתף את הדוכן" — מקטע ב"החנות שלי". בא במקום הלשונית "להפיץ".
@@ -92,6 +93,9 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
           </button>
         </div>
       </div>
+
+      {/* 🎵 טיקטוק — רוב הקהל שם */}
+      <TikTokCard store={store} onToast={onToast} />
 
       {/* 2. הודעה מוכנה — שורה אחת של בחירות במקום שש קופסאות מתקפלות */}
       <div className="bg-white border border-[var(--line)] p-3.5">
