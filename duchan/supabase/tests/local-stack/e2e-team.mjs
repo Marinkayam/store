@@ -276,13 +276,18 @@ check("והעברה בחזרה עובדת", back.status === 200 && (await after(
 /* ── 11. בחירת דוכן (דוכן משלי + שותפות) ── */
 await p1.page.goto(`${BASE}/dashboard/products`, { waitUntil: "networkidle" });
 await p1.page.waitForSelector("[data-testid=store-switcher]");
-const opts = await p1.page.locator("#store-pick option").allTextContents();
+check("הפס: 'עובדים עכשיו על' ושם הדוכן", ((await p1.page.textContent("[data-testid=store-switcher]")) ?? "").includes("עובדים עכשיו על"));
+await p1.page.click("[data-testid=store-switcher]");
+await p1.page.waitForSelector("[data-testid=store-switcher-sheet]");
+await p1.page.screenshot({ path: `${SHOTS}/switcher-sheet.png` });
+const opts = await p1.page.locator("[data-testid=store-option]").allTextContents();
 check("שני דוכנים → בורר בראש הדשבורד, עם 👑 שלי / 🤝 שותפות", opts.length === 2 && opts.some((o) => o.includes("שלי")) && opts.some((o) => o.includes("שותפות")), opts.join(" | "));
-await p1.page.selectOption("#store-pick", keepExtra);
+await p1.page.click(`[data-testid=store-option][data-id='${keepExtra}']`);
 await p1.page.waitForLoadState("networkidle");
 await p1.page.waitForTimeout(800);
 check("בחירה בדוכן השני — המוצרים מתחלפים (דוכן ריק)", (await p1.page.locator("[data-testid=product-row]").count()) === 0);
-await p1.page.selectOption("#store-pick", store.id);
+await p1.page.click("[data-testid=store-switcher]");
+await p1.page.click(`[data-testid=store-option][data-id='${store.id}']`);
 await p1.page.waitForLoadState("networkidle");
 await p1.page.waitForTimeout(800);
 check("וחזרה לדוכן המשותף", (await p1.page.locator("[data-testid=product-row]").count()) === prodCount);
