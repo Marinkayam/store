@@ -201,7 +201,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     });
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
-    showToast(status === "active" ? "החנות הופעלה" : status === "paused" ? "החנות הושהתה" : "החנות נחסמה");
+    showToast(status === "active" ? "הדוכן הופעל" : status === "paused" ? "הדוכן הושהה" : "הדוכן נחסם");
   }
 
   // הפעלת חנות = פתיחת הלינק לשיתוף. הפעולה היחידה שגובה כסף בפועל.
@@ -213,7 +213,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     });
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
-    showToast(activate ? "החנות הופעלה, הלינק פתוח 🎉" : "ההפעלה בוטלה");
+    showToast(activate ? "הדוכן הופעל, הלינק פתוח 🎉" : "ההפעלה בוטלה");
   }
 
   async function setAi(storeId: string, aiEnabled: boolean, aiCredits?: number | null) {
@@ -286,8 +286,8 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     setEditProduct(null);
     openDetail(storeId);
     showToast(
-      action === "restore" ? "המוצר חזר לחנות"
-      : action === "delete" ? "המוצר הוצא מהחנות, אפשר לשחזר"
+      action === "restore" ? "המוצר חזר לדוכן"
+      : action === "delete" ? "המוצר הוצא מהדוכן, אפשר לשחזר"
       : action === "hide" ? "המוצר מוסתר מהקונים"
       : action === "show" ? "המוצר חזר להיות מוצג"
       : "המוצר עודכן"
@@ -382,7 +382,7 @@ function SchemaWarning() {
         </header>
         {totals && (
           <div className="text-xs text-[var(--muted)] -mt-2">
-            {totals.activeStores}/{totals.stores} חנויות פעילות
+            {totals.activeStores}/{totals.stores} דוכנים פעילים
           </div>
         )}
 
@@ -396,7 +396,7 @@ function SchemaWarning() {
           {([
             ["approvals", "לאישור"],
             ["overview", "סקירה"],
-            ["stores", "חנויות"],
+            ["stores", "דוכנים"],
             ["network", "רשת"],
             ["explore", "מה מוכרות"],
             ["news", "עדכונים"],
@@ -424,17 +424,17 @@ function SchemaWarning() {
         {tab === "approvals" && (
           <>
             <section className="bg-white border border-[var(--line)] p-3">
-              <h2 className="text-sm font-bold">חנויות שהצהירו על תשלום</h2>
+              <h2 className="text-sm font-bold">דוכנים שהצהירו על תשלום</h2>
               <p className="text-[12.5px] text-[var(--muted)] mt-0.5 leading-relaxed">
                 הכסף מגיע בביט או בפייבוקס, מחוץ למערכת. כאן מאשרים שהוא התקבל,
-                והלינק של החנות נפתח להזמנות מיד.
+                והלינק של הדוכן נפתח להזמנות מיד.
               </p>
             </section>
 
             {waitingPayment.length === 0 ? (
               <div className="bg-white border border-[var(--line)] p-8 text-center">
                 <div className="text-3xl">✓</div>
-                <p className="text-[13px] font-bold mt-2">אין חנויות שמחכות</p>
+                <p className="text-[13px] font-bold mt-2">אין דוכנים שמחכים</p>
                 <p className="text-[12.5px] text-[var(--muted)] mt-1">
                   כשדוכן יסמן "שילמנו", הוא יופיע כאן.
                 </p>
@@ -480,7 +480,7 @@ function SchemaWarning() {
                         target="_blank"
                         className="border border-[var(--line)] py-2.5 px-3 text-[12.5px] font-medium text-center"
                       >
-                        לחנות
+                        לדוכן
                       </a>
                       <a
                         href={waLink(s)}
@@ -569,12 +569,12 @@ function SchemaWarning() {
             )}
 
             <div className="grid grid-cols-2 gap-2">
-              <Stat label="חנויות באוויר" value={totals.live} sub={`${totals.drafts} טיוטות`} icon="🚀" />
-              <Stat label="הכנסה מהפעלות" value={`₪${totals.paidTotal}`} sub={`${totals.live} חנויות ששולמו`} icon="🏦" />
+              <Stat label="דוכנים באוויר" value={totals.live} sub={`${totals.drafts} טיוטות`} icon="🚀" />
+              <Stat label="הכנסה מהפעלות" value={`₪${totals.paidTotal}`} sub={`${totals.live} דוכנים ששולמו`} icon="🏦" />
               <Stat label="כניסות · 7 ימים" value={totals.views7d} sub={`${totals.viewsTotal} סה"כ`} icon="👀" />
               <Stat label="הזמנות חדשות" value={totals.newOrders} sub={`${totals.orders} סה"כ`} icon="🧾" />
-              <Stat label='מכירות ששולמו' value={`₪${formatPrice(totals.revenue)}`} sub="בכל החנויות" icon="💰" />
-              <Stat label="מוצרים באוויר" value={totals.products} sub={`${totals.stores} חנויות`} icon="🛍️" />
+              <Stat label='מכירות ששולמו' value={`₪${formatPrice(totals.revenue)}`} sub="בכל הדוכנים" icon="💰" />
+              <Stat label="מוצרים באוויר" value={totals.products} sub={`${totals.stores} דוכנים`} icon="🛍️" />
             </div>
 
             <section className="bg-white border border-[var(--line)] p-3">
@@ -590,7 +590,7 @@ function SchemaWarning() {
                     <span className="text-[12px] text-[var(--muted)]">{s.views7d} כניסות · ₪{formatPrice(s.revenue)}</span>
                   </button>
                 ))}
-              {stores.length === 0 && <p className="text-xs text-[var(--muted)] py-3">עוד אין חנויות.</p>}
+              {stores.length === 0 && <p className="text-xs text-[var(--muted)] py-3">עוד אין דוכנים.</p>}
             </section>
 
             <section className="bg-white border border-[var(--line)] p-3">
@@ -601,7 +601,7 @@ function SchemaWarning() {
                   <Avatar s={s} size={8} />
                   <span className="flex-1 text-[13px] truncate">{s.display_name}</span>
                   <span className="text-[12px] text-[var(--warn-ink)]">
-                    {s.ordersNew > 0 ? `${s.ordersNew} הזמנות מחכות` : "חנות ריקה"}
+                    {s.ordersNew > 0 ? `${s.ordersNew} הזמנות מחכות` : "דוכן ריק"}
                   </span>
                 </button>
               ))}
@@ -659,7 +659,7 @@ function SchemaWarning() {
                 </button>
               ))}
               {filtered.length === 0 && (
-                <p className="text-center text-sm text-[var(--muted)] py-8">לא נמצאו חנויות.</p>
+                <p className="text-center text-sm text-[var(--muted)] py-8">לא נמצאו דוכנים.</p>
               )}
             </div>
           </>
@@ -677,7 +677,7 @@ function SchemaWarning() {
         {/* ── מה מוכרות ── */}
         {tab === "explore" && (
           <div className="flex flex-col gap-3">
-            {explore.length === 0 && <p className="text-center text-sm text-[var(--muted)] py-10">עוד אין חנויות פעילות.</p>}
+            {explore.length === 0 && <p className="text-center text-sm text-[var(--muted)] py-10">עוד אין דוכנים פעילים.</p>}
             {explore.map((s) => (
               <div key={s.id} className="bg-white border border-[var(--line)] p-3">
                 <div className="flex items-center gap-2.5 mb-2">
@@ -688,7 +688,7 @@ function SchemaWarning() {
                   </div>
                   <a href={`/s/${s.slug}`} target="_blank"
                     className="border border-[var(--line)] px-3 py-1.5 text-[12px] whitespace-nowrap">
-                    לחנות ←
+                    לדוכן ←
                   </a>
                 </div>
                 {s.products.length === 0 ? (
@@ -762,7 +762,7 @@ function SchemaWarning() {
               </a>
               <a href={`/s/${detail.store.slug}`} target="_blank"
                 className="border border-[var(--line)] px-3.5 py-2 text-xs font-medium">
-                צפייה בחנות
+                צפייה בדוכן
               </a>
               {(["active", "paused", "blocked"] as const)
                 .filter((st) => st !== detail.store.status)
@@ -782,7 +782,7 @@ function SchemaWarning() {
                 }}
                 className="w-full text-right text-[12px] text-[var(--ok-ink)] bg-[var(--ok-bg)] border border-[var(--ok-line)] px-3 py-2 mb-3"
               >
-                🔗 החנות עוד לא נתבעה, לחיצה מעתיקה את לינק התביעה
+                🔗 הדוכן עוד לא נתבע, לחיצה מעתיקה את לינק התביעה
               </button>
             )}
 
@@ -841,7 +841,7 @@ function SchemaWarning() {
                       onClick={() => openDetail(detail.store.referred_by!)}
                       className="underline"
                     >
-                      {stores.find((x) => x.id === detail.store.referred_by)?.display_name ?? "חנות שנמחקה"}
+                      {stores.find((x) => x.id === detail.store.referred_by)?.display_name ?? "דוכן שנמחק"}
                     </button>
                   </>
                 ) : (
@@ -886,7 +886,7 @@ function SchemaWarning() {
                       {" · "}{detail.store.ai_credits === null ? "ללא הגבלה" : `${detail.store.ai_credits} נשארו`}
                     </span>
                   ) : (
-                    <span className="text-[var(--warn-ink)]">{" · כבוי לחנות הזו"}</span>
+                    <span className="text-[var(--warn-ink)]">{" · כבוי לדוכן הזה"}</span>
                   )}
                 </span>
                 {detail.store.ai_enabled ? (
@@ -908,7 +908,7 @@ function SchemaWarning() {
               </div>
               {!aiConfigured && (
                 <div className="text-[12px] text-[var(--warn-ink)] mt-2">
-                  <b>אין מפתח Anthropic בשרת.</b> כתיבה אוטומטית דלוקה לכל החנויות,
+                  <b>אין מפתח Anthropic בשרת.</b> כתיבה אוטומטית דלוקה לכל הדוכנים,
                   אז כל מי שילחץ "לכתוב לי תיאור" יקבל שגיאה. צריך להגדיר{" "}
                   <code>ANTHROPIC_API_KEY</code> ולפרוס מחדש.
                 </div>
@@ -1042,7 +1042,7 @@ function SchemaWarning() {
                             {p.is_visible === false ? "👁️" : "🙈"}
                           </button>
                           <button onClick={() => productAction(p.id, detail.store.id, "delete")}
-                            aria-label="הוצאה מהחנות"
+                            aria-label="הוצאה מהדוכן"
                             className="text-[12px] border border-[var(--danger-line)] text-[var(--danger)] px-2 py-1.5">
                             🗑️
                           </button>
@@ -1075,7 +1075,7 @@ function SchemaWarning() {
                           שמירה
                         </button>
                         <p className="text-[11px] text-[var(--faint)]">
-                          שדות: שם · מחיר · מלאי. השינוי יופיע בחנות מיד.
+                          שדות: שם · מחיר · מלאי. השינוי יופיע בדוכן מיד.
                         </p>
                       </div>
                     )}
@@ -1215,21 +1215,21 @@ function NetworkTab({
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
-        <Stat label="הגיעו מחנות" value={totals.referred} sub={`מתוך ${totals.stores}`} icon="🔗" />
+        <Stat label="הגיעו מדוכן" value={totals.referred} sub={`מתוך ${totals.stores}`} icon="🔗" />
         <Stat label="לחיצות על 'לפתוח דוכן'" value={totals.refClicks} sub={`${conversion}% נפתחו`} icon="👆" />
       </div>
 
       <section className="bg-white border border-[var(--line)] p-3">
         <h2 className="text-sm font-bold">אשכולות</h2>
         <p className="text-[12px] text-[var(--muted)] mb-2">
-          חנות שהביאה חנויות אחרות. כאן נמצאות הכיתות והשכונות.
+          דוכן שהביא דוכנים אחרים. כאן נמצאות הכיתות והשכונות.
         </p>
         {withCluster.length === 0 && (
-          <p className="text-xs text-[var(--muted)] py-3">עוד אף חנות לא הביאה חנות אחרת.</p>
+          <p className="text-xs text-[var(--muted)] py-3">עוד אף דוכן לא הביא דוכן אחר.</p>
         )}
         {withCluster.map(({ root, size }) => (
           <div key={root.id} className="border-t border-[var(--line)] pt-2 mt-2 first:border-0 first:mt-0 first:pt-0">
-            <div className="text-[12px] font-bold text-[var(--ok-ink)] mb-1">אשכול של {size} חנויות</div>
+            <div className="text-[12px] font-bold text-[var(--ok-ink)] mb-1">אשכול של {size} דוכנים</div>
             {row(root, 0)}
           </div>
         ))}

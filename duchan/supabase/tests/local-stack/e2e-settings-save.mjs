@@ -56,7 +56,7 @@ const row = async () => (await db.query("select * from stores where id=$1", [ori
 
 /* ── 1. עיצוב הדוכן ── */
 await open("design");
-await page.fill("input[aria-label='שם החנות']", "בדיקת שמירה");
+await page.fill("input[aria-label='שם הדוכן']", "בדיקת שמירה");
 await page.fill("textarea[aria-label='תיאור הדוכן']", "צמידים וסקווישים בעבודת יד");
 await page.fill("input[aria-label='עיר']", "חולון");
 await page.click("button[aria-label='אמוג׳י 🐼']");
@@ -142,7 +142,7 @@ check("אחרי טעינה מחדש: מסך הבית מראה את מה שנשמ
   hub.replace(/\s+/g, " ").slice(0, 160));
 await open("design");
 check("ובתוך העיצוב: השם והעיר במקום",
-  (await page.inputValue("input[aria-label='שם החנות']")) === "בדיקת שמירה" && (await page.inputValue("input[aria-label='עיר']")) === "חולון");
+  (await page.inputValue("input[aria-label='שם הדוכן']")) === "בדיקת שמירה" && (await page.inputValue("input[aria-label='עיר']")) === "חולון");
 check("והבחירות מסומנות", (await page.getAttribute("button[aria-label='סגנון רך']", "aria-pressed")) === "true" &&
   (await page.getAttribute("button[aria-label='רקע כוכבים']", "aria-pressed")) === "true");
 await back();
@@ -154,15 +154,15 @@ await back();
 
 /* ── 9. יציאה דרך שורת הניווט עם שינוי שלא נשמר — שואלת ── */
 await open("design");
-await page.fill("input[aria-label='שם החנות']", "שינוי שלא נשמר");
+await page.fill("input[aria-label='שם הדוכן']", "שינוי שלא נשמר");
 let asked = "";
 page.once("dialog", async (d) => { asked = d.message(); await d.dismiss(); });
 await page.click("nav button:has-text('מוצרים')");
 await page.waitForTimeout(600);
 check("יציאה עם שינוי שלא נשמר — שואלת קודם", asked.includes("לא נשמרו"), asked);
 check("ובחירה 'לא' — נשארת במסך עם השינוי", page.url().includes("/dashboard/settings") &&
-  (await page.inputValue("input[aria-label='שם החנות']")) === "שינוי שלא נשמר");
-await page.fill("input[aria-label='שם החנות']", "בדיקת שמירה");
+  (await page.inputValue("input[aria-label='שם הדוכן']")) === "שינוי שלא נשמר");
+await page.fill("input[aria-label='שם הדוכן']", "בדיקת שמירה");
 await back();
 
 /* ── 10. מספר לא תקין — "חזרה" לא יוצאת ולא שומרת חצי ── */

@@ -111,7 +111,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
     return (
       <Shell>
         <p className="text-sm text-[var(--muted)] leading-relaxed text-center">
-          עוד אין לך חנות.
+          עוד אין לך דוכן.
           <br />
           <a href="/onboarding" className="underline text-[var(--ink)]">נפתח אחת ←</a>
         </p>
@@ -124,7 +124,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
       <Shell>
         <div className="text-center flex flex-col gap-4">
           <div className="text-5xl">🎊</div>
-          <h1 data-testid="store-live" className="text-xl font-bold">החנות שלך באוויר</h1>
+          <h1 data-testid="store-live" className="text-xl font-bold">הדוכן שלך באוויר</h1>
           <p className="text-[13px] text-[var(--muted)] leading-relaxed">
             הלינק פעיל. כל מי שמקבל אותו ממך יכול להיכנס ולהזמין.
           </p>
@@ -142,13 +142,13 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
             {copied ? "הועתק ✓" : "העתקת הלינק"}
           </button>
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`רוצה לראות את החנות שלי? ${storeUrl}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`רוצים לראות את הדוכן שלי? ${storeUrl}`)}`}
             className="bg-[var(--whatsapp)] text-white py-3 text-sm font-bold"
           >
             שיתוף בוואטסאפ
           </a>
           <a href="/dashboard" className="text-sm text-[var(--muted)] underline">
-            לניהול החנות ←
+            לניהול הדוכן ←
           </a>
         </div>
       </Shell>
@@ -162,14 +162,14 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <div className="text-5xl">⏳</div>
           <h1 data-testid="payment-pending" className="text-xl font-bold">קיבלנו, בודקים</h1>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
-            אנחנו מאשרות כל חנות ידנית, לרוב תוך כמה שעות.
+            אנחנו מאשרים כל דוכן ידנית, לרוב תוך כמה שעות.
             <br />
             ברגע שזה קורה הלינק נפתח ואפשר לשתף.
           </p>
           <div className="bg-white border border-[var(--line)] p-4 text-right text-[13px] leading-relaxed">
             <div className="font-bold mb-1">בינתיים שווה:</div>
             <div className="text-[var(--muted)]">
-              • להוסיף עוד כמה מוצרים, חנות עם 5 מוצרים נראית רצינית
+              • להוסיף עוד כמה מוצרים, דוכן עם 5 מוצרים נראה רציני
               <br />
               • לכתוב תיאור קצר לכל אחד
               <br />
@@ -177,7 +177,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
             </div>
           </div>
           <a
-            href={waOwner(`היי מרינה! שילמנו על החנות "${store.display_name}" (${store.slug}). אפשר לאשר?`)}
+            href={waOwner(`היי מרינה! שילמנו על הדוכן "${store.display_name}" (${store.slug}). אפשר לאשר?`)}
             className="bg-[var(--whatsapp)] text-white py-3 text-sm font-bold"
           >
             לשלוח לי תזכורת בוואטסאפ
@@ -242,7 +242,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(
-            `בניתי חנות אמיתית באינטרנט! 🛍️\n` +
+            `בניתי דוכן אמיתי באינטרנט! 🛍️\n` +
               (isLaunch
                 ? `יש עכשיו ${dealLabel}: רק ₪${price} במקום ₪${fullPrice}.\n`
                 : `כדי לפרסם אותה צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\n`) +
@@ -307,13 +307,13 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
       <h2 className="text-base font-bold mt-9 mb-1">איך משלמים לדוכן</h2>
       <p className="text-[12.5px] text-[var(--muted)] mb-3 leading-relaxed">
         אנחנו לא סולקות כרטיסי אשראי ולא שומרות פרטי תשלום. משלמים בביט או בפייבוקס,
-        ואני מאשרת את החנות ידנית.
+        ואני מאשרת את הדוכן ידנית.
       </p>
       {/* הבלבול הכי סביר כאן הוא בין שני סוגי הכסף. אומרים את זה במפורש. */}
       <div className="bg-[var(--ok-bg)] border border-[var(--ok-line)] p-3 mb-3 text-[12.5px] leading-relaxed">
         <span className="font-bold">שני דברים נפרדים לגמרי:</span>
         <br />
-        התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת החנות.
+        התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת הדוכן.
         <br />
         הכסף שקונים משלמים לך על מוצרים עובר <b>ישירות אליך</b>, בביט או במזומן, איך
         שנבחר בהגדרות. אנחנו לא נוגעים בו ולא לוקחים ממנו אגורה.
@@ -390,7 +390,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
       <div className="mt-8 bg-white border border-[var(--line)] p-4">
         <div className="text-[14px] font-bold">שילמתם? נעדכן אותנו</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
-          זה לא מפעיל את החנות מיד, זה מכניס אותה לרשימה שלי לאישור.
+          זה לא מפעיל את הדוכן מיד, זה מכניס אותו לרשימה שלי לאישור.
         </p>
         <div className="flex gap-1.5 mt-3">
           {METHODS.map((m) => (
@@ -421,13 +421,13 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           disabled={busy || !consentOn}
           className="mt-2 w-full bg-[var(--ink)] text-white py-3.5 text-[14px] font-bold disabled:opacity-40"
         >
-          {busy ? "רגע…" : consentOn ? "שילמנו, לאישור החנות" : "קודם מסמנים שההורים מאשרים ↑"}
+          {busy ? "רגע…" : consentOn ? "שילמנו, לאישור הדוכן" : "קודם מסמנים שההורים מאשרים ↑"}
         </button>
       </div>
 
       <div className="text-center mt-8">
         <a href="/dashboard" className="text-[13px] text-[var(--muted)] underline">
-          לא עכשיו, חזרה לחנות ←
+          לא עכשיו, חזרה לדוכן ←
         </a>
         <p className="text-[12px] text-[var(--faint)] mt-4 leading-relaxed">
           כל מה שבנית נשמר, גם אם לא תפעילי עכשיו.

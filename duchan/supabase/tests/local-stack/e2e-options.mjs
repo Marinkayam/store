@@ -172,11 +172,11 @@ await fetch(`${BASE}/api/revalidate`, { method: "POST" }).catch(() => {});
 const stranger = await phone();
 await stranger.goto(`${BASE}/s/${slug}`, { waitUntil: "networkidle" });
 const strangerBody = await stranger.textContent("body");
-check("a buyer sees no management strip at all", !strangerBody.includes("זו החנות שלך"));
+check("a buyer sees no management strip at all", !strangerBody.includes("זה הדוכן שלך"));
 check("a buyer gets no dashboard links", (await stranger.locator("a[href='/dashboard/products']").count()) === 0);
 
 await girl.goto(`${BASE}/s/${slug}`, { waitUntil: "networkidle" });
-await girl.waitForSelector("text=זו החנות שלך", { timeout: 10000 });
+await girl.waitForSelector("text=זה הדוכן שלך", { timeout: 10000 });
 check("the girl sees her store and the way into management", true);
 check("the strip links to orders, products and design",
   (await girl.locator("a[href='/dashboard']").count()) >= 1 &&

@@ -574,7 +574,7 @@ export default function SettingsPage() {
   const statusRow =
     store.status === "blocked" ? (
       <div className=" bg-[var(--danger-bg)] border border-[var(--danger-line)] p-3.5 text-[13px] text-[var(--danger)]">
-        החנות הושבתה על ידי הנהלת דוכן.
+        הדוכן הושבת על ידי הנהלת דוכן.
       </div>
     ) : (
       <div className=" bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
@@ -707,7 +707,7 @@ export default function SettingsPage() {
           <div className="sticky top-0 z-30 h-[54px] flex items-center gap-2 px-1.5 bg-white border-b border-[var(--line)]">
             <button
               onClick={closeSection}
-              aria-label="חזרה להחנות שלי"
+              aria-label="חזרה לדוכן שלי"
               data-testid="section-back"
               className="w-11 h-11 flex items-center justify-center text-[20px] text-[var(--ink)]"
             >
@@ -793,7 +793,7 @@ export default function SettingsPage() {
                 <input
                   value={name}
                   maxLength={40}
-                  aria-label="שם החנות"
+                  aria-label="שם הדוכן"
                   placeholder="שם הדוכן שלך"
                   onChange={(e) => { setName(e.target.value); setDirty(true); }}
                   className="editable editable-quiet block w-full text-center font-bold text-[15px] pe-6"

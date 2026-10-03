@@ -12,7 +12,7 @@ import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "הזמנות", icon: "receipt" },
   { href: "/dashboard/products", label: "מוצרים", icon: "bag" },
-  { href: "/dashboard/settings", label: "החנות שלי", icon: "shop" },
+  { href: "/dashboard/settings", label: "הדוכן שלי", icon: "shop" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

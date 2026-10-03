@@ -393,8 +393,8 @@ await admin.click("button:has-text('רשת')");
 await admin.waitForTimeout(1500);
 const net = await admin.textContent("body");
 check("לשונית הרשת מציגה את האשכול עם שני הדוכנים",
-  net.includes("אשכול של 2 חנויות") && net.includes("החנות של נועה"));
-check("וסופרת הפניות", net.includes("הגיעו מחנות"));
+  net.includes("אשכול של 2 דוכנים") && net.includes("החנות של נועה"));
+check("וסופרת הפניות", net.includes("הגיעו מדוכן"));
 await admin.screenshot({ path: `${shots}/48-admin-network.png`, fullPage: true });
 
 /* ── 9: שדות רגישים לא דלפו בדרך ── */

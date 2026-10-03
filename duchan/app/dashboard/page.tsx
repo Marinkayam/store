@@ -215,13 +215,13 @@ export default function OrdersPage() {
   if (!store)
     return (
       <div className="p-8 text-center text-sm text-[var(--muted)] leading-relaxed">
-        עוד אין לך חנות.
+        עוד אין לך דוכן.
         <br />
         <a href="/onboarding" className="underline text-[var(--ink)]">נפתח אחת ←</a>
       </div>
     );
 
-  const firstName = store.display_name.replace(/^החנות של\s*/, "");
+  const firstName = store.display_name.replace(/^(החנות|הדוכן) של\s*/, "");
 
   return (
     <div>
@@ -261,7 +261,7 @@ export default function OrdersPage() {
       {doneCount < checklist.length && (
         <div className="mx-4 mt-4 bg-white border border-[var(--line)] p-4 text-xs">
           <div className="flex justify-between font-medium mb-1.5">
-            <span>החנות שלך {doneCount} מתוך {checklist.length}</span>
+            <span>הדוכן שלך {doneCount} מתוך {checklist.length}</span>
             <span>{"▓".repeat(doneCount)}{"░".repeat(checklist.length - doneCount)}</span>
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-[var(--muted)]">

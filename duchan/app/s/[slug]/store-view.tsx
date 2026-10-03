@@ -480,7 +480,7 @@ export default function StoreView({
          נקבע איך משלמים". המספר מגיע מתשובת השרת, לא מה-HTML. */
       const waPayUrl = store.payout_whatsapp
         ? `https://wa.me/${data.phone}?text=${encodeURIComponent(
-            `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בחנות שלך 🛍️ (סה"כ ₪${formatPrice(data.total)}). איך הכי נוח לך שאשלם?`
+            `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בדוכן שלך 🛍️ (סה"כ ₪${formatPrice(data.total)}). איך הכי נוח לך שאשלם?`
           )}`
         : null;
       setConfirmed({
@@ -643,7 +643,7 @@ export default function StoreView({
         <div className="sticky top-0 z-40 bg-[var(--ink)] text-white" dir="rtl">
           <div className="flex items-center justify-between gap-2 px-3 py-2">
             <span className="text-[12px] opacity-80 leading-tight">
-              זו החנות שלך
+              זה הדוכן שלך
               <br />
               <span className="opacity-70">ככה הקונים רואים אותה</span>
             </span>
@@ -834,7 +834,7 @@ export default function StoreView({
         >
           {store.display_name} ·{" "}
           <a href="/" className="underline">
-            נבנתה בדוכן
+            נבנה בדוכן
           </a>
           {" · "}
           <a href="/terms" className="underline">תנאים</a>

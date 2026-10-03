@@ -3,7 +3,7 @@ import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH, OWNER_WHATSAPP, PA
 import ActivateView from "./activate-view";
 
 export const metadata: Metadata = {
-  title: "פרסום החנות",
+  title: "פרסום הדוכן",
   robots: { index: false, follow: false },
 };
 

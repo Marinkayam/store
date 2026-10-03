@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   }
 
   const displayName = body.displayName?.trim().slice(0, 40);
-  if (!displayName) return NextResponse.json({ error: "לחנות צריך שם" }, { status: 400 });
+  if (!displayName) return NextResponse.json({ error: "לדוכן צריך שם" }, { status: 400 });
 
   // שניהם לא חובה. גיל מחוץ לטווח נשמר כלא-קיים במקום לדחות את כל הבקשה —
   // זה שדה עזר לפיד עתידי, לא משהו שצריך לחסום עליו פתיחת דוכן.
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     .eq("contact_phone", contactPhone);
   if ((count ?? 0) >= QUOTAS.storesPerParentEmail) {
     return NextResponse.json(
-      { error: `אפשר לפתוח עד ${QUOTAS.storesPerParentEmail} חנויות למספר אחד` },
+      { error: `אפשר לפתוח עד ${QUOTAS.storesPerParentEmail} דוכנים למספר אחד` },
       { status: 409 }
     );
   }

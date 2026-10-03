@@ -53,7 +53,7 @@ export default function SettingsHub({
     <div className="px-4 pt-4 pb-6 flex flex-col gap-5" data-testid="settings-hub">
       {/* מה המסך הזה — במשפט אחד, לפני הכל */}
       <header className="fx-rise" style={delay()}>
-        <h1 className="text-[20px] font-bold text-[var(--ink)]">החנות שלי</h1>
+        <h1 className="text-[20px] font-bold text-[var(--ink)]">הדוכן שלי</h1>
         <p className="text-[13px] text-[var(--muted)] mt-0.5">כאן עורכים את הפרטים של הדוכן ואיך הוא נראה, ומשתפים אותו.</p>
       </header>
       <div className="fx-rise" style={delay()}>{hero}</div>

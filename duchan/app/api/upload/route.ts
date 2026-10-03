@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
   let { data: stores, error: storesErr } = await storeSelect("id, media_bytes, media_quota_bytes");
   if (storesErr) ({ data: stores } = await storeSelect("id, media_bytes"));
   const store = stores?.[0];
-  if (!store) return NextResponse.json({ error: "אין לך חנות עדיין" }, { status: 404 });
+  if (!store) return NextResponse.json({ error: "אין לך דוכן עדיין" }, { status: 404 });
 
   /* תקרה פר-חנות כשהמנהלת הגדילה, אחרת הגלובלית */
   const storeCap = store.media_quota_bytes ?? QUOTAS.mediaBytesPerStore;
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
     const fresh = await recountStoreMedia(db, store.id);
     if (fresh === null || fresh + bytes > storeCap) {
       return NextResponse.json(
-        { error: "נגמר המקום בחנות, אפשר למחוק סרטון ישן כדי לפנות" },
+        { error: "נגמר המקום בדוכן, אפשר למחוק סרטון ישן כדי לפנות" },
         { status: 413 }
       );
     }

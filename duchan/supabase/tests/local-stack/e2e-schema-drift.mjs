@@ -19,7 +19,7 @@ const text = async () => {
 };
 
 const before = await text();
-check("with the column present the store renders", !before.includes("החנות סגורה כרגע"));
+check("with the column present the store renders", !before.includes("הדוכן סגור כרגע"));
 
 // מפילים את העמודה — בדיוק המצב בפרודקשן אחרי דיפלוי ולפני מיגרציה
 await db.query("alter table stores drop column payout_link");
@@ -27,7 +27,7 @@ await db.query("notify pgrst, 'reload schema'");
 await new Promise((r) => setTimeout(r, 1500));
 
 const during = await text();
-check("without the column the store still opens", !during.includes("החנות סגורה כרגע"));
+check("without the column the store still opens", !during.includes("הדוכן סגור כרגע"));
 check("and the products are still there", during.includes("₪"));
 
 // מחזירים
@@ -35,7 +35,7 @@ await db.query("alter table stores add column if not exists payout_link text");
 await db.query("notify pgrst, 'reload schema'");
 await new Promise((r) => setTimeout(r, 1500));
 const after = await text();
-check("and it recovers once the migration runs", !after.includes("החנות סגורה כרגע"));
+check("and it recovers once the migration runs", !after.includes("הדוכן סגור כרגע"));
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} schema-drift checks passed`);

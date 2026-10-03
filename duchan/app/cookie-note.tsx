@@ -31,29 +31,19 @@ export default function CookieNote() {
     setShow(false);
   };
 
+  /* פס דק בראש העמוד, בתוך הזרימה — לא צף מעל. כשהוא צף בתחתית הוא כיסה
+     את כפתורי השמירה, הסל ושורת הניווט עד שלחצו "הבנתי". */
   return (
-    <div
-      role="region"
-      aria-label="עוגיות"
-      data-testid="cookie-note"
-      className="fixed inset-x-0 bottom-0 z-[90] max-w-md mx-auto px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
-    >
-      <div className="bg-white border border-[var(--ink)] p-3.5 flex items-start gap-3">
-        <span className="text-[26px] leading-none" aria-hidden>🍪</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] leading-relaxed text-[var(--ink)]">
-            <b>עוגיות? רק הקטנות שצריך.</b> הן זוכרות שנכנסתם, כדי שלא תצטרכו קוד בכל פעם.
-            בלי פרסומות ובלי מעקב.
-          </p>
-          <div className="flex items-center gap-3 mt-2">
-            <button onClick={ok} data-testid="cookie-ok" className="min-h-11 px-4 bg-[var(--ink)] text-white text-[13px] font-bold">
-              הבנתי 👍
-            </button>
-            <a href="/privacy#cookies" className="text-[12.5px] underline text-[var(--ink)]">
-              מה זה עוגיות?
-            </a>
-          </div>
-        </div>
+    <div role="region" aria-label="עוגיות" data-testid="cookie-note" className="bg-[var(--cream)] border-b border-[var(--line)] px-3 py-2">
+      <div className="max-w-md mx-auto flex items-center gap-2.5">
+        <span className="text-[22px] leading-none" aria-hidden>🍪</span>
+        <p className="flex-1 min-w-0 text-[12.5px] leading-snug text-[var(--ink)]">
+          <b>עוגיות? רק הקטנות שצריך.</b> הן זוכרות שנכנסתם. בלי פרסומות ובלי מעקב.{" "}
+          <a href="/privacy#cookies" className="underline whitespace-nowrap">מה זה עוגיות?</a>
+        </p>
+        <button onClick={ok} data-testid="cookie-ok" className="shrink-0 min-h-11 px-3 bg-[var(--ink)] text-white text-[12.5px] font-bold">
+          הבנתי 👍
+        </button>
       </div>
     </div>
   );

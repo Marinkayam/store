@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     }
     const p = byId.get(item.productId);
     if (!p) {
-      return NextResponse.json({ error: "אחד המוצרים כבר לא בחנות" }, { status: 409 });
+      return NextResponse.json({ error: "אחד המוצרים כבר לא בדוכן" }, { status: 409 });
     }
     if (p.track_stock && p.stock < qty) {
       return NextResponse.json({ error: `נשארו רק ${p.stock} מ"${p.name}"` }, { status: 409 });

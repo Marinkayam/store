@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const { error } = await db.from("coupons").insert({ ...r.row, store_id: body.storeId, created_by: "admin" });
   if (error) {
     if (error.code === "23505")
-      return NextResponse.json({ error: `כבר יש בחנות קופון עם הקוד ${r.row.code}` }, { status: 409 });
+      return NextResponse.json({ error: `כבר יש בדוכן קופון עם הקוד ${r.row.code}` }, { status: 409 });
     console.error("[admin/coupons] insert failed:", error.message);
     return NextResponse.json({ error: "השמירה לא הצליחה" }, { status: 500 });
   }

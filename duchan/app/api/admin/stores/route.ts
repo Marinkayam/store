@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   }
 
   const displayName = body.displayName?.trim().slice(0, 40);
-  if (!displayName) return NextResponse.json({ error: "לחנות צריך שם" }, { status: 400 });
+  if (!displayName) return NextResponse.json({ error: "לדוכן צריך שם" }, { status: 400 });
 
   const contactPhone = normalizePhone(body.contactPhone ?? "") ?? "972500000000";
 

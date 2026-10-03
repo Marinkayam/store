@@ -532,7 +532,7 @@ export default function ProductsPage() {
       // הדוכן הופך לדבר אמיתי שאפשר לשלוח, ואומרים את זה בגדול ומיד.
       const isFirst = !edit.id && products.length === 0;
       if (isFirst) setCelebrate(true);
-      else showToast(edit.trackStock && edit.stock === 0 ? "המוצר סומן כאזל" : edit.id ? "המוצר עודכן" : "המוצר נוסף לחנות");
+      else showToast(edit.trackStock && edit.stock === 0 ? "המוצר סומן כאזל" : edit.id ? "המוצר עודכן" : "המוצר נוסף לדוכן");
       setEdit(null);
       refresh();
       refreshStorePage();
@@ -644,7 +644,7 @@ export default function ProductsPage() {
   async function restore(p: Product) {
     const supa = supabaseBrowser();
     await supa.from("products").update({ deleted_at: null }).eq("id", p.id);
-    showToast("המוצר חזר לחנות 🎉");
+    showToast("המוצר חזר לדוכן 🎉");
     refresh();
     refreshStorePage();
     loadDeleted();
@@ -669,7 +669,7 @@ export default function ProductsPage() {
         {products.length > 0 && (
           <div className="bg-white border border-[var(--line)] p-4 mb-2" data-testid="categories-box">
             <div className="flex items-center justify-between gap-2 mb-0.5">
-              <div className="text-[13px] font-bold">קטגוריות בחנות</div>
+              <div className="text-[13px] font-bold">קטגוריות בדוכן</div>
               {(store?.categories?.length ?? 0) > 0 && (
                 <button
                   onClick={() => setDesignOpen(true)}
@@ -1113,7 +1113,7 @@ export default function ProductsPage() {
               ))}
             </div>
             <p className="text-[12px] text-[var(--faint)] mb-3 leading-relaxed">
-              ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי מופיעות לבד, לפי מה שבאמת קורה בחנות.
+              ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי מופיעות לבד, לפי מה שבאמת קורה בדוכן.
             </p>
 
             {/* ⭐ מומלץ — חלק משלו בראש הדוכן, לא קטגוריה ולא תגית */}
@@ -1144,7 +1144,7 @@ export default function ProductsPage() {
                 onChange={(v) => setEdit((s) => s && { ...s, isVisible: v })}
                 on="👀 כן, מוצג"
                 off="🙈 מוסתר"
-                label="מוצג בחנות"
+                label="מוצג בדוכן"
                 testid="visible-choice"
               />
             </div>

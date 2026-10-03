@@ -6,7 +6,7 @@ import Icon from "@/app/icons";
 
 export const metadata: Metadata = {
   title: "מה מקבלים בדוכן",
-  description: "חנות אמיתית, לינק לשיתוף, וכל מה שצריך כדי למכור, בתשלום אחד.",
+  description: "דוכן אמיתי, לינק לשיתוף, וכל מה שצריך כדי למכור, בתשלום אחד.",
 };
 
 /**

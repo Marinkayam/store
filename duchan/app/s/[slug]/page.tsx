@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = data.store.display_name;
-  const description = data.store.tagline || "חנות קטנה שנבנתה בדוכן";
+  const description = data.store.tagline || "דוכן קטן ואמיתי 🛍️";
 
   // התמונה של הכרטיס בוואטסאפ: הקאבר, ואם אין — תמונת המוצר הראשון.
   // בלי תמונה הלינק נראה כמו טקסט, ואף אחת לא לוחצת עליו.

@@ -54,11 +54,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {/* דילוג לתוכן — לניווט במקלדת. מוסתר עד שמגיעים אליו בטאב */}
         <a href="#main" className="skip-link">דילוג לתוכן</a>
+        <CookieNote />
         <div id="main" tabIndex={-1} className="outline-none">
           {children}
         </div>
         <A11yMenu />
-        <CookieNote />
         {/* Vercel Web Analytics — אותו אירוח, בלי עוגייה ובלי סקריפט
             מדומיין זר. האירועים נשלחים דרך lib/squish-analytics.ts, שמסנן
             כל מה שאינו ברשימה לבנה. */}
