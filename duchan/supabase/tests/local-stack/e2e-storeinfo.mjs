@@ -132,8 +132,10 @@ for (const m of ["ביט", "פייבוקס", "מזומן"]) {
 }
 await buyer.click("button[aria-label='תשלום בפייבוקס']");
 await buyer.waitForTimeout(500);
-check("בחירת פייבוקס חושפת את לינק התשלום",
-  (await buyer.locator("a[href='https://link.payboxapp.com/abc123']").count()) === 1);
+// משלמים *אחרי* שההזמנה נשלחה — בקופה רק אומרים מה יקרה (הכפתור עצמו במסך התשלום)
+check("בחירת פייבוקס: 'אחרי שליחת ההזמנה יופיע כפתור לתשלום בפייבוקס'",
+  ((await buyer.textContent("[data-testid=pay-next]")) ?? "").includes("יופיע כפתור לתשלום בפייבוקס") &&
+  (await buyer.locator("a[href='https://link.payboxapp.com/abc123']").count()) === 0);
 await buyer.screenshot({ path: `${shots}/83-checkout.png` });
 
 /* השם אינו נוחות: בלעדיו הילדה לא יודעת איזו הזמנה של מי. הטלפון חובה
@@ -143,8 +145,7 @@ await buyer.fill("input[aria-label='השם שלך']", "נועה");
 await buyer.fill("input[aria-label='מספר טלפון']", "052-000-2222");
 await buyer.fill("input[aria-label='עיר למשלוח']", "רמת גן");
 await buyer.fill("input[aria-label='רחוב למשלוח']", "הרצל 12");
-/* בניין דורש קומה ודירה; הקוד רשות. מה שהשליח באמת שואל. */
-await buyer.click("button[aria-label='בניין']");
+/* בניין = ממלאים קומה ודירה (בלי כפתור "בניין" — נגזר ממה שמולא); הקוד רשות. */
 await buyer.fill("input[aria-label='קומה']", "3");
 await buyer.fill("input[aria-label='מספר דירה']", "8");
 await buyer.fill("input[aria-label='קוד כניסה']", "1234");

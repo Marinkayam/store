@@ -18,7 +18,10 @@ export interface Theme {
   primary: string;
   onPrimary: string;
   /** הצבע הראשי כשהוא טקסט (מחיר, כותרת) — כהה מספיק ל-4.5:1 (AA).
-   *  ה-primary עצמו נשאר רך, לרקעים וכפתורים, עם onPrimary כהה עליו. */
+   *
+   *  בערכות הבהירות primary = הגוון העמוק של הצבע, עם טקסט לבן עליו.
+   *  קודם הכפתורים היו בגוון הרך עם טקסט שחור — מרינה: "טקסט שחור על כפתור
+   *  חום זה לא נראה טוב". לבן על הגוון העמוק עומד גם ב-4.5:1. */
   primaryText: string;
   radius: string;
   font: string;
@@ -33,12 +36,12 @@ const R = "0px";
 const SOFT = "none";
 
 export const THEMES: Record<ThemeKey, Theme> = {
-  cloud:   { label: "שמנת",   bg: "#FBF8F3", surface: "#FFFFFF", ink: "#262626", primary: "#A8A46D", onPrimary: "#262626", primaryText: "#716E43", radius: R, font: "'Heebo',sans-serif",     thumb: "#F6F0E8", border: "1px solid #D6CFC4", shadow: SOFT },
-  berry:   { label: "לבנדר",  bg: "#F7F3F9", surface: "#FFFFFF", ink: "#31243A", primary: "#B89AC8", onPrimary: "#31243A", primaryText: "#8858A2", radius: R, font: "'Heebo',sans-serif",     thumb: "#F3EDF7", border: "1px solid #DCD0E4", shadow: SOFT },
+  cloud:   { label: "שמנת",   bg: "#FBF8F3", surface: "#FFFFFF", ink: "#262626", primary: "#716E43", onPrimary: "#FFFFFF", primaryText: "#716E43", radius: R, font: "'Heebo',sans-serif",     thumb: "#F6F0E8", border: "1px solid #D6CFC4", shadow: SOFT },
+  berry:   { label: "לבנדר",  bg: "#F7F3F9", surface: "#FFFFFF", ink: "#31243A", primary: "#8858A2", onPrimary: "#FFFFFF", primaryText: "#8858A2", radius: R, font: "'Heebo',sans-serif",     thumb: "#F3EDF7", border: "1px solid #DCD0E4", shadow: SOFT },
   night:   { label: "לילה",   bg: "#232028", surface: "#2E2A35", ink: "#F4F1EC", primary: "#C9B7DA", onPrimary: "#232028", primaryText: "#C9B7DA", radius: R, font: "'Heebo',sans-serif",     thumb: "#38333F", border: "1px solid #443E4D", shadow: "none" },
-  pastel:  { label: "זית",    bg: "#F4F5EC", surface: "#FFFFFF", ink: "#2C3020", primary: "#8CA78C", onPrimary: "#2C3020", primaryText: "#577157", radius: R, font: "'Heebo',sans-serif",     thumb: "#EEF1E4", border: "1px solid #D3D6C2", shadow: SOFT },
-  candy:   { label: "אפרסק",  bg: "#FDF2EC", surface: "#FFFFFF", ink: "#3A241A", primary: "#D9967A", onPrimary: "#3A241A", primaryText: "#A65330", radius: R, font: "'Heebo',sans-serif",     thumb: "#FBEBE1", border: "1px solid #E8D3C6", shadow: SOFT },
-  minimal: { label: "עץ",     bg: "#FAF6F1", surface: "#FFFFFF", ink: "#2B2118", primary: "#B9824A", onPrimary: "#2B2118", primaryText: "#8D6236", radius: R, font: "'Heebo',sans-serif",     thumb: "#F5EDE3", border: "1px solid #E0D3C4", shadow: SOFT },
+  pastel:  { label: "זית",    bg: "#F4F5EC", surface: "#FFFFFF", ink: "#2C3020", primary: "#577157", onPrimary: "#FFFFFF", primaryText: "#577157", radius: R, font: "'Heebo',sans-serif",     thumb: "#EEF1E4", border: "1px solid #D3D6C2", shadow: SOFT },
+  candy:   { label: "אפרסק",  bg: "#FDF2EC", surface: "#FFFFFF", ink: "#3A241A", primary: "#A65330", onPrimary: "#FFFFFF", primaryText: "#A65330", radius: R, font: "'Heebo',sans-serif",     thumb: "#FBEBE1", border: "1px solid #E8D3C6", shadow: SOFT },
+  minimal: { label: "עץ",     bg: "#FAF6F1", surface: "#FFFFFF", ink: "#2B2118", primary: "#8D6236", onPrimary: "#FFFFFF", primaryText: "#8D6236", radius: R, font: "'Heebo',sans-serif",     thumb: "#F5EDE3", border: "1px solid #E0D3C4", shadow: SOFT },
 };
 
 export function themeOrDefault(key: string | null | undefined): Theme {

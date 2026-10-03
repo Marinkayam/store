@@ -413,12 +413,12 @@ export default function StoreView({
       showToast("למשלוח צריך עיר ורחוב");
       return;
     }
-    if (shipping && !homeType) {
-      showToast("בניין או בית פרטי? כדי שהשליח ידע");
-      return;
-    }
+    // סוג הבית נגזר ממה שמילאו: קומה או דירה = בניין (ואז צריך את שתיהן)
+    const homeType: "building" | "private" | null = shipping
+      ? shipFloor.trim() || shipApartment.trim() ? "building" : "private"
+      : null;
     if (shipping && homeType === "building" && (!shipFloor.trim() || !shipApartment.trim())) {
-      showToast("לבניין צריך גם קומה ומספר דירה");
+      showToast("בבניין צריך גם קומה וגם מספר דירה");
       return;
     }
     // הנוסח המלא לתצוגה אצל המוכרת + הפירוק המובנה
@@ -541,7 +541,9 @@ export default function StoreView({
          נקבע איך משלמים". המספר מגיע מתשובת השרת, לא מה-HTML. */
       const waPayUrl = store.payout_whatsapp
         ? `https://wa.me/${data.phone}?text=${encodeURIComponent(
-            `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בדוכן שלך 🛍️ (סה"כ ₪${formatPrice(data.total)}). איך הכי נוח לך שאשלם?`
+            chosenPay === "bit" || chosenPay === "paybox"
+              ? `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בדוכן שלך 🛍️ (סה"כ ₪${formatPrice(data.total)}). בחרתי לשלם ב${chosenPay === "bit" ? "ביט" : "פייבוקס"} — לאן להעביר?`
+              : `היי! שלחתי עכשיו הזמנה #${data.orderNumber} בדוכן שלך 🛍️ (סה"כ ₪${formatPrice(data.total)}). איך הכי נוח לך שאשלם?`
           )}`
         : null;
       setConfirmed({
@@ -1310,7 +1312,18 @@ export default function StoreView({
                 </button>
               ) : (
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="coupon-code" className="text-[12px] opacity-70">קוד קופון</label>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="coupon-code" className="text-[12px] opacity-70">קוד קופון</label>
+                    {/* מרינה: "קוד קופון — תן אופציה לבטל לסגור" */}
+                    <button
+                      type="button"
+                      onClick={() => { setCouponOpen(false); setCouponInput(""); setCouponError(""); }}
+                      data-testid="coupon-cancel"
+                      className="text-[12.5px] underline opacity-75 min-h-11 px-1"
+                    >
+                      ביטול
+                    </button>
+                  </div>
                   <div className="flex gap-2">
                     <input
                       id="coupon-code"
@@ -1351,92 +1364,56 @@ export default function StoreView({
               לאסוף בעצמה לא צריכה "לקבל" משלוח שהיא לא ביקשה. */}
           {store.ships && (
             <section className="mt-8">
-              <h3 className="text-[13.5px] font-bold mb-3.5">📦 איך לקבל את ההזמנה?</h3>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setWantsShipping(true)}
-                  aria-pressed={wantsShipping}
-                  className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
-                  style={
-                    wantsShipping
-                      ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
-                  }
-                >
-                  משלוח
-                </button>
-                <button
-                  onClick={() => setWantsShipping(false)}
-                  aria-pressed={!wantsShipping}
-                  className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
-                  style={
-                    !wantsShipping
-                      ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                      : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
-                  }
-                >
-                  מסירה אישית
-                </button>
-              </div>
+              <h3 className="text-[13.5px] font-bold mb-3">📦 איך לקבל את ההזמנה?</h3>
+              <PickRows
+                label="איך לקבל את ההזמנה"
+                value={wantsShipping ? "ship" : "pickup"}
+                onChange={(v) => setWantsShipping(v === "ship")}
+                options={[
+                  {
+                    key: "ship",
+                    title: "🚚 משלוח",
+                    sub: [store.shipping_note || "עד הבית", typeof store.shipping_price === "number" ? `₪${formatPrice(store.shipping_price)}` : ""]
+                      .filter(Boolean).join(" · "),
+                  },
+                  { key: "pickup", title: "🤝 מסירה אישית", sub: "קובעים עם הדוכן איפה ומתי" },
+                ]}
+              />
+              {/* כתובת — טופס רגיל: עיר, רחוב, ואם גרים בבניין גם קומה ודירה.
+                  קודם היו כאן כפתורי "בניין / בית פרטי" בלי כותרת, ומרינה:
+                  "זה לא התנהגות נורמלית ומבלבלת". עכשיו סוג הבית נגזר ממה שמילאו. */}
               {wantsShipping && (
-                <p className="opacity-75 text-[12.5px] mt-2 leading-relaxed">
-                  {store.shipping_note || "בתיאום"}
-                  {typeof store.shipping_price === "number" && ` · ₪${formatPrice(store.shipping_price)}`}
-                </p>
-              )}
-              {/* משלוח אמיתי צריך יעד מפורק — מה שהשליח באמת שואל.
-                  הכל נראה רק למוכרת, לא נכנס לשום דף פומבי. */}
-              {wantsShipping && (
-                <div className="mt-4 flex flex-col gap-4">
-                  <div className="flex gap-3">
-                    <label className="flex-1 min-w-0 block">
-                      <span className="block text-[11.5px] opacity-75 mb-1.5">עיר *</span>
-                      <input
-                        value={shipCity}
-                        onChange={(e) => setShipCity(e.target.value)}
-                        placeholder="למשל: רמת גן"
-                        aria-label="עיר למשלוח"
-                        maxLength={40}
-                        className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
-                      />
-                    </label>
-                    <label className="flex-1 min-w-0 block">
-                      <span className="block text-[11.5px] opacity-75 mb-1.5">רחוב ומספר *</span>
-                      <input
-                        value={shipStreet}
-                        onChange={(e) => setShipStreet(e.target.value)}
-                        placeholder="למשל: הרצל 12"
-                        aria-label="רחוב למשלוח"
-                        maxLength={80}
-                        className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
-                      />
-                    </label>
-                  </div>
-                  <div className="flex gap-3">
-                    {([["building", "בניין"], ["private", "בית פרטי"]] as const).map(([k, label]) => {
-                      const on = homeType === k;
-                      return (
-                        <button
-                          key={k}
-                          onClick={() => setHomeType(k)}
-                          aria-pressed={on}
-                          aria-label={label}
-                          className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
-                          style={
-                            on
-                              ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
-                          }
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {homeType === "building" && (
+                <div className="mt-5 flex flex-col gap-4" data-testid="ship-address">
+                  <h3 className="text-[13.5px] font-bold">🏠 לאן לשלוח?</h3>
+                  <label className="block">
+                    <span className="block text-[12px] opacity-75 mb-1.5">עיר *</span>
+                    <input
+                      value={shipCity}
+                      onChange={(e) => setShipCity(e.target.value)}
+                      placeholder="למשל: רמת גן"
+                      aria-label="עיר למשלוח"
+                      autoComplete="address-level2"
+                      maxLength={40}
+                      className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="block text-[12px] opacity-75 mb-1.5">רחוב ומספר בית *</span>
+                    <input
+                      value={shipStreet}
+                      onChange={(e) => setShipStreet(e.target.value)}
+                      placeholder="למשל: הרצל 12"
+                      aria-label="רחוב למשלוח"
+                      autoComplete="address-line1"
+                      maxLength={80}
+                      className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                    />
+                  </label>
+                  <div>
+                    <span className="block text-[12px] opacity-75 mb-1.5">גרים בבניין? ממלאים גם קומה ודירה (בבית פרטי — משאירים ריק)</span>
                     <div className="flex gap-3">
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-75 mb-1.5">קומה *</span>
+                        <span className="block text-[11.5px] opacity-75 mb-1">קומה</span>
                         <input
                           value={shipFloor}
                           onChange={(e) => setShipFloor(e.target.value)}
@@ -1448,7 +1425,7 @@ export default function StoreView({
                         />
                       </label>
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-75 mb-1.5">דירה *</span>
+                        <span className="block text-[11.5px] opacity-75 mb-1">דירה</span>
                         <input
                           value={shipApartment}
                           onChange={(e) => setShipApartment(e.target.value)}
@@ -1460,7 +1437,7 @@ export default function StoreView({
                         />
                       </label>
                       <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-75 mb-1.5">קוד כניסה</span>
+                        <span className="block text-[11.5px] opacity-75 mb-1">קוד כניסה</span>
                         <input
                           value={shipEntryCode}
                           onChange={(e) => setShipEntryCode(e.target.value)}
@@ -1471,7 +1448,7 @@ export default function StoreView({
                         />
                       </label>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </section>
@@ -1525,28 +1502,13 @@ export default function StoreView({
                   ההזמנה. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?". */}
               {methods.length > 0 && (
                 <>
-                  <h3 className="text-[13.5px] font-bold mb-3.5">💜 איך משלמים?</h3>
-                  <div className="flex gap-3">
-                    {methods.map((m) => {
-                      const on = chosenPay === m.key;
-                      return (
-                        <button
-                          key={m.key}
-                          onClick={() => setPayWith(m.key)}
-                          aria-pressed={on}
-                          aria-label={`תשלום ב${m.label}`}
-                          className="flex-1 min-h-11 border-[1.5px] text-[13px] font-semibold transition-opacity"
-                          style={
-                            on
-                              ? { background: "var(--s-primary)", color: "var(--s-onprimary)", borderColor: "var(--s-primary)" }
-                              : { borderColor: "currentColor", background: "var(--s-surface)", opacity: 0.75 }
-                          }
-                        >
-                          {m.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <h3 className="text-[13.5px] font-bold mb-3">💜 איך משלמים?</h3>
+                  <PickRows
+                    label="איך משלמים"
+                    value={chosenPay ?? ""}
+                    onChange={(v) => setPayWith(v as PayMethod)}
+                    options={methods.map((m) => ({ key: m.key, title: m.label, aria: `תשלום ב${m.label}` }))}
+                  />
                 </>
               )}
               {!methods.length && paySummary && (
@@ -1557,34 +1519,20 @@ export default function StoreView({
               {store.payout_note && (
                 <p className="opacity-75 text-[12.5px] mt-2">{store.payout_note}</p>
               )}
-              {/* לינק נפתח בלשונית חדשה; מספר מוצג עם העתקה. הסל והטופס
-                  נשארים כאן, והקונה חוזרת לשלוח אחרי ששילמה. */}
-              {payTarget?.kind === "link" && (
-                <a
-                  href={payTarget.url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  className="mt-3 block text-center py-3 text-[13.5px] font-bold"
-                  style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
-                >
-                  {payTarget.label} ←
-                </a>
-              )}
-              {payTarget?.kind === "phone" && (
-                <div className="mt-3 flex items-center justify-between gap-2 border-[1.5px] border-black/10 px-3 py-2.5">
-                  <span className="text-[13px]">
-                    {payTarget.method === "bit" ? "ביט" : "פייבוקס"} למספר{" "}
-                    <b dir="ltr" className="text-[14px]">{formatPayPhone(payTarget.phone)}</b>
-                  </span>
-                  <button
-                    onClick={() => copyPayPhone(payTarget.phone)}
-                    aria-label="העתקת מספר התשלום"
-                    className="shrink-0 px-3 py-2 text-[12.5px] font-bold border-[1.5px]"
-                    style={{ borderColor: "var(--s-primary)", color: "var(--s-primary-text)" }}
-                  >
-                    העתקה 📋
-                  </button>
-                </div>
+              {/* מה יקרה אחרי השליחה — משלמים *אחרי* שההזמנה נשלחה, לא לפני.
+                  קודם הופיע כאן כפתור תשלום, וזה גרם לשלם לפני שהזמינו. */}
+              {chosenPay && (
+                <p className="text-[12.5px] mt-2.5 leading-relaxed s-r px-3 py-2.5" style={{ background: "var(--s-thumb)" }} data-testid="pay-next">
+                  {chosenPay === "cash"
+                    ? "💵 משלמים במזומן כשמקבלים את ההזמנה."
+                    : payTarget?.kind === "link"
+                      ? `👉 אחרי שליחת ההזמנה יופיע כפתור לתשלום ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
+                      : payTarget?.kind === "phone"
+                        ? `👉 אחרי שליחת ההזמנה יופיע המספר להעברה ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
+                        : store.payout_whatsapp
+                          ? `👉 אחרי שליחת ההזמנה כותבים לדוכן בוואטסאפ, והם שולחים לאן להעביר ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
+                          : `👉 אחרי שליחת ההזמנה הדוכן יחזור אליך עם פרטי התשלום ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`}
+                </p>
               )}
             </section>
           )}
@@ -1646,13 +1594,22 @@ export default function StoreView({
           className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
-          <div className="text-4xl mb-2" aria-hidden>💳</div>
-          <h2 className="text-lg font-bold">נשאר רק לשלם</h2>
+          <div className="text-4xl mb-2" aria-hidden>{!payTarget ? "💬" : "💳"}</div>
+          <h2 className="text-lg font-bold">
+            {/* ההזמנה כבר נשלחה — זה רק התשלום */}
+            ✅ ההזמנה נשלחה · נשאר לשלם
+          </h2>
           <p className="text-[13px] opacity-75 mt-1 leading-relaxed">
-            ההזמנה שלך (#{confirmed.orderNumber}) שמורה בדוכן.
-            <br />
-            משלמים ₪{formatPrice(confirmed.total)} וסוגרים עניין:
+            הזמנה #{confirmed.orderNumber} · ₪{formatPrice(confirmed.total)}
+            {chosenPay === "bit" || chosenPay === "paybox" ? ` · ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}` : ""}
           </p>
+          {!payTarget && confirmed.waPayUrl && (
+            <p className="text-[13.5px] mt-3 leading-relaxed" data-testid="pay-whatsapp-explain">
+              {chosenPay === "bit" || chosenPay === "paybox"
+                ? `הדוכן שולח את פרטי ה${chosenPay === "bit" ? "ביט" : "פייבוקס"} בוואטסאפ. לוחצים כאן, ההודעה כבר כתובה — רק לשלוח:`
+                : "קובעים עם הדוכן בוואטסאפ איך משלמים. ההודעה כבר כתובה — רק לשלוח:"}
+            </p>
+          )}
           {!payTarget && confirmed.waPayUrl ? (
             <a
               href={confirmed.waPayUrl}
@@ -1662,7 +1619,9 @@ export default function StoreView({
               className="mt-4 block py-3.5 text-[15px] font-bold text-white"
               style={{ background: "var(--whatsapp)" }}
             >
-              קביעת התשלום בוואטסאפ 💬
+              {chosenPay === "bit" || chosenPay === "paybox"
+                ? `💬 לקבל את פרטי ה${chosenPay === "bit" ? "ביט" : "פייבוקס"} בוואטסאפ`
+                : "💬 לקבוע את התשלום בוואטסאפ"}
             </a>
           ) : payTarget?.kind === "link" ? (
             <a
@@ -1709,16 +1668,20 @@ export default function StoreView({
             className="mt-2 w-full py-3 text-[13.5px] font-bold border-[1.5px]"
             style={{ borderColor: "currentColor", opacity: 0.85 }}
           >
-            שילמתי ✓
+            {/* בוואטסאפ עוד לא שילמו — רק שלחו הודעה */}
+            {!payTarget ? "שלחתי הודעה ✓" : "שילמתי ✓"}
           </button>
-          <a
-            href={confirmed.waUrl}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="mt-3 block text-[12.5px] opacity-75 underline"
-          >
-            משהו לא מסתדר? אפשר לכתוב לדוכן בוואטסאפ
-          </a>
+          {/* כשהכפתור הראשי כבר וואטסאפ — בלי קישור וואטסאפ שני */}
+          {payTarget && (
+            <a
+              href={confirmed.waUrl}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="mt-3 block text-[12.5px] opacity-75 underline"
+            >
+              משהו לא מסתדר? אפשר לכתוב לדוכן בוואטסאפ
+            </a>
+          )}
         </div>
       )}
 
@@ -1783,6 +1746,58 @@ export default function StoreView({
           {toast}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * בחירה אחת מכמה — שורות עם עיגול סימון, כותרת ושורת הסבר.
+ * לקופה: איך מקבלים ואיך משלמים. ברור יותר מזוג "גלולות" בלי כותרת:
+ * רואים מה נבחר (עיגול מלא + מסגרת בצבע הדוכן) ומה כל אפשרות אומרת.
+ */
+function PickRows({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { key: string; title: string; sub?: string; aria?: string }[];
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-col gap-2">
+      {options.map((o) => {
+        const on = value === o.key;
+        return (
+          <button
+            key={o.key}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            aria-label={o.aria ?? o.title.replace(/^\S+\s/, "")}
+            onClick={() => onChange(o.key)}
+            className="s-r w-full text-right px-4 py-3 min-h-12 border-2 flex items-center gap-3"
+            style={{
+              background: "var(--s-surface)",
+              borderColor: on ? "var(--s-primary)" : "color-mix(in srgb, currentColor 22%, transparent)",
+            }}
+          >
+            <span
+              className="w-5 h-5 shrink-0 flex items-center justify-center"
+              style={{ borderRadius: "999px", border: `2px solid ${on ? "var(--s-primary)" : "currentColor"}`, opacity: on ? 1 : 0.6 }}
+              aria-hidden
+            >
+              {on && <span className="w-2.5 h-2.5" style={{ borderRadius: "999px", background: "var(--s-primary)" }} />}
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className={`block text-[14px] ${on ? "font-bold" : "font-semibold"}`}>{o.title}</span>
+              {o.sub && <span className="block text-[12px] opacity-75 mt-0.5 leading-snug">{o.sub}</span>}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

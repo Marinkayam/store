@@ -125,10 +125,19 @@ await buyer.click("button[aria-label='הוספה מהירה, מחזיק מפתח
 await buyer.waitForTimeout(600);
 await buyer.click("[data-testid=cart-bar]");
 await buyer.waitForSelector("text=ההזמנה שלך", { timeout: 10000 });
-// הלינק מופיע כשבוחרים פייבוקס — הוא שייך לאמצעי הזה ולא לכל הזמנה
+// בוחרים פייבוקס — בקופה כתוב שהכפתור יופיע אחרי השליחה; הכפתור עצמו
+// במסך התשלום, אחרי שההזמנה נשמרה (לא משלמים לפני שהזמינו)
 await buyer.click("button[aria-label='תשלום בפייבוקס']");
 await buyer.waitForTimeout(400);
-const payBtn = buyer.locator("a[href='https://link.payboxapp.com/abc123']");
+check("before sending, the checkout says a payment button comes next",
+  ((await buyer.textContent("[data-testid=pay-next]")) ?? "").includes("יופיע כפתור"));
+await buyer.fill("input[aria-label='השם שלך']", "רוני");
+await buyer.fill("input[aria-label='מספר טלפון']", "0523334455");
+const pickup1 = buyer.locator("button:has-text('מסירה אישית')");
+if (await pickup1.count()) await pickup1.click();
+await buyer.click("button:has-text('שליחת ההזמנה')");
+await buyer.waitForSelector("[data-testid=order-pay-first]", { timeout: 15000 });
+const payBtn = buyer.locator("[data-testid=order-pay-first] a[href='https://link.payboxapp.com/abc123']");
 check("the buyer gets a real payment button", (await payBtn.count()) === 1);
 check("it is labelled by the app it opens",
   ((await payBtn.textContent()) ?? "").includes("פייבוקס"), (await payBtn.textContent()) ?? "");
@@ -194,7 +203,7 @@ const waPayMsg = decodeURIComponent(waPayHref);
 check("with whatsapp-payment on, the buyer gets a chat button",
   waPayHref.includes("wa.me/"), waPayHref.slice(0, 40));
 check("whose message names the order and the amount",
-  /הזמנה #\d+/.test(waPayMsg) && waPayMsg.includes("איך הכי נוח לך שאשלם"),
+  /הזמנה #\d+/.test(waPayMsg) && waPayMsg.includes("בחרתי לשלם בביט"),
   waPayMsg.slice(waPayMsg.indexOf("text=") + 5, waPayMsg.indexOf("text=") + 60));
 
 await db.query("update stores set payout_link = null, payout_bit_link = null, payout_paybox_link = null, payout_bit_phone = null, payout_paybox_phone = null, payout_whatsapp = null where id = $1", [store.id]);

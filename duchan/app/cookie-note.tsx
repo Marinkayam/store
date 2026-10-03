@@ -34,7 +34,9 @@ export default function CookieNote() {
   /* פס דק בראש העמוד, בתוך הזרימה — לא צף מעל. כשהוא צף בתחתית הוא כיסה
      את כפתורי השמירה, הסל ושורת הניווט עד שלחצו "הבנתי". */
   return (
-    <div role="region" aria-label="עוגיות" data-testid="cookie-note" className="bg-[var(--cream)] border-b border-[var(--line)] px-3 py-2">
+    /* pt עם safe-area: כשנכנסים מוואטסאפ באייפון הדף מתחיל מתחת לשורת השעון
+       (viewportFit: cover), והפס "התחבא" שם. ככה הוא תמיד מתחת לה. */
+    <div role="region" aria-label="עוגיות" data-testid="cookie-note" className="bg-[var(--cream)] border-b border-[var(--line)] px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]">
       <div className="max-w-md mx-auto flex items-center gap-2.5">
         <span className="text-[22px] leading-none" aria-hidden>🍪</span>
         <p className="flex-1 min-w-0 text-[12.5px] leading-snug text-[var(--ink)]">
