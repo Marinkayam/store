@@ -11,6 +11,13 @@ import { useState } from "react";
  *
  * phone — כשהכרטיס יושב בתיק חנות, המספר כבר ממולא.
  */
+/** ההודעה בוואטסאפ עם קישור הכניסה — אחת לכל החמ"ל */
+export function loginLinkWhatsapp(phone: string, url: string): string {
+  const to = phone.replace(/\D/g, "").replace(/^0/, "972");
+  const text = `היי! ראינו שהקוד בסמס לא הגיע 🙈\nהנה קישור כניסה לדוכן שלך 🛍️\n${url}\nלוחצים עליו ואז על "להיכנס" — בלי קוד. עובד פעם אחת, ל-24 שעות.`;
+  return `https://wa.me/${to}?text=${encodeURIComponent(text)}`;
+}
+
 export default function NoSmsLogin({ phone: initial = "", compact = false }: { phone?: string; compact?: boolean }) {
   const [open, setOpen] = useState(!compact);
   const [phone, setPhone] = useState(initial);
@@ -40,13 +47,7 @@ export default function NoSmsLogin({ phone: initial = "", compact = false }: { p
     }
   }
 
-  const whatsapp = () => {
-    const to = phone.replace(/\D/g, "").replace(/^0/, "972");
-    const text = encodeURIComponent(
-      `היי! הנה קישור כניסה לדוכן שלך 🛍️\n${url}\nלוחצים עליו ואז על "להיכנס" — בלי קוד. עובד פעם אחת, ל-24 שעות.`
-    );
-    window.open(`https://wa.me/${to}?text=${text}`, "_blank");
-  };
+  const whatsapp = () => window.open(loginLinkWhatsapp(phone, url), "_blank");
 
   if (!open) {
     return (
