@@ -856,25 +856,28 @@ export default function ProductsPage() {
                     <span className="text-[11px] px-1.5 py-0.5 bg-[var(--danger-bg)] text-[var(--danger)] font-bold">אזל</span>
                   ) : p.stock <= 2 ? (
                     <span className="text-[11px] px-1.5 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">נשארו {p.stock}</span>
-                  ) : (
-                    <span className="text-[11px] px-1.5 py-0.5 bg-[var(--canvas)] text-[var(--muted)]">{p.stock} במלאי</span>
-                  )}
+                  ) : null /* הכמות עצמה כתובה בין ה-+ וה-− בצד */}
                 </div>
               </div>
-              {/* מלאי מהיר */}
+              {/* מלאי מהיר. ה-+ וה-− לבד בצד לא אמרו כלום ("מה זה הפלוס והמינוס
+                  האלה?") — עכשיו כתוב "מלאי" והכמות יושבת ביניהם */}
               {p.track_stock && (
-                <div className="flex flex-col gap-1 items-center" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-col items-center shrink-0" onClick={(e) => e.stopPropagation()} data-testid="stock-stepper">
+                  <span className="text-[10.5px] text-[var(--muted)] mb-0.5">מלאי</span>
                   <button
                     onClick={() => quickStock(p, 1)}
-                    className="w-7 h-7 border border-[var(--line)] bg-white text-sm"
+                    className="w-8 h-7 border border-[var(--line)] bg-white text-sm"
                     aria-label="הוספה למלאי"
                   >
                     +
                   </button>
+                  <span className="h-6 flex items-center text-[14px] font-bold tabular-nums" aria-label={`במלאי: ${p.stock}`} data-testid="stock-count">
+                    {p.stock}
+                  </span>
                   <button
                     onClick={() => quickStock(p, -1)}
                     disabled={p.stock === 0}
-                    className="w-7 h-7 border border-[var(--line)] bg-white text-sm disabled:opacity-25"
+                    className="w-8 h-7 border border-[var(--line)] bg-white text-sm disabled:opacity-25"
                     aria-label="הורדה מהמלאי"
                   >
                     −

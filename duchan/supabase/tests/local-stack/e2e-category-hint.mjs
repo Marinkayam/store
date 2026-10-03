@@ -71,6 +71,19 @@ await buyer.goto(`${BASE}/s/${store.slug}?t=${Date.now()}`, { waitUntil: "networ
 const bar = (await buyer.textContent("[data-testid=category-chips]").catch(() => "")) ?? "";
 check("בדוכן: א-קט מופיעה, ב-קט (ריקה) לא", bar.includes("א-קט") && !bar.includes("ב-קט"), bar);
 
+/* ── מלאי מהיר: כתוב "מלאי" והכמות בין ה-+ וה-− ── */
+const { rows: [st] } = await db.query("select stock from products where id=$1", [prod.id]);
+const step = girl.locator(`div.cursor-pointer:has-text('${prod.name}') [data-testid=stock-stepper]`).first();
+const stepText = (await step.textContent()) ?? "";
+check("ליד ה-+ וה-− כתוב 'מלאי' והכמות ביניהם", stepText.includes("מלאי") && (await step.locator("[data-testid=stock-count]").textContent()) === String(st.stock), stepText);
+await step.locator("button[aria-label='הוספה למלאי']").click();
+await girl.waitForTimeout(700);
+check("לוחצים + והמספר עולה ב-1", (await step.locator("[data-testid=stock-count]").textContent()) === String(st.stock + 1));
+await step.locator("button[aria-label='הורדה מהמלאי']").click();
+await girl.waitForTimeout(700);
+check("לוחצים − והוא חוזר", (await step.locator("[data-testid=stock-count]").textContent()) === String(st.stock));
+await girl.screenshot({ path: `${process.env.SHOTS ?? "/tmp"}/stock-stepper.png` });
+
 /* ── ניקוי ── */
 await db.query("update stores set categories=$1 where id=$2", [orig.categories, store.id]);
 for (const p of prodsBefore) await db.query("update products set categories=$1, category=$2 where id=$3", [p.categories, p.category, p.id]);
