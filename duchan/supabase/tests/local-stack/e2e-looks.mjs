@@ -135,10 +135,10 @@ check("הבחירה נרשמת", (await girl.getAttribute("button[aria-label='ס
 // הדוכן הקטן צמוד למעלה: גם כשגוללים עד הרקעים, רואים את מה שבחרו
 await girl.locator("[data-testid=bg-picker]").scrollIntoViewIfNeeded();
 await girl.waitForTimeout(300);
-const mini = await girl.locator("[data-testid=design-preview]").boundingBox();
-check("הדוכן הקטן נשאר על המסך בזמן הבחירה", !!mini && mini.y >= 0 && mini.y < 120, `${mini?.y}`);
-check("והוא כבר מראה את הלבבות",
-  (await girl.locator("[data-testid=design-preview]").evaluate((el) => getComputedStyle(el).backgroundImage)).includes("svg"));
+/* הדוכן הקטן שצף ירד ("נתקע למעלה") — הדוכן לעריכה בראש המקטע הוא התצוגה */
+check("הדוכן בראש המקטע כבר מראה את הלבבות",
+  (await girl.locator("#identity").evaluate((el) => getComputedStyle(el).backgroundImage)).includes("svg"));
+check("ואין יותר דוכן קטן שצף ונתקע למעלה", (await girl.locator("[data-testid=design-preview]").count()) === 0);
 await girl.screenshot({ path: "/tmp/looks-settings.png", fullPage: true });
 /* חזרה למסך הבית של "החנות שלי": הדוכן שבראשו כבר עם הרקע, עוד לפני שמירה */
 await girl.click("[data-testid=section-back]");

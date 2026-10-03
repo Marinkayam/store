@@ -18,6 +18,7 @@ import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style"
 import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
 import SellerCoupons from "../share/seller-coupons";
+import ShareSection from "./share-section";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
 
@@ -27,6 +28,7 @@ import SellerCoupons from "../share/seller-coupons";
  * עובד, ואפשר לשלוח קישור ישר למקטע.
  */
 const SECTIONS = {
+  share: { icon: "🔗", title: "לשתף את הדוכן", intro: "הלינק לדוכן, הודעות מוכנות לוואטסאפ, והזמנה לחברה." },
   design: { icon: "🎨", title: "עיצוב הדוכן", intro: "כל מה שקשור לאיך הדוכן נראה, במקום אחד. לוחצים על השם, התיאור או התמונה כדי לשנות." },
   products: { icon: "⭐", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
   promo: { icon: "📣", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
@@ -192,22 +194,6 @@ export default function SettingsPage() {
     }
   };
 
-  /* בעיצוב יש שני דוכנים: הגדול שעורכים בו, והקטן שצף למעלה בזמן שבוחרים
-     צבע/סגנון/רקע. הקטן מופיע רק כשהגדול כבר לא על המסך — אחרת רואים
-     את אותו דוכן פעמיים. */
-  /* callback ref ולא useRef: הכרטיס נוצר רק אחרי שהחנות נטענה והמקטע
-     נפתח, וכך ה-observer נרשם בדיוק כשהוא קיים — לא תלוי בסדר הטעינה */
-  const [cardEl, setCardEl] = useState<HTMLDivElement | null>(null);
-  const [cardInView, setCardInView] = useState(true);
-  useEffect(() => {
-    if (!cardEl || typeof IntersectionObserver === "undefined") {
-      setCardInView(true);
-      return;
-    }
-    const io = new IntersectionObserver(([e]) => setCardInView(e.isIntersecting), { rootMargin: "-54px 0px 0px 0px" });
-    io.observe(cardEl);
-    return () => io.disconnect();
-  }, [cardEl]);
 
   const showToast = (m: string) => {
     setToast(m);
@@ -597,6 +583,10 @@ export default function SettingsPage() {
   const catCount = store.categories?.length ?? 0;
   const groups: HubGroup[] = [
     {
+      title: "לשתף",
+      rows: [{ key: "share", icon: "🔗", tint: "#e3f5ea", title: "לשתף את הדוכן", summary: "הלינק לדוכן והודעות מוכנות לוואטסאפ" }],
+    },
+    {
       title: "איך הדוכן נראה",
       rows: [
         {
@@ -714,7 +704,6 @@ export default function SettingsPage() {
 
           <div
             id="identity"
-            ref={setCardEl}
             className="scroll-mt-14 overflow-hidden border border-[var(--line)]"
             style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
           >
@@ -913,60 +902,6 @@ export default function SettingsPage() {
                 ↺ חזרה לבסיס
               </button>
             )}
-          </div>
-
-          {/* הדוכן הקטן — צמוד למעלה בזמן שגוללים בין הבחירות. בלעדיו כל
-              לחיצה על סגנון או רקע שינתה משהו שנמצא מחוץ למסך. */}
-          <div
-            data-testid="design-preview"
-            aria-label="תצוגה מקדימה של הדוכן"
-            aria-hidden={cardInView}
-            className={`fixed top-[58px] inset-x-3 max-w-[calc(28rem-24px)] mx-auto z-20 border border-[var(--line)] overflow-hidden transition-opacity duration-200 ${
-              cardInView ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
-            style={{ background: storeBackground(t, bgPattern, bgPreview), color: t.ink, fontFamily: lk.font }}
-          >
-            {/* הפס למעלה (קאבר) — כדי שגם בחירת הקאבר תיראה מיד, ליד הרקע */}
-            <div
-              className="h-5"
-              data-testid="design-preview-cover"
-              style={
-                coverPreview
-                  ? { backgroundImage: `url(${coverPreview})`, backgroundSize: "cover", backgroundPosition: "center" }
-                  : previewBg ? undefined : { background: coverCss(preset) }
-              }
-            />
-            <div className="p-2.5 flex flex-col gap-2">
-              <div
-                className="text-center px-2 py-1.5"
-                style={previewBg ? { ...readablePlate(t), borderRadius: lk.radius, border: lk.border(t), boxShadow: lk.shadow(t) } : undefined}
-              >
-                <div className="text-[13.5px] font-bold truncate">{emoji} {name || "הדוכן שלך"}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {[0, 1].map((i) => {
-                  const p = products[i];
-                  const img = p ? mediaUrl(p.poster_key) ?? mediaUrl(p.image_key) : null;
-                  return (
-                    <div key={i} className="overflow-hidden"
-                      style={{ background: t.surface, border: lk.border(t), borderRadius: lk.radius, boxShadow: lk.shadow(t) }}>
-                      <div className="h-11 flex items-center justify-center text-lg overflow-hidden" style={{ background: t.thumb }}>
-                        {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : p ? "🛍️" : i ? "🧸" : "🧁"}
-                      </div>
-                      <div className="px-1.5 py-1 flex items-center justify-between gap-1">
-                        <span className="text-[10.5px] font-bold" style={{ color: t.primary }}>
-                          ₪{p ? formatPrice(p.price) : i ? "12.90" : "15"}
-                        </span>
-                        <span className="px-1.5 py-0.5 text-[9.5px] font-bold"
-                          style={{ background: t.primary, color: t.onPrimary, borderRadius: lk.radius }}>
-                          לסל
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           <div>
@@ -1303,6 +1238,7 @@ export default function SettingsPage() {
 
             </>
           )}
+          {section === "share" && <ShareSection store={store} onToast={showToast} />}
           {section === "coupons" && (
             <div className="bg-white border border-[var(--line)] p-3" id="coupons" data-testid="seller-coupons">
               <SellerCoupons store={store} />
@@ -1317,96 +1253,102 @@ export default function SettingsPage() {
             מה שמסומן מופיע לקונים לפני ההזמנה וגם בהודעה. הכסף עובר ישירות
             אלייך — דוכן לא נוגע בו ולא לוקח עמלה.
           </p>
+          {/* כל אמצעי בשורה משלו. מסמנים ✓ — ומתחתיו נפתח "לאן מעבירים?".
+              מה שלא סומן לא מציג שדות (מרינה: "אם לוחצים על הצ'ק בוקס אז
+              נפתחת התיבה"). מזומן לא צריך פרטים. */}
           <div className="flex flex-col gap-1.5 mt-2.5">
             {([
               ["payout_bit", "ביט", "למספר הוואטסאפ שלך"],
               ["payout_paybox", "פייבוקס", "אם יש לך"],
               ["payout_cash", "מזומן", "במסירה, פנים אל פנים"],
             ] as const).map(([key, label, hint]) => (
+              <div key={key} className={`border-[1.5px] ${payout[key] ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)]"}`}>
               <button
-                key={key}
                 onClick={() => { setPayout({ ...payout, [key]: !payout[key] }); setDirty(true); }}
-                className={`flex items-center gap-2.5 border-[1.5px] px-3 py-2.5 text-right ${
-                  payout[key] ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)]"
-                }`}
+                aria-pressed={payout[key]}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-right min-h-11"
               >
-                <span className={`w-4 h-4 flex items-center justify-center text-[11px] ${
-                  payout[key] ? "bg-[var(--ink)] text-white" : "border border-[#D3D5DC]"
+                <span className={`w-5 h-5 shrink-0 flex items-center justify-center text-[12px] ${
+                  payout[key] ? "bg-[var(--ink)] text-white" : "border-[1.5px] border-[#C9C2B6] bg-white"
                 }`}>
                   {payout[key] ? "✓" : ""}
                 </span>
                 <span className="text-[13px] font-medium flex-1">{label}</span>
                 <span className="text-[12px] text-[var(--muted)]">{hint}</span>
               </button>
+              {key === "payout_bit" && payout.payout_bit && (
+                <div className="px-3 pb-3" data-testid="bit-details">
+                  <div className="text-[12px] font-bold mb-1.5">לאן מעבירים בביט?</div>
+                  <input
+                    value={payout.payout_bit_phone ?? ""}
+                    onChange={(e) => { setPayout({ ...payout, payout_bit_phone: e.target.value }); setDirty(true); }}
+                    placeholder="מספר הביט, למשל 050-1234567"
+                    aria-label="מספר ביט"
+                    inputMode="tel"
+                    dir="ltr"
+                    maxLength={14}
+                    className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
+                  />
+                  {!!payout.payout_bit_phone?.trim() && !isPayPhone(payout.payout_bit_phone) && (
+                    <p className="text-[12px] text-[var(--danger)] mt-1">זה לא נראה כמו מספר נייד ישראלי.</p>
+                  )}
+                  <input
+                    value={payout.payout_bit_link ?? ""}
+                    onChange={(e) => { setPayout({ ...payout, payout_bit_link: e.target.value }); setDirty(true); }}
+                    placeholder="או לינק מאפליקציית ביט (אם יש)"
+                    aria-label="לינק ביט"
+                    dir="ltr"
+                    maxLength={200}
+                    className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right mt-1.5"
+                  />
+                  {!!payout.payout_bit_link?.trim() && !isBitLink(payout.payout_bit_link.trim()) && (
+                    <p className="text-[12px] text-[var(--danger)] mt-1">
+                      זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר רק אותו.
+                    </p>
+                  )}
+                  <p className="text-[11.5px] text-[var(--muted)] mt-1.5 leading-relaxed">
+                    מספיק מספר. לינק מ&quot;בקשת תשלום&quot; פותח את האפליקציה ישר — אם יש, עדיף.
+                  </p>
+                </div>
+              )}
+              {key === "payout_paybox" && payout.payout_paybox && (
+                <div className="px-3 pb-3" data-testid="paybox-details">
+                  <div className="text-[12px] font-bold mb-1.5">לאן מעבירים בפייבוקס?</div>
+                  <input
+                    value={payout.payout_paybox_phone ?? ""}
+                    onChange={(e) => { setPayout({ ...payout, payout_paybox_phone: e.target.value }); setDirty(true); }}
+                    placeholder="מספר הפייבוקס, למשל 052-7654321"
+                    aria-label="מספר פייבוקס"
+                    inputMode="tel"
+                    dir="ltr"
+                    maxLength={14}
+                    className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
+                  />
+                  {!!payout.payout_paybox_phone?.trim() && !isPayPhone(payout.payout_paybox_phone) && (
+                    <p className="text-[12px] text-[var(--danger)] mt-1">זה לא נראה כמו מספר נייד ישראלי.</p>
+                  )}
+                  <input
+                    value={payout.payout_paybox_link ?? ""}
+                    onChange={(e) => { setPayout({ ...payout, payout_paybox_link: e.target.value }); setDirty(true); }}
+                    placeholder="או לינק מאפליקציית פייבוקס (אם יש)"
+                    aria-label="לינק פייבוקס"
+                    dir="ltr"
+                    maxLength={200}
+                    className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right mt-1.5"
+                  />
+                  {!!payout.payout_paybox_link?.trim() && !isPayboxLink(payout.payout_paybox_link.trim()) && (
+                    <p className="text-[12px] text-[var(--danger)] mt-1">
+                      זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר רק אותו.
+                    </p>
+                  )}
+                  <p className="text-[11.5px] text-[var(--muted)] mt-1.5 leading-relaxed">
+                    מספיק מספר. לינק מ&quot;בקשת תשלום&quot; פותח את האפליקציה ישר — אם יש, עדיף.
+                  </p>
+                </div>
+              )}
+              </div>
             ))}
           </div>
-          {/* לכל אמצעי — מספר או לינק, ואפשר ששניהם יובילו לאנשים שונים
-              (אבא בביט, אח בפייבוקס). לינק פותח את האפליקציה ישר על
-              ההעברה; מספר מוצג לקונה עם כפתור העתקה. */}
-          <div className="mt-3 border border-[var(--line)] p-3">
-            <div className="text-[12.5px] font-bold mb-2">ביט — לאן מעבירים?</div>
-            <input
-              value={payout.payout_bit_phone ?? ""}
-              onChange={(e) => { setPayout({ ...payout, payout_bit_phone: e.target.value }); setDirty(true); }}
-              placeholder="מספר הביט, למשל 050-1234567"
-              aria-label="מספר ביט"
-              inputMode="tel"
-              dir="ltr"
-              maxLength={14}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
-            />
-            {!!payout.payout_bit_phone?.trim() && !isPayPhone(payout.payout_bit_phone) && (
-              <p className="text-[12px] text-[var(--danger)] mt-1">זה לא נראה כמו מספר נייד ישראלי.</p>
-            )}
-            <input
-              value={payout.payout_bit_link ?? ""}
-              onChange={(e) => { setPayout({ ...payout, payout_bit_link: e.target.value }); setDirty(true); }}
-              placeholder="או לינק מאפליקציית ביט (אם יש)"
-              aria-label="לינק ביט"
-              dir="ltr"
-              maxLength={200}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right mt-1.5"
-            />
-            {!!payout.payout_bit_link?.trim() && !isBitLink(payout.payout_bit_link.trim()) && (
-              <p className="text-[12px] text-[var(--danger)] mt-1">
-                זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר רק אותו.
-              </p>
-            )}
-          </div>
-          <div className="mt-2 border border-[var(--line)] p-3">
-            <div className="text-[12.5px] font-bold mb-2">פייבוקס — לאן מעבירים?</div>
-            <input
-              value={payout.payout_paybox_phone ?? ""}
-              onChange={(e) => { setPayout({ ...payout, payout_paybox_phone: e.target.value }); setDirty(true); }}
-              placeholder="מספר הפייבוקס, למשל 052-7654321"
-              aria-label="מספר פייבוקס"
-              inputMode="tel"
-              dir="ltr"
-              maxLength={14}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right"
-            />
-            {!!payout.payout_paybox_phone?.trim() && !isPayPhone(payout.payout_paybox_phone) && (
-              <p className="text-[12px] text-[var(--danger)] mt-1">זה לא נראה כמו מספר נייד ישראלי.</p>
-            )}
-            <input
-              value={payout.payout_paybox_link ?? ""}
-              onChange={(e) => { setPayout({ ...payout, payout_paybox_link: e.target.value }); setDirty(true); }}
-              placeholder="או לינק מאפליקציית פייבוקס (אם יש)"
-              aria-label="לינק פייבוקס"
-              dir="ltr"
-              maxLength={200}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px] text-right mt-1.5"
-            />
-            {!!payout.payout_paybox_link?.trim() && !isPayboxLink(payout.payout_paybox_link.trim()) && (
-              <p className="text-[12px] text-[var(--danger)] mt-1">
-                זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר רק אותו.
-              </p>
-            )}
-          </div>
-          <p className="text-[12px] text-[var(--muted)] mt-1.5 leading-relaxed">
-            מספיק מספר. הקונות יראו אותו עם כפתור העתקה ואת הסכום להעברה.
-            לינק (מ"בקשת תשלום" באפליקציה) פותח להן את האפליקציה ישר — אם יש, עדיף.
-          </p>
           {/* אופציה שלישית: בלי מספר ובלי לינק — סוגרים את התשלום בשיחה.
               הכפתור אצל הקונה נפתח עם הודעה מוכנה על ההזמנה והסכום. */}
           <button

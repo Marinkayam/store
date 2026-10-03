@@ -624,7 +624,7 @@ export default function Onboarding() {
           >
             {draft.products.length ? "לדוכן שלי" : "להעלות מוצר ראשון"}
           </a>
-          <a href="/dashboard/share" className="btn btn-tertiary t-small">
+          <a href="/dashboard/settings#share" className="btn btn-tertiary t-small">
             לשלוח את הלינק לחברים
           </a>
         </div>

@@ -39,7 +39,7 @@ const PATHS = [
   ["/privacy", "פרטיות"],
   ["/dashboard", "הזמנות"],
   ["/dashboard/products", "מוצרים"],
-  ["/dashboard/share", "להפיץ"],
+  ["/dashboard/share", "להפיץ (מפנה ל\"לשתף\")"],
   ["/dashboard/settings", "החנות שלי"],
   ["/activate", "פרסום"],
   [`/s/${live.slug}`, "חנות פעילה"],

@@ -21,7 +21,7 @@ export type HubRow = {
   title: string;
   /** מה מוגדר עכשיו — "שמנת · עגלגל · לבבות" */
   summary: string;
-  /** קישור החוצה במקום מקטע (קופונים יושבים ב"להפיץ") */
+  /** קישור החוצה במקום מקטע */
   href?: string;
   testid?: string;
 };
@@ -54,7 +54,7 @@ export default function SettingsHub({
       {/* מה המסך הזה — במשפט אחד, לפני הכל */}
       <header className="fx-rise" style={delay()}>
         <h1 className="text-[20px] font-bold text-[var(--ink)]">החנות שלי</h1>
-        <p className="text-[13px] text-[var(--muted)] mt-0.5">כאן עורכים את הפרטים של הדוכן ואיך הוא נראה.</p>
+        <p className="text-[13px] text-[var(--muted)] mt-0.5">כאן עורכים את הפרטים של הדוכן ואיך הוא נראה, ומשתפים אותו.</p>
       </header>
       <div className="fx-rise" style={delay()}>{hero}</div>
       {before && <div className="fx-rise" style={delay()}>{before}</div>}

@@ -1277,7 +1277,7 @@ export default function ProductsPage() {
             עכשיו הדבר הכי כיף, לשלוח אותו.
           </p>
           <a
-            href="/dashboard/share"
+            href="/dashboard/settings#share"
             className="w-full max-w-xs bg-[var(--ink)] text-white py-4 text-[15px] font-bold"
           >
             שליחה לחברים

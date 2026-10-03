@@ -11,7 +11,6 @@ import ReleasePopup from "./release-popup";
 const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "הזמנות", icon: "receipt" },
   { href: "/dashboard/products", label: "מוצרים", icon: "bag" },
-  { href: "/dashboard/share", label: "להפיץ", icon: "megaphone" },
   { href: "/dashboard/settings", label: "החנות שלי", icon: "shop" },
 ];
 

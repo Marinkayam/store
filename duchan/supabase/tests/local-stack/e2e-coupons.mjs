@@ -107,9 +107,10 @@ await girl.click("[data-testid=settings-coupons-link]");
 await girl.waitForSelector("[data-testid=seller-coupons]", { timeout: 20000 });
 check("ב'החנות שלי' יש מקטע קופונים", (await girl.locator("[data-testid=coupon-manager]").count()) === 1);
 check("והכתובת היא #coupons", girl.url().endsWith("#coupons"), girl.url());
-await girl.goto(`${BASE}/dashboard/share`);
-await girl.waitForSelector("text=הודעות מוכנות", { timeout: 20000 });
-check("וב'להפיץ' אין עוד קופונים כפולים", (await girl.locator("[data-testid=coupon-manager]").count()) === 0);
+await girl.goto(`${BASE}/dashboard/settings#share`);
+await girl.reload();
+await girl.waitForSelector("[data-testid=share-section]", { timeout: 20000 });
+check("ובשיתוף אין עוד קופונים כפולים", (await girl.locator("[data-testid=coupon-manager]").count()) === 0);
 await girl.goto(`${BASE}/dashboard/settings#coupons`);
 await girl.waitForSelector("[data-testid=seller-coupons]", { timeout: 20000 });
 

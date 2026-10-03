@@ -321,9 +321,9 @@ check("og:image מצביע על תמונה שהועלתה", og("og:image")?.incl
 // noindex ו-OpenGraph חיים יחד בכוונה: לא נמצא בגוגל, אבל נראה טוב בשיתוף
 check("ועדיין noindex למרות כרטיס התצוגה", storeHtml.includes("noindex"));
 
-/* ── 6: מסך "להפיץ" ── */
-await girl.goto(`${BASE}/dashboard/share`);
-await girl.waitForSelector("textarea", { timeout: 15000 });
+/* ── 6: לשתף את הדוכן ("להפיץ" אוחד ל"החנות שלי") ── */
+await girl.goto(`${BASE}/dashboard/settings#share`);
+await girl.waitForSelector("[data-testid=share-section] textarea", { timeout: 15000 });
 const box = await girl.locator("textarea").first().inputValue();
 check("ההודעה המוכנה נושאת את שם הדוכן ואת הלינק",
   box.includes(seed.display_name) && box.includes(`/s/${seed.slug}`));

@@ -48,7 +48,9 @@ const empty = await phone();
 await empty.goto(`${BASE}/login`);
 await verifyPhone(empty, "0529998877");
 await empty.waitForURL("**/dashboard", { timeout: 15000 });
+// "להפיץ" אוחד ל"החנות שלי" ← לשתף; הכתובת הישנה מפנה לשם
 await empty.goto(`${BASE}/dashboard/share`);
+await empty.waitForURL("**/dashboard/settings#share", { timeout: 15000 });
 await empty.waitForSelector("text=רגע לפני ששולחים", { timeout: 15000 });
 const gate = await empty.textContent("body");
 check("sharing is blocked while the store has no products", gate.includes("עוד אין מוצרים"));
@@ -71,12 +73,12 @@ await empty.waitForSelector("[data-testid=first-product-celebration]", { timeout
 check("the first product is celebrated, not toasted",
   await empty.locator("[data-testid=first-product-celebration]").isVisible());
 check("and the celebration's main button leads to sharing",
-  (await empty.locator("[data-testid=first-product-celebration] a[href='/dashboard/share']").count()) === 1);
+  (await empty.locator("[data-testid=first-product-celebration] a[href='/dashboard/settings#share']").count()) === 1);
 await empty.screenshot({ path: `${shots}/52-celebration.png` });
 
 /* ── 4. ומשם ישר להפצה ── */
-await empty.click("[data-testid=first-product-celebration] a[href='/dashboard/share']");
-await empty.waitForURL("**/dashboard/share");
+await empty.click("[data-testid=first-product-celebration] a[href='/dashboard/settings#share']");
+await empty.waitForURL("**/dashboard/settings#share");
 await empty.waitForSelector("textarea", { timeout: 15000 });
 check("share opens for real once a product exists",
   (await empty.locator("textarea").count()) >= 1);
