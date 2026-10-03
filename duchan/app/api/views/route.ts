@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { canManage } from "@/lib/team";
 
 // GET /api/views?slug= — סה"כ כניסות לחנות, לבעלת החנות בלבד.
 // store_views אין עליה policy ציבורי, ולכן הקריאה עוברת דרך השרת.
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     .select("id, owner_id")
     .eq("slug", slug)
     .maybeSingle();
-  if (!store || store.owner_id !== user.id) {
+  if (!store || !(await canManage(db, store.id, user.id))) {
     return NextResponse.json({ views: 0 }, { status: 403 });
   }
 

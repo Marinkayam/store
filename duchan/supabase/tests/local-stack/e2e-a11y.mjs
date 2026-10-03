@@ -50,6 +50,7 @@ for (const [path, label] of [
   ["/", "דף הבית"], ["/price", "מחיר"], ["/login", "כניסה"], ["/onboarding", "פתיחת דוכן"],
   ["/terms", "תנאי שימוש"], ["/privacy", "פרטיות"], ["/accessibility", "הצהרת נגישות"],
   [`/s/${store.slug}`, "הדוכן לקונים"], ["/s/nosuchstore", "דוכן שלא קיים"],
+  ["/join/nosuchinvitetoken", "הצטרפות לדוכן (לינק שבור)"],
 ]) {
   await pub.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
   await audit(pub, label);
@@ -86,7 +87,7 @@ for (const [path, label] of [
   await girl.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
   await audit(girl, label);
 }
-for (const s of ["design", "products", "promo", "coupons", "payment", "shipping", "order", "share", "app", "details"]) {
+for (const s of ["design", "products", "promo", "coupons", "payment", "shipping", "order", "share", "app", "details", "team"]) {
   await girl.goto(`${BASE}/dashboard/settings#${s}`);
   await girl.reload({ waitUntil: "networkidle" });
   await girl.waitForSelector(`[data-testid=section-${s}]`, { timeout: 15000 });

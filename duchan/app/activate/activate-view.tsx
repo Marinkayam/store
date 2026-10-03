@@ -33,7 +33,7 @@ const METHODS = [
 ];
 
 export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bitUrl, payboxUrl, ownerWhatsapp }: Props) {
-  const { store, setStore, loading } = useStore();
+  const { store, setStore, loading, role } = useStore();
   const [showParent, setShowParent] = useState(false);
   const [method, setMethod] = useState<string>("bit");
   const [ref, setRef] = useState("");
@@ -149,6 +149,25 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           </a>
           <a href="/dashboard" className="text-sm text-[var(--muted)] underline">
             לניהול הדוכן ←
+          </a>
+        </div>
+      </Shell>
+    );
+
+  /* ── שותף/ה (0057): את התשלום ואישור ההורים עושה ראש הדוכן ── */
+  if (role === "partner" && !store.activated_at)
+    return (
+      <Shell>
+        <div className="text-center flex flex-col gap-4" data-testid="activate-partner">
+          <div className="text-5xl" aria-hidden>👑</div>
+          <h1 className="text-xl font-bold">את הפרסום עושה ראש הדוכן</h1>
+          <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
+            {store.payment_claimed_at
+              ? "ראש הדוכן כבר סימן/ה ששילמו. עכשיו אנחנו בודקים שהכסף הגיע, ואז הדוכן נפתח להזמנות."
+              : "התשלום ואישור ההורים נעשים מהטלפון של ראש הדוכן. בינתיים אפשר להוסיף מוצרים ולעצב."}
+          </p>
+          <a href="/dashboard/products" className="bg-[var(--ink)] text-white py-3 text-sm font-bold">
+            להוספת מוצרים
           </a>
         </div>
       </Shell>

@@ -19,6 +19,8 @@ import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
 import SellerCoupons from "../share/seller-coupons";
 import ShareSection from "./share-section";
+import TeamSection from "./team-section";
+import { OWNER_ONLY_SECTIONS, partnerPatch } from "@/lib/team-fields";
 import InstallCard from "@/app/install-card";
 import { setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 
@@ -40,6 +42,7 @@ const SECTIONS = {
   order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה בוואטסאפ. היא נכתבת לבד, אין מה למלא." },
   app: { icon: "📲", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית. זיהינו את הטלפון ואת הדפדפן — אלה הצעדים בדיוק בשבילו." },
   details: { icon: "📱", title: "הפרטים שלי", intro: "לאן מגיעות ההזמנות, וקצת עליכם. אף פעם לא כתובת." },
+  team: { icon: "👥", title: "צוות הדוכן", intro: "מי מנהל איתך את הדוכן. כל אחד נכנס עם הטלפון שלו." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
 /* העוגנים של הגרסה הקודמת (גלילה אחת) — קישורים ישנים ממשיכים לעבוד */
@@ -56,7 +59,8 @@ const asSection = (hash: string): SectionKey | null => {
 const EMOJIS = ["🦄", "🍩", "🐼", "🍦", "🌈", "🍓", "🐻", "⭐", "🧁", "🐸"];
 
 export default function SettingsPage() {
-  const { store, setStore, loading } = useStore();
+  const { store, setStore, loading, role } = useStore();
+  const isPartner = role === "partner";
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("");
   const [emoji, setEmoji] = useState("🦄");
@@ -238,7 +242,8 @@ export default function SettingsPage() {
 
   async function save(): Promise<boolean> {
     if (!store) return false;
-    const normalized = normalizePhone(phone);
+    // שותף/ה לא נוגע/ת בטלפון ההזמנות ובפרטי התשלום (0057) — לא בודקים אותם
+    const normalized = isPartner ? store.contact_phone : normalizePhone(phone);
     if (!normalized) {
       showToast("מספר הוואטסאפ לא נראה תקין, לבדוק שוב");
       return false;
@@ -307,7 +312,8 @@ export default function SettingsPage() {
      * PostgREST אומר בשגיאה איזו עמודה חסרה, אז מורידים אותה ומנסים שוב.
      * מה שאפשר לשמור נשמר, ומה שלא נאמר במפורש במקום להיבלע.
      */
-    const attempt: Record<string, unknown> = { ...patch };
+    // שותף/ה שולח/ת רק את מה שמותר לו/ה — ראה lib/team-fields.ts
+    const attempt: Record<string, unknown> = isPartner ? { ...partnerPatch(patch) } : { ...patch };
     const dropped: string[] = [];
     let lastError = "";
 
@@ -641,7 +647,11 @@ export default function SettingsPage() {
     {
       title: "הזמנות וכסף",
       rows: [
-        { key: "payment", icon: "💳", tint: "#e9efe3", title: "איך משלמים לי", summary: payLabels.length ? payLabels.join(" · ") : "עוד לא סומן" },
+        {
+          key: "payment", icon: "💳", tint: "#e9efe3", title: "איך משלמים לי",
+          summary: payLabels.length ? payLabels.join(" · ") : "עוד לא סומן",
+          ...(isPartner ? { locked: "רק ראש הדוכן משנה את זה" } : {}),
+        },
         {
           key: "shipping", icon: "🚚", tint: "#f6efe6", title: "משלוחים",
           summary: info.ships ? (info.shipping_price !== "" ? `משלוח ₪${formatPrice(parsePrice(info.shipping_price))}` : "משלוח · המחיר בתיאום") : "מסירה ביד בלבד",
@@ -652,8 +662,16 @@ export default function SettingsPage() {
     {
       title: "חשבון",
       rows: [
+        {
+          key: "team", icon: "👥", tint: "#e6eef6", title: "צוות הדוכן",
+          summary: isPartner ? "🤝 את/ה שותף/ה בדוכן הזה" : "להוסיף חבר/ה, אח או אחות שינהלו איתך",
+        },
         { key: "app", icon: "📲", tint: "#efe7f4", title: "אפליקציה בטלפון", summary: "אייקון במסך הבית — כניסה בלחיצה אחת" },
-        { key: "details", icon: "📱", tint: "#ece6de", title: "הפרטים שלי", summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, info.city].filter(Boolean).join(" · ") },
+        {
+          key: "details", icon: "📱", tint: "#ece6de", title: "הפרטים שלי",
+          summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, info.city].filter(Boolean).join(" · "),
+          ...(isPartner ? { locked: "רק ראש הדוכן משנה את זה" } : {}),
+        },
       ],
     },
   ];
@@ -674,7 +692,11 @@ export default function SettingsPage() {
              שני שלבים: משלמים, ואז מרינה מאשרת. עכשיו זה כתוב במפורש. */
           before={
             <div className="flex flex-col gap-3">
-              {!store.activated_at ? (
+              {!store.activated_at && isPartner ? (
+                <div data-testid="publish-partner" className="bg-[var(--canvas)] border border-[var(--line)] p-4 text-[13px] leading-relaxed">
+                  <b>⏳ הדוכן עוד לא פתוח להזמנות.</b> את הפרסום ואת התשלום עושה ראש הדוכן. בינתיים אפשר להוסיף מוצרים ולעצב.
+                </div>
+              ) : !store.activated_at ? (
                 <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block">
                   <div className="text-[13px] font-bold">
                     {store.payment_claimed_at ? "⏳ התשלום בבדיקה" : "🚀 לפתוח את הדוכן להזמנות"}
@@ -1270,13 +1292,23 @@ export default function SettingsPage() {
             </>
           )}
           {section === "share" && <ShareSection store={store} onToast={showToast} />}
+          {section === "team" && <TeamSection store={store} onToast={showToast} />}
+          {isPartner && (OWNER_ONLY_SECTIONS as readonly string[]).includes(section) && (
+            <div className="bg-white border border-[var(--line)] p-4 text-center" data-testid="owner-only">
+              <div className="text-3xl" aria-hidden>👑</div>
+              <div className="text-[14px] font-bold mt-1">רק ראש הדוכן משנה את זה</div>
+              <p className="text-[12.5px] text-[var(--muted)] mt-1 leading-relaxed">
+                איך משלמים, לאן מגיעות ההזמנות והפרטים האישיים — אצל ראש הדוכן. אפשר לראות מי זה ב&quot;צוות הדוכן&quot;.
+              </p>
+            </div>
+          )}
           {section === "app" && <InstallCard force />}
           {section === "coupons" && (
             <div className="bg-white border border-[var(--line)] p-3" id="coupons" data-testid="seller-coupons">
               <SellerCoupons store={store} />
             </div>
           )}
-          {section === "payment" && (
+          {section === "payment" && !isPartner && (
             <>
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
         <div id="payment" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
@@ -1494,7 +1526,7 @@ export default function SettingsPage() {
 
             </>
           )}
-          {section === "details" && (
+          {section === "details" && !isPartner && (
             <>
         {/* שלושת הפרטים שאינם חלק מהתצוגה של הדוכן, בכרטיס אחד.
             הטלפון ישב קודם לבדו באמצע המסך עם רווחים גדולים סביבו ובלי

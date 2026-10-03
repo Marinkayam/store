@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { canManage } from "@/lib/team";
 import { presignedUpload } from "@/lib/r2";
 import { recountStoreMedia, recountSquishMedia } from "@/lib/media-usage";
 import { QUOTAS } from "@/lib/quotas";
@@ -130,8 +131,10 @@ export async function POST(req: NextRequest) {
   // הבעלות נאכפת כאן בכל מקרה.
   type StoreRow = { id: string; media_bytes: number; media_quota_bytes?: number | null };
   const storeSelect = async (cols: string) => {
-    let q = db.from("stores").select(cols).eq("owner_id", user.id);
-    q = storeId ? q.eq("id", storeId) : q.order("created_at", { ascending: true });
+    // עם storeId — כל דוכן שאני מנהל/ת (ראש או שותף/ה, נבדק מיד אחרי);
+    // בלי — הדוכן הראשון שאני ראש שלו (התנהגות ותיקה)
+    let q = db.from("stores").select(cols);
+    q = storeId ? q.eq("id", storeId) : q.eq("owner_id", user.id).order("created_at", { ascending: true });
     return (await q.limit(1)) as unknown as { data: StoreRow[] | null; error: { message: string } | null };
   };
   /* העמודה החדשה עשויה עוד לא להיות בפרודקשן — עמודה חסרה לא מפילה העלאות */
@@ -139,6 +142,9 @@ export async function POST(req: NextRequest) {
   if (storesErr) ({ data: stores } = await storeSelect("id, media_bytes"));
   const store = stores?.[0];
   if (!store) return NextResponse.json({ error: "אין לך דוכן עדיין" }, { status: 404 });
+  if (storeId && !(await canManage(db, store.id, user.id))) {
+    return NextResponse.json({ error: "אין לך דוכן עדיין" }, { status: 404 });
+  }
 
   /* תקרה פר-חנות כשהמנהלת הגדילה, אחרת הגלובלית */
   const storeCap = store.media_quota_bytes ?? QUOTAS.mediaBytesPerStore;

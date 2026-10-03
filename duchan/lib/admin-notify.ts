@@ -20,7 +20,7 @@ import { SITE_URL, absolute } from "./site";
  * שמישהי תצטרך להיכנס לוורסל.
  */
 
-export type AlertKind = "store_created" | "payment_claimed" | "login_stuck" | "sms_failed" | "test";
+export type AlertKind = "store_created" | "payment_claimed" | "login_stuck" | "sms_failed" | "partner_joined" | "test";
 
 export type Alert = {
   kind: AlertKind;

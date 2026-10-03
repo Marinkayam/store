@@ -5,6 +5,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import Icon, { type IconName } from "../icons";
 import ReleasePopup from "./release-popup";
+import StoreSwitcher from "./store-switcher";
 import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 
 // אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
@@ -23,6 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto">
       <ReleasePopup />
+      <StoreSwitcher />
       <div className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">{children}</div>
       {/* באייפון: רק כמה פיקסלים מעל פס הבית, לא כל אזור הבטיחות + ריווח —
           אחרת נשאר רווח לבן גדול מתחת לשורה */}

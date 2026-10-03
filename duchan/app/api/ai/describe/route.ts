@@ -4,6 +4,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { r2Client } from "@/lib/r2";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { canManage } from "@/lib/team";
 
 // POST /api/ai/describe { storeId, productName?, imageBase64+mediaType | imageKey }
 //
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
     .select("id, owner_id")
     .eq("id", storeId)
     .maybeSingle();
-  if (!store || store.owner_id !== user.id) {
+  if (!store || !(await canManage(db, store.id, user.id))) {
     return NextResponse.json({ error: "אין גישה" }, { status: 403 });
   }
 

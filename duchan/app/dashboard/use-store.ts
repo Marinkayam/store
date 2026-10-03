@@ -4,26 +4,50 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Store } from "@/lib/types";
 
-/** החנות של המשתמשת המחוברת (הראשונה, אם ההורה פתח כמה). RLS מסנן. */
+/**
+ * הדוכן שעובדים עליו עכשיו. RLS מסנן: דוכנים שאני ראש שלהם, ומאז 0057 גם
+ * דוכנים שאני שותף/ה בהם.
+ *
+ * מי שיש לו/ה יותר מדוכן אחד בוחר/ת בראש הדשבורד (StoreSwitcher), והבחירה
+ * נשמרת בטלפון. בלי בחירה — הדוכן הראשון שנפתח, כמו תמיד.
+ */
+export const STORE_PICK_KEY = "duchan-store-id";
+
+export type StoreRole = "owner" | "partner";
+
+export function pickStore(id: string) {
+  try {
+    localStorage.setItem(STORE_PICK_KEY, id);
+  } catch {}
+}
+
 export function useStore() {
   const [store, setStore] = useState<Store | null>(null);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [role, setRole] = useState<StoreRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const supa = supabaseBrowser();
-    supa
-      .from("stores")
-      .select("*")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        setStore((data as Store) ?? null);
-        setLoading(false);
-      });
+    Promise.all([
+      supa.from("stores").select("*").order("created_at", { ascending: true }),
+      supa.auth.getUser(),
+    ]).then(([{ data }, { data: auth }]) => {
+      const list = (data as Store[] | null) ?? [];
+      let picked: string | null = null;
+      try {
+        picked = localStorage.getItem(STORE_PICK_KEY);
+      } catch {}
+      // בחירה שכבר לא קיימת (יצאתי מהדוכן, הוציאו אותי) — חוזרים לראשון
+      const s = list.find((x) => x.id === picked) ?? list[0] ?? null;
+      setStores(list);
+      setStore(s);
+      setRole(s ? (s.owner_id === auth.user?.id ? "owner" : "partner") : null);
+      setLoading(false);
+    });
   }, []);
 
-  return { store, setStore, loading };
+  return { store, setStore, stores, role, loading };
 }
 
 export function confettiBurst(x: number, y: number) {

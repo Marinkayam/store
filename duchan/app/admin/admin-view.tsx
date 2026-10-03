@@ -105,6 +105,8 @@ interface StoreDetail {
   products: DetailProduct[];
   orders: DetailOrder[];
   views: { day: string; views: number }[];
+  /** צוות הדוכן (0057) — שותפים בלבד; ראש הדוכן הוא בעל הדוכן */
+  team?: { user_id: string; phone: string; joined_at: string }[];
 }
 
 interface Announcement {
@@ -1084,6 +1086,40 @@ function SchemaWarning() {
               })}
               {detail.products.length === 0 && <p className="text-xs text-[var(--muted)]">עוד אין מוצרים.</p>}
             </div>
+
+            {/* צוות הדוכן (0057) */}
+            {!!detail.team?.length && (
+              <>
+                <h3 className="text-sm font-bold mb-1.5">👥 צוות</h3>
+                <div className="mb-4 flex flex-col gap-1.5" data-testid="admin-team">
+                  <div className="border border-[var(--line)] p-2 bg-white text-[12px]">
+                    👑 ראש הדוכן · טלפון ההזמנות <bdi dir="ltr">{displayPhone(detail.store.contact_phone)}</bdi>
+                  </div>
+                  {detail.team.map((m) => (
+                    <div key={m.user_id} className="flex items-center gap-2 border border-[var(--line)] p-2 bg-white text-[12px]">
+                      <span className="flex-1">🤝 שותף/ה · <bdi dir="ltr">{displayPhone(m.phone)}</bdi></span>
+                      <button
+                        data-testid="admin-make-head"
+                        onClick={async () => {
+                          if (!window.confirm("להפוך את השותף/ה לראש הדוכן? ראש הדוכן הנוכחי יהפוך לשותף/ה.")) return;
+                          const r = await fetch("/api/admin/store", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ action: "make_head", storeId: detail.store.id, userId: m.user_id }),
+                          });
+                          const d = await r.json().catch(() => ({}));
+                          showToast(r.ok ? "ראש הדוכן הוחלף 👑" : d.error ?? "ההחלפה נכשלה");
+                          openDetail(detail.store.id);
+                        }}
+                        className="border border-[var(--line)] px-2 py-1 text-[11.5px]"
+                      >
+                        👑 להפוך לראש הדוכן
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* קופונים של החנות — המנהלת יוצרת ומנהלת, המוכרת רואה אותם אצלה */}
             <h3 className="text-sm font-bold mb-1.5">🏷️ קופונים</h3>

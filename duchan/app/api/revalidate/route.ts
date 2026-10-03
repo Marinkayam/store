@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { canManage } from "@/lib/team";
 
 // POST /api/revalidate { slug } — מרעננת את דף החנות אחרי שינוי.
 // בלי זה, שינוי ערכה/שם/מצב חופשה לוקח עד 60 שניות להופיע לקונות,
@@ -24,10 +25,11 @@ export async function POST(req: NextRequest) {
   const db = supabaseAdmin();
   const { data: store } = await db
     .from("stores")
-    .select("owner_id")
+    .select("id")
     .eq("slug", body.slug)
     .maybeSingle();
-  if (!store || store.owner_id !== user.id) {
+  // ראש הדוכן או שותף/ה (0057)
+  if (!store || !(await canManage(db, store.id, user.id))) {
     return NextResponse.json({ ok: false }, { status: 403 });
   }
 

@@ -19,7 +19,7 @@ export default function PhoneVerify({
   title: string;
   subtitle: string;
   cta: string;
-  onVerified: (r: { isNew: boolean; hasStore: boolean; phone: string }) => void | Promise<void>;
+  onVerified: (r: { isNew: boolean; hasStore: boolean; phone: string; invite?: string }) => void | Promise<void>;
 }) {
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("");

@@ -74,11 +74,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "צריך לאמת מספר טלפון קודם" }, { status: 400 });
   }
 
-  // המכסה עברה מאימייל לטלפון: אפשר להמציא כתובת מייל, קשה יותר להשיג מספר נוסף
+  // המכסה עברה מאימייל לטלפון: אפשר להמציא כתובת מייל, קשה יותר להשיג מספר נוסף.
+  // נספרים דוכנים שהמשתמש/ת *ראש* שלהם (חשבון = מספר מאומת אחד). לא לפי
+  // טלפון ההזמנות — בדוכן משותף (0057) הוא יכול להיות של שותף, ושותפות
+  // לא נספרת במכסה.
   const { count } = await db
     .from("stores")
     .select("id", { count: "exact", head: true })
-    .eq("contact_phone", contactPhone);
+    .eq("owner_id", user.id);
   if ((count ?? 0) >= QUOTAS.storesPerParentEmail) {
     return NextResponse.json(
       { error: `אפשר לפתוח עד ${QUOTAS.storesPerParentEmail} דוכנים למספר אחד` },

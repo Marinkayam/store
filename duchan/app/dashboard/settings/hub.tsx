@@ -23,6 +23,8 @@ export type HubRow = {
   summary: string;
   /** קישור החוצה במקום מקטע */
   href?: string;
+  /** שותף/ה (0057): השורה נראית, אבל רק ראש הדוכן נכנס. הטקסט מסביר למה. */
+  locked?: string;
   testid?: string;
 };
 
@@ -75,9 +77,9 @@ export default function SettingsHub({
                   </span>
                   <span className="flex-1 min-w-0 text-right">
                     <span className="block text-[14px] font-bold text-[var(--ink)]">{r.title}</span>
-                    <span className="block text-[12px] text-[var(--muted)] truncate mt-0.5">{r.summary}</span>
+                    <span className="block text-[12px] text-[var(--muted)] truncate mt-0.5">{r.locked ? `🔒 ${r.locked}` : r.summary}</span>
                   </span>
-                  <span className="text-[var(--faint)] text-[18px] shrink-0" aria-hidden>‹</span>
+                  <span className="text-[var(--faint)] text-[18px] shrink-0" aria-hidden>{r.locked ? "🔒" : "‹"}</span>
                 </>
               );
               const cls = `fx-press w-full flex items-center gap-3 px-3.5 py-3 min-h-[60px] ${

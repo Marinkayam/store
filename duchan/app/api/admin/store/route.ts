@@ -18,11 +18,13 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin();
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const [store, products, orders, views] = await Promise.all([
+  const [store, products, orders, views, team] = await Promise.all([
     db.from("stores").select("*").eq("id", id).maybeSingle(),
     db.from("products").select("*").eq("store_id", id).order("created_at", { ascending: true }),
     db.from("orders").select("*").eq("store_id", id).order("created_at", { ascending: false }).limit(30),
     db.from("store_views").select("day, views").eq("store_id", id).gte("day", twoWeeksAgo).order("day"),
+    // צוות הדוכן (0057). שגיאה (הטבלה עוד לא קיימת) = בלי צוות, לא תיק שנופל
+    db.from("store_members").select("user_id, phone, joined_at").eq("store_id", id).order("joined_at"),
   ]);
 
   if (!store.data) return NextResponse.json({ error: "לא נמצא" }, { status: 404 });
@@ -48,6 +50,7 @@ export async function GET(req: NextRequest) {
     products: prods,
     orders: ords,
     views: views.data ?? [],
+    team: team.error ? [] : team.data ?? [],
   });
 }
 
@@ -70,10 +73,28 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
+  const db = supabaseAdmin();
+
+  /* החמ"ל מחליף ראש דוכן (0057) — למשל כשהצוות לא מסכים. אותה פעולה
+     אטומית כמו העברה רגילה, רק בלי לחכות לאישור. */
+  const team = body as { action?: string; storeId?: string; userId?: string };
+  if (team.action === "make_head") {
+    const { data: st } = await db.from("stores").select("id, owner_id, contact_phone").eq("id", team.storeId ?? "").maybeSingle();
+    if (!st) return NextResponse.json({ error: "הדוכן לא נמצא" }, { status: 404 });
+    const { data: oldPhone } = await db.from("phone_accounts").select("phone").eq("user_id", st.owner_id).limit(1).maybeSingle();
+    await db.from("stores").update({ transfer_to: team.userId, transfer_requested_at: new Date().toISOString() }).eq("id", st.id);
+    const { error } = await db.rpc("team_accept_transfer", {
+      p_store: st.id, p_user: team.userId, p_old_phone: oldPhone?.phone ?? st.contact_phone,
+    });
+    if (error) {
+      await db.from("stores").update({ transfer_to: null, transfer_requested_at: null }).eq("id", st.id);
+      return NextResponse.json({ error: "ההחלפה נכשלה — אולי כבר לא בצוות" }, { status: 409 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   const { productId, action } = body;
   if (!productId) return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
-
-  const db = supabaseAdmin();
 
   // רשימה סגורה של פעולות. לא בונים patch מהגוף — אחרת אפשר לשלוח
   // store_id ולהעביר מוצר בין חנויות.

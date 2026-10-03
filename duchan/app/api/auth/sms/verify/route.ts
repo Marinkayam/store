@@ -200,7 +200,30 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const res = NextResponse.json({ ok: true, isNew, hasStore: !!store, phone });
+  // דוכן משותף (0057): שותף/ה בלי דוכן משלו/ה נכנס/ת לדשבורד, לא לפתיחת
+  // דוכן. ומי שמחכה לו/ה הזמנה פתוחה למספר הזה — ישר לעמוד ההצטרפות.
+  // שגיאה כאן (הטבלה עוד לא קיימת) = התנהגות ותיקה, לא כניסה שנופלת.
+  let hasStore = !!store;
+  let invite: string | null = null;
+  if (!hasStore) {
+    const { data: m } = await db.from("store_members").select("store_id").eq("user_id", userId).limit(1).maybeSingle();
+    hasStore = !!m;
+  }
+  if (!hasStore) {
+    const { data: inv } = await db
+      .from("store_invites")
+      .select("token")
+      .eq("phone", phone)
+      .is("accepted_at", null)
+      .is("cancelled_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    invite = inv?.token ?? null;
+  }
+
+  const res = NextResponse.json({ ok: true, isNew, hasStore, phone, ...(invite ? { invite } : {}) });
   // העוגייה סיימה את תפקידה — מכאן ההוכחה יושבת בדאטהבייס
   if (pilotToken) res.cookies.set(PILOT_COOKIE, "", { path: "/", maxAge: 0 });
   return res;

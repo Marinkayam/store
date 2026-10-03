@@ -87,6 +87,8 @@ psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0051_clo
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0054_coupons.sql >/dev/null 2>&1
 # ו-0055: טבלאות הפוש של המנהלת — של השרת בלבד, בלי הרשאות לדפדפן
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0055_admin_push.sql >/dev/null 2>&1
+# ו-0057: השותפים — store_members לקריאה בלבד, store_invites של השרת בלבד
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0057_store_members.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
 up 3001 || { say "מפעיל PostgREST"; ("$PGREST" "$PGREST_CONF" >"$LOGS/postgrest.log" 2>&1 &); sleep 5; }

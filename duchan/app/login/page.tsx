@@ -33,12 +33,13 @@ function Login() {
       title="כניסה לדוכן"
       subtitle="מקלידים מספר, מקבלים קוד. זהו."
       cta="שלחו לי קוד"
-      onVerified={({ hasStore }) => {
+      onVerified={({ hasStore, invite }) => {
         // ניווט מלא ולא router.replace: הסשן נוצר בשרת ונשלח כעוגייה בתשובה
         // של ה-fetch. ניווט צד-לקוח לא טוען מחדש את הקליינט של Supabase,
         // והדשבורד עולה ריק כי הוא עדיין חושב שאף אחת לא מחוברת.
         const next = params.get("next");
-        window.location.assign(next ?? (hasStore ? "/dashboard" : "/onboarding"));
+        // הזמנה לדוכן משותף שמחכה למספר הזה (0057)
+        window.location.assign(next ?? (hasStore ? "/dashboard" : invite ? `/join/${invite}` : "/onboarding"));
       }}
     />
   );
