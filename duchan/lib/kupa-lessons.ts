@@ -11,7 +11,7 @@ import type { BadgeKey } from "./kupa";
  * כי חשבון על המוצר שלי מעניין יותר מחשבון על תפוחים.
  */
 
-export type Topic = "חשבון" | "צרכנות" | "עסק";
+export type Topic = "חשבון" | "צרכנות" | "עסק" | "חיסכון";
 
 export interface Lesson {
   topic: Topic;
@@ -26,11 +26,11 @@ export interface Sample {
   price: number;
 }
 
-const FALLBACK: Sample = { name: "מחזיק מפתחות", price: 12 };
-const sh = (n: number) => `₪${Number.isInteger(n) ? n : n.toFixed(2)}`;
+export const FALLBACK: Sample = { name: "מחזיק מפתחות", price: 12 };
+export const sh = (n: number) => `₪${Number.isInteger(n) ? n : n.toFixed(2)}`;
 
 /** סדר קבוע לכל חידה (לא אקראי בכל רינדור), כדי שהתשובה לא תקפוץ */
-function order(key: string, opts: string[]): string[] {
+export function order(key: string, opts: string[]): string[] {
   let h = 0;
   for (const c of key) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const a = [...opts];

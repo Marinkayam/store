@@ -8,6 +8,7 @@
 //   6. "kupa-quiet" (של הבדיקות האחרות) משתיק חגיגות
 //   7. טאב משלה בשורה למטה, אחרונה
 //   8. לכל אות חידה עם 3 תשובות שונות ואחת נכונה; טעות → "נסו שוב", נכון → הסבר + כוכב שנשמר
+//      ומאגר של 100+ חידות: כוכב על כל חידה, תואר ב-5 כוכבים
 //   9. בלי גלילה הצידה ב-360
 import { chromium } from "playwright";
 import pg from "pg";
@@ -129,6 +130,39 @@ await p.click("[data-testid=badge-close]");
 await p.reload({ waitUntil: "networkidle" });
 await p.waitForSelector("[data-testid=kupa-page]");
 check("הכוכב של החידה נשמר אחרי רענון", ((await p.locator("[data-testid=kupa-badge]").nth(1).getAttribute("aria-label")) ?? "").includes("החידה נפתרה"));
+
+/* ── 8ב. מאגר החידות: כוכב על כל חידה ── */
+const starsNow = async () => Number(((await p.textContent("[data-testid=kupa-stars]")) ?? "").replace(/\D/g, ""));
+const remainingNow = async () => Number(((await p.textContent("[data-testid=riddle-remaining]")) ?? "").replace(/\D/g, ""));
+const s0 = await starsNow(), r0 = await remainingNow();
+check("כוכבים = חידות שנפתרו (חידת האות נתנה כוכב)", s0 === 1, String(s0));
+check("מאגר גדול: יותר מ-100 חידות", r0 > 100, String(r0));
+await p.click("[data-testid=riddle-new]");
+await p.waitForSelector("[data-testid=riddle-sheet]");
+const q1 = (await p.textContent("[data-testid=riddle-sheet] #riddle-q")) ?? "";
+await p.locator("[data-testid=riddle-sheet] [data-testid=riddle-option]:not([data-right])").first().click();
+check("מאגר: טעות לא נותנת כוכב", ((await p.textContent("[data-testid=riddle-sheet-stars]")) ?? "").includes(`${s0} כוכבים`));
+await p.locator("[data-testid=riddle-sheet] [data-testid=riddle-option][data-right]").click();
+check("מאגר: נכון → כוכב קופץ ו'קיבלת כוכב'", (await p.locator("[data-testid=riddle-star]").count()) === 1 &&
+  ((await p.textContent("[data-testid=riddle-sheet] [data-testid=riddle-why]")) ?? "").includes("קיבלת כוכב"));
+check("ומונה הכוכבים עלה", ((await p.textContent("[data-testid=riddle-sheet-stars]")) ?? "").includes(`${s0 + 1} כוכבים`));
+await p.screenshot({ path: `${SHOTS}/kupa-riddle-star.png` });
+await p.click("[data-testid=riddle-next]");
+const q2 = (await p.textContent("[data-testid=riddle-sheet] #riddle-q")) ?? "";
+check("'עוד חידה' מביא שאלה אחרת", q2 !== "" && q2 !== q1, q2.slice(0, 40));
+// עוד 3 חידות → 5 כוכבים = תואר חדש
+for (let i = 0; i < 3; i++) {
+  await p.locator("[data-testid=riddle-sheet] [data-testid=riddle-option][data-right]").click();
+  if (i < 2) await p.click("[data-testid=riddle-next]");
+}
+check("5 כוכבים: 'תואר חדש!' — ניצוץ של חשבון", ((await p.textContent("[data-testid=riddle-rankup]").catch(() => "")) ?? "").includes("ניצוץ של חשבון"));
+await p.screenshot({ path: `${SHOTS}/kupa-rankup.png` });
+await p.click("[data-testid=riddle-close]");
+check("בעמוד: 5 כוכבים והתואר", (await starsNow()) === 5 && ((await p.textContent("[data-testid=riddle-rank]")) ?? "") === "ניצוץ של חשבון");
+check("ונשארו 4 חידות פחות במאגר", (await remainingNow()) === r0 - 4, `${r0} → ${await remainingNow()}`);
+await p.reload({ waitUntil: "networkidle" });
+await p.waitForSelector("[data-testid=kupa-riddles]");
+check("הכוכבים נשמרים אחרי רענון", (await starsNow()) === 5);
 
 /* ── 4. אות חדש ── */
 const reachedKeys = k0.badges.filter((b) => b.reached).map((b) => b.key);
