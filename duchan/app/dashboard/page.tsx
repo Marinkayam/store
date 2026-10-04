@@ -651,8 +651,8 @@ type MissingItem = { key: string; title: string; why: string; cta: string; href:
 /** מה חסר כדי שהדוכן ייראה מוכן. כשאין הזמנות הוא מתחת למסלול, ומסומן "לא חובה" */
 function Missing({ missing, optional = false }: { missing: MissingItem[]; optional?: boolean }) {
   return (
-    <section className={`bg-white border border-[var(--line)] ${optional ? "" : "mx-4 mt-4"}`} data-testid="store-missing" aria-labelledby="missing-title">
-      <h2 id="missing-title" className="px-4 pt-3.5 pb-1 text-[14px] font-bold">
+    <section className={optional ? "border-t border-[var(--line)] pt-2" : "mx-4 mt-4 bg-white border border-[var(--line)]"} data-testid="store-missing" aria-labelledby="missing-title">
+      <h2 id="missing-title" className={`${optional ? "" : "px-4"} pt-3.5 pb-1 text-[14px] font-bold`}>
         {optional
           ? "ואם יש זמן: לשפר את הדוכן (לא חובה)"
           : missing.length === 1
@@ -660,7 +660,7 @@ function Missing({ missing, optional = false }: { missing: MissingItem[]; option
             : `נשארו ${missing.length} דברים כדי שהדוכן ייראה מוכן`}
       </h2>
       {missing.map((m) => (
-        <a key={m.key} href={m.href} className="flex items-center gap-3 px-4 py-3 border-t border-[var(--sand)] first-of-type:border-t-0" data-testid={`missing-${m.key}`}>
+        <a key={m.key} href={m.href} className={`flex items-center gap-3 ${optional ? "" : "px-4"} py-3 border-t border-[var(--sand)] first-of-type:border-t-0`} data-testid={`missing-${m.key}`}>
           <span className="flex-1 min-w-0">
             <span className="block text-[13.5px] font-bold">{m.title}</span>
             <span className="block text-[12px] text-[var(--muted)] leading-snug mt-0.5">{m.why}</span>

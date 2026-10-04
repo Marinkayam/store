@@ -21,6 +21,7 @@ import { uploadBlob } from "@/lib/upload-client";
 import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
+import { KupaStall } from "@/app/kupa-art";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryDesigner from "./category-designer";
 import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
@@ -283,7 +284,7 @@ export default function ProductsPage() {
   /* ---------- טיוטות ---------- */
   const draftKey = (id: string | null) => `duchan-product-draft-${id ?? "new"}`;
 
-  function openEditor(p: Product | null) {
+  function openEditor(p: Product | null, idea?: { name: string; price: string }) {
     setCatDraft(null);
     let base: EditState;
     if (p) {
@@ -315,7 +316,7 @@ export default function ProductsPage() {
         previewIsVideo: !!p.video_key,
       };
     } else {
-      base = { ...EMPTY_EDIT };
+      base = { ...EMPTY_EDIT, ...(idea ?? {}) };
     }
     // שחזור טיוטה אם יש
     try {
@@ -813,23 +814,51 @@ export default function ProductsPage() {
           />
         )}
 
-        {/* דוכן ריק זה לא מסך שגיאה — זו הזמנה. הכפתור יושב כאן וגם למעלה,
-            כי מסך ריק שמפנה ל-"+" קטן בפינה משאיר אותה לחפש. */}
+        {/* דוכן ריק זה לא מסך שגיאה — זו הזמנה. מרינה: "משעמם ולא מזמין".
+            עכשיו: הדוכן מצויר, שאלה אחת ("מה נמכור היום?"), כפתור גדול לצלם,
+            ורעיונות שלוחצים עליהם — הטופס נפתח עם השם והמחיר כבר כתובים. */}
         {products.length === 0 && (
-          <div className="text-center py-12 flex flex-col items-center gap-3">
-            <Icon name="stall" size={64} tone="var(--cream)" className="text-[var(--wood)]" />
-            <p className="text-sm text-[var(--muted)] leading-relaxed">
-              הדוכן שלך ריק בינתיים.
-              <br />
-              הוספת מוצר לוקחת פחות מדקה: תמונה, שם, מחיר.
+          <section className="flex flex-col items-center text-center gap-3 pt-2 pb-6" data-testid="products-empty">
+            <KupaStall level={2} bare className="w-full max-w-[320px] block" />
+            <h2 className="text-[22px] font-black leading-tight">מה נמכור היום?</h2>
+            <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-[18rem]">
+              מצלמים, כותבים שם ומחיר, וזה כבר בדוכן. לוקח פחות מדקה.
             </p>
             <button
               onClick={() => openEditor(null)}
-              className="mt-1 bg-[var(--ink)] text-white px-6 py-3 text-[13.5px] font-bold"
+              data-testid="products-empty-add"
+              className="w-full flex items-center justify-center gap-2 bg-[var(--ink)] text-white py-3.5 text-[15px] font-bold mt-1"
             >
-              הוספת מוצר ראשון
+              <Icon name="camera" size={20} tone="var(--lavender)" />
+              לצלם מוצר ראשון
             </button>
-          </div>
+            <div className="w-full mt-3">
+              <div className="text-[13px] font-bold text-right mb-2">או מתחילים מרעיון:</div>
+              <div className="grid grid-cols-3 gap-x-2 gap-y-3">
+                {([
+                  ["סקוויש", "15", "heart"],
+                  ["צמיד", "12", "gem"],
+                  ["ציור", "25", "palette"],
+                  ["ספר", "10", "box"],
+                  ["מדבקות", "5", "star"],
+                  ["צעצוע", "20", "gift"],
+                ] as const).map(([name, price, icon]) => (
+                  <button
+                    key={name}
+                    onClick={() => openEditor(null, { name, price })}
+                    data-testid="product-idea"
+                    className="fx-press flex flex-col items-center gap-1 py-1"
+                  >
+                    <span className="w-14 h-14 flex items-center justify-center bg-[var(--cream)]">
+                      <Icon name={icon} size={30} tone="var(--lavender)" />
+                    </span>
+                    <span className="text-[13px] font-bold">{name}</span>
+                    <span className="text-[12px] text-[var(--muted)]" dir="ltr">₪{price}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
         {/* מעל הרשימה: כותרת קטנה ו"לשנות סדר". החצים ▲▼ מופיעים רק במצב
             סידור — בשאר הזמן השורה נקייה: תמונה, שם, מחיר, ומה שחשוב לדעת. */}
@@ -959,15 +988,16 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* היה עיגול "+" בלי מילה, וקל היה לפספס אותו לגמרי */}
-      <button
+      {/* היה עיגול "+" בלי מילה, וקל היה לפספס אותו לגמרי.
+          כשהדוכן ריק יש כבר כפתור גדול באמצע המסך — אין צורך בשניים */}
+      {products.length > 0 && <button
         onClick={() => openEditor(null)}
         aria-label="מוצר חדש"
         data-bottom-bar
         className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] h-12 bg-[var(--ink)] text-white text-[15px] font-bold  z-30 flex items-center justify-center gap-2"
       >
         <Icon name="plus" size={18} /> מוצר חדש
-      </button>
+      </button>}
 
       {/* editor sheet */}
       {edit && (

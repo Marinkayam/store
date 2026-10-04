@@ -130,8 +130,8 @@ export default function FirstSteps({
   ];
 
   return (
-    <section className="bg-white border border-[var(--line)]" data-testid="orders-empty" aria-labelledby="first-steps-title">
-      <div className="px-4 pt-4 pb-3">
+    <section data-testid="orders-empty" aria-labelledby="first-steps-title">
+      <div className="pt-1 pb-3">
         <h2 id="first-steps-title" className="text-[17px] font-bold leading-tight">
           ככה הדוכן מתחיל לעבוד
         </h2>
@@ -140,7 +140,7 @@ export default function FirstSteps({
         </p>
       </div>
 
-      <div className="px-4 pt-4 pb-4 border-t border-[var(--sand)]">
+      <div className="pt-1 pb-2">
         <VSteps
           steps={steps.map((st) => {
             const isDone = done[st.key];

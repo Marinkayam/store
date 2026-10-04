@@ -5,6 +5,7 @@ import { useStore, confettiBurst } from "../use-store";
 import { useKupa, useNight, readSolved, addSolved, writeSolved, postSolve, type KupaData } from "./use-kupa";
 import { KupaStall, Coin, Medal } from "@/app/kupa-art";
 import Icon from "@/app/icons";
+import Chevron from "@/app/chevron";
 import CloseX from "@/app/close-x";
 import { nextBadge, weekIndex, weekQuest, SALE_COINS, SALES_PER_DAY, QUEST_COINS, CARD_COINS, PUNCHES_PER_CARD, type BadgeState } from "@/lib/kupa";
 import { SHOP, type ShopItem, type Deco } from "@/lib/kupa-shop";
@@ -35,6 +36,8 @@ export default function KupaPage() {
   const { store, loading } = useStore();
   const { kupa } = useKupa(store?.id);
   const [open, setOpen] = useState<BadgeState | null>(null);
+  /* "מה זה?" — לחיצה על המטבעות או על הכוכבים בראש העמוד */
+  const [explain, setExplain] = useState<"coins" | "stars" | null>(null);
   const [solved, setSolved] = useState<string[]>([]);
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [rankUp, setRankUp] = useState<string | null>(null);
@@ -130,35 +133,39 @@ export default function KupaPage() {
 
   return (
     <div className="px-4 pt-4 pb-8 flex flex-col gap-5" data-testid="kupa-page">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">קופת הדוכן</h1>
-          <p className="text-[13px] text-[var(--muted)] mt-0.5">כל צעד בדוכן שווה מטבעות, והמטבעות בונות ומשדרגות את הדוכן.</p>
-        </div>
-        <div className="flex flex-col items-stretch gap-1.5 shrink-0">
-          <span
+      <header>
+        <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">קופת הדוכן</h1>
+        <p className="text-[13px] text-[var(--muted)] mt-0.5">כל צעד בדוכן שווה מטבעות, והמטבעות בונות ומשדרגות את הדוכן.</p>
+        {/* מטבעות וכוכבים — באותו גודל, קטנים, בלי קופסאות. לחיצה מסבירה מה זה (מרינה) */}
+        <div className="flex items-center gap-4 mt-2.5">
+          <button
+            onClick={() => setExplain("coins")}
             key={`c${balance ?? kupa.balance}`}
-            className="kp-bump flex items-center justify-between gap-1.5 bg-white border border-[var(--line)] px-3 py-1.5 text-[20px] font-black tabular-nums"
+            className="kp-bump flex items-center gap-1.5 text-[17px] font-black tabular-nums min-h-11"
             data-testid="kupa-coins"
+            aria-label={`${balance ?? kupa.balance} מטבעות דוכן. מה זה?`}
           >
+            <Coin size={20} />
             {balance ?? kupa.balance}
-            <Coin size={24} />
-            <span className="sr-only">מטבעות דוכן</span>
-          </span>
-          <span
+            <span className="text-[12.5px] font-medium text-[var(--muted)]">מטבעות</span>
+          </button>
+          <span className="w-px h-5 bg-[var(--line)]" aria-hidden />
+          <button
+            onClick={() => setExplain("stars")}
             key={starBump}
-            className={`flex items-center justify-between gap-1.5 bg-white border border-[var(--line)] px-3 py-1 text-[16px] font-black tabular-nums ${starBump ? "kp-bump" : ""}`}
+            className={`flex items-center gap-1.5 text-[17px] font-black tabular-nums min-h-11 ${starBump ? "kp-bump" : ""}`}
             data-testid="kupa-stars-top"
+            aria-label={`${stars} כוכבים. מה זה?`}
           >
-            {stars}
             <Icon name="star" size={20} tone="var(--warning)" className="text-[#6f4b28]" />
-            <span className="sr-only">כוכבים</span>
-          </span>
+            {stars}
+            <span className="text-[12.5px] font-medium text-[var(--muted)]">כוכבים</span>
+          </button>
         </div>
       </header>
 
       {/* טאבים פנימיים: הדוכן · משימות · חידות · חנות */}
-      <div role="tablist" aria-label="קופת הדוכן" className="grid grid-cols-4 border border-[var(--line)] bg-white -mb-1">
+      <div role="tablist" aria-label="קופת הדוכן" className="grid grid-cols-4 border-b border-[var(--line)] -mb-1">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -167,7 +174,7 @@ export default function KupaPage() {
             data-testid={`kupa-tab-${t.key}`}
             onClick={() => setTab(t.key)}
             className={`min-h-12 flex flex-col items-center justify-center gap-0.5 text-[12.5px] font-bold border-b-[3px] ${
-              tab === t.key ? "border-[var(--wood)] text-[var(--ink)] bg-[var(--canvas)]" : "border-transparent text-[var(--muted)]"
+              tab === t.key ? "border-[var(--wood)] text-[var(--ink)]" : "border-transparent text-[var(--muted)]"
             }`}
           >
             <Icon name={t.icon} size={18} tone={tab === t.key ? "var(--lavender)" : "var(--sand)"} />
@@ -179,8 +186,8 @@ export default function KupaPage() {
       {tab === "stall" && (
       <>
       {/* הדוכן */}
-      <section className="bg-white border border-[var(--line)]" aria-labelledby="kupa-level">
-        <div className="relative">
+      <section aria-labelledby="kupa-level">
+        <div className="relative -mx-4">
           <KupaStall level={kupa.level} name={kupa.name} night={night} deco={deco ?? kupa.deco} className="w-full block" />
           {/* יום / לילה */}
           <button
@@ -195,7 +202,7 @@ export default function KupaPage() {
             </span>
           </button>
         </div>
-        <div className="px-4 py-3.5 flex flex-col gap-2">
+        <div className="pt-3.5 flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-2">
             <h2 id="kupa-level" className="text-[17px] font-black" data-testid="kupa-level">{kupa.levelName}</h2>
             <span className="text-[12px] text-[var(--muted)]">רמה {kupa.level + 1} מתוך 6</span>
@@ -224,7 +231,7 @@ export default function KupaPage() {
 
       {/* הצעד הבא — אחד בלבד, כדי שתמיד יהיה ברור מה עושים עכשיו */}
       {nb && (
-        <section className="border-[1.5px] border-[var(--ink)] bg-white p-4 flex flex-col gap-3" data-testid="kupa-next">
+        <section className="border-t border-[var(--line)] pt-4 flex flex-col gap-3" data-testid="kupa-next">
           <div className="flex items-center gap-3">
             <Medal icon={nb.icon} reached={false} size={48} />
             <div className="flex-1 min-w-0">
@@ -366,6 +373,19 @@ export default function KupaPage() {
             setOpen(null);
             if (window.location.search) history.replaceState(null, "", "/dashboard/kupa");
           }}
+        />
+      )}
+      {explain && (
+        <ExplainSheet
+          kind={explain}
+          coins={balance ?? kupa.balance}
+          stars={stars}
+          rank={rank}
+          onGo={(t) => {
+            setExplain(null);
+            setTab(t);
+          }}
+          onClose={() => setExplain(null)}
         />
       )}
       {riddleOpen && (
@@ -700,16 +720,16 @@ function QuickActions({ kupa }: { kupa: KupaData }) {
       key={key}
       href={href}
       data-testid={`kupa-action-${key}`}
-      className="fx-press bg-white border border-[var(--line)] p-3 flex flex-col gap-1.5 min-h-[92px]"
+      className="flex items-center gap-3 py-3 border-b border-[var(--line)] last:border-b-0"
     >
-      <span className="flex items-center justify-between">
-        <span className="w-9 h-9 bg-[var(--canvas)] flex items-center justify-center text-[#6f4b28]">
-          <Icon name={icon} size={20} tone="var(--lavender)" />
-        </span>
-        {done && <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">✓ בוצע</span>}
+      <span className="w-9 h-9 shrink-0 flex items-center justify-center text-[#6f4b28]">
+        <Icon name={icon} size={24} tone="var(--lavender)" />
       </span>
-      <span className="text-[13.5px] font-bold leading-tight">{title}</span>
-      <span className="text-[11.5px] text-[var(--muted)] leading-snug flex items-center gap-1 flex-wrap">{sub}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-[14px] font-bold leading-tight">{title}</span>
+        <span className="text-[12px] text-[var(--muted)] leading-snug flex items-center gap-1 flex-wrap mt-0.5">{sub}</span>
+      </span>
+      {done ? <span className="text-[12px] font-bold text-[var(--ok-ink)] shrink-0">✓ בוצע</span> : <Chevron size={14} className="text-[var(--faint)] shrink-0" />}
     </a>
   );
   const prod = pending(["first_product", "photo", "five_products"]);
@@ -721,7 +741,7 @@ function QuickActions({ kupa }: { kupa: KupaData }) {
   return (
     <section aria-labelledby="kupa-actions">
       <h2 id="kupa-actions" className="text-[15px] font-black mb-2 px-0.5">מה נותן מטבעות עכשיו</h2>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex flex-col">
         {tile("product", "להוסיף מוצר", "/dashboard/products?new=1", "bag", prod ? <>{prod.title} {coin(prod.coins)}</> : <>השגת את כל אותות המוצרים</>, !prod)}
         {tile("share", "לשתף את הדוכן", "/dashboard/settings#share", "share", views ? <>{views.title} {coin(views.coins)}</> : <>השגת את כל אותות הכניסות</>, !views)}
         {tile("pay", "איך משלמים לי", "/dashboard/settings#payment", "coins", pay.reached ? <>מסודר</> : <>ביט, פייבוקס או מזומן {coin(pay.coins)}</>, pay.reached)}
@@ -1005,4 +1025,76 @@ function Shop({
 
 function shopTitle(key: string) {
   return SHOP.find((i) => i.key === key)?.title ?? "הקישוט";
+}
+
+/* ── "מה זה?" — מטבעות וכוכבים, בשפה פשוטה ── */
+function ExplainSheet({
+  kind,
+  coins,
+  stars,
+  rank,
+  onGo,
+  onClose,
+}: {
+  kind: "coins" | "stars";
+  coins: number;
+  stars: number;
+  rank: ReturnType<typeof rankOf>;
+  onGo: (tab: "tasks" | "riddles" | "shop") => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const coinsKind = kind === "coins";
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/45 z-[60]" onClick={onClose} aria-hidden />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="explain-title"
+        data-testid="kupa-explain"
+        data-kind={kind}
+        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[61] bg-white px-5 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col gap-3"
+      >
+        <button onClick={onClose} aria-label="סגירה" className="absolute top-2 left-2 w-11 h-11 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <div className="flex items-center gap-2.5">
+          {coinsKind ? <Coin size={36} /> : <Icon name="star" size={36} tone="var(--warning)" className="text-[#6f4b28]" />}
+          <h2 id="explain-title" className="text-[20px] font-black">
+            {coinsKind ? `מטבעות דוכן · ${coins}` : `כוכבים · ${stars}`}
+          </h2>
+        </div>
+        {coinsKind ? (
+          <ul className="flex flex-col gap-2 text-[14px] leading-relaxed">
+            <li><b>איך מקבלים?</b> על כל צעד בדוכן: מוצר חדש, שיתוף, כניסות, מכירה ששולמה ומשימות.</li>
+            <li><b>מה עושים איתן?</b> הן בונות את הדוכן מעגלה קטנה ועד כוכב השוק, ובחנות קונים בהן קישוטים.</li>
+            <li><b>זה כסף?</b> לא. זה משחק בתוך דוכן. אי אפשר לקנות אותן בכסף ואי אפשר להמיר אותן לכסף.</li>
+          </ul>
+        ) : (
+          <ul className="flex flex-col gap-2 text-[14px] leading-relaxed">
+            <li><b>איך מקבלים?</b> כוכב על כל חידה שפותרים נכון: חשבון, כסף וצרכנות.</li>
+            <li><b>הדרגה שלך:</b> {rank.name}{rank.next ? `. עוד ${rank.next.missing} כוכבים ל"${rank.next.name}".` : ". הדרגה הכי גבוהה!"}</li>
+            <li><b>טעית?</b> אין עונש. מנסים שוב, והכוכב מחכה.</li>
+          </ul>
+        )}
+        <div className="flex gap-2 mt-1">
+          <button onClick={() => onGo(coinsKind ? "tasks" : "riddles")} className="flex-1 bg-[var(--ink)] text-white py-3 text-[14px] font-bold">
+            {coinsKind ? "לראות משימות" : "לפתור חידה"}
+          </button>
+          {coinsKind && (
+            <button onClick={() => onGo("shop")} className="flex-1 border-[1.5px] border-[var(--ink)] py-3 text-[14px] font-bold">
+              לחנות הקישוטים
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
 }
