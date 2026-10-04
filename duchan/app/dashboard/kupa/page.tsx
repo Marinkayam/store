@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStore, confettiBurst } from "../use-store";
-import { useKupa, readSolved, addSolved, type KupaData } from "./use-kupa";
+import { useKupa, readSolved, addSolved, writeSolved, postSolve, type KupaData } from "./use-kupa";
 import { KupaStall, Coin, Medal } from "@/app/kupa-art";
 import Icon from "@/app/icons";
 import CloseX from "@/app/close-x";
@@ -31,12 +31,23 @@ export default function KupaPage() {
   const [rankUp, setRankUp] = useState<string | null>(null);
   const [starBump, setStarBump] = useState(0);
 
-  /** כוכב על כל חידה שנפתרת — גם של אות וגם מהמאגר */
-  function solve(id: string) {
+  /** כוכב על כל חידה שנפתרת — גם של אות וגם מהמאגר. נשמר במסד (השרת
+   *  בודק את התשובה); המסך מתעדכן מיד ולא מחכה לשרת. */
+  function solve(id: string, answer: string) {
     if (!store || solved.includes(id)) return;
     const before = rankOf(solved.length).index;
-    const next = addSolved(store.id, id);
+    const next = [...new Set([...solved, id])];
+    addSolved(store.id, id);
     setSolved(next);
+    const storeId = store.id;
+    postSolve(storeId, { riddleId: id, answer }).then((server) => {
+      if (!server) return; // בלי רשת: נשאר בטלפון, ויעלה בפעם הבאה
+      setSolved((cur) => {
+        const merged = [...new Set([...server, ...cur])];
+        writeSolved(storeId, merged);
+        return merged;
+      });
+    });
     setStarBump((n) => n + 1);
     const after = rankOf(next.length);
     if (after.index > before) {
@@ -46,8 +57,28 @@ export default function KupaPage() {
   }
 
   useEffect(() => {
-    if (store) setSolved(readSolved(store.id));
-  }, [store]);
+    if (!store || !kupa) return;
+    const local = readSolved(store.id);
+    if (kupa.solved === null) {
+      setSolved(local); // הטבלה עוד לא במסד
+      return;
+    }
+    // כוכבים שנפתרו בטלפון לפני שהיה מסד — עולים פעם אחת, כשבמסד עוד אין כלום
+    const server = kupa.solved;
+    const missing = local.filter((id) => !server.includes(id));
+    setSolved([...new Set([...server, ...local])]);
+    if (missing.length && server.length === 0) {
+      const storeId = store.id;
+      postSolve(storeId, { import: local }).then((after) => {
+        if (after) {
+          writeSolved(storeId, after);
+          setSolved(after);
+        }
+      });
+    } else if (!missing.length) {
+      writeSolved(store.id, server);
+    }
+  }, [store, kupa]);
 
   // ?badge=first_sale — מגיעים מהחגיגה ישר לחידה של האות
   useEffect(() => {
@@ -228,7 +259,7 @@ export default function KupaPage() {
           badge={open}
           kupa={kupa}
           solved={solved.includes(open.key)}
-          onSolved={() => solve(open.key)}
+          onSolved={(answer) => solve(open.key, answer)}
           onClose={() => {
             setOpen(null);
             if (window.location.search) history.replaceState(null, "", "/dashboard/kupa");
@@ -272,7 +303,7 @@ function BadgeSheet({
   badge: BadgeState;
   kupa: KupaData;
   solved: boolean;
-  onSolved: () => void;
+  onSolved: (answer: string) => void;
   onClose: () => void;
 }) {
   const lesson = lessonFor(badge.key, kupa.sample);
@@ -344,7 +375,7 @@ function remaining(kupa: KupaData, solved: string[]): number {
 
 /** חידה אחת: שאלה, שלוש תשובות, הסבר. טעות = "נסו שוב", בלי עונש.
  *  `key` מבחוץ מאפס אותה כשעוברים לחידה אחרת. */
-function RiddleBox({ lesson, solved, onSolved }: { lesson: Lesson; solved: boolean; onSolved: () => void }) {
+function RiddleBox({ lesson, solved, onSolved }: { lesson: Lesson; solved: boolean; onSolved: (answer: string) => void }) {
   const [picked, setPicked] = useState<string | null>(solved ? lesson.answer : null);
   const [shake, setShake] = useState(0);
   /** הכוכב נוחת רק כשפותרים עכשיו — לא כשפותחים חידה שכבר נפתרה */
@@ -357,7 +388,7 @@ function RiddleBox({ lesson, solved, onSolved }: { lesson: Lesson; solved: boole
     if (o === lesson.answer) {
       if (!solved) {
         setEarned(true);
-        onSolved();
+        onSolved(o);
       }
     } else setShake((n) => n + 1);
   }
@@ -475,7 +506,7 @@ function RiddleSheet({
   solved: string[];
   stars: number;
   rankUp: string | null;
-  onSolved: (id: string) => void;
+  onSolved: (id: string, answer: string) => void;
   onClose: () => void;
 }) {
   const [current, setCurrent] = useState<Riddle | null>(() => nextRiddle(solved, kupa.sample));
@@ -515,7 +546,7 @@ function RiddleSheet({
         )}
 
         {current ? (
-          <RiddleBox key={current.id} lesson={current} solved={false} onSolved={() => onSolved(current.id)} />
+          <RiddleBox key={current.id} lesson={current} solved={false} onSolved={(answer) => onSolved(current.id, answer)} />
         ) : (
           <p className="text-center text-[15px] font-bold py-6">פתרת את כל החידות במאגר! 🎉</p>
         )}

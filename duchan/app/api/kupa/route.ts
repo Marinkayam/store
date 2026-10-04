@@ -24,12 +24,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "אין לך גישה לדוכן הזה" }, { status: 403 });
   }
 
-  const [{ data: products }, { data: orders }, { data: views }, { data: members }, ownerPhone] = await Promise.all([
+  const [{ data: products }, { data: orders }, { data: views }, { data: members }, ownerPhone, solvedRes] = await Promise.all([
     db.from("products").select("name, price, image_key, poster_key").eq("store_id", store.id).is("deleted_at", null).order("sort_order"),
     db.from("orders").select("status, total, buyer_phone, created_at").eq("store_id", store.id),
     db.from("store_views").select("views").eq("store_id", store.id),
     db.from("store_members").select("phone").eq("store_id", store.id),
     phoneOf(db, store.owner_id),
+    db.from("kupa_solved").select("riddle_id").eq("store_id", store.id),
   ]);
 
   // הזמנה מהטלפון של הצוות עצמו לא נחשבת — אחרת אפשר "לקנות" מעצמך מטבעות.
@@ -57,5 +58,8 @@ export async function GET(req: NextRequest) {
     slug: store.slug,
     name: store.display_name,
     sample: pickSample(products ?? []),
+    // חידות שנפתרו (כוכבים). null = הטבלה עוד לא קיימת במסד — הדפדפן
+    // ממשיך עם מה שנשמר בטלפון, במקום להראות 0 כוכבים
+    solved: solvedRes.error ? null : (solvedRes.data ?? []).map((r) => r.riddle_id as string),
   });
 }

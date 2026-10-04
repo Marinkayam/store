@@ -28,6 +28,8 @@ const { rows: [store] } = await db.query("select * from stores where contact_pho
 const { rows: [other] } = await db.query("select id from stores where id<>$1 and owner_id<>$2 limit 1", [store.id, store.owner_id]);
 const MARK = "e2e-kupa";
 await db.query("delete from orders where store_id=$1 and buyer_note=$2", [store.id, MARK]);
+await db.query("delete from kupa_solved where store_id=$1", [store.id]);
+const solvedDb = async () => (await db.query("select riddle_id from kupa_solved where store_id=$1", [store.id])).rows.map((r) => r.riddle_id);
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -163,6 +165,50 @@ check("ונשארו 4 חידות פחות במאגר", (await remainingNow()) ==
 await p.reload({ waitUntil: "networkidle" });
 await p.waitForSelector("[data-testid=kupa-riddles]");
 check("הכוכבים נשמרים אחרי רענון", (await starsNow()) === 5);
+
+/* ── 8ג. שמירה במסד (0058) ── */
+const inDb = await solvedDb();
+check("במסד: 5 חידות שנפתרו (כולל חידת האות)", inDb.length === 5, inDb.join(","));
+const post = (body) => p.request.post(`${BASE}/api/kupa/solve`, { data: { storeId: store.id, ...body } });
+const fresh = (await api()).body;
+check("ה-API מחזיר את החידות שנפתרו", Array.isArray(fresh.solved) && fresh.solved.length === 5);
+const unsolvedId = "c-receipt";
+const wrong = await post({ riddleId: unsolvedId, answer: "אין סיבה, זה רק נייר" });
+check("תשובה לא נכונה → 400 ולא נשמר כוכב", wrong.status() === 400 && !(await solvedDb()).includes(unsolvedId));
+check("חידה שלא קיימת → 400", (await post({ riddleId: "c-nope", answer: "x" })).status() === 400);
+if (other) {
+  const foreign = await p.request.post(`${BASE}/api/kupa/solve`, { data: { storeId: other.id, riddleId: unsolvedId, answer: "כדי שאפשר יהיה להחזיר או להחליף" } });
+  check("כוכב לדוכן של מישהו אחר → 403", foreign.status() === 403);
+}
+const ok1 = await post({ riddleId: unsolvedId, answer: "כדי שאפשר יהיה להחזיר או להחליף" });
+check("תשובה נכונה ישר ל-API → נשמר", ok1.ok() && (await solvedDb()).includes(unsolvedId));
+const imp = await post({ import: ["c-need-want", "c-only-today", "c-privacy"] });
+check("ייבוא מהטלפון לא עובד כשכבר יש כוכבים במסד", imp.ok() && (await solvedDb()).length === 6);
+
+// טלפון אחר, בלי שום דבר שמור מקומית: אותם כוכבים
+const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await ctx2.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); } catch {} });
+const p2 = await ctx2.newPage();
+await p2.goto(`${BASE}/login`);
+await verifyPhone(p2, "0501234567");
+await p2.waitForURL("**/dashboard", { timeout: 20000 });
+await p2.goto(`${BASE}/dashboard/kupa`, { waitUntil: "networkidle" });
+await p2.waitForSelector("[data-testid=kupa-riddles]");
+await p2.waitForTimeout(600);
+const s2 = Number(((await p2.textContent("[data-testid=kupa-stars]")) ?? "").replace(/\D/g, ""));
+check("בטלפון אחר: אותם 6 כוכבים מהמסד", s2 === 6, String(s2));
+await ctx2.close();
+
+// כוכבים שהיו רק בטלפון (גרסה קודמת) עולים למסד בכניסה הראשונה
+await db.query("delete from kupa_solved where store_id=$1", [store.id]);
+await p.evaluate((id) => localStorage.setItem(`kupa-solved:${id}`, JSON.stringify(["c-need-want", "c-receipt", "t-times-0", "not-a-riddle"])), store.id);
+await p.goto(`${BASE}/dashboard/kupa`, { waitUntil: "networkidle" });
+await p.waitForSelector("[data-testid=kupa-riddles]");
+await p.waitForTimeout(1500);
+const imported = (await solvedDb()).sort();
+check("כוכבים מהטלפון עלו למסד (בלי מזהים לא חוקיים)", imported.join(",") === ["c-need-want", "c-receipt", "t-times-0"].sort().join(","), imported.join(","));
+await db.query("delete from kupa_solved where store_id=$1", [store.id]);
+await p.evaluate((id) => localStorage.removeItem(`kupa-solved:${id}`), store.id);
 
 /* ── 4. אות חדש ── */
 const reachedKeys = k0.badges.filter((b) => b.reached).map((b) => b.key);

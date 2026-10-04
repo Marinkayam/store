@@ -4,7 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import type { Kupa } from "@/lib/kupa";
 import type { Sample } from "@/lib/kupa-lessons";
 
-export type KupaData = Kupa & { slug: string; name: string; sample: Sample };
+export type KupaData = Kupa & {
+  slug: string;
+  name: string;
+  sample: Sample;
+  /** חידות שנפתרו במסד (0058). null = הטבלה עוד לא קיימת — נשענים על הטלפון */
+  solved: string[] | null;
+};
 
 /** אירוע שמסכים יורים אחרי פעולה שעשויה לתת אות (מוצר נשמר, הזמנה שולמה,
  *  הגדרות נשמרו) — וככה החגיגה מגיעה מיד ולא רק במעבר מסך. */
@@ -70,7 +76,27 @@ export function writeSeen(storeId: string, k: Kupa) {
   } catch {}
 }
 
-/* ── חידות שנפתרו (כוכבי ידע) — גם הן בטלפון: הן לא נותנות מטבעות ── */
+/** שמירת חידה שנפתרה במסד (השרת בודק את התשובה), או העברה חד-פעמית של
+ *  הכוכבים מהטלפון. מחזיר את כל מה שנפתר בדוכן, או null אם נכשל. */
+export async function postSolve(
+  storeId: string,
+  payload: { riddleId: string; answer: string } | { import: string[] }
+): Promise<string[] | null> {
+  try {
+    const r = await fetch("/api/kupa/solve", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ storeId, ...payload }),
+    });
+    return r.ok ? ((await r.json()).solved as string[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+/* ── עותק בטלפון של החידות שנפתרו ──
+   המקור הוא המסד (kupa_solved). העותק כאן הוא גיבוי: כשאין רשת, וכשמגיעים
+   מגרסה קודמת שבה הכוכבים נשמרו רק בטלפון (הם עולים למסד בפעם הראשונה). */
 const solvedKey = (storeId: string) => `kupa-solved:${storeId}`;
 export function readSolved(storeId: string): string[] {
   try {
@@ -78,6 +104,11 @@ export function readSolved(storeId: string): string[] {
   } catch {
     return [];
   }
+}
+export function writeSolved(storeId: string, list: string[]) {
+  try {
+    localStorage.setItem(solvedKey(storeId), JSON.stringify(list));
+  } catch {}
 }
 export function addSolved(storeId: string, key: string): string[] {
   const next = [...new Set([...readSolved(storeId), key])];
