@@ -35,7 +35,7 @@ import { kupaCheck } from "../kupa/use-kupa";
  * עובד, ואפשר לשלוח קישור ישר למקטע.
  */
 const SECTIONS = {
-  share: { icon: "🔗", title: "לשתף את הדוכן", intro: "הלינק לדוכן, הודעות מוכנות לוואטסאפ, והזמנה לחברים." },
+  share: { icon: "🔗", title: "לשתף את הדוכן", intro: "" }, // האיור והמשפט שבמקטע עצמו מסבירים — מרינה: "מינימליסטי"
   design: { icon: "🎨", title: "עיצוב הדוכן", intro: "כל מה שקשור לאיך הדוכן נראה, במקום אחד. לוחצים על השם, התיאור או התמונה כדי לשנות." },
   products: { icon: "⭐", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
   promo: { icon: "📣", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
@@ -765,7 +765,7 @@ export default function SettingsPage() {
           </div>
 
           <div key={section} className="fx-slide p-3 flex flex-col gap-3" data-testid={`section-${section}`}>
-            <p className="text-[12.5px] text-[var(--muted)] leading-relaxed px-1">{SECTIONS[section].intro}</p>
+            {SECTIONS[section].intro && <p className="text-[12.5px] text-[var(--muted)] leading-relaxed px-1">{SECTIONS[section].intro}</p>}
           {section === "design" && (
             <>
         {/* הדוכן עצמו, ניתן לעריכה במקום.

@@ -331,6 +331,9 @@ check("ועדיין noindex למרות כרטיס התצוגה", storeHtml.inclu
 
 /* ── 6: לשתף את הדוכן ("להפיץ" אוחד ל"החנות שלי") ── */
 await girl.goto(`${BASE}/dashboard/settings#share`);
+// מרינה: "מינימליסטי וברור" — ההודעות האחרות מקופלות תחת "עוד דרכים לשתף"
+await girl.waitForSelector("[data-testid=share-send]", { timeout: 15000 });
+await girl.click("[data-testid=share-more] summary");
 await girl.waitForSelector("[data-testid=share-section] textarea", { timeout: 15000 });
 const box = await girl.locator("textarea").first().inputValue();
 check("ההודעה המוכנה נושאת את שם הדוכן ואת הלינק",

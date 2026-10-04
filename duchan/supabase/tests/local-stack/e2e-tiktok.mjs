@@ -35,6 +35,8 @@ await verifyPhone(p, "0501234567");
 await p.waitForURL("**/dashboard", { timeout: 20000 });
 await p.goto(`${BASE}/dashboard/settings#share`);
 await p.reload({ waitUntil: "networkidle" });
+await p.waitForSelector("[data-testid=share-more]", { timeout: 15000 });
+await p.click("[data-testid=share-more] summary");
 await p.waitForSelector("[data-testid=tiktok-card]", { timeout: 15000 });
 
 const shown = ((await p.textContent("[data-testid=tiktok-link]")) ?? "").trim();
