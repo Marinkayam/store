@@ -12,12 +12,147 @@ import Icon, { type IconName } from "./icons";
  */
 
 const W = "var(--wood)";
-const LINE = { stroke: "#6f4b28", strokeWidth: 1.6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+const INK = "#6f4b28";
+const LINE = { stroke: INK, strokeWidth: 1.5, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+const SOFT = { ...LINE, strokeWidth: 1 };
 
 function part(lv: number, build: number | undefined, i = 0) {
   return build === lv
-    ? { className: "kp-drop", style: { animationDelay: `${0.12 + i * 0.09}s` } as React.CSSProperties }
+    ? { className: "kp-drop", style: { animationDelay: `${0.12 + i * 0.11}s` } as React.CSSProperties }
     : {};
+}
+
+/* ── חפצים קטנים, כל אחד מצויר סביב נקודת הבסיס שלו (x = שמאל, y = הקרקע שלו) ── */
+
+function Jar({ x, y }: { x: number; y: number }) {
+  return (
+    <g {...LINE}>
+      <rect x={x} y={y - 21} width="19" height="21" rx="3.5" fill="var(--canvas)" />
+      <rect x={x - 2} y={y - 27} width="23" height="7" rx="2.5" fill="var(--lavender)" />
+      <g {...SOFT}>
+        <rect x={x + 3} y={y - 16} width="6" height="5" rx="1.6" fill="var(--cream)" />
+        <rect x={x + 10} y={y - 17} width="6" height="5" rx="1.6" fill="var(--blush)" />
+        <rect x={x + 3} y={y - 9} width="6" height="5" rx="1.6" fill="var(--blush)" />
+        <rect x={x + 10} y={y - 9} width="6" height="5" rx="1.6" fill="var(--cream)" />
+      </g>
+    </g>
+  );
+}
+
+function Plant({ x, y }: { x: number; y: number }) {
+  const leaves: [number, number, number][] = [
+    [x + 3, y - 24, -30], [x + 15, y - 24, 30], [x + 4, y - 32, -25], [x + 14, y - 32, 25], [x + 9, y - 38, 0],
+  ];
+  return (
+    <g {...LINE}>
+      <path d={`M${x + 9} ${y - 13} v-26`} fill="none" />
+      {leaves.map(([cx, cy, r], i) => (
+        <ellipse key={i} cx={cx} cy={cy} rx="6.5" ry="3.6" fill="var(--olive)" transform={`rotate(${r} ${cx} ${cy})`} />
+      ))}
+      <path d={`M${x} ${y - 14} h18 l-2.5 14 h-13 z`} fill="var(--blush)" />
+      <path d={`M${x - 1} ${y - 14} h20`} fill="none" strokeWidth={2.2} />
+    </g>
+  );
+}
+
+function Basket({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      {/* ענבים מאחור, כוכב מחייך לפניהם, הסלסלה מסתירה את התחתית */}
+      <g {...SOFT} fill="var(--lavender)">
+        {[[x + 28, y - 22], [x + 34, y - 22], [x + 31, y - 27], [x + 25, y - 27], [x + 37, y - 27]].map(([cx, cy], i) => (
+          <circle key={i} cx={cx} cy={cy} r="3.4" />
+        ))}
+      </g>
+      <g className="star-bob">
+        <path
+          d={`M${x + 14} ${y - 38} l3.4 7.4 8 0.8 -6 5.4 1.8 7.9 -7.2 -4.2 -7.2 4.2 1.8 -7.9 -6 -5.4 8 -0.8z`}
+          fill="var(--warning)"
+          {...LINE}
+        />
+        <circle cx={x + 11.5} cy={y - 28} r="0.9" fill={INK} />
+        <circle cx={x + 16.5} cy={y - 28} r="0.9" fill={INK} />
+        <path d={`M${x + 11.5} ${y - 25.5} q2.5 2 5 0`} fill="none" stroke={INK} strokeWidth={0.9} />
+      </g>
+      <g {...LINE}>
+        <path d={`M${x} ${y - 17} h42 l-4 17 h-34 z`} fill="var(--sand)" />
+        <path d={`M${x + 2} ${y - 11} h38 M${x + 3} ${y - 5} h36`} fill="none" strokeWidth={0.9} />
+        <path d={`M${x + 10} ${y - 17} l1.5 17 M${x + 21} ${y - 17} v17 M${x + 32} ${y - 17} l-1.5 17`} fill="none" strokeWidth={0.7} />
+      </g>
+    </g>
+  );
+}
+
+function Bag({ x, y }: { x: number; y: number }) {
+  return (
+    <g {...LINE}>
+      <path d={`M${x + 4} ${y - 25} a6 6 0 0 1 12 0`} fill="none" />
+      <path d={`M${x} ${y} v-25 h20 v25 z`} fill="var(--canvas)" />
+      <path d={`M${x + 20} ${y - 25} l5 4 v25 l-5 -4 z`} fill="var(--sand)" />
+      <path d={`M${x + 10} ${y - 5} v-11`} fill="none" strokeWidth={1} />
+      <ellipse cx={x + 6} cy={y - 13} rx="4" ry="2.2" fill="var(--olive)" transform={`rotate(-26 ${x + 6} ${y - 13})`} />
+      <ellipse cx={x + 14} cy={y - 10} rx="4" ry="2.2" fill="var(--olive)" transform={`rotate(26 ${x + 14} ${y - 10})`} />
+    </g>
+  );
+}
+
+function Squishy({ x, y }: { x: number; y: number }) {
+  return (
+    <g className="kp-squish" style={{ transformOrigin: `${x + 10}px ${y}px` }}>
+      <path d={`M${x} ${y} q0 -16 10 -16 q10 0 10 16 z`} fill="var(--blush)" {...LINE} />
+      <circle cx={x + 7} cy={y - 8} r="1" fill={INK} />
+      <circle cx={x + 13} cy={y - 8} r="1" fill={INK} />
+      <path d={`M${x + 7.5} ${y - 5} q2.5 2 5 0`} fill="none" stroke={INK} strokeWidth={0.9} />
+      <circle cx={x + 4.5} cy={y - 5.5} r="1.6" fill="var(--lavender)" opacity=".6" />
+      <circle cx={x + 15.5} cy={y - 5.5} r="1.6" fill="var(--lavender)" opacity=".6" />
+    </g>
+  );
+}
+
+function Bracelets({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <g {...LINE}>
+        <path d={`M${x + 8} ${y - 2} v-28`} fill="none" strokeWidth={1.8} />
+        <rect x={x} y={y - 3} width="16" height="3" rx="1" fill={W} />
+      </g>
+      {[["var(--lavender)", 0], ["var(--olive)", 7], ["var(--warning)", 14]].map(([c, dy]) => (
+        <ellipse key={String(dy)} cx={x + 8} cy={y - 24 + Number(dy)} rx="6.5" ry="2.6" fill="none" stroke={String(c)} strokeWidth={2.4} />
+      ))}
+    </g>
+  );
+}
+
+/** תווית מחיר תלויה — מתנדנדת קצת */
+function Tag({ x, y, text }: { x: number; y: number; text: string }) {
+  return (
+    <g className="kp-swing" style={{ transformOrigin: `${x}px ${y}px` }}>
+      <path d={`M${x} ${y} v5`} stroke={INK} strokeWidth={0.8} />
+      <path d={`M${x - 7} ${y + 5} h14 v9 h-14 z`} fill="var(--canvas)" {...SOFT} />
+      <text x={x} y={y + 12} textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="6" fill={INK}>
+        {text}
+      </text>
+    </g>
+  );
+}
+
+function Wheel({ cx, cy }: { cx: number; cy: number }) {
+  return (
+    <g className="kp-wheel" style={{ transformOrigin: `${cx}px ${cy}px` }} {...LINE}>
+      <circle cx={cx} cy={cy} r="11" fill="var(--canvas)" />
+      <circle cx={cx} cy={cy} r="7.5" fill="none" strokeWidth={0.8} />
+      {[0, 60, 120].map((a) => (
+        <path key={a} d={`M${cx} ${cy - 11} v22`} transform={`rotate(${a} ${cx} ${cy})`} strokeWidth={1.1} />
+      ))}
+      <circle cx={cx} cy={cy} r="2.4" fill={W} />
+    </g>
+  );
+}
+
+/** נקודה על עקומה ריבועית — לשרשראות דגלים ונורות */
+function onCurve(t: number, [x0, y0]: number[], [cx, cy]: number[], [x1, y1]: number[]) {
+  const u = 1 - t;
+  return [u * u * x0 + 2 * u * t * cx + t * t * x1, u * u * y0 + 2 * u * t * cy + t * t * y1];
 }
 
 export function KupaStall({
@@ -33,113 +168,175 @@ export function KupaStall({
   className?: string;
 }) {
   const sign = (name ?? "הדוכן שלי").slice(0, 14);
+  const lights = { a: [26, 57], c: [120, 63], b: [214, 57] };
   return (
     <svg viewBox="0 0 240 176" className={className} role="img" aria-label={`איור הדוכן ברמה ${level + 1}`}>
       <rect x="0" y="0" width="240" height="176" fill="var(--cream)" />
-      <rect x="0" y="154" width="240" height="22" fill="var(--sand)" />
-      {/* שמש קטנה — תמיד שם, כדי שגם העגלה הקטנה תרגיש כמו יום טוב בשוק */}
-      <circle cx="210" cy="26" r="11" fill="var(--warning)" opacity=".55" />
+
+      {/* שמש עם קרניים, וענן שזז לאט */}
+      <g opacity=".75">
+        <circle cx="214" cy="20" r="9" fill="var(--warning)" />
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+          <path key={a} d="M214 6 v-3" stroke="var(--warning)" strokeWidth={2} strokeLinecap="round" transform={`rotate(${a} 214 20)`} />
+        ))}
+      </g>
+      {level < 5 && (
+        <g className="kp-drift">
+          <path d="M14 24 a6 6 0 0 1 10 -5 a8 8 0 0 1 15 2 a5 5 0 0 1 1 10 h-24 a4 4 0 0 1 -2 -7z" fill="var(--canvas)" stroke={INK} strokeWidth={1} opacity=".9" />
+        </g>
+      )}
+
+      {/* קרקע: אדמה, כמה גבעולי דשא, וצל רך מתחת לדוכן */}
+      <rect x="0" y="150" width="240" height="26" fill="var(--sand)" />
+      <path d="M0 150 h240" stroke={INK} strokeWidth={1} opacity=".5" />
+      <g stroke="var(--olive)" strokeWidth={1.4} strokeLinecap="round" fill="none">
+        <path d="M14 162 l-2 -5 M16 162 l1 -6 M18 162 l3 -4" />
+        <path d="M222 166 l-2 -5 M224 166 l1 -6 M226 166 l3 -4" />
+        <path d="M110 170 l-2 -4 M112 170 l2 -4" />
+      </g>
+      <ellipse cx="120" cy="153" rx="96" ry="3.5" fill={INK} opacity=".1" />
 
       {level === 0 ? (
         <g className={build === 0 ? "kp-roll" : ""}>
+          {/* שמשייה קטנה על העגלה */}
           <g {...LINE}>
-            <rect x="70" y="104" width="100" height="34" fill={W} />
-            <rect x="74" y="92" width="92" height="12" fill="var(--canvas)" />
-            <path d="M170 108 l24 -16" fill="none" strokeWidth={3.2} />
-            <g className="kp-wheel" style={{ transformOrigin: "92px 146px" }}>
-              <circle cx="92" cy="146" r="9" fill="var(--canvas)" />
-              <path d="M92 137 v18 M83 146 h18" />
-            </g>
-            <g className="kp-wheel" style={{ transformOrigin: "148px 146px" }}>
-              <circle cx="148" cy="146" r="9" fill="var(--canvas)" />
-              <path d="M148 137 v18 M139 146 h18" />
-            </g>
+            <path d="M70 100 v-44" fill="none" strokeWidth={1.8} />
+            <path d="M44 62 Q70 34 96 62 z" fill="var(--lavender)" />
+            <path d="M57 62 Q63 46 70 41 Q77 46 83 62" fill="var(--canvas)" />
+            <path d="M44 62 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0" fill="none" strokeWidth={1.1} />
           </g>
+          <Plant x={80} y={100} />
+          <Squishy x={104} y={100} />
+          <Jar x={130} y={100} />
+          {/* העגלה: קרשים, ידית וגלגלים */}
           <g {...LINE}>
-            <rect x="84" y="78" width="14" height="14" fill="var(--lavender)" />
-            <circle cx="114" cy="84" r="8" fill="var(--blush)" />
-            <rect x="128" y="74" width="12" height="18" fill="var(--olive)" />
+            <rect x="60" y="100" width="112" height="34" fill={W} />
+            <path d="M60 111 h112 M60 122 h112" fill="none" strokeWidth={0.8} opacity=".7" />
+            <path d="M88 100 v34 M116 100 v34 M144 100 v34" fill="none" strokeWidth={0.6} opacity=".5" />
+            <path d="M172 106 l22 -15" fill="none" strokeWidth={3.2} />
+            <path d="M190 89 l8 -2" fill="none" strokeWidth={4.5} />
           </g>
+          <Tag x={117} y={134} text="₪5" />
+          <Wheel cx={84} cy={142} />
+          <Wheel cx={150} cy={142} />
         </g>
       ) : (
         <>
-          {/* רמה 2: דוכן — עמודים, דלפק ומוצרים */}
-          <g {...LINE} {...part(1, build, 0)}>
-            <rect x="40" y="58" width="9" height="96" fill={W} />
-            <rect x="191" y="58" width="9" height="96" fill={W} />
-            <rect x="28" y="114" width="184" height="14" fill={W} />
-            <rect x="34" y="128" width="172" height="26" fill="var(--canvas)" />
+          {/* רמה 2: דוכן — עמודים, מדף אחורי, דלפק עם בד מפוספס, ארגז תפוחים */}
+          <g {...part(1, build, 0)}>
+            <g {...LINE}>
+              <rect x="36" y="38" width="9" height="112" fill={W} />
+              <rect x="195" y="38" width="9" height="112" fill={W} />
+              <path d="M39 50 v20 M198 60 v24" stroke={INK} strokeWidth={0.6} opacity=".6" />
+            </g>
+            {/* ארגז תפוחים על הקרקע */}
+            <g {...LINE}>
+              {[[9, 124], [17, 122], [25, 124]].map(([cx, cy]) => (
+                <circle key={cx} cx={cx} cy={cy} r="4.6" fill="var(--blush)" />
+              ))}
+              <rect x="3" y="126" width="30" height="24" fill={W} />
+              <path d="M3 138 h30" fill="none" strokeWidth={0.8} opacity=".7" />
+            </g>
           </g>
-          <g {...LINE} {...part(1, build, 1)}>
-            <rect x="56" y="96" width="16" height="18" fill="var(--lavender)" />
-            <circle cx="88" cy="105" r="9" fill="var(--blush)" />
-            <rect x="104" y="92" width="14" height="22" fill="var(--olive)" />
-            <path d="M128 114 l8 -20 l8 20z" fill="var(--warning)" />
-            <rect x="152" y="98" width="18" height="16" fill="var(--canvas)" />
-            <circle cx="182" cy="106" r="8" fill="var(--lavender)" />
+          <g {...part(1, build, 1)}>
+            {/* בד מפוספס מתחת לדלפק */}
+            <g {...SOFT}>
+              {Array.from({ length: 12 }, (_, i) => (
+                <rect key={i} x={30 + i * 15} y="118" width="15" height="30" fill={i % 2 ? "var(--canvas)" : "var(--lavender)"} />
+              ))}
+            </g>
+            <g {...LINE}>
+              <rect x="24" y="108" width="192" height="10" fill={W} />
+              <path d="M24 113 h192" fill="none" strokeWidth={0.6} opacity=".6" />
+            </g>
+            <Tag x={70} y={118} text="₪8" />
+            <Tag x={168} y={118} text="₪12" />
           </g>
-          {/* רמה 3: סוכך */}
+          <g {...part(1, build, 2)}>
+            <Plant x={46} y={108} />
+            <Basket x={70} y={108} />
+            <Bag x={120} y={108} />
+            <Jar x={152} y={108} />
+            <Bracelets x={180} y={108} />
+          </g>
+
+          {/* רמה 3: סוכך עם שוליים מסולסלים */}
           {level >= 2 && (
             <g {...part(2, build, 0)}>
               <g {...LINE} className="awning-flap">
-                <rect x="28" y="36" width="184" height="10" fill={W} />
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <path
-                    key={i}
-                    d={`M${28 + i * 30.67} 46 h30.67 v14 a15.3 13 0 0 1 -30.67 0 z`}
-                    fill={i % 2 ? "var(--canvas)" : "var(--lavender)"}
-                  />
-                ))}
+                <rect x="24" y="30" width="192" height="9" fill={W} />
+                {Array.from({ length: 8 }, (_, i) => {
+                  const x = 24 + i * 24;
+                  const c = i % 2 ? "var(--canvas)" : "var(--lavender)";
+                  return <path key={i} d={`M${x} 39 h24 v12 a12 9 0 0 1 -24 0 z`} fill={c} />;
+                })}
+                <path d="M24 44 h192" fill="none" strokeWidth={0.6} opacity=".5" />
               </g>
             </g>
           )}
-          {/* רמה 4: שלט עם השם */}
+
+          {/* רמה 4: שלט עם השם, ולוח גיר "חדש!" */}
           {level >= 3 && (
             <g {...part(3, build, 0)}>
-              <g className="kp-swing">
-                <path d="M98 36 v-8 M142 36 v-8" stroke="#6f4b28" strokeWidth={1.4} />
-                <rect x="70" y="8" width="100" height="21" fill="var(--canvas)" {...LINE} />
-                <text x="120" y="23" textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="11" fill="var(--ink)">
+              <g className="kp-swing" style={{ transformOrigin: "120px 30px" }}>
+                <path d="M96 30 l4 -8 M144 30 l-4 -8" stroke={INK} strokeWidth={1.2} />
+                <rect x="68" y="4" width="104" height="20" rx="3" fill={W} {...LINE} />
+                <rect x="71" y="7" width="98" height="14" rx="2" fill="var(--canvas)" {...SOFT} />
+                <text x="120" y="17.5" textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="10" fill="var(--ink)">
                   {sign}
+                </text>
+              </g>
+              {/* לוח גיר קטן על הקרקע */}
+              <g {...LINE}>
+                <path d="M212 150 l6 -26 M232 150 l-6 -26" fill="none" strokeWidth={1.6} />
+                <rect x="210" y="122" width="24" height="18" fill="var(--ink)" />
+                <text x="222" y="134" textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="6.5" fill="var(--canvas)" stroke="none">
+                  חדש!
                 </text>
               </g>
             </g>
           )}
-          {/* רמה 5: שרשרת נורות */}
+
+          {/* רמה 5: נורות לאורך הסוכך ופנס על העמוד */}
           {level >= 4 && (
             <g {...part(4, build, 0)}>
-              <path d="M28 70 Q120 88 212 70" fill="none" stroke="#6f4b28" strokeWidth={1} />
-              {Array.from({ length: 9 }, (_, i) => (
-                <circle
-                  key={i}
-                  className="kp-twinkle"
-                  style={{ animationDelay: `${(i % 3) * 0.5}s` }}
-                  cx={34 + i * 21.5}
-                  cy={72 + Math.sin((i / 8) * Math.PI) * 7}
-                  r="3.2"
-                  fill={i % 2 ? "var(--warning)" : "var(--blush)"}
-                  stroke="#6f4b28"
-                  strokeWidth={0.8}
-                />
-              ))}
+              <path d={`M${lights.a} Q${lights.c} ${lights.b}`} fill="none" stroke={INK} strokeWidth={0.9} />
+              {Array.from({ length: 11 }, (_, i) => {
+                const [px, py] = onCurve((i + 0.5) / 11, lights.a, lights.c, lights.b);
+                return (
+                  <g key={i}>
+                    <rect x={px - 1.4} y={py - 0.5} width="2.8" height="2.5" fill={INK} />
+                    <circle className="kp-twinkle" style={{ animationDelay: `${(i % 3) * 0.5}s` }} cx={px} cy={py + 4.5} r="2.8" fill={i % 2 ? "var(--warning)" : "var(--blush)"} stroke={INK} strokeWidth={0.8} />
+                  </g>
+                );
+              })}
+              <g className="kp-swing" style={{ transformOrigin: "209px 92px" }}>
+                <path d="M204 92 h5 v6" fill="none" stroke={INK} strokeWidth={1} />
+                <rect x="204" y="98" width="10" height="3" fill={W} {...SOFT} />
+                <rect x="205" y="101" width="8" height="10" rx="1.5" fill="var(--warning)" {...SOFT} />
+                <rect x="204" y="111" width="10" height="2.5" fill={W} {...SOFT} />
+              </g>
             </g>
           )}
-          {/* רמה 6: דגל וכוכב מחייך */}
+
+          {/* רמה 6: דגל, כוכב מחייך על הסוכך ובלון */}
           {level >= 5 && (
             <g {...part(5, build, 0)}>
               <g {...LINE}>
-                <path d="M200 36 v-26" fill="none" />
-                <path d="M200 10 l24 7 l-24 7z" fill="var(--warning)" className="kp-swing" />
+                <path d="M22 30 v-28" fill="none" />
+                <path d="M22 2 l18 5 l-18 5 z" fill="var(--warning)" className="kp-swing" style={{ transformOrigin: "22px 7px" }} />
               </g>
               <g className="star-bob">
-                <path
-                  d="M22 8 l4.5 9.2 10 1.4 -7.3 7 1.8 10 -9 -4.8 -9 4.8 1.8 -10 -7.3 -7 10 -1.4z"
-                  fill="var(--warning)"
-                  {...LINE}
-                />
-                <circle cx="19.5" cy="20" r="1" fill="#6f4b28" />
-                <circle cx="24.5" cy="20" r="1" fill="#6f4b28" />
-                <path d="M19.5 23.5 q2.5 2 5 0" fill="none" stroke="#6f4b28" strokeWidth={1} />
+                <path d="M54 4 l4.6 9.4 10.3 1.2 -7.6 7.1 2 10.2 -9.3 -5.1 -9.3 5.1 2 -10.2 -7.6 -7.1 10.3 -1.2z" fill="var(--lavender)" {...LINE} />
+                <circle cx="51" cy="17" r="1.1" fill={INK} />
+                <circle cx="57" cy="17" r="1.1" fill={INK} />
+                <path d="M51 20.5 q3 2.4 6 0" fill="none" stroke={INK} strokeWidth={1} />
+              </g>
+              <g className="star-bob" style={{ animationDelay: ".7s" }}>
+                <path d="M204 112 q14 -20 22 -40" fill="none" stroke={INK} strokeWidth={0.8} />
+                <ellipse cx="226" cy="62" rx="9" ry="11" fill="var(--blush)" {...LINE} />
+                <path d="M224 73 h4 l-2 3 z" fill="var(--blush)" {...SOFT} />
+                <path d="M222 56 q2 -3 5 -3" fill="none" stroke="var(--canvas)" strokeWidth={1.4} strokeLinecap="round" />
               </g>
             </g>
           )}
