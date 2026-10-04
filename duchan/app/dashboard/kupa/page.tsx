@@ -108,7 +108,7 @@ export default function KupaPage() {
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">קופת הדוכן</h1>
-          <p className="text-[13px] text-[var(--muted)] mt-0.5">כל צעד בדוכן שווה מטבעות, והמטבעות בונים את הדוכן.</p>
+          <p className="text-[13px] text-[var(--muted)] mt-0.5">כל צעד בדוכן שווה מטבעות, והמטבעות בונות ומשדרגות את הדוכן.</p>
         </div>
         <div className="flex flex-col items-stretch gap-1.5 shrink-0">
           <span className="flex items-center justify-between gap-1.5 bg-white border border-[var(--line)] px-3 py-1.5 text-[20px] font-black tabular-nums" data-testid="kupa-coins">
@@ -265,8 +265,8 @@ export default function KupaPage() {
       </details>
 
       <p className="text-[12px] text-[var(--muted)] leading-relaxed">
-        מטבעות דוכן הם משחק בתוך האתר. הם לא כסף, אי אפשר לקנות אותם ואי אפשר להפסיד אותם.
-        בקרוב יהיה אפשר לקנות בהם קישוטים לדוכן. בינתיים הם בונים לך את הדוכן.
+        מטבעות דוכן הן משחק בתוך האתר. הן לא כסף, אי אפשר לקנות אותן ואי אפשר להפסיד אותן.
+        בקרוב יהיה אפשר לקנות בהן קישוטים לדוכן. בינתיים הן בונות ומשדרגות לך את הדוכן.
       </p>
 
       {open && (

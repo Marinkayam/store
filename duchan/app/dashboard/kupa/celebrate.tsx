@@ -126,7 +126,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
     kind === "welcome"
       ? `על כל מה שכבר עשית בדוכן אספת ${kupa.coins} מטבעות דוכן. כל צעד חדש מוסיף עוד, והדוכן גדל.`
       : kind === "level"
-        ? "המטבעות שאספת בנו לדוכן קומה חדשה. ככה הוא נראה עכשיו."
+        ? "המטבעות שאספת שדרגו את הדוכן. ככה הוא נראה עכשיו."
         : top?.lesson ?? "";
   const shareLine = kind === "level" ? `הדוכן שלי עלה לרמה ${kupa.level + 1}: ${kupa.levelName} 🎪 בואו לראות 👇` : top?.share;
   const link = typeof window !== "undefined" ? `${window.location.origin}${storePath(kupa.slug)}` : "";
