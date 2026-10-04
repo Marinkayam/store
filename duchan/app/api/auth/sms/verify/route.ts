@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle();
     return NextResponse.json(
-      { error: stale ? "הקוד פג. אפשר לבקש חדש" : "לא ביקשנו קוד למספר הזה. לנסות שוב" },
+      { error: stale ? "תוקף הקוד פג. אפשר לבקש קוד חדש" : "לא נשלח קוד למספר הזה. אפשר לבקש קוד חדש" },
       { status: 400 }
     );
   }

@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     const opensAt = dropTime(p.drop_at);
     if (opensAt !== null && opensAt > now) {
       return NextResponse.json(
-        { error: `"${p.name}" עוד לא נפתח. נפתח בעוד ${countdown(opensAt - now)}`, field: "drop", productId: p.id },
+        { error: `"${p.name}" עוד לא נפתח להזמנות. ייפתח בעוד ${countdown(opensAt - now)}`, field: "drop", productId: p.id },
         { status: 409 }
       );
     }
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
   // מה חסר, במקום שהשם יבלע כל הודעה אחרת.
   if (name.length < 2) {
     return NextResponse.json(
-      { error: "רק צריך את השם שלך, כדי שהיא תדע מי הזמינה" },
+      { error: "צריך לכתוב שם, כדי שבעלי הדוכן ידעו מי הזמין" },
       { status: 400 }
     );
   }
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
   const phone = normalizePhone(buyerPhone ?? "");
   if (!phone) {
     return NextResponse.json(
-      { error: "צריך מספר טלפון תקין, כדי שהדוכן יוכל לחזור אליכם" },
+      { error: "צריך מספר טלפון תקין, כדי שבעלי הדוכן יוכלו לחזור אליכם" },
       { status: 400 }
     );
   }

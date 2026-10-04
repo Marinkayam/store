@@ -282,7 +282,7 @@ check("לקנות שוב את אותו דבר → 409", (await shopApi({ action:
 check("קישוט שלא קיים → 400", (await shopApi({ action: "buy", item: "unicorn" })).status() === 400);
 await db.query("insert into kupa_purchases (store_id, item_key, price) values ($1, 'test_spend', 99999)", [store.id]);
 const poor = await shopApi({ action: "buy", item: "cat" });
-check("בלי מספיק מטבעות → 400 'חסרים עוד'", poor.status() === 400 && ((await poor.json()).error ?? "").includes("חסרים"));
+check("בלי מספיק מטבעות → 400 'חסרות עוד'", poor.status() === 400 && ((await poor.json()).error ?? "").includes("חסרות"));
 await db.query("delete from kupa_purchases where store_id=$1 and item_key='test_spend'", [store.id]);
 const after = (await api()).body;
 check("הרמה לפי כל מה שהורווח — קנייה לא מורידה רמה", after.coins === qb.coins && after.level === qb.level && after.balance === qb.coins - 30);

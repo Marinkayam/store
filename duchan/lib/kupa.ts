@@ -41,12 +41,12 @@ export const QUEST_COINS = 25;
 export const QUESTS: { key: QuestKey; title: string; how: string; href: string; minutes: number; icon: IconName }[] = [
   { key: "video", title: "סרטון של 5 שניות", how: "מצלמים סרטון קצר לאחד המוצרים — רואים איך הוא נראה ביד.", href: "/dashboard/products", minutes: 2, icon: "video" },
   { key: "describe", title: "תיאורים שמוכרים", how: "כותבים תיאור קצר לשלושה מוצרים: ממה הוא עשוי, ולמי הוא מתאים.", href: "/dashboard/products", minutes: 4, icon: "pencil" },
-  { key: "category", title: "סדר בדוכן", how: "יוצרים קטגוריה ומכניסים אליה מוצר — ככה קל למצוא.", href: "/dashboard/products", minutes: 2, icon: "box" },
+  { key: "category", title: "סדר בדוכן", how: "יוצרים קטגוריה ומכניסים אליה מוצר — ככה קל יותר למצוא מוצרים.", href: "/dashboard/products", minutes: 2, icon: "box" },
   { key: "featured", title: "המומלץ שלי", how: "בוחרים מוצר אחד ומסמנים אותו כמומלץ, שיופיע בראש הדוכן.", href: "/dashboard/products", minutes: 1, icon: "star" },
   { key: "coupon", title: "קופון לחברים", how: "יוצרים קוד הנחה ושולחים אותו לחברים.", href: "/dashboard/settings#coupons", minutes: 3, icon: "gift" },
   { key: "promo", title: "הודעה לקונים", how: "כותבים הודעה קצרה שמופיעה בראש הדוכן, למשל מבצע או מתנה.", href: "/dashboard/settings#promo", minutes: 2, icon: "megaphone" },
   { key: "mystery", title: "שקית הפתעה", how: "מוסיפים מוצר שהוא שקית הפתעה — הקונים לא יודעים מה בפנים.", href: "/dashboard/products?new=1", minutes: 3, icon: "gift" },
-  { key: "drop", title: "דרופ", how: "קובעים מוצר שנפתח להזמנה בשעה מסוימת, ומספרים לחברים מתי.", href: "/dashboard/products", minutes: 3, icon: "hourglass" },
+  { key: "drop", title: "דרופ", how: "קובעים שמוצר ייפתח להזמנה בשעה מסוימת, ומספרים לחברים מתי.", href: "/dashboard/products", minutes: 3, icon: "hourglass" },
   { key: "ship", title: "גם משלוחים", how: "מגדירים אם שולחים בדואר ובכמה — ככה גם מי שגר רחוק יכול לקנות.", href: "/dashboard/settings#shipping", minutes: 2, icon: "box" },
 ];
 

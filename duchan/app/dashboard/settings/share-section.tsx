@@ -46,7 +46,7 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
         <div className="text-4xl" aria-hidden>📦</div>
         <div className="text-[14px] font-bold">רגע לפני ששולחים</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed max-w-xs">
-          בדוכן עוד אין מוצרים. חברה שתיכנס עכשיו תראה מדף ריק — שווה להוסיף מוצר אחד קודם.
+          בדוכן עוד אין מוצרים. חברים שייכנסו עכשיו יראו מדף ריק — שווה להוסיף מוצר אחד קודם.
         </p>
         <a href="/dashboard/products?new=1" className="mt-1 bg-[var(--ink)] text-white px-5 py-2.5 text-[13px] font-bold">
           להוסיף מוצר ראשון
@@ -77,7 +77,7 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
         </p>
         {!store.activated_at && (
           <p className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-1.5" data-testid="share-preview-note">
-            👀 עכשיו זו תצוגה מקדימה: רואים הכל, וההזמנות נפתחות אחרי הפרסום.
+            👀 עכשיו זו תצוגה מקדימה: אפשר להיכנס ולראות את הדוכן, אבל הזמנות נפתחות רק אחרי הפרסום.
           </p>
         )}
         <div className="mt-2.5 bg-[var(--canvas)] border border-[var(--line)] px-3 py-2 text-[12.5px] font-mono text-left truncate" dir="ltr" data-testid="share-link">
@@ -103,7 +103,7 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
       <div className="bg-white border border-[var(--line)] p-3.5">
         <div className="text-[13.5px] font-bold">✍️ הודעה מוכנה</div>
         <p className="text-[12px] text-[var(--muted)] mt-0.5">בוחרים למי, משנים אם רוצים, ושולחים.</p>
-        <div className="flex flex-wrap gap-1.5 mt-2.5" role="radiogroup" aria-label="איזו הודעה">
+        <div className="flex flex-wrap gap-1.5 mt-2.5" role="radiogroup" aria-label="בחירת הודעה">
           {SHARE_TEXTS.map((t) => (
             <button
               key={t.key}
@@ -142,7 +142,7 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
               }}
               className="border border-[var(--line)] px-3 text-[12.5px] text-[var(--muted)]"
             >
-              איפוס
+              להחזיר למקור
             </button>
           )}
         </div>
@@ -153,7 +153,7 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
         <div className="text-[13.5px] font-bold">🎁 להזמין חברים לפתוח דוכן</div>
         <p className="text-[12px] text-[var(--warn-ink)] leading-relaxed mt-0.5">
           כשחברים פותחים דוכנים, כולם מוכרים יותר — כי כולם גם קונים.
-          {store.ref_clicks > 0 && ` כבר ${store.ref_clicks} לחצו על זה מהדוכן שלך.`}
+          {store.ref_clicks > 0 && ` כבר ${store.ref_clicks} נכנסו דרך לינק ההזמנה שלך.`}
         </p>
         <div className="grid grid-cols-2 gap-2 mt-2.5">
           <button onClick={() => send(inviteText(ctx, refLink))} className="fx-press bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold">

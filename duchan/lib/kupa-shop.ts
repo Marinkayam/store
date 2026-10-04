@@ -24,12 +24,12 @@ export interface ShopItem {
 
 export const SHOP: ShopItem[] = [
   { key: "flowers", title: "עציץ פרחים", price: 30, where: "ליד הדוכן בציור", icon: "plant" },
-  { key: "awning_olive", title: "סוכך זית", price: 40, where: "הסוכך, השמשייה והבד בציור", icon: "palette", awning: "olive" },
-  { key: "awning_blush", title: "סוכך ורוד", price: 40, where: "הסוכך, השמשייה והבד בציור", icon: "palette", awning: "blush" },
+  { key: "awning_olive", title: "סוכך זית", price: 40, where: "צובע את הסוכך, השמשייה והבד בציור", icon: "palette", awning: "olive" },
+  { key: "awning_blush", title: "סוכך ורוד", price: 40, where: "צובע את הסוכך, השמשייה והבד בציור", icon: "palette", awning: "blush" },
   { key: "open_sign", title: "שלט \"פתוח!\"", price: 50, where: "תלוי על העמוד בציור", icon: "shop" },
-  { key: "confetti", title: "קונפטי לקונים", price: 60, where: "בדוכן: מי שמזמין/ה מקבל/ת קונפטי", icon: "party" },
+  { key: "confetti", title: "קונפטי לקונים", price: 60, where: "בדוכן עצמו: קונים שמזמינים רואים קונפטי", icon: "party" },
   { key: "cat", title: "חתול של הדוכן", price: 120, where: "יושב ליד הדוכן בציור, ומנפנף בזנב", icon: "heart" },
-  { key: "awning_gold", title: "סוכך זהב", price: 250, where: "הסוכך, השמשייה והבד בציור", icon: "star", awning: "gold" },
+  { key: "awning_gold", title: "סוכך זהב", price: 250, where: "צובע את הסוכך, השמשייה והבד בציור", icon: "star", awning: "gold" },
 ];
 
 export const AWNING_FILL: Record<AwningColor, string> = {

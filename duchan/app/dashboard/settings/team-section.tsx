@@ -29,7 +29,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
     const r = await fetch(`/api/team?storeId=${store.id}`, { cache: "no-store" });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) {
-      setError(d.error ?? "לא הצלחנו לטעון את הצוות");
+      setError(d.error ?? "לא הצלחנו לטעון את הצוות. אפשר לרענן ולנסות שוב");
       return;
     }
     setTeam(d);
@@ -154,7 +154,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
                     data-testid="set-orders-phone"
                     className="border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
                   >
-                    📲 שההזמנות יגיעו לכאן
+                    📲 שההזמנות יגיעו לטלפון הזה
                   </button>
                 )}
                 {p.role === "partner" && team.transferTo !== p.userId && (

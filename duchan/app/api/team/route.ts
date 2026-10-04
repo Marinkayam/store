@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, token: same.token, renewed: true });
       }
       if (team.length + live.length >= MAX_PARTNERS) {
-        return err(`בדוכן יכולים להיות עד ${MAX_PARTNERS + 1}: ראש הדוכן ושותף/ה אחד/ת`, 409);
+        return err(`בדוכן יכולים להיות עד ${MAX_PARTNERS + 1} אנשים: ראש הדוכן ושותף/ה אחד/ת`, 409);
       }
       const token = randomToken(24);
       const { error } = await db.from("store_invites").insert({
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
     case "leave": {
       if (role === "owner") return err("ראש הדוכן לא יכול לצאת. קודם מעבירים את הראשות לשותף/ה", 400);
       const self = (await members()).find((m) => m.user_id === user.id);
-      if (!self) return err("כבר לא בצוות", 404);
+      if (!self) return err("את/ה כבר לא בצוות", 404);
       await db.from("store_members").delete().eq("store_id", store.id).eq("user_id", user.id);
       await afterLeave(user.id, self.phone);
       return NextResponse.json({ ok: true });
@@ -220,13 +220,13 @@ export async function POST(req: NextRequest) {
     }
 
     case "decline_transfer": {
-      if (store.transfer_to !== user.id) return err("אין בקשה כזו", 404);
+      if (store.transfer_to !== user.id) return err("הבקשה כבר לא קיימת. אולי היא בוטלה", 404);
       await db.from("stores").update({ transfer_to: null, transfer_requested_at: null }).eq("id", store.id);
       return NextResponse.json({ ok: true });
     }
 
     case "accept_transfer": {
-      if (store.transfer_to !== user.id || role !== "partner") return err("אין בקשה כזו", 404);
+      if (store.transfer_to !== user.id || role !== "partner") return err("הבקשה כבר לא קיימת. אולי היא בוטלה", 404);
       // אותה מכסה כמו פתיחת דוכן: עד 3 דוכנים שאני ראש שלהם
       const { count } = await db
         .from("stores")

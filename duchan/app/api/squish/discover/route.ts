@@ -18,7 +18,7 @@ import { MIN_ITEMS } from "@/lib/squish";
 export async function GET() {
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים. צריך להיכנס שוב" }, { status: 401 });
 
   const db = supabaseAdmin();
 

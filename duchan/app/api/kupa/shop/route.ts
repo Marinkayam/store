@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   const k = await loadKupa(db, store);
   if (!k.shopReady) return err("החנות עוד לא מוכנה, לנסות שוב מאוחר יותר", 503);
   if (k.owned.includes(item.key)) return err("זה כבר שלך", 409);
-  if (k.kupa.balance < item.price) return err(`חסרים עוד ${item.price - k.kupa.balance} מטבעות`, 400);
+  if (k.kupa.balance < item.price) return err(`חסרות עוד ${item.price - k.kupa.balance} מטבעות`, 400);
   if (item.awning) {
     const awnings = k.owned.filter((x) => shopItem(x)?.awning);
     if (awnings.length) await db.from("kupa_purchases").update({ equipped: false }).eq("store_id", store.id).in("item_key", awnings);

@@ -22,7 +22,7 @@ const ITEM_REASONS = new Set([
 export async function POST(req: NextRequest) {
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים. צריך להיכנס שוב" }, { status: 401 });
 
   let body: Body;
   try {

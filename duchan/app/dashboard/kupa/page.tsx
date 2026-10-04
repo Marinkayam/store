@@ -186,7 +186,7 @@ export default function KupaPage() {
           <button
             onClick={() => setNight(!night)}
             aria-pressed={night}
-            aria-label={night ? "להחזיר יום בדוכן" : "לילה בדוכן"}
+            aria-label={night ? "לעבור ליום" : "לעבור ללילה"}
             data-testid="kupa-night"
             className="absolute top-2 left-2 w-11 h-11 flex items-center justify-center border border-[var(--line)] bg-white/90 text-[#6f4b28]"
           >
@@ -722,8 +722,8 @@ function QuickActions({ kupa }: { kupa: KupaData }) {
     <section aria-labelledby="kupa-actions">
       <h2 id="kupa-actions" className="text-[15px] font-black mb-2 px-0.5">מה נותן מטבעות עכשיו</h2>
       <div className="grid grid-cols-2 gap-2">
-        {tile("product", "להוסיף מוצר", "/dashboard/products?new=1", "bag", prod ? <>{prod.title} {coin(prod.coins)}</> : <>כל אותות המוצרים אצלך</>, !prod)}
-        {tile("share", "לשתף את הדוכן", "/dashboard/settings#share", "share", views ? <>{views.title} {coin(views.coins)}</> : <>כל אותות הכניסות אצלך</>, !views)}
+        {tile("product", "להוסיף מוצר", "/dashboard/products?new=1", "bag", prod ? <>{prod.title} {coin(prod.coins)}</> : <>השגת את כל אותות המוצרים</>, !prod)}
+        {tile("share", "לשתף את הדוכן", "/dashboard/settings#share", "share", views ? <>{views.title} {coin(views.coins)}</> : <>השגת את כל אותות הכניסות</>, !views)}
         {tile("pay", "איך משלמים לי", "/dashboard/settings#payment", "coins", pay.reached ? <>מסודר</> : <>ביט, פייבוקס או מזומן {coin(pay.coins)}</>, pay.reached)}
         {tile("orders", "לסמן הזמנה ששולמה", "/dashboard", "receipt", <>כל הזמנה ששולמה {coin(SALE_COINS)}</>)}
       </div>
@@ -776,7 +776,7 @@ function WeekQuest({ kupa, storeId }: { kupa: KupaData; storeId: string }) {
               לדלג השבוע
             </button>
           </div>
-          <span className="text-[11.5px] text-[var(--muted)]">המטבעות מגיעים לבד, ברגע שזה קורה בדוכן.</span>
+          <span className="text-[11.5px] text-[var(--muted)]">המטבעות מגיעות לבד, ברגע שהמשימה מתבצעת בדוכן.</span>
         </div>
       ) : (
         <div className="bg-[var(--ok-bg)] p-4 text-center text-[14px] font-bold text-[var(--ok-ink)]" data-testid="week-quest-all-done">
@@ -827,7 +827,7 @@ function PunchCard({ kupa }: { kupa: KupaData }) {
         ))}
       </div>
       <p className="text-[12.5px] text-[var(--muted)] leading-relaxed">
-        ניקוב על כל שבוע שעשיתם משהו בדוכן. כרטיסייה מלאה = {CARD_COINS} מטבעות, ומתחילים חדשה. שבוע שמפספסים לא מוחק כלום.
+        מקבלים ניקוב על כל שבוע שעשיתם בו משהו בדוכן. כרטיסייה מלאה = {CARD_COINS} מטבעות, ומתחילים חדשה. שבוע שמפספסים לא מוחק כלום.
         {kupa.cards > 0 && <b className="text-[var(--ink)]"> כבר מילאתם {kupa.cards === 1 ? "כרטיסייה אחת" : `${kupa.cards} כרטיסיות`}!</b>}
       </p>
     </section>
@@ -903,7 +903,7 @@ function Shop({
       <div className="bg-white border border-[var(--line)]">
         <KupaStall level={kupa.level} name={kupa.name} night={night} deco={preview} className="w-full block" />
         <div className="px-4 py-3 flex items-center justify-between gap-2">
-          <h2 id="shop-title" className="text-[15px] font-black">חנות הסוכך</h2>
+          <h2 id="shop-title" className="text-[15px] font-black">חנות הקישוטים</h2>
           <span className="flex items-center gap-1 text-[15px] font-black tabular-nums" data-testid="shop-balance">
             יש לך {balance}
             <Coin size={18} />
@@ -925,7 +925,7 @@ function Shop({
         >
           <span className="h-10 bg-[var(--canvas)] flex items-center justify-center"><span className="w-3/4 h-3 bg-[var(--lavender)]" /></span>
           <b className="text-[13px]">סוכך סגול</b>
-          <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{deco.awning === "lavender" ? "✓ על הדוכן" : "שלך · לשים"}</span>
+          <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{deco.awning === "lavender" ? "✓ על הדוכן" : "שלך · לשים על הדוכן"}</span>
         </button>
         {SHOP.map((it) => {
           const have = owned.includes(it.key);
@@ -960,7 +960,7 @@ function Shop({
               <b className="text-[13px] leading-tight">{it.title}</b>
               <span className="text-[11px] text-[var(--muted)] leading-snug">{it.where}</span>
               {have ? (
-                <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{on ? "✓ על הדוכן" : "שלך · לשים"}</span>
+                <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{on ? "✓ על הדוכן" : "שלך · לשים על הדוכן"}</span>
               ) : (
                 <span className={`flex items-center gap-1 text-[13px] font-black tabular-nums ${poor ? "text-[var(--muted)]" : ""}`}>
                   {it.price}
@@ -986,7 +986,7 @@ function Shop({
             {balance >= picked.price ? (
               <>לקנות <b>{picked.title}</b> ב-{picked.price} מטבעות?</>
             ) : (
-              <>חסרים עוד <b className="tabular-nums">{picked.price - balance}</b> מטבעות ל{picked.title}</>
+              <>חסרות עוד <b className="tabular-nums">{picked.price - balance}</b> מטבעות ל{picked.title}</>
             )}
           </span>
           {balance >= picked.price && (

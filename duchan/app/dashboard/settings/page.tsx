@@ -42,9 +42,9 @@ const SECTIONS = {
   coupons: { icon: "🏷️", title: "קופונים", intro: "יוצרים כאן קוד הנחה, ושולחים אותו לחברים." },
   payment: { icon: "💳", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
   shipping: { icon: "🚚", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
-  order: { icon: "💬", title: "ההזמנה בוואטסאפ", intro: "ככה נראית הזמנה שמגיעה בוואטסאפ. היא נכתבת לבד, אין מה למלא." },
+  order: { icon: "💬", title: "איך מגיעה הזמנה", intro: "איך הזמנה מגיעה אליך, ואיך נראית הודעת וואטסאפ מקונים. אין כאן מה למלא." },
   app: { icon: "📲", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית. זיהינו את הטלפון ואת הדפדפן — אלה הצעדים בדיוק בשבילו." },
-  details: { icon: "📱", title: "הפרטים שלי", intro: "לאן מגיעות ההזמנות, וקצת עליכם. אף פעם לא כתובת." },
+  details: { icon: "📱", title: "הפרטים שלי", intro: "הטלפון שקונים כותבים אליו, וקצת עליכם. בלי כתובת מגורים." },
   team: { icon: "🤝", title: "לנהל ביחד", intro: "לא חובה. אפשר לנהל את הדוכן לבד, ואפשר עם עוד אחד/ת — חבר/ה, אח או אחות. כל אחד נכנס עם הטלפון שלו." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
@@ -248,7 +248,7 @@ export default function SettingsPage() {
     // שותף/ה לא נוגע/ת בטלפון ההזמנות ובפרטי התשלום (0057) — לא בודקים אותם
     const normalized = isPartner ? store.contact_phone : normalizePhone(phone);
     if (!normalized) {
-      showToast("מספר הוואטסאפ לא נראה תקין, לבדוק שוב");
+      showToast("מספר הוואטסאפ לא נראה תקין. כדאי לבדוק אותו ב'הפרטים שלי'");
       return false;
     }
     const bitLink = payout.payout_bit_link?.trim();
@@ -339,7 +339,7 @@ export default function SettingsPage() {
     setDirty(false);
     if (dropped.length) {
       console.error("[settings] saved without missing columns:", dropped.join(", "), lastError);
-      showToast(`נשמר, חוץ מ-${dropped.length} שדות שצריך עדכון דאטהבייס`);
+      showToast(`נשמר, חוץ מ-${dropped.length} שדות שעוד אי אפשר לשמור. לנסות שוב מאוחר יותר`);
     } else {
       showToast("נשמר ✨");
     }
@@ -378,7 +378,7 @@ export default function SettingsPage() {
     setCoverPreview(null);
     setStore({ ...store, cover_preset: key, cover_key: null });
     refreshStorePage(store.slug);
-    showToast("הרקע עודכן");
+    showToast("הקאבר עודכן");
   }
 
   async function removeCover() {
@@ -388,7 +388,7 @@ export default function SettingsPage() {
     setCoverPreview(null);
     setStore({ ...store, cover_key: null });
     refreshStorePage(store.slug);
-    showToast("התמונה הוסרה, חזרנו לרקע");
+    showToast("תמונת הקאבר הוסרה");
   }
 
   /** תמונת רקע לכל הדף, בפרופורציות המקוריות. עוברת בקנבס (EXIF), ונשמרת מיד. */
@@ -445,7 +445,7 @@ export default function SettingsPage() {
     setLook(null);
     setBgPattern(null);
     setDirty(true);
-    showToast("חזרנו לבסיס — לשמור כדי שזה יופיע בדוכן");
+    showToast("חזרנו לבסיס. לוחצים 'שמירת שינויים' כדי שזה יופיע בדוכן");
   }
 
   async function onAvatar(file: File) {
@@ -498,7 +498,7 @@ export default function SettingsPage() {
     }
     setStore({ ...store, status: next });
     await refreshStorePage(store.slug);
-    showToast(next === "paused" ? "הדוכן בהפסקה. הלינק מציג 'הדוכן סגור'" : "הדוכן פתוח שוב 🎉");
+    showToast(next === "paused" ? "הדוכן בהפסקה. מי שנכנס ללינק רואה 'הדוכן סגור כרגע'" : "הדוכן פתוח שוב 🎉");
   }
 
   if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
@@ -567,7 +567,7 @@ export default function SettingsPage() {
             className="mt-3 bg-white/90 px-3 py-2 text-[12px] text-[var(--warn-ink)] leading-relaxed"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            הדוכן בתצוגה מקדימה: רואים הכל, וההזמנות נפתחות אחרי הפרסום.
+            הדוכן בתצוגה מקדימה: אפשר להיכנס ולראות אותו, אבל הזמנות נפתחות רק אחרי הפרסום.
           </div>
         )}
         <a
@@ -600,7 +600,7 @@ export default function SettingsPage() {
           <div className="text-[12px] text-[var(--muted)] leading-snug mt-0.5">
             {store.status === "active"
               ? "צריך הפסקה? סוגרים כאן, ופותחים שוב מתי שרוצים."
-              : "הלינק מציג 'סגור כרגע'. הכל נשמר — לחיצה פותחת שוב."}
+              : "מי שנכנס ללינק רואה 'הדוכן סגור כרגע'. הכל נשמר, ולחיצה פותחת שוב."}
           </div>
         </div>
         </div>
@@ -660,7 +660,7 @@ export default function SettingsPage() {
           key: "shipping", icon: "🚚", tint: "#f6efe6", title: "משלוחים",
           summary: info.ships ? (info.shipping_price !== "" ? `משלוח ₪${formatPrice(parsePrice(info.shipping_price))}` : "משלוח · המחיר בתיאום") : "מסירה ביד בלבד",
         },
-        { key: "order", icon: "💬", tint: "#e3f5ea", title: "ההזמנה בוואטסאפ", summary: "ככה נראית הזמנה שמגיעה בוואטסאפ" },
+        { key: "order", icon: "💬", tint: "#e3f5ea", title: "איך מגיעה הזמנה", summary: "מה קורה כשמישהו מזמין" },
       ],
     },
     {
@@ -706,7 +706,7 @@ export default function SettingsPage() {
                 <span className="block text-[12px] text-[var(--muted)] mt-0.5 leading-snug">
                   {isPartner
                     ? "את/ה שותף/ה בדוכן הזה · מה אני יכול/ה לעשות, ומי בצוות"
-                    : "אם רוצים — אפשר להזמין חבר/ה, אח או אחות אחד/ת שינהלו איתך"}
+                    : "אם רוצים, אפשר להזמין חבר/ה, אח או אחות לנהל איתך את הדוכן"}
                 </span>
               </span>
               <Chevron className="text-[var(--faint)]" />
@@ -731,7 +731,7 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
-                      <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (חינם) או בביט</li>
+                      <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (בלי עמלה) או בביט</li>
                       <li>2. אנחנו בודקים שהכסף הגיע</li>
                       <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
                     </ol>
@@ -861,7 +861,7 @@ export default function SettingsPage() {
                 maxLength={140}
                 rows={2}
                 aria-label="תיאור הדוכן"
-                placeholder="פה כותבים את מה שאתם מוכרים בדוכן"
+                placeholder="כותבים כאן מה מוכרים בדוכן"
                 onChange={(e) => { setTagline(e.target.value); setDirty(true); }}
                 className="editable editable-quiet block w-full text-center text-[12px] resize-none leading-snug opacity-85"
                 style={{ color: t.ink }}
@@ -1113,7 +1113,7 @@ export default function SettingsPage() {
 
             {/* רקע הקאבר — הפס שבראש הדוכן. כאן, ליד רקע הדוכן: שני הרקעים
                 באותו מקום, ולא אחד בעיצוב ואחד מתחת לשם */}
-            <div className="text-[12px] text-[var(--faint)] mt-4 mb-1.5">והפס למעלה (קאבר):</div>
+            <div className="text-[12px] text-[var(--faint)] mt-4 mb-1.5">והפס בראש הדוכן (קאבר):</div>
             <div className="flex gap-1.5 flex-wrap" data-testid="cover-picker">
               <button
                 onClick={() => coverRef.current?.click()}
@@ -1337,7 +1337,7 @@ export default function SettingsPage() {
             <>
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
         <div id="payment" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">מה מקבלים ממך?</div>
+          <div className="text-[13px] font-bold">איך אפשר לשלם לך?</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             מה שמסומן מופיע לקונים לפני ההזמנה וגם בהודעה. הכסף עובר ישירות
             אליכם — דוכן לא נוגע בו ולא לוקח עמלה.
@@ -1392,7 +1392,7 @@ export default function SettingsPage() {
                   />
                   {!!payout.payout_bit_link?.trim() && !isBitLink(payout.payout_bit_link.trim()) && (
                     <p className="text-[12px] text-[var(--danger)] mt-1">
-                      זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר רק אותו.
+                      זה לא נראה כמו לינק של ביט. מטעמי בטיחות אפשר להדביק כאן רק לינק של ביט.
                     </p>
                   )}
                   <PayDetailsMissing
@@ -1434,7 +1434,7 @@ export default function SettingsPage() {
                   />
                   {!!payout.payout_paybox_link?.trim() && !isPayboxLink(payout.payout_paybox_link.trim()) && (
                     <p className="text-[12px] text-[var(--danger)] mt-1">
-                      זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר רק אותו.
+                      זה לא נראה כמו לינק של פייבוקס. מטעמי בטיחות אפשר להדביק כאן רק לינק של פייבוקס.
                     </p>
                   )}
                   <PayDetailsMissing
@@ -1491,7 +1491,7 @@ export default function SettingsPage() {
         <div className="bg-white border border-[var(--line)] p-3">
           <div className="text-[13px] font-bold">איך המוצרים מגיעים לקונים?</div>
           <div className="text-[12px] text-[var(--muted)] mb-2.5">
-            {info.ships ? "המשלוח מופיע בדוכן ובהודעת ההזמנה." : "הקונים יודעים שמוסרים ביד ומתאמים בוואטסאפ."}
+            {info.ships ? "המשלוח מופיע בדוכן ובהודעת ההזמנה." : "בדוכן כתוב שמוסרים ביד, ואת המסירה מתאמים בוואטסאפ."}
           </div>
           <Choice
             value={info.ships}
@@ -1503,11 +1503,11 @@ export default function SettingsPage() {
           />
           {info.ships && (
             <>
-              <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">איך ולאן</label>
+              <label className="block text-[12px] text-[var(--muted)] mt-2.5 mb-1">איך שולחים ולאן</label>
               <textarea
                 value={info.shipping_note}
                 onChange={(e) => { setInfo({ ...info, shipping_note: e.target.value }); setDirty(true); }}
-                placeholder="שולחת בדואר לכל הארץ, מגיע תוך שבוע. באזור שלי אפשר גם למסור ביד."
+                placeholder="שולחים בדואר לכל הארץ, מגיע תוך שבוע. באזור שלי אפשר גם למסור ביד."
                 maxLength={200}
                 rows={2}
                 aria-label="פרטי משלוח"
@@ -1524,7 +1524,7 @@ export default function SettingsPage() {
                 className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
               />
               <p className="text-[12px] text-[var(--muted)] mt-1">
-                אפשר להשאיר ריק, ואז כתוב רק שיש משלוח והמחיר נסגר בוואטסאפ.
+                אפשר להשאיר ריק. אז בדוכן כתוב רק שיש משלוח, ואת המחיר סוגרים בוואטסאפ.
               </p>
             </>
           )}
@@ -1537,13 +1537,13 @@ export default function SettingsPage() {
         {/* איך ההזמנה מגיעה אליך */}
         <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <ol className="text-[12.5px] text-[var(--muted)] leading-relaxed flex flex-col gap-1">
-            <li>1. בוחרים מוצרים בדוכן ולוחצים "שליחה בוואטסאפ".</li>
-            <li>2. וואטסאפ נפתח <b>אצלם</b>, וההודעה כבר כתובה בפנים.</li>
-            <li>3. לוחצים שלח, וההודעה נוחתת אצלך כהודעת וואטסאפ רגילה.</li>
+            <li>1. הקונים בוחרים מוצרים בדוכן ולוחצים "שליחת ההזמנה".</li>
+            <li>2. ההזמנה מופיעה אצלך בלשונית "הזמנות".</li>
+            <li>3. אם הם רוצים לדבר איתך, הם לוחצים על כפתור הוואטסאפ, וההודעה כבר כתובה בשבילם.</li>
           </ol>
           <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
-            ההודעה נכתבת לבד, אין מה למלא כאן. השם ומספר ההזמנה בשורה הראשונה,
-            כדי לדעת איזו הודעה שייכת לאיזו הזמנה כבר מרשימת השיחות:
+            ככה נראית ההודעה. שם הקונה ומספר ההזמנה בשורה הראשונה, כך שכבר
+            ברשימת השיחות רואים איזו הודעה שייכת לאיזו הזמנה:
           </p>
           {/* בלי "שורת פתיחה" ו"שורת סיום": שתי תיבות שביקשו טקסט לפני
               שבכלל היה ברור מה ההודעה, וההודעה מסתדרת מצוין בלעדיהן. */}
@@ -1558,7 +1558,7 @@ export default function SettingsPage() {
           </div>
           <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
             {payLabels.length
-              ? `בקופה בוחרים מתוך מה שסומן למטה (${payLabels.join(" / ")}), ומה שנבחר מופיע בהודעה.`
+              ? `בהזמנה הקונים בוחרים מתוך מה שסימנת ב"איך משלמים לי" (${payLabels.join(" / ")}), ומה שנבחר מופיע בהודעה.`
               : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
           </p>
         </div>
@@ -1573,7 +1573,7 @@ export default function SettingsPage() {
             התיבות קשורות לאותו ערך — מה שמקלידים בזו מתעדכן בזו. */}
         <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <label className="block text-[12px] text-[var(--muted)] mb-1">
-            הטלפון שלך בוואטסאפ, לשם מגיעות ההזמנות
+            הטלפון שלך בוואטסאפ, לשם קונים כותבים על הזמנות
           </label>
           <input
             value={phone}
@@ -1585,7 +1585,7 @@ export default function SettingsPage() {
           />
           {normalizePhone(phone) && (
             <a
-              href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה, זו אני 🙂")}`}
+              href={`https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent("בדיקה מהדוכן 🙂")}`}
               target="_blank"
               rel="noreferrer"
               className="block text-[12px] text-[var(--ok-ink)] underline mt-1"
@@ -1620,8 +1620,8 @@ export default function SettingsPage() {
             </div>
           </div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
-            הגיל לא מופיע בדוכן ולא בקוד המקור. העיר כן מופיעה, למעלה מתחת
-            לשם, כדי שהקונים ידעו אם המסירה הגיונית. אף פעם לא כתובת.
+            הגיל לא מופיע בדוכן, והקונים לא רואים אותו. העיר כן מופיעה, למעלה
+            מתחת לשם, כדי שהקונים ידעו אם המסירה הגיונית. כתובת לא מבקשים אף פעם.
           </p>
         </div>
 
@@ -1692,7 +1692,7 @@ function PayDetailsMissing({
     <div className="mt-2 border-[1.5px] border-[var(--warn-line)] bg-[var(--warn-bg)] text-[var(--warn-ink)] px-3 py-2.5" data-testid={testid}>
       <p className="text-[12.5px] font-bold leading-snug">⚠️ עוד לא כתבת לאן מעבירים</p>
       <p className="text-[12px] mt-1 leading-relaxed">
-        בלי מספר או לינק, מי שבוחר/ת {method} לא יוכל/תוכל לשלם ישר, ויצטרך/תצטרך לשאול אותך בוואטסאפ.
+        בלי מספר או לינק, קונים שבוחרים {method} לא יוכלו לשלם ישר, ויצטרכו לשאול אותך בוואטסאפ.
       </p>
       {myPhone && (
         <button

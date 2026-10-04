@@ -82,7 +82,7 @@ export async function POST(req: Request) {
   const cid = crypto.randomUUID();
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברים", cid }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים. צריך להיכנס שוב", cid }, { status: 401 });
 
   let body: { profileId?: string; item?: ItemInput };
   try {

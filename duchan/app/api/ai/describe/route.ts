@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   // בודקים תצורת שרת רק אחרי — כדי לא לחשוף מצב הגדרה לקורא לא מזוהה.
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים. צריך להיכנס שוב" }, { status: 401 });
 
   let body: {
     storeId?: string;

@@ -13,7 +13,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 export async function GET(req: Request) {
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים. צריך להיכנס שוב" }, { status: 401 });
 
   const requestedId = new URL(req.url).searchParams.get("item");
   if (!requestedId) return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });

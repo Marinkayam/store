@@ -19,7 +19,7 @@ import { itemLine, type TradeItem } from "@/lib/squish-trade";
 export async function POST(req: Request) {
   const supa = await supabaseServer();
   const { data: { user } } = await supa.auth.getUser();
-  if (!user) return NextResponse.json({ error: "לא מחוברים" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "לא מחוברים. צריך להיכנס שוב" }, { status: 401 });
 
   let body: { proposalId?: string };
   try {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "הטרייד עוד לא מוכן לתיאום" }, { status: 409 });
   }
   if (!p.accepted_by_sender_at || !p.accepted_by_receiver_at) {
-    return NextResponse.json({ error: "שתי הצדדים צריכות לאשר" }, { status: 409 });
+    return NextResponse.json({ error: "שני הצדדים צריכים לאשר" }, { status: 409 });
   }
   const mine = p.sender_user_id === user.id;
   const parentAck = mine ? p.parent_ack_sender_at : p.parent_ack_receiver_at;
