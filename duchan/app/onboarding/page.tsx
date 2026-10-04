@@ -138,7 +138,7 @@ export default function Onboarding() {
       reader.onload = () => set({ avatarData: reader.result as string });
       reader.readAsDataURL(blob);
     } catch (e) {
-      setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה. אפשר לבחור תמונה אחרת.");
     }
   }
 
@@ -153,7 +153,7 @@ export default function Onboarding() {
         setAdding((a) => (a ? { ...a, imageData: reader.result as string } : a));
       reader.readAsDataURL(blob);
     } catch (e) {
-      setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      setPhotoErr(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה. אפשר לבחור תמונה אחרת.");
     }
   }
 
@@ -178,7 +178,7 @@ export default function Onboarding() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? "משהו השתבש, לנסות שוב");
+        setErr(data.error ?? "משהו השתבש. אפשר לנסות שוב.");
         return;
       }
 
@@ -224,7 +224,7 @@ export default function Onboarding() {
       sessionStorage.removeItem("duchan-draft");
       setResult({ slug: data.slug });
     } catch {
-      setErr("אין חיבור, לנסות שוב");
+      setErr("אין חיבור לאינטרנט. אפשר לנסות שוב בעוד רגע.");
     } finally {
       setBusy(false);
     }
@@ -280,7 +280,7 @@ export default function Onboarding() {
           <div className="text-center">
             <h1 className="t-title">ככה הדוכן שלך ייראה</h1>
             <p className="t-sub mt-2">
-              לחיצה על כל דבר עורכת אותו. אפשר גם להוסיף מוצר ולראות אותו בפנים.
+              לוחצים על כל חלק כדי לשנות אותו. אפשר גם להוסיף מוצר ולראות איך הוא נראה בדוכן.
             </p>
           </div>
 
@@ -525,7 +525,7 @@ export default function Onboarding() {
           <div className="t-small text-[var(--muted)]">
             <div className="font-semibold text-[var(--ink)] mb-1">מה יקרה עכשיו:</div>
             <ul className="flex flex-col gap-0.5 list-disc pr-4">
-              <li>הדוכן נפתח, פרטי, רק מי שבונה אותו רואה אותו</li>
+              <li>הדוכן נפתח במצב פרטי, ועוד אי אפשר להזמין ממנו</li>
               <li>מעלים מוצר ראשון עם תמונה ומחיר</li>
               <li>מפרסמים ומשתפים את הקישור</li>
             </ul>

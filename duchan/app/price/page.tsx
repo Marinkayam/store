@@ -33,7 +33,7 @@ export default function PricePage() {
           <p className="t-sub mt-3">
             בונים בחינם. משלמים רק כשרוצים
             <br />
-            לפתוח את הלינק ולשלוח אותו לחברים.
+            לפרסם את הדוכן ולשלוח את הלינק לחברים.
           </p>
 
           <div className={`mt-6 inline-flex flex-col items-center card px-8 py-5 ${IS_LAUNCH ? "fx-shine relative" : ""}`}>
@@ -100,7 +100,7 @@ export default function PricePage() {
           </div>
 
           <div className="text-[13.5px] font-bold text-[var(--ink)] mt-5 mb-2.5">
-            ₪{ACTIVATION_PRICE} בפרספקטיבה
+            ₪{ACTIVATION_PRICE} בהשוואה לדברים אחרים
           </div>
           <AnchorTable />
         </section>
@@ -111,7 +111,7 @@ export default function PricePage() {
             נבנה את הדוכן ←
           </a>
           <p className="text-[12.5px] text-[var(--muted)] mt-3 leading-relaxed">
-            בונים קודם. משלמים רק כשרוצים לפרסם,
+            בונים קודם, ומשלמים רק כשרוצים לפרסם.
             <br />
             אפשר לראות הכל בלי להתחייב.
           </p>

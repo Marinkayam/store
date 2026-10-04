@@ -74,7 +74,7 @@ export default function InstallCard({ force = false }: { force?: boolean }) {
   if (platform.kind === "installed" || done) {
     return force ? (
       <div className="bg-white border border-[var(--line)] p-3.5 text-[13px]" data-testid="install-done">
-        ✅ הדוכן כבר על המסך הבית — נכנסים מהאייקון, כמו כל אפליקציה.
+        ✅ הדוכן כבר על מסך הבית — נכנסים מהאייקון, כמו כל אפליקציה.
       </div>
     ) : null;
   }

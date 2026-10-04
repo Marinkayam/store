@@ -83,7 +83,7 @@ export async function GET(
   if (!peek || peek.used_at || new Date(peek.expires_at).getTime() < Date.now()) {
     return failPage(
       "הקישור כבר נוצל או שפג תוקפו",
-      "קישור כניסה עובד פעם אחת בלבד, ל-24 שעות. אפשר לבקש חדש ממי ששלח אותו."
+      "קישור כניסה עובד פעם אחת בלבד, ותקף 24 שעות. אפשר לבקש חדש ממי ששלח אותו."
     );
   }
   return welcomePage(token, forStore(_req));
@@ -113,7 +113,7 @@ export async function POST(
   if (!link?.phone) {
     return failPage(
       "הקישור כבר נוצל או שפג תוקפו",
-      "קישור כניסה עובד פעם אחת בלבד, ל-24 שעות. אפשר לבקש חדש ממי ששלח אותו."
+      "קישור כניסה עובד פעם אחת בלבד, ותקף 24 שעות. אפשר לבקש חדש ממי ששלח אותו."
     );
   }
   const phone = link.phone;
@@ -142,17 +142,17 @@ export async function POST(
         user_metadata: { phone },
       });
       if (createErr || !created.user) {
-        return failPage("לא הצלחנו להיכנס", "משהו השתבש אצלנו. אפשר ללחוץ שוב על הקישור בעוד רגע.");
+        return failPage("הכניסה לא הצליחה", "משהו השתבש אצלנו. אפשר ללחוץ שוב על הקישור בעוד רגע.");
       }
       userId = created.user.id;
     }
     await db.from("phone_accounts").insert({ phone, user_id: userId });
   }
-  if (!userId) return failPage("לא הצלחנו להיכנס", "אפשר לנסות שוב בעוד רגע.");
+  if (!userId) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
 
   const { data: existing } = await db.auth.admin.getUserById(userId);
   const email = existing.user?.email;
-  if (!email) return failPage("לא הצלחנו להיכנס", "אפשר לנסות שוב בעוד רגע.");
+  if (!email) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
 
   /* ── פתיחת סשן — magic link שנצרך כאן בשרת, כמו באימות סמס ── */
   const supa = await supabaseServer();
@@ -173,9 +173,9 @@ export async function POST(
   if (!signedIn) {
     const password = randomPassword();
     const { error: updErr } = await db.auth.admin.updateUserById(userId, { password });
-    if (updErr) return failPage("לא הצלחנו להיכנס", "אפשר לנסות שוב בעוד רגע.");
+    if (updErr) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
     const { error: signInErr } = await supa.auth.signInWithPassword({ email, password });
-    if (signInErr) return failPage("לא הצלחנו להיכנס", "אפשר לנסות שוב בעוד רגע.");
+    if (signInErr) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
   }
 
   /* ── סימון פיילוט לילדה חדשה — אותו מנגנון כמו במסלול הסמס ── */

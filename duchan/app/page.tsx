@@ -95,7 +95,7 @@ export default function Landing() {
         <StallArt className="w-64 h-auto" />
         <h1 className="text-[1.5rem] leading-none font-semibold tracking-[-0.02em] mt-3">דוכן</h1>
         <p className="text-[15px] leading-relaxed mt-3 max-w-[19rem] text-[var(--ink)]">
-          יש לך אוסף ענקי של סקוושי?
+          יש לך אוסף ענקי של סקווישים?
           <br />
           צעצועים, בגדים וספרים שכבר לא צריך?
           <br />

@@ -71,7 +71,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
     const { error } = await supa.rpc("set_parent_consent", { p_store: store.id, p_consent: on });
     if (error) {
       setConsent(!on);
-      setErr("לא הצלחנו לשמור את האישור, לנסות שוב.");
+      setErr("לא הצלחנו לשמור את האישור. אפשר לסמן שוב.");
       return;
     }
     setStore({ ...store, parent_consent_at: on ? new Date().toISOString() : null });
@@ -93,7 +93,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
     });
     setBusy(false);
     if (error) {
-      setErr("משהו השתבש, אפשר לנסות שוב, או לשלוח לי הודעה בוואטסאפ.");
+      setErr("משהו השתבש. אפשר לנסות שוב, או לכתוב לנו בוואטסאפ.");
       return;
     }
     setStore({ ...store, payment_claimed_at: new Date().toISOString(), payment_method: method });
@@ -278,9 +278,9 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           לצאת לעולם
         </h1>
         <p className="text-[13px] text-[var(--muted)] mt-2 leading-relaxed">
-          בנית אותה בחינם, וזה נשאר שלך.
+          בנית את הדוכן בחינם, והוא נשאר שלך.
           <br />
-          הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות, תשלום אחד.
+          הלינק כבר עובד בתצוגה מקדימה. כדי לקבל הזמנות אמיתיות, משלמים פעם אחת.
         </p>
         {isLaunch && (
           <div
@@ -298,7 +298,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <span className="text-sm text-[var(--muted)]">פעם אחת, לתמיד</span>
         </div>
         {isLaunch && (
-          <p className="text-[14px] font-bold mt-2">לבנות את הדוכן שלך במחיר מצחיק!</p>
+          <p className="text-[14px] font-bold mt-2">לפרסם את הדוכן שלך במחיר מצחיק!</p>
         )}
         <p className="text-[12px] text-[var(--muted)] mt-1.5">
           בלי מנוי · בלי עמלה על מכירות · כל שקל שמרוויחים נשאר אצלכם
@@ -316,14 +316,14 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
       <div className="mt-8 bg-white border border-[var(--line)] p-4">
         <div className="text-[14px] font-bold">צריך אישור של הורה?</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
-          לשלוח את ההסבר המלא, מה כלול, מה לומדים מזה, ואיך אנחנו שומרים על הבטיחות.
+          אפשר לשלוח להורה את ההסבר המלא: מה כלול, מה לומדים מזה, ואיך אנחנו שומרים על הבטיחות.
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(
             `בניתי דוכן אמיתי באינטרנט! 🛍️\n` +
               (isLaunch
                 ? `יש עכשיו ${dealLabel}: רק ₪${price} במקום ₪${fullPrice}.\n`
-                : `כדי לפרסם אותה צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\n`) +
+                : `כדי לפרסם אותו צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\n`) +
               `כל ההסבר כאן: ${priceUrl}`
           )}`}
           className="mt-3 block text-center bg-[var(--whatsapp)] text-white py-2.5 text-[13px] font-bold"
@@ -339,11 +339,11 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         {showParent && (
           <div data-testid="parent-explainer" className="mt-4 flex flex-col gap-4">
             <div>
-              <div className="text-[13px] font-bold mb-2">מה היא באמת לומדת</div>
+              <div className="text-[13px] font-bold mb-2">מה באמת לומדים מזה</div>
               <LearnsTable />
             </div>
             <div>
-              <div className="text-[13px] font-bold mb-2">₪{price} בפרספקטיבה</div>
+              <div className="text-[13px] font-bold mb-2">₪{price} בהשוואה לדברים אחרים</div>
               <AnchorTable />
             </div>
             <div>
@@ -365,7 +365,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
       >
         <div className="text-[14px] font-bold">לפני שמפרסמים</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
-          דוכן אמיתי באינטרנט זה דבר גדול. אנחנו רוצות לדעת שההורים שלך בעניין.
+          דוכן אמיתי באינטרנט זה דבר גדול. אנחנו רוצים לדעת שההורים שלך יודעים ומסכימים.
         </p>
         <label className="flex items-start gap-2.5 mt-3 cursor-pointer">
           <input
@@ -376,7 +376,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
             className="mt-0.5 w-5 h-5 shrink-0 accent-[var(--ink)]"
           />
           <span className="text-[13px] leading-relaxed">
-            אני מאשרת שההורים שלי יודעים ומאשרים לי לנהל את הדוכן.
+            אני מאשר/ת שההורים שלי יודעים ומאשרים לי לנהל את הדוכן.
           </span>
         </label>
       </div>
@@ -384,17 +384,17 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
       {/* תשלום */}
       <h2 className="text-base font-bold mt-9 mb-1">איך משלמים לדוכן</h2>
       <p className="text-[12.5px] text-[var(--muted)] mb-3 leading-relaxed">
-        אנחנו לא סולקות כרטיסי אשראי ולא שומרות פרטי תשלום. משלמים בביט או בפייבוקס,
-        ואני מאשרת את הדוכן ידנית.
+        אנחנו לא סולקים כרטיסי אשראי ולא שומרים פרטי תשלום. משלמים בביט או בפייבוקס,
+        ואנחנו מאשרים את הדוכן ידנית.
       </p>
       {/* הבלבול הכי סביר כאן הוא בין שני סוגי הכסף. אומרים את זה במפורש. */}
       <div className="bg-[var(--ok-bg)] border border-[var(--ok-line)] p-3 mb-3 text-[12.5px] leading-relaxed">
         <span className="font-bold">שני דברים נפרדים לגמרי:</span>
         <br />
-        התשלום הזה הוא <b>לדוכן</b>, פעם אחת, על הקמת הדוכן.
+        התשלום הזה הוא <b>לנו</b>, פעם אחת, על פתיחת הדוכן.
         <br />
         הכסף שקונים משלמים לך על מוצרים עובר <b>ישירות אליך</b>, בביט או במזומן, איך
-        שנבחר בהגדרות. אנחנו לא נוגעים בו ולא לוקחים ממנו אגורה.
+        שבוחרים בהגדרות. אנחנו לא נוגעים בו ולא לוקחים ממנו אגורה.
       </div>
       {/* שתי דרכים, ולא רשימה של לינקים: פייבוקס ראשון כי הוא חינם, וביט
           מתחתיו כדרך משנית. בשתיהן צריך לדעת מה לכתוב, אז שם הדוכן יושב
@@ -460,15 +460,15 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         <a href={waOwner(`היי! רוצה להפעיל את הדוכן "${store.display_name}" (${store.slug}). איך משלמים?`)}
           className="bg-white border border-[var(--line)] py-3 text-[13px] font-bold text-center"
         >
-          💬 יש לי שאלה, לדבר איתך בוואטסאפ
+          💬 יש לי שאלה, לדבר איתכם בוואטסאפ
         </a>
       </div>
 
       {/* הצהרה */}
       <div className="mt-8 bg-white border border-[var(--line)] p-4">
-        <div className="text-[14px] font-bold">שילמתם? נעדכן אותנו</div>
+        <div className="text-[14px] font-bold">שילמתם? עדכנו אותנו</div>
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
-          זה לא מפעיל את הדוכן מיד, זה מכניס אותו לרשימה שלי לאישור.
+          הדוכן לא נפתח מיד: אנחנו בודקים שהתשלום הגיע, ואז מאשרים.
         </p>
         <div className="flex gap-1.5 mt-3">
           {METHODS.map((m) => (
@@ -488,7 +488,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           value={ref}
           onChange={(e) => setRef(e.target.value)}
           data-testid="payment-ref"
-          placeholder="על שם מי שולם? (לא חובה)"
+          placeholder="על שם מי התשלום? (לא חובה)"
           maxLength={60}
           className="mt-2 w-full border border-[var(--line)] px-3.5 py-2.5 text-[13px]"
         />
@@ -508,7 +508,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           לא עכשיו, חזרה לדוכן ←
         </a>
         <p className="text-[12px] text-[var(--faint)] mt-4 leading-relaxed">
-          כל מה שבנית נשמר, גם אם לא תפעילי עכשיו.
+          כל מה שבנית נשמר, גם אם לא מפעילים עכשיו.
           <br />
           <a href="/terms" className="underline">תנאי שימוש</a>
           {" · "}

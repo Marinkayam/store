@@ -53,14 +53,14 @@ export default function JoinPage({ params }: { params: Promise<{ token: string }
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
-        setError(d.error ?? "משהו השתבש, לנסות שוב");
+        setError(d.error ?? "משהו השתבש. אפשר לנסות שוב.");
         setWrongPhone(!!d.wrongPhone);
         return;
       }
       pickStore(d.storeId);
       window.location.assign("/dashboard");
     } catch {
-      setError("אין חיבור, לנסות שוב");
+      setError("אין חיבור לאינטרנט. אפשר לנסות שוב בעוד רגע.");
     } finally {
       setBusy(false);
     }
@@ -95,7 +95,7 @@ export default function JoinPage({ params }: { params: Promise<{ token: string }
             {info.state !== "open" ? (
               <div className="bg-white border border-[var(--line)] p-4 text-[13.5px] leading-relaxed" data-testid="join-closed">
                 {info.state === "expired"
-                  ? "פג התוקף של ההזמנה (שבוע). אפשר לבקש מראש הדוכן הזמנה חדשה."
+                  ? "פג התוקף של ההזמנה: היא תקפה לשבוע בלבד. אפשר לבקש מראש הדוכן הזמנה חדשה."
                   : info.state === "cancelled"
                     ? "ההזמנה בוטלה. אפשר לבקש מראש הדוכן הזמנה חדשה."
                     : "ההזמנה הזו כבר נוצלה."}

@@ -65,14 +65,14 @@ export default function PhoneVerify({
       });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? "לא הצלחנו לשלוח קוד");
+        setErr(data.error ?? "לא הצלחנו לשלוח קוד. בודקים שהמספר נכון ומנסים שוב.");
         return;
       }
       setStep("code");
       setCode("");
       setCooldown(60);
     } catch {
-      setErr("אין חיבור, לנסות שוב");
+      setErr("אין חיבור לאינטרנט. אפשר לנסות שוב בעוד רגע.");
     } finally {
       setBusy(false);
     }
@@ -90,7 +90,7 @@ export default function PhoneVerify({
       });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? "הקוד לא נכון");
+        setErr(data.error ?? "הקוד לא נכון. אפשר להקליד אותו שוב.");
         setCode("");
         return;
       }
@@ -98,7 +98,7 @@ export default function PhoneVerify({
       try { localStorage.setItem("duchan-last-phone", phone); } catch { /* אין אחסון */ }
       await onVerified(data);
     } catch {
-      setErr("אין חיבור, לנסות שוב");
+      setErr("אין חיבור לאינטרנט. אפשר לנסות שוב בעוד רגע.");
     } finally {
       setBusy(false);
     }
@@ -227,7 +227,7 @@ export default function PhoneVerify({
         disabled={cooldown > 0 || busy}
         className="t-small text-[var(--muted)] underline disabled:opacity-40 disabled:no-underline"
       >
-        {cooldown > 0 ? `לא הגיעה הודעה? אפשר לשלוח שוב בעוד ${cooldown}` : "לא הגיעה הודעה? לשלוח שוב"}
+        {cooldown > 0 ? `לא הגיעה הודעה? אפשר לשלוח שוב בעוד ${cooldown} שניות` : "לא הגיעה הודעה? לשלוח שוב"}
       </button>
     </div>
   );

@@ -5,7 +5,7 @@
  */
 export default function HelpButton({ context }: { context: string }) {
   const sales = (process.env.NEXT_PUBLIC_SALES_WHATSAPP || "972545888471").replace(/\D/g, "");
-  const msg = `היי מרינה! 👋 צריך עזרה ב${context}.`;
+  const msg = `היי! 👋 צריך עזרה ב${context}.`;
   return (
     <a
       href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
