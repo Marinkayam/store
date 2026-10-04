@@ -140,14 +140,14 @@ export default function FirstSteps({
         </p>
       </div>
 
-      <div className="px-4 pt-3 pb-4 border-t border-[var(--sand)]">
+      <div className="px-4 pt-4 pb-4 border-t border-[var(--sand)]">
         <VSteps
           steps={steps.map((st) => {
             const isDone = done[st.key];
             const isCurrent = st.key === current;
             const waiting = st.key === "publish" && claimed && !published;
             const state = isDone ? "done" : isCurrent ? "current" : waiting ? "waiting" : "later";
-            const showSub = isCurrent || waiting || st.key === "open" || st.key === "order";
+            const showSub = isCurrent || waiting || (st.key === "order" && !isDone);
             return {
               key: st.key,
               testid: `first-step-${st.key}`,

@@ -27,7 +27,7 @@ let p = await fresh();
 await p.goto(`${BASE}/`, { waitUntil: "networkidle" });
 check("ביקור ראשון: הודעת העוגיות מופיעה", (await p.locator("[data-testid=cookie-note]").count()) === 1);
 const note = (await p.textContent("[data-testid=cookie-note]")) ?? "";
-check("בשפה קלילה: 'רק הקטנות שצריך', 'בלי פרסומות ובלי מעקב'", note.includes("רק הקטנות שצריך") && note.includes("בלי פרסומות ובלי מעקב"), note);
+check("בשפה קלילה: 'ואי עוגיות, יאמי!', 'בלי פרסומות ובלי מעקב'", note.includes("ואי עוגיות, יאמי") && !note.includes("רק הקטנות שצריך") && note.includes("בלי פרסומות ובלי מעקב"), note);
 check("ויש קישור 'מה זה עוגיות?' להסבר", (await p.getAttribute("[data-testid=cookie-note] a", "href")) === "/privacy#cookies");
 await p.click("[data-testid=cookie-ok]");
 check("'הבנתי' סוגר", (await p.locator("[data-testid=cookie-note]").count()) === 0);

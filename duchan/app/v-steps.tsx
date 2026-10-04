@@ -2,11 +2,16 @@ import type { ReactNode } from "react";
 
 /**
  * שלבים ממוספרים עם פס התקדמות אנכי — מרינה: "אם יש 1,2,3 אולי שיהיה עם
- * איזה פרוגרס ורטיקלי יפה".
+ * איזה פרוגרס ורטיקלי יפה", ואז: "מאוד גס, הקווים והרווחים בכלל לא שווים".
  *
- * ריבוע ממוספר לכל שלב, וקו אנכי שמחבר אותו לשלב הבא. שלב שנעשה מקבל ✓
- * בזית, והקו שיוצא ממנו נצבע — כך רואים במבט אחד כמה כבר עברנו.
- * בלי פינות מעוגלות, כמו כל השפה של הדוכן.
+ * לכן:
+ *   • הקו רציף — כל קטע יוצא ממרכז הסימן ויורד בדיוק עד מרכז הסימן הבא,
+ *     מאחורי הסימנים. בלי רווחים מתחת לסימן שגדלים ומתכווצים לפי הטקסט.
+ *   • כל שלב באותו גובה מינימלי ובאותו ריווח, כך שהמרחקים בין הסימנים שווים
+ *     כשאין בשלב תוכן נוסף.
+ *   • סימן קטן ועדין (24px) וקו דק (2px): שלב שנעשה — זית מלא עם ✓, השלב
+ *     של עכשיו — דיו מלא, שלבים שעוד לא הגיעו — לבן עם מסגרת דקה.
+ *   • בלי פינות מעוגלות, כמו כל השפה של הדוכן.
  */
 export type VStep = {
   key: string;
@@ -18,7 +23,10 @@ export type VStep = {
   testid?: string;
 };
 
+const MARK = 24; // גודל הסימן — הקו עובר במרכזו
+
 export default function VSteps({ steps, testid, compact = false }: { steps: VStep[]; testid?: string; compact?: boolean }) {
+  const gap = compact ? 14 : 18; // ריווח קבוע בין שלבים
   return (
     <ol data-testid={testid} className="flex flex-col">
       {steps.map((s, i) => {
@@ -32,25 +40,39 @@ export default function VSteps({ steps, testid, compact = false }: { steps: VSte
             data-testid={s.testid}
             data-state={s.state}
             aria-current={state === "current" && s.state ? "step" : undefined}
-            className="flex gap-3"
+            className="relative flex gap-3"
+            style={{ paddingBottom: last ? 0 : gap, minHeight: last ? undefined : MARK + gap + 6 }}
           >
-            <div className="flex flex-col items-center shrink-0" aria-hidden>
+            {/* הקטע עד השלב הבא: ממרכז הסימן הזה ועד מרכז הסימן הבא */}
+            {!last && (
               <span
-                className={`w-8 h-8 flex items-center justify-center text-[14px] font-bold transition-colors ${
-                  done ? "bg-[var(--olive)] text-white" : dark ? "bg-[var(--ink)] text-white" : "bg-[var(--sand)] text-[var(--muted)]"
-                }`}
+                aria-hidden
+                className="absolute w-[2px]"
+                style={{
+                  right: MARK / 2 - 1,
+                  top: MARK / 2,
+                  bottom: -MARK / 2,
+                  background: done ? "var(--olive)" : "var(--sand)",
+                }}
+              />
+            )}
+            <span
+              aria-hidden
+              className={`relative z-[1] shrink-0 flex items-center justify-center text-[12px] font-bold ${
+                done
+                  ? "bg-[var(--olive)] text-white"
+                  : dark
+                    ? "bg-[var(--ink)] text-white"
+                    : "bg-white text-[var(--muted)] border-[1.5px] border-[var(--stone)]"
+              }`}
+              style={{ width: MARK, height: MARK }}
+            >
+              {done ? "✓" : state === "waiting" ? "⏳" : i + 1}
+            </span>
+            <div className="flex-1 min-w-0" style={{ paddingTop: 2 }}>
+              <div
+                className={`text-[14px] leading-[20px] ${done ? "text-[var(--muted)] font-medium" : state === "later" ? "text-[var(--muted)] font-semibold" : "font-bold"}`}
               >
-                {done ? "✓" : state === "waiting" ? "⏳" : i + 1}
-              </span>
-              {!last && (
-                <span
-                  className="w-[3px] flex-1 min-h-3 my-1 transition-colors"
-                  style={{ background: done ? "var(--olive)" : "var(--sand)" }}
-                />
-              )}
-            </div>
-            <div className={`flex-1 min-w-0 pt-1 ${last ? "" : compact ? "pb-3" : "pb-5"}`}>
-              <div className={`text-[14.5px] font-bold leading-snug ${done ? "text-[var(--muted)]" : ""}`}>
                 {s.title}
                 {done && <span className="sr-only"> (נעשה)</span>}
               </div>

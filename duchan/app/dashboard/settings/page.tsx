@@ -537,7 +537,7 @@ export default function SettingsPage() {
         style={
           coverPreview
             ? { backgroundImage: `url(${coverPreview})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : previewBg ? undefined : { background: coverCss(preset) }
+            : { background: coverCss(preset) }
         }
       />
       <div className="px-4 pb-4 -mt-9 text-center">
@@ -789,7 +789,7 @@ export default function SettingsPage() {
               onClick={() => coverRef.current?.click()}
               aria-label="החלפת תמונת הקאבר"
               className="block w-full h-28 overflow-hidden relative"
-              style={coverPreview || previewBg ? undefined : { background: coverCss(preset) }}
+              style={coverPreview ? undefined : { background: coverCss(preset) }}
             >
               {coverPreview && <img src={coverPreview} alt="" className="w-full h-full object-cover" />}
               <span className="absolute bottom-1.5 left-1.5 bg-black/55 text-white text-[11.5px] px-2 py-1">

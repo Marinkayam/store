@@ -158,7 +158,9 @@ await b2.goto(fresh(), { waitUntil: "networkidle" });
 const rootBg = await b2.locator(".s-look").first().evaluate((el) => getComputedStyle(el).backgroundImage);
 check("הדוכן לקונות מקבל את הרקע", rootBg.includes("svg"), rootBg.slice(0, 60));
 const coverBg = await b2.locator("[data-testid=store-cover]").evaluate((el) => getComputedStyle(el).backgroundImage);
-check("הקאבר המוכן לא מתחרה ברקע — שקוף", coverBg === "none", coverBg.slice(0, 40));
+// מרינה, 10.2026: "לא רואים את הבאנר" — הפס בראש הדוכן מוצג גם מעל רקע
+const coverFill = await b2.locator("[data-testid=store-cover]").evaluate((el) => { const cs = getComputedStyle(el); return cs.backgroundImage + " " + cs.backgroundColor; });
+check("הפס בראש הדוכן (קאבר) נראה גם כשיש רקע", !/^none rgba\(0, 0, 0, 0\)$/.test(coverFill), coverFill.slice(0, 60));
 const card = b2.locator(".s-look .s-r.relative").first();
 const radius = await card.evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
 check("כרטיסי המוצרים עגולים (22px)", radius === "22px", radius);

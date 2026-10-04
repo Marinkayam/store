@@ -807,9 +807,10 @@ export default function StoreView({
         <div
           data-testid="store-cover"
           className="h-36 overflow-hidden"
-          // רקע שנבחר רץ מלמעלה — קאבר מוכן מעליו היה רקע שני שמתחרה בו.
-          // תמונת קאבר שהועלתה עדיין גוברת.
-          style={{ background: cover || customBg ? undefined : coverCss(store.cover_preset) }}
+          // הפס בראש הדוכן תמיד מוצג, גם כשיש רקע לדוכן — מרינה: "לא רואים
+          // את הבאנר". קודם הוא נעלם מעל רקע, ובחירת קאבר לא שינתה כלום.
+          // תמונת קאבר שהועלתה גוברת על הקאבר המוכן.
+          style={{ background: cover ? undefined : coverCss(store.cover_preset) }}
         >
           {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
         </div>

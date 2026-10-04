@@ -122,6 +122,20 @@ try {
   await p.reload();
   await p.waitForSelector("[data-testid=first-step-publish][data-state=current]", { timeout: 15000 });
   check("אחרי מוצר: הצעד הנוכחי הוא לפרסם", await p.locator("[data-testid=first-steps-publish]").isVisible());
+  if (process.env.SHOTS) await p.locator("[data-testid=orders-empty]").screenshot({ path: `${process.env.SHOTS}/first-steps.png` });
+  // המרווחים בין הסימנים שווים כשאין בשלב תוכן נוסף (מרינה: "הקווים והרווחים בכלל לא שווים")
+  const gaps = await p.evaluate(() => {
+    const ys = [...document.querySelectorAll("[data-testid=orders-empty] ol > li > span[aria-hidden]:not(.absolute)")].map((m) => m.getBoundingClientRect().top);
+    return ys.slice(1).map((y, i) => Math.round(y - ys[i]));
+  });
+  check("הקו רציף: כל קטע מגיע בדיוק עד הסימן הבא", await p.evaluate(() => {
+    const lis = [...document.querySelectorAll("[data-testid=orders-empty] ol > li")];
+    return lis.slice(0, -1).every((li, i) => {
+      const line = li.querySelector("span.absolute").getBoundingClientRect();
+      const next = lis[i + 1].querySelector("span[aria-hidden]:not(.absolute)").getBoundingClientRect();
+      return Math.abs(line.bottom - (next.top + next.height / 2)) <= 1;
+    });
+  }), gaps.join(","));
   check("store-state-banner עדיין קיים (מבחן ההפעלה)", await p.locator("[data-testid=store-state-banner]").isVisible());
   check("בלי שגיאות בדפדפן", errs.length === 0, errs.join(" | "));
 } finally {
