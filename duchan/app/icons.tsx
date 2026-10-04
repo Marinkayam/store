@@ -17,7 +17,7 @@ export type IconName =
   | "camera" | "video" | "gallery" | "plus" | "check" | "pencil" | "trash"
   | "hourglass" | "gift" | "gem" | "leaf" | "sparkle" | "coins" | "link"
   | "palette" | "box" | "eye" | "party" | "moon" | "search" | "cloud"
-  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat";
+  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin";
 
 interface Props {
   name: IconName;
@@ -195,6 +195,13 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
     <>
       <path d="M7 2.5h10v19H7z" fill={t} />
       <path d="M10 5h4" fill="none" />
+    </>
+  ),
+  // מטבע דוכן: עיגול עם סוכך קטן מוטבע — כמו המטבע של הקופה (kupa-art)
+  coin: (t) => (
+    <>
+      <circle cx="12" cy="12" r="9" fill={t} />
+      <path d="M7.5 10h9M7.5 10v1.2a1.5 1.4 0 0 0 3 0V10m0 1.2a1.5 1.4 0 0 0 3 0V10m0 1.2a1.5 1.4 0 0 0 3 0V10M9 12.8v3M15 12.8v3M8 15.8h8" fill="none" strokeWidth={1.3} />
     </>
   ),
   chat: (t) => (

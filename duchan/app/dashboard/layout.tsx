@@ -17,7 +17,7 @@ const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard/settings", label: "הדוכן שלי", icon: "shop" },
   { href: "/dashboard/products", label: "מוצרים", icon: "bag" },
   { href: "/dashboard", label: "הזמנות", icon: "receipt" },
-  { href: "/dashboard/kupa", label: "הקופה", icon: "coins" },
+  { href: "/dashboard/kupa", label: "הקופה", icon: "coin" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
