@@ -97,7 +97,7 @@ await buyer.screenshot({ path: `${shots}/62-must-pick.png` });
 await buyer.locator("button:text-is('כחול')").click();
 await buyer.locator("button[aria-label='הוספה לסל']").click();
 await sheetGone();
-check("cart accepts the product once a choice is made", (await buyer.textContent("body")).includes("פריטים"));
+check("cart accepts the product once a choice is made", (await buyer.textContent("body")).includes("פריט אחד"));
 
 /* ── 3. אותו מוצר בשני צבעים = שתי שורות בסל ── */
 await card().click();
@@ -182,7 +182,7 @@ check("the strip links to orders, products and design",
   (await girl.locator("a[href='/dashboard']").count()) >= 1 &&
   (await girl.locator("a[href='/dashboard/products']").count()) === 1 &&
   (await girl.locator("a[href='/dashboard/settings']").count()) === 1);
-check("the strip explains this is the buyers' view", (await girl.textContent("body")).includes("ככה הקונים רואים אותה"));
+check("the strip explains this is the buyers' view", (await girl.textContent("body")).includes("ככה הקונים רואים אותו"));
 await girl.screenshot({ path: `${shots}/65-owner-strip.png` });
 
 /* ── 8. החמ"ל: הסתרה, מחיקה רכה, שחזור, עריכה ── */

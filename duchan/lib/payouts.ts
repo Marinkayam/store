@@ -133,20 +133,20 @@ export function payoutSummary(p: PayoutPrefs): string {
 }
 
 /**
- * שורת התשלום בהודעת ההזמנה: "בחרתי לשלם ב: ביט".
+ * שורת התשלום בהודעת ההזמנה: "בחרתי לשלם בביט".
  *
  * שלוש גרסאות היו כאן, וזו הנכונה:
  *   "אשלם בביט"          — הבטחה, ובשלב הזה עוד לא שילמו.
  *   "מקבלים תשלום בביט / פייבוקס" — מה שהדוכן מקבל, כלומר משהו שבעלת
  *                          הדוכן כבר יודעת. לא הוסיף לה כלום.
- *   "בחרתי לשלם ב: ביט"   — עובדה על *הבחירה* של הקונה, וזה בדיוק מה
+ *   "בחרתי לשלם בביט"    — עובדה על *הבחירה* של הקונה, וזה בדיוק מה
  *                          שהיא צריכה כדי לדעת למה לצפות.
  *
  * ריק כשאין אמצעי תשלום מסומן — אז גם אין מה לבחור.
  */
 export function payoutLine(p: PayoutPrefs, chosen?: PayMethod | null): string {
   const label = payMethods(p).find((m) => m.key === chosen)?.label;
-  if (label) return `בחרתי לשלם ב: ${label}`;
+  if (label) return `בחרתי לשלם ב${label}`;
   // לא נבחר כלום (או שהאמצעי כבר לא מסומן) — נופלים למה שהדוכן מקבל
   const labels = payoutLabels(p);
   return labels.length ? `אפשר לשלם ב: ${labels.join(" / ")}` : "";
@@ -172,7 +172,7 @@ export function paymentLinkLine(p: PayoutPrefs, chosen?: PayMethod | null): stri
 }
 
 /**
- * שורת המסירה: "בחרתי בשיטת מסירה: משלוח".
+ * שורת המסירה: "בחרתי לקבל במשלוח".
  *
  * גם כאן זו בחירה של הקונה הזו ולא הגדרה של הדוכן. כשהדוכן לא מציע
  * משלוח בכלל אין שורה — לא הייתה בחירה.
@@ -181,9 +181,9 @@ export function deliveryLine(
   opts: { ships: boolean; wantsShipping: boolean; note?: string | null; price?: number | null }
 ): string {
   if (!opts.ships) return "";
-  if (!opts.wantsShipping) return "בחרתי בשיטת מסירה: מסירה אישית";
+  if (!opts.wantsShipping) return "בחרתי לקבל במסירה אישית";
   const extra = [opts.note?.trim() || "בתיאום", opts.price ? `₪${formatPrice(opts.price)}` : ""]
     .filter(Boolean)
     .join(" · ");
-  return `בחרתי בשיטת מסירה: משלוח · ${extra}`;
+  return `בחרתי לקבל במשלוח · ${extra}`;
 }

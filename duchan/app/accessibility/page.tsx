@@ -9,7 +9,7 @@ export default function AccessibilityPage() {
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
-        <a href="/" className="text-xs text-[var(--muted)] underline">← חזרה לדוכן</a>
+        <a href="/" className="text-xs text-[var(--muted)] underline">← לדף הבית</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">הצהרת נגישות</h1>
         <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.1 · עודכן באוקטובר 2026</p>
 
@@ -38,7 +38,7 @@ export default function AccessibilityPage() {
         </Section>
 
         <Section title="מגבלות ידועות">
-          חלק מהתכנים בשירות מועלים על ידי המשתמשות עצמן (תמונות מוצרים,
+          חלק מהתכנים בשירות מועלים על ידי המשתמשים עצמם (תמונות מוצרים,
           סרטונים קצרים) ואינם עוברים בדיקת נגישות מרכזית. לדוגמה, וידאו
           שמעלים בעלי דוכן אינו כולל כתוביות. שינוי מיקום תמונה בעורך המוצר
           נעשה כרגע בגרירה בלבד, ללא חלופה מקלדתית. אנחנו עובדים על צמצום
@@ -59,7 +59,7 @@ export default function AccessibilityPage() {
           >
             וואטסאפ
           </a>{" "}
-          ולפרט את הבעיה ואת העמוד שבו נתקלת. נחזור בהקדם האפשרי.
+          ולפרט את הבעיה ואת העמוד שבו נתקלתם בה. נחזור בהקדם האפשרי.
         </Section>
 
         <Section title="עדכון ההצהרה">

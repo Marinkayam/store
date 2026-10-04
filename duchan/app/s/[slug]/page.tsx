@@ -71,7 +71,7 @@ export default async function StorePage({ params }: Props) {
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--canvas)] text-center px-8">
         <Icon name="moon" size={58} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
         <h1 className="text-xl font-bold">הדוכן סגור כרגע</h1>
-        <p className="text-sm text-[var(--muted)]">אולי הלינק השתנה, ואולי היא פשוט נחה.</p>
+        <p className="text-sm text-[var(--muted)]">אולי הלינק השתנה, ואולי בעלי הדוכן לוקחים הפסקה.</p>
       </div>
     );
   }
@@ -167,7 +167,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
           href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
           className="inline-block mt-3 py-1 text-[12.5px] text-[var(--muted)] underline"
         >
-          יש לך שאלות? אשמח לענות בוואטסאפ
+          יש לך שאלות? אפשר לשאול אותנו בוואטסאפ
         </a>
       </section>
     </div>

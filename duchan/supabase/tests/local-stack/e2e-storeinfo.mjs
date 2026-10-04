@@ -169,10 +169,10 @@ check("השורה הראשונה נושאת את שם הקונה ואת מספר
   /נועה/.test(msg.split("\n")[0]) && /#\d+/.test(msg.split("\n")[0]), msg.split("\n")[0]);
 check("ההודעה מפרטת את מה שהוזמן", msg.includes("גרבי צבעים") && msg.includes("כחול"));
 check("ואת הסכום", /סה"כ: ₪\d+/.test(msg), msg.split("\n").find((l) => l.includes('סה"כ')) ?? "");
-check("ואומרת במה הקונה בחרה לשלם", msg.includes("בחרתי לשלם ב: פייבוקס"),
+check("ואומרת במה הקונה בחרה לשלם", msg.includes("בחרתי לשלם בפייבוקס"),
   msg.split("\n").find((l) => l.includes("בחרתי לשלם")) ?? "");
-check("ואת שיטת המסירה שהיא בחרה", /בחרתי בשיטת מסירה:/.test(msg),
-  msg.split("\n").find((l) => l.includes("שיטת מסירה")) ?? "");
+check("ואת שיטת המסירה שהיא בחרה", /בחרתי לקבל ב/.test(msg),
+  msg.split("\n").find((l) => l.includes("בחרתי לקבל")) ?? "");
 /* הקישור של הילדה נשלח מיד עם ההזמנה (בקשת מרינה 2026-08) — הקונה
    בחרה פייבוקס והלינק של הדוכן הוא פייבוקס, אז הוא בהודעה והתשלום
    יכול לקרות בלי הלוך-חזור. הטלפון של הילדה עדיין לא נכנס להודעה. */
@@ -220,7 +220,7 @@ const waUrl2 = await buyer2
   .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")
   .getAttribute("href");
 const msg2 = waUrl2 ? decodeURIComponent(new URL(waUrl2).searchParams.get("text") ?? "") : "";
-check("בחירת ביט מצוינת בהודעה", msg2.includes("בחרתי לשלם ב: ביט"),
+check("בחירת ביט מצוינת בהודעה", msg2.includes("בחרתי לשלם בביט"),
   msg2.split("\n").find((l) => l.includes("בחרתי לשלם")) ?? "");
 /* הלינק של הדוכן הוא פייבוקס והקונה בחרה ביט — קישור לא רלוונטי
    לא נדחף לה להודעה. */

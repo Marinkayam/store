@@ -305,7 +305,7 @@ export default function StoreView({
       const data = await res.json();
       if (!res.ok) {
         setCoupon(null);
-        setCouponError(data.error ?? "לא הצלחנו לבדוק את הקוד");
+        setCouponError(data.error ?? "לא הצלחנו לבדוק את הקוד. אפשר לנסות שוב");
         return;
       }
       setCoupon({ code: data.code, label: data.label, discount: Number(data.discount) });
@@ -407,7 +407,7 @@ export default function StoreView({
   async function sendOrder() {
     if (!cart.length || sending || preview) return;
     if (buyerName.trim().length < 2) {
-      showToast("רק צריך את השם שלך, כדי שהיא תדע מי הזמינה");
+      showToast("צריך לכתוב שם, כדי שבעלי הדוכן ידעו מי הזמין");
       return;
     }
     // טלפון חובה: ההזמנה כבר לא עוברת בוואטסאפ, ובלי מספר אין למוכרת
@@ -476,11 +476,11 @@ export default function StoreView({
           // הקוד נפל בדרך (נוצל, פג). ההזמנה לא נשלחה; הסל והפרטים נשמרו.
           setCoupon(null);
           setCouponOpen(true);
-          setCouponError(data.error ?? "הקוד לא עבר");
-          showToast("ההזמנה לא נשלחה כי הקוד לא עבר. אפשר לשלוח בלי הקוד");
+          setCouponError(data.error ?? "הקוד כבר לא תקף");
+          showToast("ההזמנה לא נשלחה כי הקוד כבר לא תקף. אפשר לשלוח שוב בלי הקוד");
           return;
         }
-        showToast(data.error ?? "משהו השתבש, לנסות שוב");
+        showToast(data.error ?? "משהו השתבש וההזמנה לא נשלחה. אפשר לנסות שוב");
         return; // לא מנקים את הסל עד שהשרת אישר
       }
 
@@ -567,7 +567,7 @@ export default function StoreView({
         for (let i = 0; i < 3; i++) setTimeout(() => confettiBurst(window.innerWidth / 2, window.innerHeight * 0.45, 18), i * 220);
       }
     } catch {
-      showToast("אין חיבור, לנסות שוב עוד רגע");
+      showToast("אין חיבור, ההזמנה לא נשלחה. אפשר לנסות שוב עוד רגע");
     } finally {
       setSending(false);
     }
@@ -754,7 +754,7 @@ export default function StoreView({
             <span className="text-[12px] opacity-80 leading-tight">
               זה הדוכן שלך
               <br />
-              <span className="opacity-70">ככה הקונים רואים אותה</span>
+              <span className="opacity-70">ככה הקונים רואים אותו</span>
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
               <a href="/dashboard" className="relative bg-white text-[var(--ink)] px-2.5 py-1.5 text-[12.5px] font-bold">
@@ -783,20 +783,20 @@ export default function StoreView({
           {owner ? (
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
               <span className="text-[12.5px] leading-tight">
-                תצוגה מקדימה, אפשר כבר לשלוח את הלינק לחברים
+                תצוגה מקדימה: אפשר כבר לשלוח את הלינק לחברים
                 <br />
-                <span className="opacity-75">כדי לקבל הזמנות צריך לפרסם</span>
+                <span className="opacity-75">ההזמנות נפתחות אחרי פרסום הדוכן</span>
               </span>
               <a
                 href="/activate"
                 className="shrink-0 bg-[var(--warn-ink)] text-white px-3 py-2 text-[12.5px] font-bold"
               >
-                פרסמי את הדוכן
+                לפרסם את הדוכן
               </a>
             </div>
           ) : (
             <p className="px-3 py-2 text-[12.5px] text-center leading-tight">
-              👀 תצוגה מקדימה, הדוכן הזה עוד לא נפתח להזמנות
+              👀 תצוגה מקדימה: הדוכן הזה עוד לא נפתח להזמנות
             </p>
           )}
         </div>
@@ -852,7 +852,7 @@ export default function StoreView({
         <div className="flex items-center justify-center gap-2 mt-2 text-[12.5px] opacity-70 flex-wrap">
           {store.city && <span>📍 {store.city}</span>}
           {store.city && <span aria-hidden>·</span>}
-          <span>{visibleProducts.length} מוצרים</span>
+          <span>{visibleProducts.length === 1 ? "מוצר אחד" : `${visibleProducts.length} מוצרים`}</span>
           {store.ships && (
             <>
               <span aria-hidden>·</span>
@@ -979,12 +979,12 @@ export default function StoreView({
         style={{ background: "var(--s-primary)", color: "var(--s-onprimary)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)" }}
         onClick={() => cartCount && setOrderOpen(true)}
       >
-        <span className="text-sm">{cartCount} פריטים · ₪{formatPrice(cartTotal)}</span>
+        <span className="text-sm">{cartCount === 1 ? "פריט אחד" : `${cartCount} פריטים`} · ₪{formatPrice(cartTotal)}</span>
         <span
           className="s-r px-4 py-1.5 text-[13px] font-bold"
           style={{ background: "var(--s-onprimary)", color: "var(--s-primary)" }}
         >
-          הזמנה
+          להזמנה
         </span>
       </div>
 
@@ -1046,7 +1046,7 @@ export default function StoreView({
               ₪{formatPrice(current.price)}
             </p>
             {current.track_stock && current.stock <= 3 && (
-              <p className="text-[12px] opacity-75 text-center mt-1">נשארו {current.stock} במלאי</p>
+              <p className="text-[12px] opacity-75 text-center mt-1">{current.stock === 1 ? "נשאר אחד במלאי" : `נשארו ${current.stock} במלאי`}</p>
             )}
             {current.is_mystery && (
               <p className="text-[13px] font-semibold text-center mt-2" data-testid="mystery-note">
@@ -1287,7 +1287,7 @@ export default function StoreView({
                 <b>קופונים:</b> עוד אין לך קופון בדוכן, אז הקונים לא רואים כאן שדה קוד.
                 <span className="block opacity-75">ההודעה הזו מופיעה רק לך.</span>
               </span>
-              <span className="font-bold underline shrink-0">ליצירה ←</span>
+              <span className="font-bold underline shrink-0">ליצירת קופון ←</span>
             </a>
           )}
 
@@ -1359,7 +1359,7 @@ export default function StoreView({
                       className="shrink-0 px-5 text-[13.5px] font-bold disabled:opacity-50"
                       style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
                     >
-                      {couponBusy ? "בודקת…" : "החלה"}
+                      {couponBusy ? "בודקים…" : "הפעלה"}
                     </button>
                   </div>
                   {couponError && (
@@ -1579,7 +1579,7 @@ export default function StoreView({
                  היא נקלטת כאן, בחנות של הילדה. */
               style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
             >
-              {sending ? "רגע…" : "שליחת ההזמנה"}
+              {sending ? "שולחים…" : "שליחת ההזמנה"}
             </button>
             <p className="text-[11.5px] opacity-75 text-center mt-2">
               ההזמנה נשלחת ישר לבעלי הדוכן, והאישור יופיע כאן.

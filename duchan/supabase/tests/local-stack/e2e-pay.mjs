@@ -51,7 +51,7 @@ await quick.click();
 await p.waitForSelector("text=נוסף לסל", { timeout: 8000 });
 check("adding from the grid does not open the product sheet",
   !(await p.textContent("body")).includes("הוספה לסל" + "\n"));
-check("the cart bar shows the item", (await p.textContent("body")).includes("פריטים · ₪9"));
+check("the cart bar shows the item", (await p.textContent("body")).includes("פריט אחד · ₪9"));
 await p.waitForTimeout(2800);
 check("the button then reports what is already in the cart",
   ((await quick.textContent()) ?? "").includes("בסל · 1"), (await quick.textContent()) ?? "");
