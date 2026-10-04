@@ -221,7 +221,7 @@ export default function OrdersPage() {
         !store.tagline?.trim() && {
           key: "about",
           title: "משפט על הדוכן",
-          why: "מי מוכרים ומה מיוחד אצלכם. קונים אוהבים לדעת ממי הם קונים.",
+          why: "מי מוכר/ת ומה מיוחד בדוכן. קונים אוהבים לדעת ממי הם קונים.",
           cta: "לכתוב משפט",
           href: "/dashboard/settings#design",
         },
