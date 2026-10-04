@@ -6,6 +6,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import StallHero from "./stall-hero";
 import HelpButton from "./help-button";
 import PromoBurst from "./promo-burst";
+import Icon from "./icons";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 
 // עמוד הנחיתה: שדה אחד. בלי אימייל. הבנייה מתחילה לפני ההרשמה.
@@ -125,7 +126,7 @@ export default function Landing() {
           >
             <PromoBurst />
             <span className="relative z-[3] inline-block text-[11.5px] font-bold bg-black/25 px-2.5 py-0.5">
-              <span className="fx-wiggle">🎉</span> {DEAL_LABEL}
+              <span className="fx-wiggle inline-block align-[-2px]"><Icon name="party" size={14} tone="none" /></span> {DEAL_LABEL}
             </span>
             <span className="relative z-[3] block text-[17px] font-bold leading-snug mt-1">
               רק <bdi className="fx-pop text-[24px] align-[-2px]">₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן!{" "}

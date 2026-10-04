@@ -17,7 +17,7 @@ export type IconName =
   | "camera" | "video" | "gallery" | "plus" | "check" | "pencil" | "trash"
   | "hourglass" | "gift" | "gem" | "leaf" | "sparkle" | "coins" | "link"
   | "palette" | "box" | "eye" | "party" | "moon" | "search" | "cloud"
-  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun";
+  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun" | "flame" | "pin" | "cookie";
 
 interface Props {
   name: IconName;
@@ -214,6 +214,24 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
     <>
       <path d="M4 5h16v11H10l-4 3.5V16H4z" fill={t} />
       <path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01" fill="none" strokeWidth={2.2} />
+    </>
+  ),
+  flame: (t) => (
+    <>
+      <path d="M12 3c.4 3.2 5.5 5.4 5.5 10.5A5.5 5.5 0 0 1 12 19a5.5 5.5 0 0 1-5.5-5.5c0-2.6 1.6-3.8 2.4-5.6.9 1 1.2 2.2 1.2 3.2C11.6 9 12.6 6.2 12 3z" fill={t} />
+      <path d="M12 19a2.3 2.3 0 0 1-2.3-2.4c0-1.5 1.4-2.2 2.3-3.8.9 1.6 2.3 2.3 2.3 3.8A2.3 2.3 0 0 1 12 19z" fill="none" />
+    </>
+  ),
+  pin: (t) => (
+    <>
+      <path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z" fill={t} />
+      <circle cx="12" cy="10" r="2.3" fill="none" />
+    </>
+  ),
+  cookie: (t) => (
+    <>
+      <path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.8 3 3 0 0 1-3.6-3 3 3 0 0 1-3.2-3.4A3 3 0 0 1 12 3.5z" fill={t} />
+      <path d="M8.5 10h.01M10.5 15h.01M15 15.5h.01M7.5 13.5h.01" fill="none" strokeWidth={2.4} />
     </>
   ),
   lock: (t) => (

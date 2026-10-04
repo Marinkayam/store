@@ -266,7 +266,7 @@ export default function StoreView({
     const id = setTimeout(() => {
       const n = Date.now() + clock.offset;
       setClock((c) => c && { ...c, now: n });
-      if (n >= next) showToast("🔥 הדרופ נפתח! אפשר להזמין");
+      if (n >= next) showToast("הדרופ נפתח! אפשר להזמין");
     }, Math.min(next - clock.now + 300, 2_000_000_000));
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -622,7 +622,7 @@ export default function StoreView({
                       className="absolute inset-x-0 top-1/4 z-10 bg-[var(--ink)]/85 text-white text-[13px] font-bold text-center py-1.5"
                       data-testid="drop-strip"
                     >
-                      🔥 דרופ{" "}
+                      <Icon name="flame" size={15} tone="none" className="inline-block align-[-3px] me-1" />דרופ{" "}
                       {clock && p.drop_at ? (
                         <>· <DropCountdown at={dropTime(p.drop_at)!} offset={clock.offset} /></>
                       ) : (
@@ -637,7 +637,7 @@ export default function StoreView({
                       style={{ color: "var(--s-primary-text)", borderColor: "currentColor" }}
                       data-testid="mystery-chip"
                     >
-                      🎁 הפתעה
+                      <Icon name="gift" size={13} tone="none" className="inline-block align-[-2px] me-1" />מוצר בהפתעה
                     </span>
                   ) : (
                     (() => {
@@ -677,7 +677,7 @@ export default function StoreView({
                     ) : p.is_mystery ? (
                       <MysteryBag className="w-24 h-24" />
                     ) : (
-                      <span className="squish" style={{ animationDelay: `${i * 0.4}s` }}>🛍️</span>
+                      <span className="squish opacity-70" style={{ animationDelay: `${i * 0.4}s`, color: "var(--s-ink)" }}><Icon name="bag" size={56} tone="var(--s-surface)" /></span>
                     )}
                   </div>
                   <div className="px-3.5 pt-3 pb-2 text-right">
@@ -698,7 +698,7 @@ export default function StoreView({
                     style={{ background: "var(--s-thumb)", color: "var(--s-ink)" }}
                     data-testid="drop-locked"
                   >
-                    🔒 {clock && p.drop_at ? `נפתח ${dropWhen(p.drop_at)}` : "נפתח בקרוב"}
+                    <Icon name="lock" size={13} tone="none" className="inline-block align-[-2px] me-1" />{clock && p.drop_at ? `נפתח ${dropWhen(p.drop_at)}` : "נפתח בקרוב"}
                   </div>
                 )}
                 {!out && !preview && !isLocked && (
@@ -851,7 +851,7 @@ export default function StoreView({
             כל שאלה כזו שנשארת בלי תשובה בדף היא הודעה בוואטסאפ, ולעיתים
             קרובות מכירה שלא נסגרה. */}
         <div className="flex items-center justify-center gap-2 mt-2 text-[12.5px] opacity-70 flex-wrap">
-          {store.city && <span>📍 {store.city}</span>}
+          {store.city && <span><Icon name="pin" size={14} tone="none" className="inline-block align-[-2px] me-0.5" />{store.city}</span>}
           {store.city && <span aria-hidden>·</span>}
           <span>{visibleProducts.length === 1 ? "מוצר אחד" : `${visibleProducts.length} מוצרים`}</span>
           {store.ships && (
@@ -923,7 +923,7 @@ export default function StoreView({
             style={{ background: "var(--s-ink)", color: "var(--s-surface)" }}
           >
             <span className="min-w-0">
-              <span className="block text-[14px] font-extrabold">🔥 דרופ: {nextDrop.name}</span>
+              <span className="block text-[14px] font-extrabold"><Icon name="flame" size={16} tone="none" className="inline-block align-[-3px] me-1" />דרופ: {nextDrop.name}</span>
               <span className="block text-[12px] opacity-80">{dropWhen(nextDrop.drop_at!)}</span>
             </span>
             <span className="shrink-0 text-[16px] font-extrabold">
@@ -939,7 +939,7 @@ export default function StoreView({
           <div className="text-center pt-14">
             <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-75"} style={plate}>
               {/* יש מוצרים אבל כולם אזלו — לא "אין כאן כלום", שנראה כמו דוכן נטוש */}
-              {products.length > 0 ? "הכל נמכר! 🎉 מוצרים חדשים בקרוב" : "עוד אין כאן מוצרים."}
+              {products.length > 0 ? "הכל נמכר! מוצרים חדשים בקרוב" : "עוד אין כאן מוצרים."}
             </p>
           </div>
         ) : featured.length ? (
@@ -1052,13 +1052,13 @@ export default function StoreView({
             )}
             {current.is_mystery && (
               <p className="text-[13px] font-semibold text-center mt-2" data-testid="mystery-note">
-                🤫 מה בפנים? זו ההפתעה!
+                <Icon name="gift" size={15} tone="none" className="inline-block align-[-3px] me-1" />מה בפנים? זו ההפתעה!
               </p>
             )}
             {locked(current) && (
               <div className="s-r mt-3 px-4 py-3 text-center" style={{ background: "var(--s-thumb)" }} data-testid="drop-box">
                 <div className="text-[15px] font-extrabold">
-                  🔥 דרופ!{" "}
+                  <Icon name="flame" size={17} tone="none" className="inline-block align-[-3px] me-1" />דרופ!{" "}
                   {clock && current.drop_at ? (
                     <>נפתח בעוד <DropCountdown at={dropTime(current.drop_at)!} offset={clock.offset} /></>
                   ) : (
@@ -1184,7 +1184,7 @@ export default function StoreView({
             {preview
               ? "הדוכן עוד לא נפתח להזמנות"
               : locked(current)
-                ? "🔒 עוד לא נפתח"
+                ? <><Icon name="lock" size={16} tone="none" className="inline-block align-[-3px] me-1" />עוד לא נפתח</>
                 : maxQty(current) === 0
                 ? "אין יותר במלאי"
                 : current.options?.length && !choice
