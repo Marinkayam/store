@@ -185,12 +185,12 @@ await p.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
 check("ובלי מסך תשלום — ישר 'ההזמנה נשלחה!'", (await p.locator("[data-testid=order-pay-first]").count()) === 0);
 await p.context().close();
 
-/* ── 10. עוגיות: הפס מתחת לשורת השעון באייפון ── */
+/* ── 10. עוגיות: הפס למטה (מרינה, 10.2026), מעל פס הבית של האייפון ── */
 const cctx = await browser.newContext({ ...devices["iPhone 13"] });
 const cp = await cctx.newPage();
 await cp.goto(`${BASE}/s/${store.slug}`, { waitUntil: "networkidle" });
-const pt = await cp.evaluate(() => document.querySelector("[data-testid=cookie-note]")?.className ?? "");
-check("פס העוגיות מתחשב בשורת השעון (safe-area)", pt.includes("safe-area-inset-top"));
+const pb = await cp.evaluate(() => document.querySelector("[data-testid=cookie-note]")?.getAttribute("style") ?? "");
+check("פס העוגיות למטה מתחשב בפס הבית של האייפון (safe-area)", pb.includes("safe-area-inset-bottom"), pb.slice(0, 80));
 await cctx.close();
 
 /* ── ניקוי ── */
