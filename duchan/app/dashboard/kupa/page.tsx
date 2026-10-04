@@ -51,8 +51,8 @@ export default function KupaPage() {
     <div className="px-4 pt-4 pb-8 flex flex-col gap-5" data-testid="kupa-page">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <a href="/dashboard/settings" className="text-[12.5px] text-[var(--muted)]">→ הדוכן שלי</a>
-          <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight mt-1">קופת הדוכן</h1>
+          <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">קופת הדוכן</h1>
+          <p className="text-[13px] text-[var(--muted)] mt-0.5">כל צעד בדוכן שווה מטבעות, והמטבעות בונים את הדוכן.</p>
         </div>
         <span className="flex items-center gap-1.5 bg-white border border-[var(--line)] px-3 py-1.5 text-[20px] font-black tabular-nums" data-testid="kupa-coins">
           {kupa.coins}

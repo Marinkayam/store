@@ -25,7 +25,6 @@ import TeamSection from "./team-section";
 import { OWNER_ONLY_SECTIONS, partnerPatch } from "@/lib/team-fields";
 import InstallCard from "@/app/install-card";
 import { setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
-import KupaCard from "../kupa/kupa-card";
 import { kupaCheck } from "../kupa/use-kupa";
 
 // "החנות שלי" — המסך שמחזיק את המוצר. תצוגה מקדימה חיה: בוחרים ערכה והחנות משתנה מולך.
@@ -739,8 +738,6 @@ export default function SettingsPage() {
                   )}
                 </a>
               ) : null}
-              {/* קופת הדוכן: הדוכן המצויר, המטבעות והצעד הבא */}
-              <KupaCard storeId={store.id} />
               {/* הצעה להוסיף למסך הבית — נעלמת כשכבר מותקן או כשסוגרים */}
               <InstallCard />
             </div>

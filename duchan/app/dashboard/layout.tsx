@@ -12,10 +12,12 @@ import KupaCelebrate from "./kupa/celebrate";
 // אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
 // הניווט — הדבר שהילדה רואה בכל מסך — לא בשליטתנו.
 // "הדוכן שלי" ראשון = מימין למטה (RTL), איפה שהאגודל נוח.
+// הקופה בטאב משלה, אחרונה: היא הכיף, לא העבודה, אז היא לא דוחקת את השאר.
 const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard/settings", label: "הדוכן שלי", icon: "shop" },
   { href: "/dashboard/products", label: "מוצרים", icon: "bag" },
   { href: "/dashboard", label: "הזמנות", icon: "receipt" },
+  { href: "/dashboard/kupa", label: "הקופה", icon: "coins" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -37,6 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           return (
             <button
               key={t.href}
+              aria-current={on ? "page" : undefined}
               onClick={() => {
                 if (hasUnsaved() && !window.confirm(UNSAVED_PROMPT)) return;
                 setUnsaved(false);

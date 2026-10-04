@@ -6,7 +6,7 @@
 //   4. אות חדש: מסך חגיגה עם המדליה, המונה עולה, ושיתוף לוואטסאפ עם הלינק
 //   5. עלייה ברמה: הדוכן נבנה מחדש
 //   6. "kupa-quiet" (של הבדיקות האחרות) משתיק חגיגות
-//   7. כרטיס ב"הדוכן שלי" ↔ אותו מספר כמו העמוד
+//   7. טאב משלה בשורה למטה, אחרונה
 //   8. לכל אות חידה עם 3 תשובות שונות ואחת נכונה; טעות → "נסו שוב", נכון → הסבר + כוכב שנשמר
 //   9. בלי גלילה הצידה ב-360
 import { chromium } from "playwright";
@@ -87,13 +87,13 @@ check("סגירה — והחגיגה לא חוזרת במעבר מסך", await (
   return (await p.locator("[data-testid=kupa-celebrate]").count()) === 0;
 })());
 
-/* ── 7. הכרטיס ב"הדוכן שלי" ── */
+/* ── 7. טאב משלה בשורה למטה ── */
 await p.goto(`${BASE}/dashboard/settings`, { waitUntil: "networkidle" });
-await p.waitForSelector("[data-testid=kupa-card]");
-check("הכרטיס: אותו מספר מטבעות", ((await p.textContent("[data-testid=kupa-card-coins]")) ?? "").includes(String(k0.coins)));
-check("הכרטיס: הרמה והצעד הבא", ((await p.textContent("[data-testid=kupa-card]")) ?? "").includes(k0.levelName));
-await p.click("[data-testid=kupa-card]");
+const tabs = await p.locator("nav button").allTextContents();
+check("4 טאבים למטה, והקופה אחרונה", tabs.length === 4 && tabs[3].includes("הקופה"), tabs.join(" | "));
+await p.click("nav button:has-text('הקופה')");
 await p.waitForURL("**/dashboard/kupa");
+check("הטאב של הקופה מסומן כפעיל", (await p.getAttribute("nav button:has-text('הקופה')", "aria-current")) === "page");
 await p.waitForSelector("[data-testid=kupa-page]");
 check("העמוד: מטבעות, רמה, 12 אותות", ((await p.textContent("[data-testid=kupa-coins]")) ?? "").includes(String(k0.coins)) &&
   (await p.textContent("[data-testid=kupa-level]")) === k0.levelName &&
