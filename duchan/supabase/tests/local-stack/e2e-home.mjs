@@ -33,6 +33,15 @@ try {
   await guest.mouse.wheel(0, 600); await guest.waitForTimeout(300);
   const cn2 = await guest.locator("[data-testid=cookie-note]").boundingBox();
   check("ונשארת במקום כשגוללים", Math.abs(cn2.y - cn.y) <= 1);
+  // בדוכן: כשנפתח גיליון מוצר, הבאנר מתחבא ולא מכסה את "הוספה לסל"
+  await guest.goto(BASE + "/s/qkubk", { waitUntil: "networkidle" });
+  await guest.locator(".grid button[aria-label]").first().click();
+  await guest.waitForSelector("button[aria-label='הוספה לסל']", { timeout: 15000 });
+  await guest.waitForTimeout(500);
+  check("גיליון מוצר פתוח: באנר העוגיות מתחבא", (await guest.getAttribute("[data-testid=cookie-note]", "data-covered")) === "1");
+  await guest.click("button[aria-label='הוספה לסל']", { timeout: 5000 });
+  check("ו'הוספה לסל' לחיץ", true);
+  await guest.goto(BASE + "/", { waitUntil: "networkidle" });
   check("אורחת רואה 'כבר פתחת דוכן?'", await guest.locator("a[href='/login']:has-text('כבר פתחת דוכן')").isVisible());
 
   /* מי שכבר יש לה דוכן */

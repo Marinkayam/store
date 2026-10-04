@@ -751,7 +751,7 @@ export default function SettingsPage() {
       ) : (
         <>
           {/* כותרת המקטע: חזרה, אייקון ושם. דביקה, כדי שהדרך חזרה תמיד על המסך */}
-          <div className="sticky top-0 z-30 h-[54px] flex items-center gap-2 px-1.5 bg-white border-b border-[var(--line)]">
+          <div className="sticky top-[env(safe-area-inset-top)] z-30 h-[54px] flex items-center gap-2 px-1.5 bg-[var(--canvas)] border-b border-[var(--line)]">
             <button
               onClick={closeSection}
               aria-label="חזרה לדוכן שלי"

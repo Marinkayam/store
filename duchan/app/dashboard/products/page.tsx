@@ -728,7 +728,7 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)]">
+      <header className="bg-[var(--canvas)] px-4 pt-6 pb-3 border-b border-[var(--line)]">
         <h1 className="text-lg font-bold">המוצרים שלי</h1>
         <p className="text-xs text-[var(--muted)] font-light">
           {products.length === 1 ? "מוצר אחד" : `${products.length} מוצרים`}

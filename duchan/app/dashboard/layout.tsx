@@ -25,7 +25,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto">
+    /* pt באזור הבטיחות: כלום לא מתחיל מתחת לשורת השעון של האייפון. הפס הקבוע
+       בצבע הדף מכסה את האזור הזה גם כשגוללים (אחרת התוכן עובר מתחת לשעון). */
+    <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto pt-[env(safe-area-inset-top)]">
+      <div aria-hidden className="fixed top-0 inset-x-0 h-[env(safe-area-inset-top)] bg-[var(--canvas)] z-[45]" />
       <ReleasePopup />
       {/* חגיגות של קופת הדוכן: אות חדש, עלייה ברמה */}
       <KupaCelebrate />

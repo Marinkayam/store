@@ -22,6 +22,10 @@ const KEY = "duchan-cookies-ok";
 export default function CookieNote() {
   const [show, setShow] = useState(false);
   const [lift, setLift] = useState(0);
+  /* גיליון או חלון פתוח (מוצר, סל, הסבר…) — הבאנר מתחבא עד שנסגר.
+     בדוכן הגיליונות יושבים בתוך שכבה מבודדת (.s-look), ולכן z-index שלהם
+     לא עולה מעל הבאנר; בלי זה הוא כיסה את "הוספה לסל". */
+  const [covered, setCovered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,12 +47,18 @@ export default function CookieNote() {
         if (r.height > 0 && r.top < vh - 1 && getComputedStyle(el).visibility !== "hidden") top = Math.min(top, r.top);
       });
       setLift(Math.max(0, Math.round(vh - top)));
+      const sheetOpen = [...document.querySelectorAll<HTMLElement>(".s-sheet:not([data-bottom-bar]), [role=dialog], [aria-modal=true]")].some((el) => {
+        if (el.closest("[data-testid=cookie-note]")) return false;
+        const r = el.getBoundingClientRect();
+        return r.height > 0 && r.top < vh - 1 && r.bottom > vh - 40 && getComputedStyle(el).visibility !== "hidden";
+      });
+      setCovered(sheetOpen);
       const h = ref.current?.offsetHeight ?? 0;
       document.documentElement.style.setProperty("--cookie-h", `${h}px`);
       document.body.style.paddingBottom = `${h}px`;
     };
     measure();
-    const t = setInterval(measure, 400);
+    const t = setInterval(measure, 250);
     window.addEventListener("resize", measure);
     return () => {
       clearInterval(t);
@@ -73,7 +83,9 @@ export default function CookieNote() {
       role="region"
       aria-label="עוגיות"
       data-testid="cookie-note"
-      className="fixed inset-x-0 max-w-md mx-auto z-[35] bg-[var(--cream)] border-t-[1.5px] border-[var(--ink)] px-3 pt-2.5 transition-[bottom] duration-200"
+      data-covered={covered ? "1" : undefined}
+      aria-hidden={covered || undefined}
+      className={`${covered ? "opacity-0 pointer-events-none" : ""} fixed inset-x-0 max-w-md mx-auto z-[35] bg-[var(--cream)] border-t-[1.5px] border-[var(--ink)] px-3 pt-2.5 transition-[bottom,opacity] duration-200`}
       style={{
         bottom: lift,
         // בלי פס תחתון — מתחת לשורת הבית של האייפון

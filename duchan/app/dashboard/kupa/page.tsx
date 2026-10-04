@@ -187,18 +187,20 @@ export default function KupaPage() {
       <>
       {/* הדוכן */}
       <section aria-labelledby="kupa-level">
-        <div className="relative -mx-4">
-          <KupaStall level={kupa.level} name={kupa.name} night={night} deco={deco ?? kupa.deco} className="w-full block" />
+        {/* בלי ריבוע שמיים ובלי פס קרקע: הדוכן על רקע הדף. בלילה השמיים
+            מחשיכים מאחוריו, מקצה לקצה */}
+        <div className="relative -mx-4 transition-colors duration-700" style={{ background: night ? "#2E3150" : "transparent" }}>
+          <KupaStall level={kupa.level} name={kupa.name} night={night} bare deco={deco ?? kupa.deco} className="w-full block" />
           {/* יום / לילה */}
           <button
             onClick={() => setNight(!night)}
             aria-pressed={night}
             aria-label={night ? "לעבור ליום" : "לעבור ללילה"}
             data-testid="kupa-night"
-            className="absolute top-2 left-2 w-11 h-11 flex items-center justify-center border border-[var(--line)] bg-white/90 text-[#6f4b28]"
+            className="absolute top-1 left-4 w-11 h-11 flex items-center justify-center text-[#6f4b28]"
           >
-            <span key={night ? "moon" : "sun"} className="kp-flip inline-flex">
-              <Icon name={night ? "sun" : "moon"} size={22} tone={night ? "var(--warning)" : "var(--lavender)"} />
+            <span key={night ? "moon" : "sun"} className="kp-flip inline-flex w-8 h-8 items-center justify-center bg-white/85 border border-[var(--line)]">
+              <Icon name={night ? "sun" : "moon"} size={18} tone={night ? "var(--warning)" : "var(--lavender)"} />
             </span>
           </button>
         </div>

@@ -244,7 +244,7 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <header className="bg-white px-4 pt-5 pb-3 border-b border-[var(--line)] flex items-start justify-between">
+      <header className="bg-[var(--canvas)] px-4 pt-5 pb-3 border-b border-[var(--line)] flex items-start justify-between">
         <div>
           <h1 className="text-[20px] font-bold">הזמנות</h1>
           <p className="text-[13px] text-[var(--muted)] mt-0.5" data-testid="orders-subtitle">
