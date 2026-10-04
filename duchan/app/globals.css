@@ -661,3 +661,43 @@ html.a11y-still .oops-fixing .oops-sign { transform: rotate(0); }
 @keyframes kp-squish { 0%, 80%, 100% { transform: scale(1, 1); } 86% { transform: scale(1.18, .78); } 92% { transform: scale(.94, 1.06); } }
 .kp-squish { animation: kp-squish 3.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .kp-drift, .kp-squish { animation: none; } }
+
+/* תנועה עדינה באיור הקופה: עלים ודשא ברוח, צמידים שמתנדנדים, שמש שמסתובבת
+   לאט, ציפורים, פרפר, מטבע שקופץ מהסלסלה, ועגלה שמקפצת קצת במקום. */
+@keyframes kp-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.kp-sway { animation: kp-sway 3.4s ease-in-out infinite; }
+@keyframes kp-jiggle { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(1.2px); } }
+.kp-jiggle { animation: kp-jiggle 1.8s ease-in-out infinite; }
+@keyframes kp-spin { to { transform: rotate(360deg); } }
+.kp-spin-slow { animation: kp-spin 28s linear infinite; }
+@keyframes kp-bird {
+  0%   { transform: translate(-30px, 34px); }
+  50%  { transform: translate(110px, 24px); }
+  100% { transform: translate(270px, 30px); }
+}
+.kp-bird { animation: kp-bird 18s linear infinite; }
+@keyframes kp-flap { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-.6); } }
+.kp-flap { animation: kp-flap .5s ease-in-out infinite; }
+@keyframes kp-butterfly {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(14px, -8px); }
+  50%  { transform: translate(26px, 2px); }
+  75%  { transform: translate(10px, 8px); }
+  100% { transform: translate(0, 0); }
+}
+.kp-butterfly { animation: kp-butterfly 7s ease-in-out infinite; }
+@keyframes kp-wings { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.35); } }
+.kp-wings { animation: kp-wings .35s ease-in-out infinite; }
+@keyframes kp-hop {
+  0%, 70%, 100% { transform: translateY(14px); opacity: 0; }
+  76%  { opacity: 1; }
+  84%  { transform: translateY(-6px); opacity: 1; }
+  96%  { transform: translateY(12px); opacity: 0; }
+}
+.kp-hop { animation: kp-hop 4.5s ease-in-out infinite; }
+@keyframes kp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+.kp-bob { animation: kp-bob 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .kp-sway, .kp-jiggle, .kp-spin-slow, .kp-bird, .kp-flap, .kp-butterfly, .kp-wings, .kp-bob { animation: none; }
+  .kp-hop, .kp-bird { display: none; }
+}

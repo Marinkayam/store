@@ -45,10 +45,13 @@ function Plant({ x, y }: { x: number; y: number }) {
   ];
   return (
     <g {...LINE}>
-      <path d={`M${x + 9} ${y - 13} v-26`} fill="none" />
-      {leaves.map(([cx, cy, r], i) => (
-        <ellipse key={i} cx={cx} cy={cy} rx="6.5" ry="3.6" fill="var(--olive)" transform={`rotate(${r} ${cx} ${cy})`} />
-      ))}
+      {/* העלים מתנדנדים סביב בסיס הגבעול, כמו ברוח קלה */}
+      <g className="kp-sway" style={{ transformOrigin: `${x + 9}px ${y - 13}px` }}>
+        <path d={`M${x + 9} ${y - 13} v-26`} fill="none" />
+        {leaves.map(([cx, cy, r], i) => (
+          <ellipse key={i} cx={cx} cy={cy} rx="6.5" ry="3.6" fill="var(--olive)" transform={`rotate(${r} ${cx} ${cy})`} />
+        ))}
+      </g>
       <path d={`M${x} ${y - 14} h18 l-2.5 14 h-13 z`} fill="var(--blush)" />
       <path d={`M${x - 1} ${y - 14} h20`} fill="none" strokeWidth={2.2} />
     </g>
@@ -116,8 +119,19 @@ function Bracelets({ x, y }: { x: number; y: number }) {
         <path d={`M${x + 8} ${y - 2} v-28`} fill="none" strokeWidth={1.8} />
         <rect x={x} y={y - 3} width="16" height="3" rx="1" fill={W} />
       </g>
-      {[["var(--lavender)", 0], ["var(--olive)", 7], ["var(--warning)", 14]].map(([c, dy]) => (
-        <ellipse key={String(dy)} cx={x + 8} cy={y - 24 + Number(dy)} rx="6.5" ry="2.6" fill="none" stroke={String(c)} strokeWidth={2.4} />
+      {[["var(--lavender)", 0], ["var(--olive)", 7], ["var(--warning)", 14]].map(([c, dy], i) => (
+        <ellipse
+          key={String(dy)}
+          className="kp-jiggle"
+          style={{ animationDelay: `${i * 0.25}s` }}
+          cx={x + 8}
+          cy={y - 24 + Number(dy)}
+          rx="6.5"
+          ry="2.6"
+          fill="none"
+          stroke={String(c)}
+          strokeWidth={2.4}
+        />
       ))}
     </g>
   );
@@ -149,6 +163,31 @@ function Wheel({ cx, cy }: { cx: number; cy: number }) {
   );
 }
 
+/** מטבע שקופץ מדי פעם מהסלסלה (או מהצנצנת בעגלה) ונופל בחזרה */
+function HopCoin({ x, y }: { x: number; y: number }) {
+  return (
+    <g className="kp-hop" aria-hidden>
+      <circle cx={x} cy={y} r="4.2" fill="#E3C26F" stroke={INK} strokeWidth={1} />
+      <path d={`M${x - 1.8} ${y - 0.8} h3.6`} stroke={INK} strokeWidth={0.8} />
+    </g>
+  );
+}
+
+/** פרפר: מסלול לולאה איטי, והכנפיים מתקפלות */
+function Butterfly() {
+  return (
+    <g className="kp-butterfly" aria-hidden>
+      <g transform="translate(14 96)">
+        <g className="kp-wings" style={{ transformOrigin: "0px 0px" }}>
+          <ellipse cx="-3.2" cy="-1.5" rx="3.4" ry="4.4" fill="var(--blush)" stroke={INK} strokeWidth={0.8} />
+          <ellipse cx="3.2" cy="-1.5" rx="3.4" ry="4.4" fill="var(--lavender)" stroke={INK} strokeWidth={0.8} />
+        </g>
+        <path d="M0 -4 v7" stroke={INK} strokeWidth={1.2} strokeLinecap="round" />
+      </g>
+    </g>
+  );
+}
+
 /** נקודה על עקומה ריבועית — לשרשראות דגלים ונורות */
 function onCurve(t: number, [x0, y0]: number[], [cx, cy]: number[], [x1, y1]: number[]) {
   const u = 1 - t;
@@ -176,9 +215,16 @@ export function KupaStall({
       {/* שמש עם קרניים, וענן שזז לאט */}
       <g opacity=".75">
         <circle cx="214" cy="20" r="9" fill="var(--warning)" />
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
-          <path key={a} d="M214 6 v-3" stroke="var(--warning)" strokeWidth={2} strokeLinecap="round" transform={`rotate(${a} 214 20)`} />
-        ))}
+        <g className="kp-spin-slow" style={{ transformOrigin: "214px 20px" }}>
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+            <path key={a} d="M214 6 v-3" stroke="var(--warning)" strokeWidth={2} strokeLinecap="round" transform={`rotate(${a} 214 20)`} />
+          ))}
+        </g>
+      </g>
+      {/* שתי ציפורים שחוצות את השמיים מדי פעם */}
+      <g className="kp-bird" aria-hidden>
+        <path className="kp-flap" d="M0 0 q3 -3 6 0 q3 -3 6 0" fill="none" stroke={INK} strokeWidth={1.1} strokeLinecap="round" style={{ transformOrigin: "6px 0px" }} transform="translate(0 0)" />
+        <path className="kp-flap" d="M14 6 q2.5 -2.5 5 0 q2.5 -2.5 5 0" fill="none" stroke={INK} strokeWidth={1} strokeLinecap="round" style={{ transformOrigin: "19px 6px", animationDelay: ".2s" }} />
       </g>
       {level < 5 && (
         <g className="kp-drift">
@@ -190,16 +236,17 @@ export function KupaStall({
       <rect x="0" y="150" width="240" height="26" fill="var(--sand)" />
       <path d="M0 150 h240" stroke={INK} strokeWidth={1} opacity=".5" />
       <g stroke="var(--olive)" strokeWidth={1.4} strokeLinecap="round" fill="none">
-        <path d="M14 162 l-2 -5 M16 162 l1 -6 M18 162 l3 -4" />
-        <path d="M222 166 l-2 -5 M224 166 l1 -6 M226 166 l3 -4" />
-        <path d="M110 170 l-2 -4 M112 170 l2 -4" />
+        <path className="kp-sway" style={{ transformOrigin: "16px 162px" }} d="M14 162 l-2 -5 M16 162 l1 -6 M18 162 l3 -4" />
+        <path className="kp-sway" style={{ transformOrigin: "224px 166px", animationDelay: "1s" }} d="M222 166 l-2 -5 M224 166 l1 -6 M226 166 l3 -4" />
+        <path className="kp-sway" style={{ transformOrigin: "111px 170px", animationDelay: ".5s" }} d="M110 170 l-2 -4 M112 170 l2 -4" />
       </g>
       <ellipse cx="120" cy="153" rx="96" ry="3.5" fill={INK} opacity=".1" />
 
       {level === 0 ? (
         <g className={build === 0 ? "kp-roll" : ""}>
-          {/* שמשייה קטנה על העגלה */}
-          <g {...LINE}>
+        <g className="kp-bob">
+          {/* שמשייה קטנה על העגלה — מתנדנדת סביב הבסיס של המוט */}
+          <g {...LINE} className="kp-sway" style={{ transformOrigin: "70px 100px" }}>
             <path d="M70 100 v-44" fill="none" strokeWidth={1.8} />
             <path d="M44 62 Q70 34 96 62 z" fill="var(--lavender)" />
             <path d="M57 62 Q63 46 70 41 Q77 46 83 62" fill="var(--canvas)" />
@@ -208,6 +255,7 @@ export function KupaStall({
           <Plant x={80} y={100} />
           <Squishy x={104} y={100} />
           <Jar x={130} y={100} />
+          <HopCoin x={140} y={74} />
           {/* העגלה: קרשים, ידית וגלגלים */}
           <g {...LINE}>
             <rect x="60" y="100" width="112" height="34" fill={W} />
@@ -217,6 +265,7 @@ export function KupaStall({
             <path d="M190 89 l8 -2" fill="none" strokeWidth={4.5} />
           </g>
           <Tag x={117} y={134} text="₪5" />
+        </g>
           <Wheel cx={84} cy={142} />
           <Wheel cx={150} cy={142} />
         </g>
@@ -255,10 +304,14 @@ export function KupaStall({
           <g {...part(1, build, 2)}>
             <Plant x={46} y={108} />
             <Basket x={70} y={108} />
+            <HopCoin x={100} y={80} />
             <Bag x={120} y={108} />
             <Jar x={152} y={108} />
             <Bracelets x={180} y={108} />
           </g>
+
+          {/* פרפר שמרחף ליד ארגז התפוחים, מרמה 3 */}
+          {level >= 2 && <Butterfly />}
 
           {/* רמה 3: סוכך עם שוליים מסולסלים */}
           {level >= 2 && (
