@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { displayPhone } from "@/lib/phone";
+import VSteps from "./v-steps";
 
 /**
  * אימות טלפון בשני מסכים קטנים: מספר → קוד.
@@ -143,21 +144,17 @@ export default function PhoneVerify({
       <div className="w-full flex flex-col gap-3">
         <h1 className="t-title text-center">{title}</h1>
         <p className="t-sub text-center">{subtitle}</p>
-        <ol className="bg-white border border-[var(--line)] flex flex-col" data-testid="phone-how">
-          {[
-            ["מקלידים מספר טלפון", "שלך, או של אמא או אבא"],
-            ["מקבלים הודעת SMS", "עם קוד של 6 ספרות. בדרך כלל תוך דקה"],
-            ["מקלידים את הקוד", "וממשיכים. זהו!"],
-          ].map(([t, sub], i) => (
-            <li key={t} className={`flex items-center gap-3 px-3.5 py-2.5 ${i ? "border-t border-[var(--line)]" : ""}`}>
-              <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-[var(--ink)] text-white text-[13px] font-bold">{i + 1}</span>
-              <span className="text-[13.5px] leading-snug">
-                <b>{t}</b>
-                <span className="text-[var(--muted)]"> · {sub}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
+        <div className="bg-white border border-[var(--line)] px-4 py-3.5">
+          <VSteps
+            testid="phone-how"
+            compact
+            steps={[
+              { key: "phone", title: "מקלידים מספר טלפון", sub: "שלך, או של אמא או אבא" },
+              { key: "sms", title: "מקבלים הודעת SMS", sub: "עם קוד של 6 ספרות. בדרך כלל תוך דקה" },
+              { key: "code", title: "מקלידים את הקוד", sub: "וממשיכים. זהו!" },
+            ]}
+          />
+        </div>
         <label htmlFor="pv-phone" className="t-small font-medium -mb-1.5">מספר הטלפון</label>
         <input
           id="pv-phone"
@@ -316,19 +313,7 @@ function FindNumberSteps({ title, steps }: { title: string; steps: string[] }) {
   return (
     <div className="mb-4">
       <div className="t-body font-medium mb-2">{title}</div>
-      <ol className="flex flex-col">
-        {steps.map((s, i) => (
-          <li
-            key={i}
-            className="flex gap-3 py-2.5 border-b border-[var(--line)] last:border-0 t-small"
-          >
-            <span className="t-label pt-0.5 shrink-0">
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <span className="leading-relaxed">{s}</span>
-          </li>
-        ))}
-      </ol>
+      <VSteps compact steps={steps.map((st, i) => ({ key: String(i), title: <span className="font-normal">{st}</span> }))} />
     </div>
   );
 }

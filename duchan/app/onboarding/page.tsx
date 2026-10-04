@@ -7,6 +7,7 @@ import { squareImage, MediaError } from "@/lib/media";
 import { uploadBlob } from "@/lib/upload-client";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "../phone-verify";
+import VSteps from "../v-steps";
 import HelpButton from "../help-button";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 
@@ -530,21 +531,16 @@ export default function Onboarding() {
 
           <div>
             <div className="t-body font-bold mb-2">מה קורה עכשיו?</div>
-            <ol className="bg-white border border-[var(--line)] flex flex-col">
-              {[
-                ["מאמתים מספר טלפון", "לשם יגיעו ההזמנות, בוואטסאפ"],
-                ["הדוכן נפתח, בינתיים רק לך", "אף אחד עוד לא רואה אותו ולא יכול להזמין"],
-                ["מוסיפים מוצרים ומפרסמים", "ואז שולחים את הלינק לחברים"],
-              ].map(([t, sub], i) => (
-                <li key={t} className={`flex items-center gap-3 px-3.5 py-2.5 ${i ? "border-t border-[var(--line)]" : ""}`}>
-                  <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-[var(--ink)] text-white text-[13px] font-bold">{i + 1}</span>
-                  <span className="text-[13.5px] leading-snug">
-                    <b>{t}</b>
-                    <span className="block text-[var(--muted)]">{sub}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <div className="bg-white border border-[var(--line)] px-4 py-3.5">
+              <VSteps
+                compact
+                steps={[
+                  { key: "phone", title: "מאמתים מספר טלפון", sub: "לשם יגיעו ההזמנות, בוואטסאפ" },
+                  { key: "private", title: "הדוכן נפתח, בינתיים רק לך", sub: "אף אחד עוד לא רואה אותו ולא יכול להזמין" },
+                  { key: "publish", title: "מוסיפים מוצרים ומפרסמים", sub: "ואז שולחים את הלינק לחברים" },
+                ]}
+              />
+            </div>
           </div>
 
           <button

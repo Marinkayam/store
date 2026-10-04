@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Store } from "@/lib/types";
+import VSteps from "@/app/v-steps";
 
 /**
  * המסך הראשון אחרי פתיחת דוכן — כשעוד אין אף הזמנה.
@@ -139,57 +140,35 @@ export default function FirstSteps({
         </p>
       </div>
 
-      <ol>
-        {steps.map((s, i) => {
-          const isDone = done[s.key];
-          const isCurrent = s.key === current;
-          const waiting = s.key === "publish" && claimed && !published;
-          return (
-            <li
-              key={s.key}
-              data-testid={`first-step-${s.key}`}
-              data-state={isDone ? "done" : isCurrent ? "current" : waiting ? "waiting" : "later"}
-              className={`flex gap-3 px-4 py-3.5 border-t border-[var(--sand)] ${isCurrent ? "bg-[var(--canvas)]" : ""}`}
-              aria-current={isCurrent ? "step" : undefined}
-            >
-              <span
-                className={`w-8 h-8 shrink-0 flex items-center justify-center text-[14px] font-bold ${
-                  isDone
-                    ? "bg-[var(--olive)] text-white"
-                    : isCurrent || waiting
-                      ? "bg-[var(--ink)] text-white"
-                      : "bg-[var(--sand)] text-[var(--muted)]"
-                }`}
-                aria-hidden
-              >
-                {isDone ? "✓" : waiting ? "⏳" : i + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className={`text-[14.5px] font-bold leading-snug ${isDone ? "text-[var(--muted)]" : ""}`}>
-                  {s.key === "publish" ? <span data-testid="store-state-banner">{s.title}</span> : s.title}
-                  {isDone && <span className="sr-only"> (נעשה)</span>}
-                </div>
-                {(isCurrent || waiting || s.key === "open" || s.key === "order") && (
-                  <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-0.5">{s.sub}</p>
-                )}
-                {isCurrent && s.body && <div className="mt-2.5">{s.body}</div>}
-                {/* אחרי שהשליחה סומנה, עדיין אפשר לשלוח שוב */}
-                {s.key === "share" && isDone && (
-                  <button
-                    onClick={() => {
-                      navigator.clipboard?.writeText(link).catch(() => {});
-                      onCopied();
-                    }}
-                    className="text-[12.5px] underline text-[var(--muted)] mt-0.5"
-                  >
-                    להעתיק את הלינק שוב
-                  </button>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <div className="px-4 pt-3 pb-4 border-t border-[var(--sand)]">
+        <VSteps
+          steps={steps.map((st) => {
+            const isDone = done[st.key];
+            const isCurrent = st.key === current;
+            const waiting = st.key === "publish" && claimed && !published;
+            const state = isDone ? "done" : isCurrent ? "current" : waiting ? "waiting" : "later";
+            const showSub = isCurrent || waiting || st.key === "open" || st.key === "order";
+            return {
+              key: st.key,
+              testid: `first-step-${st.key}`,
+              state,
+              title: st.key === "publish" ? <span data-testid="store-state-banner">{st.title}</span> : st.title,
+              sub: showSub ? st.sub : undefined,
+              body: isCurrent && st.body ? st.body : st.key === "share" && isDone ? (
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(link).catch(() => {});
+                    onCopied();
+                  }}
+                  className="text-[12.5px] underline text-[var(--muted)]"
+                >
+                  להעתיק את הלינק שוב
+                </button>
+              ) : undefined,
+            };
+          })}
+        />
+      </div>
     </section>
   );
 }

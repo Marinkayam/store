@@ -21,6 +21,8 @@ const check = (n, ok, d = "") => {
 const LOCAL = "0507770002", E164 = "972507770002";
 await db.query("delete from stores where contact_phone=$1", [E164]);
 await db.query("delete from phone_otps where phone=$1", [E164]);
+// התראות מריצות קודמות של אותו מספר — אחרת "לחיצה שנייה" סופרת גם אותן
+await db.query("delete from admin_alerts where kind='login_stuck' and body like '%050-777-0002%'");
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });

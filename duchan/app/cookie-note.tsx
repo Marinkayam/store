@@ -40,7 +40,7 @@ export default function CookieNote() {
       <div className="max-w-md mx-auto flex items-center gap-2.5">
         <span className="text-[22px] leading-none" aria-hidden>🍪</span>
         <p className="flex-1 min-w-0 text-[12.5px] leading-snug text-[var(--ink)]">
-          <b>ואי עוגיות, יאמי!</b> רק הקטנות שצריך: הן זוכרות שנכנסתם. בלי פרסומות ובלי מעקב.{" "}
+          <b>ואי עוגיות, יאמי!</b> הן זוכרות שנכנסתם. בלי פרסומות ובלי מעקב.{" "}
           <a href="/privacy#cookies" className="underline whitespace-nowrap">מה זה עוגיות?</a>
         </p>
         <button onClick={ok} data-testid="cookie-ok" className="shrink-0 min-h-11 px-3 bg-[var(--ink)] text-white text-[12.5px] font-bold">

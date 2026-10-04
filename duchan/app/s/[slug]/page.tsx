@@ -146,7 +146,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
             data-testid="open-own-deal"
           >
             <span className="relative z-[3]">
-              <span className="fx-wiggle">🎉</span> {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi className="line-through opacity-75">₪{FULL_PRICE}</bdi>!
+              <span className="fx-wiggle">🎉</span> {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi className="line-through">₪{FULL_PRICE}</bdi>!
             </span>
           </p>
         )}

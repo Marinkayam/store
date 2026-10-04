@@ -264,6 +264,13 @@ check("ברשימת המשימות: 'הודעה לקונים' עם ✓", (await 
 // חנות
 await p.click("[data-testid=kupa-tab-shop]");
 await p.waitForSelector("[data-testid=kupa-shop]");
+/* המשימה למעלה יכולה להעביר רמה (תלוי כמה שבועות פעילים יש בתאריך הריצה),
+   ואז חגיגת "הדוכן עלה רמה" מכסה את החנות. סוגרים אותה אם הופיעה. */
+await p.waitForTimeout(1500);
+if (await p.locator("[data-testid=kupa-celebrate]").count()) {
+  await p.click("[data-testid=kupa-close]");
+  await p.waitForSelector("[data-testid=kupa-celebrate]", { state: "detached" });
+}
 const bal = async () => Number(((await p.textContent("[data-testid=shop-balance]")) ?? "").replace(/\D/g, ""));
 const b0 = await bal();
 check("החנות: היתרה = כל המטבעות (עוד לא קנו כלום)", b0 === qb.coins, `${b0} / ${qb.coins}`);

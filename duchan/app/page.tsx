@@ -114,12 +114,12 @@ export default function Landing() {
             style={{ background: "var(--wood)", animationDelay: ".1s" }}
           >
             <PromoBurst />
-            <span className="relative z-[3] inline-block text-[11.5px] font-bold bg-white/20 px-2.5 py-0.5">
+            <span className="relative z-[3] inline-block text-[11.5px] font-bold bg-black/25 px-2.5 py-0.5">
               <span className="fx-wiggle">🎉</span> {DEAL_LABEL}
             </span>
             <span className="relative z-[3] block text-[17px] font-bold leading-snug mt-1">
               רק <bdi className="fx-pop text-[24px] align-[-2px]">₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן!{" "}
-              <bdi className="text-[13px] font-medium line-through opacity-70">₪{FULL_PRICE}</bdi>
+              <bdi className="text-[13px] font-medium line-through">₪{FULL_PRICE}</bdi>
             </span>
           </a>
         )}
