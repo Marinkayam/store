@@ -1031,7 +1031,7 @@ export default function ProductsPage() {
                 <>
                   <span>🛍️</span>
                   <span className="text-[12px] text-[var(--muted)] font-sans mt-1">
-                    עוד אין תמונה, לבחור אחת מהכפתורים למטה
+                    עוד אין תמונה. בוחרים אחד מהכפתורים למטה
                   </span>
                 </>
               )}

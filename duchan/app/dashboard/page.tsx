@@ -9,6 +9,9 @@ import InstallCard from "../install-card";
 import type { Order } from "@/lib/types";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { kupaCheck } from "./kupa/use-kupa";
+import Icon from "@/app/icons";
+import Chevron from "@/app/chevron";
+import { storePath } from "@/lib/short-link";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
 // "שולם" מנכה מלאי (בפונקציית DB אטומית). "נמסר" מקבל קונפטי — המיקרו-אינטראקציה היחידה.
@@ -204,15 +207,26 @@ export default function OrdersPage() {
     return best;
   })();
 
-  const checklist = store
+  /* מה חסר כדי שהדוכן ייראה מוכן — רק מה שבאמת חסר, כל דבר עם הסבר
+     ועם כפתור שלוקח בדיוק לשם (מרינה: "3 מתוך 4 לא ברור בכלל") */
+  const missing = store
     ? [
-        { done: true, label: "שם" },
-        { done: true, label: "ערכת נושא" },
-        { done: !!store.cover_key, label: "תמונת קאבר" },
-        { done: !!store.tagline, label: "תיאור הדוכן" },
-      ]
+        !store.cover_key && {
+          key: "cover",
+          title: "תמונת קאבר",
+          why: "תמונה רחבה בראש הדוכן, כמו שלט. בלעדיה הדוכן נראה ריק.",
+          cta: "להוסיף תמונה",
+          href: "/dashboard/settings#design",
+        },
+        !store.tagline?.trim() && {
+          key: "about",
+          title: "משפט על הדוכן",
+          why: "מי מוכר ומה מיוחד. קונים אוהבים לדעת ממי הם קונים.",
+          cta: "לכתוב משפט",
+          href: "/dashboard/settings#design",
+        },
+      ].filter(Boolean) as { key: string; title: string; why: string; cta: string; href: string }[]
     : [];
-  const doneCount = checklist.filter((c) => c.done).length;
 
   if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
   if (!store)
@@ -220,19 +234,26 @@ export default function OrdersPage() {
       <div className="p-8 text-center text-sm text-[var(--muted)] leading-relaxed">
         עוד אין לך דוכן.
         <br />
-        <a href="/onboarding" className="underline text-[var(--ink)]">נפתח אחת ←</a>
+        <a href="/onboarding" className="underline text-[var(--ink)]">בואו נפתח אחד ←</a>
       </div>
     );
 
-  const firstName = store.display_name.replace(/^(החנות|הדוכן) של\s*/, "");
+  const link = typeof window !== "undefined" ? `${window.location.origin}${storePath(store.slug)}` : storePath(store.slug);
+  const shareText = `פתחתי דוכן! 🛍️ בואו לראות מה יש אצלי:\n${link}`;
 
   return (
     <div>
-      <header className="bg-white px-4 pt-6 pb-3 border-b border-[var(--line)] flex items-start justify-between">
+      <header className="bg-white px-4 pt-5 pb-3 border-b border-[var(--line)] flex items-start justify-between">
         <div>
-          <h1 className="text-lg font-bold">היי {firstName} 👋</h1>
-          <p className="text-xs text-[var(--muted)] font-light">
-            {newCount ? `${newCount} הזמנות חדשות` : "הכל מטופל ✨"}
+          <h1 className="text-[20px] font-bold">הזמנות</h1>
+          <p className="text-[13px] text-[var(--muted)] mt-0.5" data-testid="orders-subtitle">
+            {newCount
+              ? newCount === 1
+                ? "הזמנה חדשה אחת מחכה לטיפול"
+                : `${newCount} הזמנות חדשות מחכות לטיפול`
+              : orders.length
+                ? "אין הזמנות חדשות שמחכות לטיפול"
+                : "כאן יופיעו ההזמנות שמגיעות מהדוכן"}
           </p>
         </div>
         <WhatsNew />
@@ -248,7 +269,7 @@ export default function OrdersPage() {
             <span className="text-2xl">{store.payment_claimed_at ? "⏳" : "🚀"}</span>
             <div className="flex-1">
               <div className="text-[13.5px] font-bold">
-                <span data-testid="store-state-banner">{store.payment_claimed_at ? "מחכות לאישור התשלום" : "הדוכן שלך בתצוגה מקדימה"}</span>
+                <span data-testid="store-state-banner">{store.payment_claimed_at ? "התשלום בבדיקה" : "הדוכן שלך בתצוגה מקדימה"}</span>
               </div>
               <div className="text-[12.5px] opacity-70 leading-relaxed">
                 {store.payment_claimed_at
@@ -260,20 +281,25 @@ export default function OrdersPage() {
         </a>
       )}
 
-      {/* רשימת השלמה — נעלמת לגמרי כשמסיימים */}
-      {doneCount < checklist.length && (
-        <div className="mx-4 mt-4 bg-white border border-[var(--line)] p-4 text-xs">
-          <div className="flex justify-between font-medium mb-1.5">
-            <span>הדוכן שלך {doneCount} מתוך {checklist.length}</span>
-            <span>{"▓".repeat(doneCount)}{"░".repeat(checklist.length - doneCount)}</span>
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[var(--muted)]">
-            {checklist.map((c) => (
-              <span key={c.label}>{c.done ? "✓" : "○"} {c.label}</span>
-            ))}
-            <a href="/dashboard/settings" className="underline">←</a>
-          </div>
-        </div>
+      {/* מה חסר בדוכן — נעלם כשהכל מוכן */}
+      {missing.length > 0 && (
+        <section className="mx-4 mt-4 bg-white border border-[var(--line)]" data-testid="store-missing" aria-labelledby="missing-title">
+          <h2 id="missing-title" className="px-4 pt-3.5 pb-1 text-[14px] font-bold">
+            {missing.length === 1 ? "נשאר דבר אחד כדי שהדוכן ייראה מוכן" : `נשארו ${missing.length} דברים כדי שהדוכן ייראה מוכן`}
+          </h2>
+          {missing.map((m) => (
+            <a key={m.key} href={m.href} className="flex items-center gap-3 px-4 py-3 border-t border-[var(--sand)] first-of-type:border-t-0" data-testid={`missing-${m.key}`}>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[13.5px] font-bold">{m.title}</span>
+                <span className="block text-[12px] text-[var(--muted)] leading-snug mt-0.5">{m.why}</span>
+              </span>
+              <span className="shrink-0 text-[12.5px] font-bold text-[var(--ink)] flex items-center gap-1">
+                {m.cta}
+                <Chevron size={14} />
+              </span>
+            </a>
+          ))}
+        </section>
       )}
 
       {/* הקופה שלי */}
@@ -332,37 +358,77 @@ export default function OrdersPage() {
             לבד כשהאפליקציה כבר במסך הבית, או כשסוגרים אותו. */}
         <InstallCard />
 
-        {orders.length === 0 &&
-          (store.activated_at ? (
-            <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
-              עוד לא הגיעו הזמנות.
-              <br />
-              לשלוח את הלינק לחברים 👇
-              <br />
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/s/${store.slug}`);
-                  showToast("הלינק הועתק");
-                }}
-                className="mt-2 bg-[var(--ink)] text-white px-4 py-2 text-xs"
-              >
-                העתקת לינק
-              </button>
+        {/* אין הזמנות: במקום מסך ריק — מה עושים כדי שתגיע הראשונה */}
+        {orders.length === 0 && (
+          <section className="bg-white border border-[var(--line)] p-4 flex flex-col gap-3" data-testid="orders-empty" aria-labelledby="first-order-title">
+            <div className="flex items-center gap-3">
+              <span className="w-12 h-12 shrink-0 bg-[var(--canvas)] flex items-center justify-center text-[#6f4b28]">
+                <Icon name="receipt" size={28} tone="var(--lavender)" />
+              </span>
+              <div>
+                <h2 id="first-order-title" className="text-[16px] font-bold leading-tight">
+                  {store.activated_at ? "איך מגיעה ההזמנה הראשונה?" : "הדוכן עוד לא פתוח להזמנות"}
+                </h2>
+                <p className="text-[12.5px] text-[var(--muted)] mt-0.5">
+                  {store.activated_at ? "שלושה דברים שמביאים קונים:" : "אפשר כבר לשלוח את הלינק ולהראות לחברים. הזמנות יגיעו אחרי שהדוכן ייפתח (הכפתור השחור למעלה)."}
+                </p>
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-14 text-sm text-[var(--muted)] leading-loose">
-              הזמנות יגיעו אחרי שהדוכן יפורסם.
-              <br />
-              בינתיים אפשר לשלוח את הלינק ולראות מה חברים אומרים ✨
-              <br />
-              <a
-                href="/dashboard/settings#share"
-                className="inline-block mt-2 bg-[var(--ink)] text-white px-4 py-2 text-xs"
-              >
-                שליחה לחברים
-              </a>
-            </div>
-          ))}
+
+            <ol className="flex flex-col">
+              <li className="flex gap-3 py-3 border-t border-[var(--sand)]">
+                <span className="w-7 h-7 shrink-0 bg-[var(--ink)] text-white text-[13px] font-bold flex items-center justify-center">1</span>
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <div>
+                    <div className="text-[13.5px] font-bold">לשלוח את הלינק לחברים ולמשפחה</div>
+                    <div className="text-[12px] text-[var(--muted)] leading-snug">מי שרואה את הדוכן יכול להזמין. כל כניסה גם שווה מטבעות.</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-[var(--whatsapp)] text-white text-center py-2.5 text-[13px] font-bold"
+                      data-testid="orders-empty-whatsapp"
+                    >
+                      שליחה בוואטסאפ
+                    </a>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard?.writeText(link).catch(() => {});
+                        showToast("הלינק הועתק");
+                      }}
+                      className="flex-1 border-[1.5px] border-[var(--ink)] py-2.5 text-[13px] font-bold"
+                      data-testid="orders-empty-copy"
+                    >
+                      העתקת הלינק
+                    </button>
+                  </div>
+                </div>
+              </li>
+              <li className="border-t border-[var(--sand)]">
+                <a href="/dashboard/products?new=1" className="flex gap-3 py-3 items-center">
+                  <span className="w-7 h-7 shrink-0 bg-[var(--ink)] text-white text-[13px] font-bold flex items-center justify-center">2</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[13.5px] font-bold">להוסיף עוד מוצרים</span>
+                    <span className="block text-[12px] text-[var(--muted)] leading-snug">יותר מבחר = יותר סיכוי שכל מי שנכנס ימצא משהו.</span>
+                  </span>
+                  <Chevron className="text-[var(--faint)]" />
+                </a>
+              </li>
+              <li className="border-t border-[var(--sand)]">
+                <a href="/dashboard/settings#share" className="flex gap-3 py-3 items-center">
+                  <span className="w-7 h-7 shrink-0 bg-[var(--ink)] text-white text-[13px] font-bold flex items-center justify-center">3</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[13.5px] font-bold">לפרסם בסטטוס, בסטורי או בטיקטוק</span>
+                    <span className="block text-[12px] text-[var(--muted)] leading-snug">יש הודעות מוכנות ורעיונות לסרטון, רק להעתיק.</span>
+                  </span>
+                  <Chevron className="text-[var(--faint)]" />
+                </a>
+              </li>
+            </ol>
+          </section>
+        )}
 
         {filtered.length === 0 && orders.length > 0 && (
           <p className="text-center py-8 text-sm text-[var(--muted)]">אין הזמנות בסינון הזה.</p>

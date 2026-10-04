@@ -160,9 +160,9 @@ await db.query("delete from orders where store_id=$1 and buyer_note is null", [s
 
 /* ── שלב 5: דשבורד — שולם ← מלאי יורד ← קופה ── */
 await page.goto(`${BASE}/dashboard`);
-await page.waitForSelector("text=היי תמר");
-check("dashboard greets by first name", true);
-await page.waitForSelector("text=הזמנות חדשות");
+await page.waitForSelector("h1:has-text('הזמנות')");
+check("dashboard opens on the orders screen, with a clear title", true);
+await page.waitForSelector("[data-testid=orders-subtitle]:has-text('מחכ')");
 await page.click("button:has-text('שולם')");
 await page.waitForTimeout(1500);
 const stockAfterPaid = (await db.query("select stock from products where id=$1", [prodRow.id])).rows[0].stock;

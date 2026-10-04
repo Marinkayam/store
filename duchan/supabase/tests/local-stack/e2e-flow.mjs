@@ -37,7 +37,7 @@ const girl = await phone();
 await girl.goto(`${BASE}/login`);
 await verifyPhone(girl, "0501234567");
 await girl.waitForURL("**/dashboard", { timeout: 15000 });
-await girl.waitForSelector("text=היי תמר", { timeout: 15000 });
+await girl.waitForSelector("h1:has-text('הזמנות')", { timeout: 15000 });
 const dash = await girl.textContent("body");
 check("the dashboard has no journey card", !dash.includes("הבא במסע") && !dash.includes("המסע שלי"));
 check("the dashboard has no levels or achievements", !dash.includes("דרגה") && !dash.includes("הישגים"));

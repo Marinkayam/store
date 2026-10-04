@@ -113,7 +113,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         <p className="text-sm text-[var(--muted)] leading-relaxed text-center">
           עוד אין לך דוכן.
           <br />
-          <a href="/onboarding" className="underline text-[var(--ink)]">נפתח אחת ←</a>
+          <a href="/onboarding" className="underline text-[var(--ink)]">בואו נפתח אחד ←</a>
         </p>
       </Shell>
     );
