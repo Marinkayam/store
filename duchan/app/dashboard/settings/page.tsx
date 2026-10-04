@@ -815,7 +815,7 @@ export default function SettingsPage() {
                   </span>
                   <span
                     className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[11px] bg-[var(--ink)] text-white z-10"
-                    style={{ borderRadius: "999px", border: "1.5px solid var(--white)" }}
+                    style={{ border: "1.5px solid var(--white)" }}
                     aria-hidden
                   >
                     ✎

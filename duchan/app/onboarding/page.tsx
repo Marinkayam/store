@@ -307,7 +307,7 @@ export default function Onboarding() {
                       : "📷"}
                   </span>
                   <span className="absolute -bottom-1 -left-1 w-5 h-5 flex items-center justify-center text-[11px] bg-[var(--ink)] text-white z-10"
-                    style={{ borderRadius: "999px", border: "1.5px solid var(--white)" }} aria-hidden>✎</span>
+                    style={{ border: "1.5px solid var(--white)" }} aria-hidden>✎</span>
                 </button>
               </div>
 
@@ -341,7 +341,6 @@ export default function Onboarding() {
                       onClick={() => set({ products: draft.products.filter((_, j) => j !== i) })}
                       aria-label={`הסרת ${pr.name || "המוצר"}`}
                       className="absolute top-1 left-1 z-10 w-5 h-5 bg-black/55 text-white text-[12px] leading-none"
-                      style={{ borderRadius: "999px" }}
                     >
                       ×
                     </button>
@@ -599,7 +598,7 @@ export default function Onboarding() {
             <div className="text-center -mt-8 pb-3">
               <div
                 className="w-20 h-20 mx-auto inline-flex items-center justify-center overflow-hidden bg-white text-2xl"
-                style={{ borderRadius: "var(--r)", border: "1px solid var(--line)", boxShadow: "0 2px 10px rgba(0,0,0,.06)" }}
+                style={{ border: "1px solid var(--line)" }}
               >
                 {draft.avatarData ? (
                   <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />

@@ -334,8 +334,8 @@ function Sketch({ layout }: { layout: CategoryLayout }) {
       <div className="flex gap-1 h-10 items-center" aria-hidden>
         {three.map((i) => (
           <span key={i} className="flex items-center gap-0.5 h-5 px-1.5 border" style={{ borderColor: i ? ink : on, background: i ? "#fff" : on }}>
-            {layout === "icon" && <span className="w-2.5 h-2.5 rounded-full" style={{ background: i ? ink : "#fff" }} />}
-            <span className="w-4 h-1 rounded-full" style={{ background: i ? ink : "#fff" }} />
+            {layout === "icon" && <span className="w-2.5 h-2.5" style={{ background: i ? ink : "#fff" }} />}
+            <span className="w-4 h-1" style={{ background: i ? ink : "#fff" }} />
           </span>
         ))}
       </div>
@@ -347,9 +347,9 @@ function Sketch({ layout }: { layout: CategoryLayout }) {
           <span key={i} className="flex flex-col items-center gap-0.5">
             <span
               className="w-6 h-6 border-2"
-              style={{ borderColor: i ? ink : on, borderRadius: layout === "circle" ? 999 : 3, background: "#F3EEE7" }}
+              style={{ borderColor: i ? ink : on, borderRadius: layout === "circle" ? 999 : 0, background: "#F3EEE7" }}
             />
-            <span className="w-5 h-1 rounded-full" style={{ background: i ? ink : on }} />
+            <span className="w-5 h-1" style={{ background: i ? ink : on }} />
           </span>
         ))}
       </div>

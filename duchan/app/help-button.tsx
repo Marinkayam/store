@@ -13,7 +13,7 @@ export default function HelpButton({ context }: { context: string }) {
       rel="noreferrer"
       aria-label="עזרה בוואטסאפ"
       className="fixed bottom-4 left-4 z-40 w-12 h-12 flex items-center justify-center bg-white border border-[var(--line)] text-[13px] font-medium text-[var(--muted)]"
-      style={{ borderRadius: "999px", boxShadow: "0 2px 8px rgba(0,0,0,.10)" }}
+      
     >
       עזרה?
     </a>

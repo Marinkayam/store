@@ -28,7 +28,7 @@ export default function StallArt({ className = "" }: { className?: string }) {
     >
       {/* הכרטיס שמאחורי הכל — מה שנותן לאיור את המראה של אייקון אפליקציה.
           הוא נשאר מחוץ לקבוצה שזזה, אחרת כל התמונה רועדת במקום הדוכן. */}
-      <rect x="6" y="6" width="308" height="308" rx="74" fill="var(--cream)" />
+      <rect x="6" y="6" width="308" height="308" fill="var(--cream)" />
 
       <g className="stall-rock">
       {/* סוכך: חמש קשתות לסירוגין, סגול בקצוות */}

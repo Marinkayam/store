@@ -1124,7 +1124,6 @@ export default function StoreView({
                       <span
                         className="w-5 h-5 flex items-center justify-center shrink-0"
                         style={{
-                          borderRadius: "999px",
                           border: `2px solid ${on ? "var(--s-primary)" : "currentColor"}`,
                         }}
                         aria-hidden
@@ -1132,7 +1131,7 @@ export default function StoreView({
                         {on && (
                           <span
                             className="w-2.5 h-2.5"
-                            style={{ borderRadius: "999px", background: "var(--s-primary)" }}
+                            style={{ background: "var(--s-primary)" }}
                           />
                         )}
                       </span>
@@ -1799,10 +1798,10 @@ function PickRows({
           >
             <span
               className="w-5 h-5 shrink-0 flex items-center justify-center"
-              style={{ borderRadius: "999px", border: `2px solid ${on ? "var(--s-primary)" : "currentColor"}`, opacity: on ? 1 : 0.6 }}
+              style={{ border: `2px solid ${on ? "var(--s-primary)" : "currentColor"}`, opacity: on ? 1 : 0.6 }}
               aria-hidden
             >
-              {on && <span className="w-2.5 h-2.5" style={{ borderRadius: "999px", background: "var(--s-primary)" }} />}
+              {on && <span className="w-2.5 h-2.5" style={{ background: "var(--s-primary)" }} />}
             </span>
             <span className="flex-1 min-w-0">
               <span className={`block text-[14px] ${on ? "font-bold" : "font-semibold"}`}>{o.title}</span>
