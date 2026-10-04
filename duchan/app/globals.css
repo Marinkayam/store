@@ -701,3 +701,17 @@ html.a11y-still .oops-fixing .oops-sign { transform: rotate(0); }
   .kp-sway, .kp-jiggle, .kp-spin-slow, .kp-bird, .kp-flap, .kp-butterfly, .kp-wings, .kp-bob { animation: none; }
   .kp-hop, .kp-bird { display: none; }
 }
+
+/* יום/לילה בקופה: השמיים מחליפים צבע ברכות, שמש וירח מתחלפים */
+.kp-sky { transition: fill .9s ease; }
+.kp-fade { transition: opacity .9s ease; }
+@keyframes kp-firefly {
+  0%, 100% { transform: translate(0, 0); opacity: .2; }
+  30% { transform: translate(6px, -5px); opacity: 1; }
+  60% { transform: translate(-4px, -9px); opacity: .5; }
+}
+.kp-firefly { animation: kp-firefly 4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .kp-sky, .kp-fade { transition: none; }
+  .kp-firefly { animation: none; opacity: .8; }
+}

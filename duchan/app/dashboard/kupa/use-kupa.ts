@@ -117,3 +117,30 @@ export function addSolved(storeId: string, key: string): string[] {
   } catch {}
   return next;
 }
+
+/* ── יום ולילה באיור הדוכן ──
+   בחירה בכפתור נשמרת בטלפון. בלי בחירה — לפי השעה בישראל: לילה מ-19:00
+   עד 06:00, כדי שמי שנכנס/ת בערב יראה את הדוכן מואר בחושך. */
+const NIGHT_KEY = "kupa-night";
+export function useNight(): [boolean, (v: boolean) => void] {
+  const [night, setNightState] = useState(false);
+  useEffect(() => {
+    let v: boolean | null = null;
+    try {
+      const raw = localStorage.getItem(NIGHT_KEY);
+      if (raw === "1" || raw === "0") v = raw === "1";
+    } catch {}
+    if (v === null) {
+      const h = Number(new Date().toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: "Asia/Jerusalem" }));
+      v = h >= 19 || h < 6;
+    }
+    setNightState(v);
+  }, []);
+  const setNight = (v: boolean) => {
+    setNightState(v);
+    try {
+      localStorage.setItem(NIGHT_KEY, v ? "1" : "0");
+    } catch {}
+  };
+  return [night, setNight];
+}

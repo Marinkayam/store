@@ -17,7 +17,7 @@ export type IconName =
   | "camera" | "video" | "gallery" | "plus" | "check" | "pencil" | "trash"
   | "hourglass" | "gift" | "gem" | "leaf" | "sparkle" | "coins" | "link"
   | "palette" | "box" | "eye" | "party" | "moon" | "search" | "cloud"
-  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin";
+  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun";
 
 interface Props {
   name: IconName;
@@ -168,6 +168,12 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
     <>
       <path d="M4 20 9 8l7 7z" fill={t} />
       <path d="M14 4.5v2M18.5 6l-1.4 1.4M20 11h-2" fill="none" />
+    </>
+  ),
+  sun: (t) => (
+    <>
+      <circle cx="12" cy="12" r="4.6" fill={t} />
+      <path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7 7 17M17 7l1.7-1.7" fill="none" />
     </>
   ),
   moon: (t) => (

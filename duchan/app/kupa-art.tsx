@@ -194,26 +194,44 @@ function onCurve(t: number, [x0, y0]: number[], [cx, cy]: number[], [x1, y1]: nu
   return [u * u * x0 + 2 * u * t * cx + t * t * x1, u * u * y0 + 2 * u * t * cy + t * t * y1];
 }
 
+/** כוכבים בשמי הלילה — מקומות קבועים, כדי שלא יקפצו ברינדור */
+const NIGHT_STARS: [number, number, number][] = [
+  [12, 10, 1.6], [34, 30, 1.1], [58, 8, 1.3], [82, 26, 1], [104, 6, 1.5], [128, 20, 1.1],
+  [150, 9, 1.3], [176, 28, 1], [192, 6, 1.2], [232, 40, 1.1], [6, 44, 1], [64, 44, 1.2], [160, 42, 0.9],
+];
+
 export function KupaStall({
   level,
   name,
   build,
+  night = false,
   className = "",
 }: {
   level: number;
   name?: string;
   /** הרמה שזה עתה הושגה — החלקים שלה נבנים באנימציה */
   build?: number;
+  /** לילה: שמיים כהים, ירח וכוכבים, הנורות זוהרות, גחליליות במקום ציפורים */
+  night?: boolean;
   className?: string;
 }) {
   const sign = (name ?? "הדוכן שלי").slice(0, 14);
   const lights = { a: [26, 57], c: [120, 63], b: [214, 57] };
+  const day = !night;
   return (
-    <svg viewBox="0 0 240 176" className={className} role="img" aria-label={`איור הדוכן ברמה ${level + 1}`}>
-      <rect x="0" y="0" width="240" height="176" fill="var(--cream)" />
+    <svg viewBox="0 0 240 176" className={className} role="img" aria-label={`איור הדוכן ברמה ${level + 1}${night ? ", בלילה" : ""}`} data-night={night ? "1" : undefined}>
+      <rect x="0" y="0" width="240" height="176" className="kp-sky" style={{ fill: night ? "#2E3150" : "var(--cream)" }} />
+
+      {/* לילה: כוכבים מנצנצים וירח */}
+      <g className="kp-fade" style={{ opacity: night ? 1 : 0 }} aria-hidden>
+        {NIGHT_STARS.map(([x, y, r], i) => (
+          <circle key={i} className="kp-twinkle" style={{ animationDelay: `${(i % 4) * 0.4}s` }} cx={x} cy={y} r={r} fill="#FFF3C4" />
+        ))}
+        <path d="M212 8 a12 12 0 1 0 12 16 a9 9 0 1 1 -12 -16z" fill="#F6E7BF" stroke="#E3C26F" strokeWidth={1} />
+      </g>
 
       {/* שמש עם קרניים, וענן שזז לאט */}
-      <g opacity=".75">
+      <g className="kp-fade" style={{ opacity: day ? 0.75 : 0 }}>
         <circle cx="214" cy="20" r="9" fill="var(--warning)" />
         <g className="kp-spin-slow" style={{ transformOrigin: "214px 20px" }}>
           {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
@@ -221,19 +239,19 @@ export function KupaStall({
           ))}
         </g>
       </g>
-      {/* שתי ציפורים שחוצות את השמיים מדי פעם */}
-      <g className="kp-bird" aria-hidden>
+      {/* שתי ציפורים שחוצות את השמיים מדי פעם (ביום) */}
+      <g className="kp-bird" aria-hidden style={{ display: day ? undefined : "none" }}>
         <path className="kp-flap" d="M0 0 q3 -3 6 0 q3 -3 6 0" fill="none" stroke={INK} strokeWidth={1.1} strokeLinecap="round" style={{ transformOrigin: "6px 0px" }} transform="translate(0 0)" />
         <path className="kp-flap" d="M14 6 q2.5 -2.5 5 0 q2.5 -2.5 5 0" fill="none" stroke={INK} strokeWidth={1} strokeLinecap="round" style={{ transformOrigin: "19px 6px", animationDelay: ".2s" }} />
       </g>
       {level < 5 && (
         <g className="kp-drift">
-          <path d="M14 24 a6 6 0 0 1 10 -5 a8 8 0 0 1 15 2 a5 5 0 0 1 1 10 h-24 a4 4 0 0 1 -2 -7z" fill="var(--canvas)" stroke={INK} strokeWidth={1} opacity=".9" />
+          <path d="M14 24 a6 6 0 0 1 10 -5 a8 8 0 0 1 15 2 a5 5 0 0 1 1 10 h-24 a4 4 0 0 1 -2 -7z" fill="var(--canvas)" stroke={INK} strokeWidth={1} opacity={night ? 0.35 : 0.9} className="kp-fade" />
         </g>
       )}
 
       {/* קרקע: אדמה, כמה גבעולי דשא, וצל רך מתחת לדוכן */}
-      <rect x="0" y="150" width="240" height="26" fill="var(--sand)" />
+      <rect x="0" y="150" width="240" height="26" className="kp-sky" style={{ fill: night ? "#4A4560" : "var(--sand)" }} />
       <path d="M0 150 h240" stroke={INK} strokeWidth={1} opacity=".5" />
       <g stroke="var(--olive)" strokeWidth={1.4} strokeLinecap="round" fill="none">
         <path className="kp-sway" style={{ transformOrigin: "16px 162px" }} d="M14 162 l-2 -5 M16 162 l1 -6 M18 162 l3 -4" />
@@ -241,6 +259,13 @@ export function KupaStall({
         <path className="kp-sway" style={{ transformOrigin: "111px 170px", animationDelay: ".5s" }} d="M110 170 l-2 -4 M112 170 l2 -4" />
       </g>
       <ellipse cx="120" cy="153" rx="96" ry="3.5" fill={INK} opacity=".1" />
+      {night && (
+        <g aria-hidden>
+          {[[18, 120], [222, 104], [60, 140], [182, 136], [120, 90]].map(([x, y], i) => (
+            <circle key={i} className="kp-firefly" style={{ animationDelay: `${i * 0.9}s` }} cx={x} cy={y} r="1.8" fill="#FFE98A" />
+          ))}
+        </g>
+      )}
 
       {level === 0 ? (
         <g className={build === 0 ? "kp-roll" : ""}>
@@ -311,7 +336,7 @@ export function KupaStall({
           </g>
 
           {/* פרפר שמרחף ליד ארגז התפוחים, מרמה 3 */}
-          {level >= 2 && <Butterfly />}
+          {level >= 2 && day && <Butterfly />}
 
           {/* רמה 3: סוכך עם שוליים מסולסלים */}
           {level >= 2 && (
@@ -359,14 +384,16 @@ export function KupaStall({
                 return (
                   <g key={i}>
                     <rect x={px - 1.4} y={py - 0.5} width="2.8" height="2.5" fill={INK} />
-                    <circle className="kp-twinkle" style={{ animationDelay: `${(i % 3) * 0.5}s` }} cx={px} cy={py + 4.5} r="2.8" fill={i % 2 ? "var(--warning)" : "var(--blush)"} stroke={INK} strokeWidth={0.8} />
+                    {night && <circle className="kp-twinkle" style={{ animationDelay: `${(i % 3) * 0.5}s` }} cx={px} cy={py + 4.5} r="7" fill="#FFD966" opacity=".4" />}
+                    <circle className="kp-twinkle" style={{ animationDelay: `${(i % 3) * 0.5}s` }} cx={px} cy={py + 4.5} r="2.8" fill={night ? "#FFE98A" : i % 2 ? "var(--warning)" : "var(--blush)"} stroke={INK} strokeWidth={0.8} />
                   </g>
                 );
               })}
               <g className="kp-swing" style={{ transformOrigin: "209px 92px" }}>
                 <path d="M204 92 h5 v6" fill="none" stroke={INK} strokeWidth={1} />
                 <rect x="204" y="98" width="10" height="3" fill={W} {...SOFT} />
-                <rect x="205" y="101" width="8" height="10" rx="1.5" fill="var(--warning)" {...SOFT} />
+                {night && <circle cx="209" cy="106" r="11" fill="#FFD966" opacity=".35" />}
+                <rect x="205" y="101" width="8" height="10" rx="1.5" fill={night ? "#FFE98A" : "var(--warning)"} {...SOFT} />
                 <rect x="204" y="111" width="10" height="2.5" fill={W} {...SOFT} />
               </g>
             </g>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStore, confettiBurst } from "../use-store";
-import { useKupa, readSolved, addSolved, writeSolved, postSolve, type KupaData } from "./use-kupa";
+import { useKupa, useNight, readSolved, addSolved, writeSolved, postSolve, type KupaData } from "./use-kupa";
 import { KupaStall, Coin, Medal } from "@/app/kupa-art";
 import Icon from "@/app/icons";
 import CloseX from "@/app/close-x";
@@ -30,6 +30,7 @@ export default function KupaPage() {
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [rankUp, setRankUp] = useState<string | null>(null);
   const [starBump, setStarBump] = useState(0);
+  const [night, setNight] = useNight();
 
   /** כוכב על כל חידה שנפתרת — גם של אות וגם מהמאגר. נשמר במסד (השרת
    *  בודק את התשובה); המסך מתעדכן מיד ולא מחכה לשרת. */
@@ -129,7 +130,21 @@ export default function KupaPage() {
 
       {/* הדוכן */}
       <section className="bg-white border border-[var(--line)]" aria-labelledby="kupa-level">
-        <KupaStall level={kupa.level} name={kupa.name} className="w-full block" />
+        <div className="relative">
+          <KupaStall level={kupa.level} name={kupa.name} night={night} className="w-full block" />
+          {/* יום / לילה */}
+          <button
+            onClick={() => setNight(!night)}
+            aria-pressed={night}
+            aria-label={night ? "להחזיר יום בדוכן" : "לילה בדוכן"}
+            data-testid="kupa-night"
+            className="absolute top-2 left-2 w-11 h-11 flex items-center justify-center border border-[var(--line)] bg-white/90 text-[#6f4b28]"
+          >
+            <span key={night ? "moon" : "sun"} className="kp-flip inline-flex">
+              <Icon name={night ? "sun" : "moon"} size={22} tone={night ? "var(--warning)" : "var(--lavender)"} />
+            </span>
+          </button>
+        </div>
         <div className="px-4 py-3.5 flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-2">
             <h2 id="kupa-level" className="text-[17px] font-black" data-testid="kupa-level">{kupa.levelName}</h2>

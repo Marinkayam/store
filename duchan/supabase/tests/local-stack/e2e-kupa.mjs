@@ -107,6 +107,26 @@ if (k0.next) check("כמה חסר לרמה הבאה", ((await p.textContent("[da
 const nb = k0.badges.find((b) => !b.reached);
 if (nb) check("הצעד הבא = האות הראשון שלא הושג", ((await p.textContent("[data-testid=kupa-next]")) ?? "").includes(nb.title), nb.title);
 
+/* ── 7ב. יום / לילה ── */
+await p.evaluate(() => localStorage.setItem("kupa-night", "0"));
+await p.reload({ waitUntil: "networkidle" });
+await p.waitForSelector("[data-testid=kupa-night]");
+const stage = p.locator("[data-testid=kupa-page] section svg").first();
+check("ברירת המחדל שנבחרה: יום", (await stage.getAttribute("data-night")) === null && (await p.getAttribute("[data-testid=kupa-night]", "aria-pressed")) === "false");
+await p.click("[data-testid=kupa-night]");
+await p.waitForTimeout(1000);
+check("כפתור הלילה: שמיים כהים, ירח וכוכבים", (await stage.getAttribute("data-night")) === "1" &&
+  (await p.getAttribute("[data-testid=kupa-night]", "aria-pressed")) === "true" &&
+  (await stage.locator("circle.kp-firefly").count()) > 0);
+await p.screenshot({ path: `${SHOTS}/kupa-night.png` });
+await p.reload({ waitUntil: "networkidle" });
+await p.waitForSelector("[data-testid=kupa-night]");
+await p.waitForTimeout(300);
+check("הלילה נשמר אחרי רענון", (await p.locator("[data-testid=kupa-page] section svg").first().getAttribute("data-night")) === "1");
+await p.click("[data-testid=kupa-night]");
+await p.waitForTimeout(300);
+check("ובחזרה ליום", (await p.locator("[data-testid=kupa-page] section svg").first().getAttribute("data-night")) === null);
+
 /* ── 8. חידות ── */
 let allGood = true;
 const bad = [];

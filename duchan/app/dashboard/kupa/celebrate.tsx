@@ -6,7 +6,7 @@ import { useStore, confettiBurst } from "../use-store";
 import { KupaStall, Coin, Medal } from "@/app/kupa-art";
 import type { BadgeState } from "@/lib/kupa";
 import { storePath } from "@/lib/short-link";
-import { fetchKupa, readSeen, writeSeen, KUPA_CHECK, type KupaData } from "./use-kupa";
+import { fetchKupa, readSeen, writeSeen, useNight, KUPA_CHECK, type KupaData } from "./use-kupa";
 
 /**
  * רגע החגיגה של קופת הדוכן — יושב ב-layout של הדשבורד ובודק אחרי כל
@@ -106,6 +106,7 @@ function useCountUp(from: number, to: number, delay = 450) {
 function Sheet({ show, published, onClose }: { show: Show; published: boolean; onClose: () => void }) {
   const { kupa, fresh, kind } = show;
   const count = useCountUp(show.from, kupa.coins);
+  const [night] = useNight();
   const first = useRef<HTMLAnchorElement | HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -159,7 +160,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
             </div>
           ) : (
             <div className="w-[200px] max-w-full border border-[var(--line)]">
-              <KupaStall level={kupa.level} name={kupa.name} build={kupa.level} className="w-full block" />
+              <KupaStall level={kupa.level} name={kupa.name} build={kupa.level} night={night} className="w-full block" />
             </div>
           )}
         </div>
