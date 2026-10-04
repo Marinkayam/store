@@ -79,9 +79,11 @@ await empty.screenshot({ path: `${shots}/52-celebration.png` });
 /* ── 4. ומשם ישר להפצה ── */
 await empty.click("[data-testid=first-product-celebration] a[href='/dashboard/settings#share']");
 await empty.waitForURL("**/dashboard/settings#share");
+// השיתוף מינימלי: לינק + וואטסאפ גלויים, ההודעה המלאה תחת "עוד דרכים לשתף"
+await empty.waitForSelector("[data-testid=share-send]", { timeout: 15000 });
+check("share opens for real once a product exists", await empty.locator("[data-testid=share-send]").isVisible());
+await empty.click("[data-testid=share-more] summary");
 await empty.waitForSelector("textarea", { timeout: 15000 });
-check("share opens for real once a product exists",
-  (await empty.locator("textarea").count()) >= 1);
 const shareBox = await empty.locator("textarea").first().inputValue();
 check("and the ready-made message carries the store link",
   // הלינק הקצר (duchan.app/<קוד>) — ראה lib/short-link.ts

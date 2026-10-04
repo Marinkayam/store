@@ -70,11 +70,16 @@ export default function FirstSteps({
   const current = order.find((k) => !done[k] && !(k === "publish" && claimed)) ?? "order";
   const allBefore = done.open && done.product && done.publish && done.share;
 
-  const steps: { key: StepKey; title: string; sub: string; body?: React.ReactNode }[] = [
-    { key: "open", title: "פתחת דוכן", sub: `הדוכן "${store.display_name}" נוצר ונשמר.` },
+  /* כל צעד שנעשה מקבל מילה טובה במקום שם המשימה (מרינה: "איפה שיש וי —
+     הוספת מוצרים, מדהים / שילמת דמי דוכן, מעולה (לא שילמת? זה הזמן)").
+     "שילמת" רק כשבאמת היה תשלום — דוכן שנפתח בלי תשלום (הזמנת חברה,
+     פתיחה מהחמ"ל) מקבל "הדוכן פתוח להזמנות". */
+  const steps: { key: StepKey; title: string; doneTitle?: string; sub: string; body?: React.ReactNode }[] = [
+    { key: "open", title: "פתחת דוכן", doneTitle: "פתחת דוכן, איזה כיף!", sub: `הדוכן "${store.display_name}" נוצר ונשמר.` },
     {
       key: "product",
       title: "להוסיף מוצר ראשון",
+      doneTitle: "הוספת מוצרים, מדהים!",
       sub: "מצלמים, כותבים שם ומחיר. לוקח דקה.",
       body: (
         <a href="/dashboard/products?new=1" className="btn btn-primary w-full" data-testid="first-steps-product">
@@ -84,7 +89,8 @@ export default function FirstSteps({
     },
     {
       key: "publish",
-      title: claimed ? "הדוכן מחכה לאישור" : "לפרסם את הדוכן",
+      title: claimed ? "הדוכן מחכה לאישור" : "לא שילמת דמי דוכן? זה הזמן",
+      doneTitle: claimed ? "שילמת דמי דוכן, מעולה!" : "הדוכן פתוח להזמנות, מעולה!",
       sub: claimed
         ? "קיבלנו את הדיווח על התשלום. אחרי שנאשר, הדוכן ייפתח להזמנות. בינתיים אפשר כבר לשלוח את הלינק."
         : "עכשיו הדוכן בתצוגה מקדימה: רואים אותו, אבל עוד אי אפשר להזמין. פרסום פותח אותו להזמנות.",
@@ -97,6 +103,7 @@ export default function FirstSteps({
     {
       key: "share",
       title: "לשלוח את הלינק לחברים",
+      doneTitle: "שלחת לחברים, יופי!",
       sub: "מי שמקבל את הלינק נכנס לדוכן ויכול להזמין. על כל כניסה מקבלים גם מטבעות לקופה.",
       body: (
         <div className="flex gap-2">
@@ -161,7 +168,10 @@ export default function FirstSteps({
               key: st.key,
               testid: `first-step-${st.key}`,
               state,
-              title: st.key === "publish" ? <span data-testid="store-state-banner">{st.title}</span> : st.title,
+              title: (() => {
+                const t = isDone && st.doneTitle ? st.doneTitle : st.title;
+                return st.key === "publish" ? <span data-testid="store-state-banner">{t}</span> : t;
+              })(),
               sub: showSub ? st.sub : undefined,
               body: isCurrent && st.body ? st.body : st.key === "share" && isDone ? (
                 <button
