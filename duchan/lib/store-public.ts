@@ -18,6 +18,8 @@ export type PublicStoreResult =
       soldIds: string[];
       /** יש בדוכן קופון חי — רק אז הקופה מציגה "יש לך קוד קופון?" */
       hasCoupons: boolean;
+      /** "קונפטי לקונים" נקנה בחנות הקופה (0059) */
+      buyerConfetti: boolean;
     }
   | { state: "closed" };
 
@@ -122,6 +124,15 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     .limit(1);
   const hasCoupons = !couponErr && (liveCoupon?.length ?? 0) > 0;
 
+  // קישוט מחנות הקופה שהקונים רואים. טבלה שעוד לא קיימת = בלי קונפטי, בשקט.
+  const { data: confettiRow, error: confettiErr } = await db
+    .from("kupa_purchases")
+    .select("item_key")
+    .eq("store_id", row.id)
+    .eq("item_key", "confetti")
+    .maybeSingle();
+  const buyerConfetti = !confettiErr && !!confettiRow;
+
   const list = (products ?? []) as unknown as PublicProduct[];
   const bestSellerId = bestSellerOf(sold ?? [], list);
   const soldIds = soldProductIds(sold ?? [], list);
@@ -169,5 +180,6 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     bestSellerId,
     soldIds,
     hasCoupons,
+    buyerConfetti,
   };
 });

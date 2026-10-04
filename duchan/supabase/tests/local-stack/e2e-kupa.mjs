@@ -29,6 +29,7 @@ const { rows: [other] } = await db.query("select id from stores where id<>$1 and
 const MARK = "e2e-kupa";
 await db.query("delete from orders where store_id=$1 and buyer_note=$2", [store.id, MARK]);
 await db.query("delete from kupa_solved where store_id=$1", [store.id]);
+await db.query("delete from kupa_purchases where store_id=$1", [store.id]);
 const solvedDb = async () => (await db.query("select riddle_id from kupa_solved where store_id=$1", [store.id])).rows.map((r) => r.riddle_id);
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
@@ -52,7 +53,8 @@ const api = async (id = store.id) => {
 if (other) check("דוכן של מישהו אחר: 403", (await api(other.id)).status === 403);
 const k0 = (await api()).body;
 const badgeSum = k0.badges.filter((b) => b.reached).reduce((a, b) => a + b.coins, 0);
-check("מטבעות = אותות שהושגו + מכירות", k0.coins === badgeSum + k0.saleCoins, `${k0.coins} = ${badgeSum} + ${k0.saleCoins}`);
+check("מטבעות = אותות + מכירות + משימות + כרטיסיות", k0.coins === badgeSum + k0.saleCoins + k0.questCoins + k0.cards * 60,
+  `${k0.coins} = ${badgeSum} + ${k0.saleCoins} + ${k0.questCoins} + ${k0.cards}×60`);
 check("12 אותות, 'הדוכן נפתח' תמיד מושג", k0.badges.length === 12 && k0.badges[0].key === "open" && k0.badges[0].reached);
 check("רמה ושם רמה", typeof k0.level === "number" && !!k0.levelName, `${k0.level} · ${k0.levelName}`);
 check("ואין בתשובה טלפונים", !/9725\d{8}/.test(JSON.stringify(k0)));
@@ -98,11 +100,17 @@ await p.click("nav button:has-text('הקופה')");
 await p.waitForURL("**/dashboard/kupa");
 check("הטאב של הקופה מסומן כפעיל", (await p.getAttribute("nav button:has-text('הקופה')", "aria-current")) === "page");
 await p.waitForSelector("[data-testid=kupa-page]");
-check("העמוד: מטבעות, רמה, 12 אותות", ((await p.textContent("[data-testid=kupa-coins]")) ?? "").includes(String(k0.coins)) &&
-  (await p.textContent("[data-testid=kupa-level]")) === k0.levelName &&
-  (await p.locator("[data-testid=kupa-badge]").count()) === 12);
+check("העמוד: מטבעות ורמה", ((await p.textContent("[data-testid=kupa-coins]")) ?? "").includes(String(k0.coins)) &&
+  (await p.textContent("[data-testid=kupa-level]")) === k0.levelName);
+check("4 טאבים פנימיים: הדוכן, משימות, חידות, חנות", (await p.locator("[role=tablist][aria-label='קופת הדוכן'] [role=tab]").allTextContents()).join("|") === "הדוכן|משימות|חידות|חנות");
+check("בטאב הדוכן: 'מה נותן מטבעות עכשיו'", (await p.locator("[data-testid^=kupa-action-]").count()) === 4);
+await p.click("[data-testid=kupa-tab-tasks]");
+check("בטאב משימות: 12 אותות, משימת השבוע וכרטיסייה", (await p.locator("[data-testid=kupa-badge]").count()) === 12 &&
+  (await p.locator("[data-testid=week-quest], [data-testid=week-quest-all-done]").count()) === 1 &&
+  (await p.locator("[data-testid=punch-card]").count()) === 1);
 const reachedUi = await p.locator("[data-testid=kupa-badge][data-reached=true]").count();
 check("אותות שהושגו בעמוד = ב-API", reachedUi === k0.badges.filter((b) => b.reached).length, String(reachedUi));
+await p.click("[data-testid=kupa-tab-stall]");
 if (k0.next) check("כמה חסר לרמה הבאה", ((await p.textContent("[data-testid=kupa-missing]")) ?? "").includes(String(k0.next.missing)));
 const nb = k0.badges.find((b) => !b.reached);
 if (nb) check("הצעד הבא = האות הראשון שלא הושג", ((await p.textContent("[data-testid=kupa-next]")) ?? "").includes(nb.title), nb.title);
@@ -128,6 +136,7 @@ await p.waitForTimeout(300);
 check("ובחזרה ליום", (await p.locator("[data-testid=kupa-page] section svg").first().getAttribute("data-night")) === null);
 
 /* ── 8. חידות ── */
+await p.click("[data-testid=kupa-tab-tasks]");
 let allGood = true;
 const bad = [];
 for (let i = 0; i < 12; i++) {
@@ -149,16 +158,18 @@ await p.locator("[data-testid=riddle-option][data-right]").click();
 check("נכון: הסבר למה", ((await p.textContent("[data-testid=riddle-why]")) ?? "").includes("נכון"));
 await p.screenshot({ path: `${SHOTS}/kupa-riddle.png` });
 await p.click("[data-testid=badge-close]");
-await p.reload({ waitUntil: "networkidle" });
-await p.waitForSelector("[data-testid=kupa-page]");
+await p.goto(`${BASE}/dashboard/kupa?tab=tasks`, { waitUntil: "networkidle" });
+await p.waitForSelector("[data-testid=kupa-badge]");
 check("הכוכב של החידה נשמר אחרי רענון", ((await p.locator("[data-testid=kupa-badge]").nth(1).getAttribute("aria-label")) ?? "").includes("החידה נפתרה"));
 
 /* ── 8ב. מאגר החידות: כוכב על כל חידה ── */
 const starsNow = async () => Number(((await p.textContent("[data-testid=kupa-stars]")) ?? "").replace(/\D/g, ""));
 const remainingNow = async () => Number(((await p.textContent("[data-testid=riddle-remaining]")) ?? "").replace(/\D/g, ""));
+await p.click("[data-testid=kupa-tab-riddles]");
 const s0 = await starsNow(), r0 = await remainingNow();
 check("כוכבים = חידות שנפתרו (חידת האות נתנה כוכב)", s0 === 1, String(s0));
 check("מאגר גדול: יותר מ-100 חידות", r0 > 100, String(r0));
+await p.click("[data-testid=kupa-tab-riddles]");
 await p.click("[data-testid=riddle-new]");
 await p.waitForSelector("[data-testid=riddle-sheet]");
 const q1 = (await p.textContent("[data-testid=riddle-sheet] #riddle-q")) ?? "";
@@ -182,7 +193,7 @@ await p.screenshot({ path: `${SHOTS}/kupa-rankup.png` });
 await p.click("[data-testid=riddle-close]");
 check("בעמוד: 5 כוכבים והתואר", (await starsNow()) === 5 && ((await p.textContent("[data-testid=riddle-rank]")) ?? "") === "ניצוץ של חשבון");
 check("ונשארו 4 חידות פחות במאגר", (await remainingNow()) === r0 - 4, `${r0} → ${await remainingNow()}`);
-await p.reload({ waitUntil: "networkidle" });
+await p.goto(`${BASE}/dashboard/kupa?tab=riddles`, { waitUntil: "networkidle" });
 await p.waitForSelector("[data-testid=kupa-riddles]");
 check("הכוכבים נשמרים אחרי רענון", (await starsNow()) === 5);
 
@@ -212,7 +223,7 @@ const p2 = await ctx2.newPage();
 await p2.goto(`${BASE}/login`);
 await verifyPhone(p2, "0501234567");
 await p2.waitForURL("**/dashboard", { timeout: 20000 });
-await p2.goto(`${BASE}/dashboard/kupa`, { waitUntil: "networkidle" });
+await p2.goto(`${BASE}/dashboard/kupa?tab=riddles`, { waitUntil: "networkidle" });
 await p2.waitForSelector("[data-testid=kupa-riddles]");
 await p2.waitForTimeout(600);
 const s2 = Number(((await p2.textContent("[data-testid=kupa-stars]")) ?? "").replace(/\D/g, ""));
@@ -222,13 +233,76 @@ await ctx2.close();
 // כוכבים שהיו רק בטלפון (גרסה קודמת) עולים למסד בכניסה הראשונה
 await db.query("delete from kupa_solved where store_id=$1", [store.id]);
 await p.evaluate((id) => localStorage.setItem(`kupa-solved:${id}`, JSON.stringify(["c-need-want", "c-receipt", "t-times-0", "not-a-riddle"])), store.id);
-await p.goto(`${BASE}/dashboard/kupa`, { waitUntil: "networkidle" });
+await p.goto(`${BASE}/dashboard/kupa?tab=riddles`, { waitUntil: "networkidle" });
 await p.waitForSelector("[data-testid=kupa-riddles]");
 await p.waitForTimeout(1500);
 const imported = (await solvedDb()).sort();
 check("כוכבים מהטלפון עלו למסד (בלי מזהים לא חוקיים)", imported.join(",") === ["c-need-want", "c-receipt", "t-times-0"].sort().join(","), imported.join(","));
 await db.query("delete from kupa_solved where store_id=$1", [store.id]);
 await p.evaluate((id) => localStorage.removeItem(`kupa-solved:${id}`), store.id);
+
+/* ── 10. משימות, כרטיסייה וחנות ── */
+const { rows: [promoOrig] } = await db.query("select promo_on, promo_title, promo_text from stores where id=$1", [store.id]);
+await db.query("update stores set promo_on=false where id=$1", [store.id]);
+const qa = (await api()).body;
+check("9 משימות, וכרטיסייה לפי שבועות פעילים", qa.quests.length === 9 && qa.activeWeeks >= 1 && qa.punches === qa.activeWeeks % 6, `${qa.activeWeeks} שבועות`);
+await db.query("update stores set promo_on=true, promo_title='מבצע', promo_text='בקנייה מעל ₪30 מקבלים מתנה' where id=$1", [store.id]);
+const qb = (await api()).body;
+check("משימה מסומנת לבד מהנתונים: הודעה לקונים → +25", qb.quests.find((q) => q.key === "promo").done && qb.coins - qa.coins === 25, `${qa.coins} → ${qb.coins}`);
+
+await p.goto(`${BASE}/dashboard/kupa?tab=tasks`, { waitUntil: "networkidle" });
+await p.waitForSelector("[data-testid=punch-card]");
+const wq = p.locator("[data-testid=week-quest]");
+if (await wq.count()) {
+  const k1 = await wq.getAttribute("data-key");
+  await p.click("[data-testid=week-quest-skip]");
+  const k2 = (await wq.count()) ? await wq.getAttribute("data-key") : "all";
+  check("לדלג על משימת השבוע מביא משימה אחרת", k2 !== k1, `${k1} → ${k2}`);
+}
+check("ברשימת המשימות: 'הודעה לקונים' עם ✓", (await p.locator("[data-testid=quest-row][data-done=true]").allTextContents()).some((t) => t.includes("הודעה לקונים")));
+
+// חנות
+await p.click("[data-testid=kupa-tab-shop]");
+await p.waitForSelector("[data-testid=kupa-shop]");
+const bal = async () => Number(((await p.textContent("[data-testid=shop-balance]")) ?? "").replace(/\D/g, ""));
+const b0 = await bal();
+check("החנות: היתרה = כל המטבעות (עוד לא קנו כלום)", b0 === qb.coins, `${b0} / ${qb.coins}`);
+await p.click("[data-testid=shop-item][data-key=flowers]");
+check("לחיצה על קישוט: תצוגה מקדימה בציור + שאלה אם לקנות", (await p.locator("[data-testid=kupa-shop] svg [data-deco=flowers]").count()) === 1 &&
+  ((await p.textContent("[data-testid=shop-confirm]")) ?? "").includes("לקנות"));
+await p.click("[data-testid=shop-cancel]");
+check("ביטול: התצוגה המקדימה נעלמת, לא נקנה כלום", (await p.locator("[data-testid=kupa-shop] svg [data-deco=flowers]").count()) === 0 && (await bal()) === b0);
+await p.click("[data-testid=shop-item][data-key=flowers]");
+await p.click("[data-testid=shop-buy]");
+await p.waitForSelector("[data-testid=shop-msg]");
+check("קנייה: 'שלך!', היתרה ירדה ב-30, ונשמר במסד", ((await p.textContent("[data-testid=shop-msg]")) ?? "").includes("שלך") && (await bal()) === b0 - 30 &&
+  (await db.query("select price from kupa_purchases where store_id=$1 and item_key='flowers'", [store.id])).rows[0]?.price === 30);
+const shopApi = (body) => p.request.post(`${BASE}/api/kupa/shop`, { data: { storeId: store.id, ...body } });
+check("לקנות שוב את אותו דבר → 409", (await shopApi({ action: "buy", item: "flowers" })).status() === 409);
+check("קישוט שלא קיים → 400", (await shopApi({ action: "buy", item: "unicorn" })).status() === 400);
+await db.query("insert into kupa_purchases (store_id, item_key, price) values ($1, 'test_spend', 99999)", [store.id]);
+const poor = await shopApi({ action: "buy", item: "cat" });
+check("בלי מספיק מטבעות → 400 'חסרים עוד'", poor.status() === 400 && ((await poor.json()).error ?? "").includes("חסרים"));
+await db.query("delete from kupa_purchases where store_id=$1 and item_key='test_spend'", [store.id]);
+const after = (await api()).body;
+check("הרמה לפי כל מה שהורווח — קנייה לא מורידה רמה", after.coins === qb.coins && after.level === qb.level && after.balance === qb.coins - 30);
+if (after.balance >= 40) {
+  await shopApi({ action: "buy", item: "awning_olive" });
+  await p.goto(`${BASE}/dashboard/kupa?tab=shop`, { waitUntil: "networkidle" });
+  await p.waitForSelector("[data-testid=kupa-shop]");
+  check("סוכך זית נקנה ועל הדוכן", (await p.locator("[data-testid=kupa-shop] svg").first().getAttribute("data-awning")) === "olive");
+  await p.click("[data-testid=shop-item][data-key=awning_lavender]");
+  await p.waitForTimeout(800);
+  check("החזרה לסוכך הסגול — בלי לשלם", (await p.locator("[data-testid=kupa-shop] svg").first().getAttribute("data-awning")) === "lavender");
+  await p.screenshot({ path: `${SHOTS}/kupa-shop.png` });
+}
+if ((await api()).body.balance >= 60) {
+  await shopApi({ action: "buy", item: "confetti" });
+  const html = await (await p.request.get(`${BASE}/s/${store.slug}`)).text();
+  check("קונפטי לקונים: הדוכן יודע להפעיל אותו", html.includes("buyerConfetti\\\":true") || html.includes('"buyerConfetti":true'));
+}
+await db.query("delete from kupa_purchases where store_id=$1", [store.id]);
+await db.query("update stores set promo_on=$2, promo_title=$3, promo_text=$4 where id=$1", [store.id, promoOrig.promo_on, promoOrig.promo_title, promoOrig.promo_text]);
 
 /* ── 4. אות חדש ── */
 const reachedKeys = k0.badges.filter((b) => b.reached).map((b) => b.key);

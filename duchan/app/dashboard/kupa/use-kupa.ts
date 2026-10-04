@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Kupa } from "@/lib/kupa";
 import type { Sample } from "@/lib/kupa-lessons";
+import type { Deco } from "@/lib/kupa-shop";
 
 export type KupaData = Kupa & {
   slug: string;
@@ -10,6 +11,10 @@ export type KupaData = Kupa & {
   sample: Sample;
   /** חידות שנפתרו במסד (0058). null = הטבלה עוד לא קיימת — נשענים על הטלפון */
   solved: string[] | null;
+  /** חנות הקישוטים (0059) */
+  owned: string[];
+  deco: Deco;
+  shopReady: boolean;
 };
 
 /** אירוע שמסכים יורים אחרי פעולה שעשויה לתת אות (מוצר נשמר, הזמנה שולמה,

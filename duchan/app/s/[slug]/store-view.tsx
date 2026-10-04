@@ -18,6 +18,7 @@ import type { PublicProduct, PublicStore } from "@/lib/types";
 import { dropTime, dropWhen } from "@/lib/drop";
 import DropCountdown from "@/app/drop-countdown";
 import MysteryBag from "@/app/mystery-bag";
+import { confettiBurst } from "@/app/confetti";
 
 interface CartLine {
   id: string;
@@ -37,6 +38,7 @@ export default function StoreView({
   soldIds,
   preview = false,
   hasCoupons = false,
+  buyerConfetti = false,
   footer,
 }: {
   store: PublicStore;
@@ -46,6 +48,8 @@ export default function StoreView({
   soldIds: string[];
   /** יש בדוכן קופון חי — רק אז מופיע "יש לך קוד קופון?" */
   hasCoupons?: boolean;
+  /** קונפטי אחרי הזמנה — קישוט שבעלי הדוכן קנו בקופה */
+  buyerConfetti?: boolean;
   /** הדוכן עוד לא פורסם: רואים הכל, אי אפשר להזמין. */
   preview?: boolean;
   /** מה שבא אחרי המוצרים ("רוצה גם דוכן כזה?"). חייב לשבת בתוך השכבה של
@@ -559,6 +563,9 @@ export default function StoreView({
         // מזומן = אין מה לשלם מרחוק.
         payFirst: (!!payTarget || !!waPayUrl) && chosenPay !== "cash",
       });
+      if (buyerConfetti) {
+        for (let i = 0; i < 3; i++) setTimeout(() => confettiBurst(window.innerWidth / 2, window.innerHeight * 0.45, 18), i * 220);
+      }
     } catch {
       showToast("אין חיבור, לנסות שוב עוד רגע");
     } finally {

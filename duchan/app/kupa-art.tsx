@@ -1,4 +1,5 @@
 import Icon, { type IconName } from "./icons";
+import { AWNING_FILL, type Deco } from "@/lib/kupa-shop";
 
 /**
  * האיורים של קופת הדוכן: הדוכן שגדל, המטבע, והמדליות של האותות.
@@ -188,6 +189,54 @@ function Butterfly() {
   );
 }
 
+/** עציץ פרחים על הקרקע (חנות הקופה) */
+function Flowers({ x }: { x: number }) {
+  return (
+    <g data-deco="flowers">
+      <g className="kp-sway" style={{ transformOrigin: `${x + 10}px 140px` }}>
+        <path d={`M${x + 6} 140 v-12 M${x + 10} 140 v-16 M${x + 14} 140 v-11`} stroke="var(--olive)" strokeWidth={1.4} fill="none" />
+        {[[x + 6, 126, "var(--blush)"], [x + 10, 122, "var(--warning)"], [x + 14, 127, "var(--lavender)"]].map(([cx, cy, c], i) => (
+          <g key={i}>
+            {[0, 72, 144, 216, 288].map((a) => (
+              <circle key={a} cx={Number(cx)} cy={Number(cy) - 3} r="2" fill={String(c)} stroke={INK} strokeWidth={0.6} transform={`rotate(${a} ${cx} ${cy})`} />
+            ))}
+            <circle cx={Number(cx)} cy={Number(cy)} r="1.5" fill={INK} />
+          </g>
+        ))}
+      </g>
+      <path d={`M${x} 140 h20 l-2.5 10 h-15 z`} fill="var(--blush)" {...LINE} />
+    </g>
+  );
+}
+
+/** חתול שיושב (חנות הקופה). הזנב מתנדנד. */
+function Cat({ x, y }: { x: number; y: number }) {
+  return (
+    <g data-deco="cat">
+      <path className="kp-sway" style={{ transformOrigin: `${x + 14}px ${y - 3}px` }} d={`M${x + 14} ${y - 3} q9 -1 7 -12`} fill="none" stroke="#3a3a3a" strokeWidth={2.6} strokeLinecap="round" />
+      <path d={`M${x} ${y} q-1 -14 8 -15 q9 1 8 15 z`} fill="#3a3a3a" stroke={INK} strokeWidth={1} />
+      <circle cx={x + 8} cy={y - 18} r="6.5" fill="#3a3a3a" stroke={INK} strokeWidth={1} />
+      <path d={`M${x + 2.5} ${y - 21} l1 -6.5 l4 4 M${x + 13.5} ${y - 21} l-1 -6.5 l-4 4`} fill="#3a3a3a" stroke={INK} strokeWidth={1} strokeLinejoin="round" />
+      <circle cx={x + 5.5} cy={y - 18.5} r="1.2" fill="#E3C26F" />
+      <circle cx={x + 10.5} cy={y - 18.5} r="1.2" fill="#E3C26F" />
+      <path d={`M${x + 7} ${y - 15.5} l1 0.8 l1 -0.8`} fill="none" stroke="#F2D9DC" strokeWidth={0.8} />
+    </g>
+  );
+}
+
+/** שלט "פתוח!" תלוי (חנות הקופה) */
+function OpenSign({ x, y }: { x: number; y: number }) {
+  return (
+    <g data-deco="open-sign" className="kp-swing" style={{ transformOrigin: `${x + 13}px ${y}px` }}>
+      <path d={`M${x + 6} ${y + 6} l7 -6 l7 6`} fill="none" stroke={INK} strokeWidth={0.9} />
+      <rect x={x} y={y + 6} width="26" height="12" rx="2" fill="var(--ok-bg, #EEF3EC)" stroke={INK} strokeWidth={1.2} />
+      <text x={x + 13} y={y + 14.8} textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="7" fill="#4A6B4A">
+        פתוח!
+      </text>
+    </g>
+  );
+}
+
 /** נקודה על עקומה ריבועית — לשרשראות דגלים ונורות */
 function onCurve(t: number, [x0, y0]: number[], [cx, cy]: number[], [x1, y1]: number[]) {
   const u = 1 - t;
@@ -205,6 +254,7 @@ export function KupaStall({
   name,
   build,
   night = false,
+  deco,
   className = "",
 }: {
   level: number;
@@ -213,13 +263,16 @@ export function KupaStall({
   build?: number;
   /** לילה: שמיים כהים, ירח וכוכבים, הנורות זוהרות, גחליליות במקום ציפורים */
   night?: boolean;
+  /** קישוטים מחנות הקופה (lib/kupa-shop.ts) */
+  deco?: Deco;
   className?: string;
 }) {
+  const AW = AWNING_FILL[deco?.awning ?? "lavender"];
   const sign = (name ?? "הדוכן שלי").slice(0, 14);
   const lights = { a: [26, 57], c: [120, 63], b: [214, 57] };
   const day = !night;
   return (
-    <svg viewBox="0 0 240 176" className={className} role="img" aria-label={`איור הדוכן ברמה ${level + 1}${night ? ", בלילה" : ""}`} data-night={night ? "1" : undefined}>
+    <svg viewBox="0 0 240 176" className={className} role="img" aria-label={`איור הדוכן ברמה ${level + 1}${night ? ", בלילה" : ""}`} data-night={night ? "1" : undefined} data-awning={deco?.awning ?? "lavender"}>
       <rect x="0" y="0" width="240" height="176" className="kp-sky" style={{ fill: night ? "#2E3150" : "var(--cream)" }} />
 
       {/* לילה: כוכבים מנצנצים וירח */}
@@ -273,7 +326,7 @@ export function KupaStall({
           {/* שמשייה קטנה על העגלה — מתנדנדת סביב הבסיס של המוט */}
           <g {...LINE} className="kp-sway" style={{ transformOrigin: "70px 100px" }}>
             <path d="M70 100 v-44" fill="none" strokeWidth={1.8} />
-            <path d="M44 62 Q70 34 96 62 z" fill="var(--lavender)" />
+            <path d="M44 62 Q70 34 96 62 z" fill={AW} />
             <path d="M57 62 Q63 46 70 41 Q77 46 83 62" fill="var(--canvas)" />
             <path d="M44 62 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0" fill="none" strokeWidth={1.1} />
           </g>
@@ -316,7 +369,7 @@ export function KupaStall({
             {/* בד מפוספס מתחת לדלפק */}
             <g {...SOFT}>
               {Array.from({ length: 12 }, (_, i) => (
-                <rect key={i} x={30 + i * 15} y="118" width="15" height="30" fill={i % 2 ? "var(--canvas)" : "var(--lavender)"} />
+                <rect key={i} x={30 + i * 15} y="118" width="15" height="30" fill={i % 2 ? "var(--canvas)" : AW} />
               ))}
             </g>
             <g {...LINE}>
@@ -345,7 +398,7 @@ export function KupaStall({
                 <rect x="24" y="30" width="192" height="9" fill={W} />
                 {Array.from({ length: 8 }, (_, i) => {
                   const x = 24 + i * 24;
-                  const c = i % 2 ? "var(--canvas)" : "var(--lavender)";
+                  const c = i % 2 ? "var(--canvas)" : AW;
                   return <path key={i} d={`M${x} 39 h24 v12 a12 9 0 0 1 -24 0 z`} fill={c} />;
                 })}
                 <path d="M24 44 h192" fill="none" strokeWidth={0.6} opacity=".5" />
@@ -422,6 +475,10 @@ export function KupaStall({
           )}
         </>
       )}
+      {/* קישוטים מהחנות */}
+      {deco?.flowers && <Flowers x={level === 0 ? 200 : 178} />}
+      {deco?.cat && <Cat x={level === 0 ? 152 : 50} y={level === 0 ? 100 : 150} />}
+      {deco?.openSign && <OpenSign x={level === 0 ? 50 : 8} y={level === 0 ? 74 : 80} />}
     </svg>
   );
 }

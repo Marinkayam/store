@@ -25,6 +25,41 @@ export interface KupaStats {
   orders: number;
   /** הזמנות ששולמו/נמסרו (בלי הזמנות עצמיות) — תאריך יצירה ב-ISO */
   paid: { at: string; total: number }[];
+  /** משימות שהנתונים מראים שבוצעו (סרטון למוצר, קופון…) */
+  quests?: Partial<Record<QuestKey, boolean>>;
+  /** כמה שבועות שונים היה בהם משהו בדוכן (מוצר, הזמנה, חידה). לא מתאפס. */
+  activeWeeks?: number;
+  /** סכום מה שנקנה בחנות הקישוטים (0059) */
+  spent?: number;
+}
+
+/* ── משימות ──
+   כל משימה נבדקת מהנתונים — אין "עשיתי" שאפשר ללחוץ בלי לעשות. בכל שבוע
+   אחת מהן מוצגת כ"משימת השבוע" (מתחלפת לפי מספר השבוע), ואפשר לדלג. */
+export type QuestKey = "video" | "describe" | "category" | "featured" | "coupon" | "promo" | "mystery" | "drop" | "ship";
+export const QUEST_COINS = 25;
+export const QUESTS: { key: QuestKey; title: string; how: string; href: string; minutes: number; icon: IconName }[] = [
+  { key: "video", title: "סרטון של 5 שניות", how: "מצלמים סרטון קצר לאחד המוצרים — רואים איך הוא נראה ביד.", href: "/dashboard/products", minutes: 2, icon: "video" },
+  { key: "describe", title: "תיאורים שמוכרים", how: "כותבים תיאור קצר לשלושה מוצרים: ממה הוא עשוי, ולמי הוא מתאים.", href: "/dashboard/products", minutes: 4, icon: "pencil" },
+  { key: "category", title: "סדר בדוכן", how: "יוצרים קטגוריה ומכניסים אליה מוצר — ככה קל למצוא.", href: "/dashboard/products", minutes: 2, icon: "box" },
+  { key: "featured", title: "המומלץ שלי", how: "בוחרים מוצר אחד ומסמנים אותו כמומלץ, שיופיע בראש הדוכן.", href: "/dashboard/products", minutes: 1, icon: "star" },
+  { key: "coupon", title: "קופון לחברים", how: "יוצרים קוד הנחה ושולחים אותו לחברים.", href: "/dashboard/settings#coupons", minutes: 3, icon: "gift" },
+  { key: "promo", title: "הודעה לקונים", how: "כותבים הודעה קצרה שמופיעה בראש הדוכן, למשל מבצע או מתנה.", href: "/dashboard/settings#promo", minutes: 2, icon: "megaphone" },
+  { key: "mystery", title: "שקית הפתעה", how: "מוסיפים מוצר שהוא שקית הפתעה — הקונים לא יודעים מה בפנים.", href: "/dashboard/products?new=1", minutes: 3, icon: "gift" },
+  { key: "drop", title: "דרופ", how: "קובעים מוצר שנפתח להזמנה בשעה מסוימת, ומספרים לחברים מתי.", href: "/dashboard/products", minutes: 3, icon: "hourglass" },
+  { key: "ship", title: "גם משלוחים", how: "מגדירים אם שולחים בדואר ובכמה — ככה גם מי שגר רחוק יכול לקנות.", href: "/dashboard/settings#shipping", minutes: 2, icon: "box" },
+];
+
+/* ── כרטיסיית ניקובים ──
+   ניקוב על כל שבוע שהיה בו משהו בדוכן. 6 ניקובים = כרטיסייה מלאה = 60
+   מטבעות, ומתחילים כרטיסייה חדשה. שבוע שמפספסים לא מוחק כלום. */
+export const PUNCHES_PER_CARD = 6;
+export const CARD_COINS = 60;
+
+/** מספר השבוע (שעון ישראל), רציף מאז 1970 — לסבב משימות ולניקובים */
+export function weekIndex(iso: string | Date): number {
+  const d = new Date(new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" }) + "T00:00:00Z");
+  return Math.floor((d.getTime() / 86400000 + 4) / 7);
 }
 
 export type BadgeKey =
@@ -110,8 +145,22 @@ export interface BadgeState extends BadgeDef {
   need: number;
 }
 
+export interface QuestState {
+  key: QuestKey;
+  title: string;
+  how: string;
+  href: string;
+  minutes: number;
+  icon: IconName;
+  done: boolean;
+}
+
 export interface Kupa {
+  /** כל מה שהורווח אי פעם — קובע את הרמה */
   coins: number;
+  /** מה שאפשר להוציא בחנות: coins פחות מה שנקנה */
+  balance: number;
+  spent: number;
   /** כמה מהמטבעות הגיעו ממכירות (ולא מאותות) */
   saleCoins: number;
   level: number;
@@ -119,6 +168,12 @@ export interface Kupa {
   /** null ברמה האחרונה */
   next: { name: string; at: number; missing: number; progress: number } | null;
   badges: BadgeState[];
+  quests: QuestState[];
+  questCoins: number;
+  activeWeeks: number;
+  /** ניקובים בכרטיסייה הנוכחית (0–5) וכמה כרטיסיות כבר מלאות */
+  punches: number;
+  cards: number;
 }
 
 function israelDay(iso: string): string {
@@ -160,7 +215,13 @@ export function computeKupa(s: KupaStats): Kupa {
     perDay.set(d, Math.min(SALES_PER_DAY, (perDay.get(d) ?? 0) + 1));
   }
   const saleCoins = [...perDay.values()].reduce((a, n) => a + n * SALE_COINS, 0);
-  const coins = badges.reduce((a, b) => a + (b.reached ? b.coins : 0), 0) + saleCoins;
+  const quests = QUESTS.map((q) => ({ ...q, done: !!s.quests?.[q.key] }));
+  const questCoins = quests.filter((q) => q.done).length * QUEST_COINS;
+  const activeWeeks = Math.max(1, s.activeWeeks ?? 1); // שבוע הפתיחה הוא הניקוב הראשון
+  const cards = Math.floor(activeWeeks / PUNCHES_PER_CARD);
+  const coins =
+    badges.reduce((a, b) => a + (b.reached ? b.coins : 0), 0) + saleCoins + questCoins + cards * CARD_COINS;
+  const spent = Math.max(0, s.spent ?? 0);
 
   const level = levelOf(coins);
   const nl = LEVELS[level + 1];
@@ -172,7 +233,32 @@ export function computeKupa(s: KupaStats): Kupa {
         progress: (coins - LEVELS[level].at) / (nl.at - LEVELS[level].at),
       }
     : null;
-  return { coins, saleCoins, level, levelName: LEVELS[level].name, next, badges };
+  return {
+    coins,
+    balance: Math.max(0, coins - spent),
+    spent,
+    saleCoins,
+    level,
+    levelName: LEVELS[level].name,
+    next,
+    badges,
+    quests,
+    questCoins,
+    activeWeeks,
+    punches: activeWeeks % PUNCHES_PER_CARD,
+    cards,
+  };
+}
+
+/** משימת השבוע: מתחילים מהמשימה שהשבוע "שלה", ולוקחים את הראשונה שעוד לא
+ *  בוצעה ולא דילגו עליה. null = כל המשימות בוצעו. */
+export function weekQuest(k: Kupa, week: number, skipped: string[] = []): QuestState | null {
+  const n = k.quests.length;
+  for (let i = 0; i < n; i++) {
+    const q = k.quests[(week + i) % n];
+    if (!q.done && !skipped.includes(q.key)) return q;
+  }
+  return k.quests.find((q) => !q.done) ?? null;
 }
 
 /** האות הבא לעבוד עליו: הראשון ברשימה שעוד לא הושג */

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { canManage, phoneOf } from "@/lib/team";
-import { payoutTarget } from "@/lib/payouts";
-import { computeKupa, type KupaStats } from "@/lib/kupa";
-import { pickSample } from "@/lib/kupa-lessons";
+import { canManage } from "@/lib/team";
+import { loadKupa } from "@/lib/kupa-server";
 
 // GET /api/kupa?storeId= — קופת הדוכן (lib/kupa.ts), לראש הדוכן ולשותף/ה.
 //
@@ -24,42 +22,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "אין לך גישה לדוכן הזה" }, { status: 403 });
   }
 
-  const [{ data: products }, { data: orders }, { data: views }, { data: members }, ownerPhone, solvedRes] = await Promise.all([
-    db.from("products").select("name, price, image_key, poster_key").eq("store_id", store.id).is("deleted_at", null).order("sort_order"),
-    db.from("orders").select("status, total, buyer_phone, created_at").eq("store_id", store.id),
-    db.from("store_views").select("views").eq("store_id", store.id),
-    db.from("store_members").select("phone").eq("store_id", store.id),
-    phoneOf(db, store.owner_id),
-    db.from("kupa_solved").select("riddle_id").eq("store_id", store.id),
-  ]);
-
-  // הזמנה מהטלפון של הצוות עצמו לא נחשבת — אחרת אפשר "לקנות" מעצמך מטבעות.
-  // הזמנה שהוסתרה מהרשימה כן נחשבת: היא קרתה, ומטבעות לא נעלמים בגלל סידור.
-  const team = new Set([store.contact_phone, ownerPhone, ...(members ?? []).map((m) => m.phone)].filter(Boolean));
-  const real = (orders ?? []).filter(
-    (o) => o.status !== "cancelled" && !(o.buyer_phone && team.has(o.buyer_phone))
-  );
-
-  const stats: KupaStats = {
-    products: products?.length ?? 0,
-    productsWithPhoto: (products ?? []).filter((p) => p.image_key || p.poster_key).length,
-    payReady: !!payoutTarget(store) || !!store.payout_cash,
-    about: !!store.tagline?.trim(),
-    views: (views ?? []).reduce((s, v) => s + (v.views ?? 0), 0),
-    orders: real.length,
-    paid: real
-      .filter((o) => o.status === "paid" || o.status === "delivered")
-      .map((o) => ({ at: o.created_at, total: Number(o.total) || 0 })),
-  };
-
+  const k = await loadKupa(db, store);
   // מוצר אחד לחידות החשבון ("‘צמיד קשת’ עולה ₪12…") — שם ומחיר, שגם ככה פומביים
   return NextResponse.json({
-    ...computeKupa(stats),
+    ...k.kupa,
     slug: store.slug,
     name: store.display_name,
-    sample: pickSample(products ?? []),
-    // חידות שנפתרו (כוכבים). null = הטבלה עוד לא קיימת במסד — הדפדפן
-    // ממשיך עם מה שנשמר בטלפון, במקום להראות 0 כוכבים
-    solved: solvedRes.error ? null : (solvedRes.data ?? []).map((r) => r.riddle_id as string),
+    sample: k.sample,
+    solved: k.solved,
+    owned: k.owned,
+    deco: k.deco,
+    shopReady: k.shopReady,
   });
 }

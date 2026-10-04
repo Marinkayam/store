@@ -160,7 +160,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
             </div>
           ) : (
             <div className="w-[200px] max-w-full border border-[var(--line)]">
-              <KupaStall level={kupa.level} name={kupa.name} build={kupa.level} night={night} className="w-full block" />
+              <KupaStall level={kupa.level} name={kupa.name} build={kupa.level} night={night} deco={kupa.deco} className="w-full block" />
             </div>
           )}
         </div>

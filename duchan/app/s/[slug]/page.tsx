@@ -91,6 +91,7 @@ export default async function StorePage({ params }: Props) {
         bestSellerId={data.bestSellerId}
         soldIds={data.soldIds}
         hasCoupons={data.hasCoupons}
+        buyerConfetti={data.buyerConfetti}
         preview={data.state === "preview"}
         /* הלולאה: מי שראתה דוכן של חבר/ה יכול/ה לפתוח אחד משלו/ה, והשיוך נשמר */
         footer={<OpenYourOwn slug={data.store.slug} name={data.store.display_name} />}
