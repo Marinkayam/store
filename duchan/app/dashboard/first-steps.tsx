@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Store } from "@/lib/types";
 import VSteps from "@/app/v-steps";
+import OrderAlerts from "./order-alerts";
 
 /**
  * המסך הראשון אחרי פתיחת דוכן — כשעוד אין אף הזמנה.
@@ -67,6 +68,7 @@ export default function FirstSteps({
   /* הצעד הפתוח: הראשון שלא נעשה. בזמן שהתשלום בבדיקה אפשר כבר לשלוח
      את הלינק, אז הצעד הבא נפתח במקביל. */
   const current = order.find((k) => !done[k] && !(k === "publish" && claimed)) ?? "order";
+  const allBefore = done.open && done.product && done.publish && done.share;
 
   const steps: { key: StepKey; title: string; sub: string; body?: React.ReactNode }[] = [
     { key: "open", title: "פתחת דוכן", sub: `הדוכן "${store.display_name}" נוצר ונשמר.` },
@@ -124,8 +126,15 @@ export default function FirstSteps({
     },
     {
       key: "order",
-      title: "ההזמנה הראשונה מגיעה",
-      sub: "היא מופיעה כאן וגם בוואטסאפ. כשמקבלים את הכסף מסמנים \"שולם\", וכשהמוצר אצל הקונה מסמנים \"נמסר\".",
+      /* כשכל הצעדים הקודמים נעשו — זה כבר לא עוד משימה, זו ההמתנה. ומה
+         שאפשר לעשות בינתיים: לשמור את הדוכן כאפליקציה ולהדליק התראה. */
+      title: allBefore ? "ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!" : "ההזמנה הראשונה מגיעה",
+      sub: allBefore
+        ? "אגב, אפשר לשמור את הדוכן כמו אפליקציה ולקבל התראה כשמגיעה הזמנה."
+        : "היא מופיעה כאן וגם בוואטסאפ. כשמקבלים את הכסף מסמנים \"שולם\", וכשהמוצר אצל הקונה מסמנים \"נמסר\".",
+      body: allBefore ? (
+        <OrderAlerts storeId={store.id} cta="לחצו כאן לשמור על מסך הבית ולהפעיל התראות" />
+      ) : undefined,
     },
   ];
 

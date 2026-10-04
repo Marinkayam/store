@@ -347,7 +347,7 @@ export default function OrdersPage() {
           <FirstSteps store={store} link={link} shareText={shareText} onCopied={() => showToast("הלינק הועתק")} />
         )}
         {orders.length === 0 && missing.length > 0 && <Missing missing={missing} optional />}
-        {orders.length === 0 && <InstallCard />}
+        {/* בלי הזמנות, ההוספה למסך הבית וההתראות יושבות בצעד 5 של FirstSteps */}
 
         {filtered.length === 0 && orders.length > 0 && (
           <p className="text-center py-8 text-sm text-[var(--muted)]">אין הזמנות בסינון הזה.</p>

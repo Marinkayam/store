@@ -74,7 +74,7 @@ export default function InstallCard({ force = false }: { force?: boolean }) {
   if (platform.kind === "installed" || done) {
     return force ? (
       <div className="bg-white border border-[var(--line)] p-3.5 text-[13px]" data-testid="install-done">
-        ✅ הדוכן כבר על מסך הבית — נכנסים מהאייקון, כמו כל אפליקציה.
+        ✓ הדוכן כבר על מסך הבית — נכנסים מהאייקון, כמו כל אפליקציה.
       </div>
     ) : null;
   }
@@ -117,7 +117,7 @@ export default function InstallCard({ force = false }: { force?: boolean }) {
       <div className="flex items-start gap-3">
         <img src="/icon-192.png" alt="" className="w-11 h-11 shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="text-[14px] font-bold">📲 הדוכן כאפליקציה בטלפון</div>
+          <div className="text-[14px] font-bold">הדוכן כאפליקציה בטלפון</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             אייקון במסך הבית — נכנסים בלחיצה אחת, בלי לחפש את הקישור.
           </p>
@@ -146,7 +146,7 @@ export default function InstallCard({ force = false }: { force?: boolean }) {
             ]}
           />
           <button onClick={copyLink} className="mt-2.5 w-full border border-[var(--line)] py-2.5 text-[13px] font-semibold min-h-11">
-            {copied ? "✓ הלינק הועתק" : "📋 להעתיק את הלינק (ולהדביק בדפדפן)"}
+            {copied ? "✓ הלינק הועתק" : "להעתיק את הלינק (ולהדביק בדפדפן)"}
           </button>
         </div>
       )}
@@ -158,7 +158,7 @@ export default function InstallCard({ force = false }: { force?: boolean }) {
           data-testid="install-now"
           className="mt-3 w-full bg-[var(--ink)] text-white py-3 text-[14px] font-bold min-h-11"
         >
-          📲 להוסיף למסך הבית
+          להוסיף למסך הבית
         </button>
       )}
 

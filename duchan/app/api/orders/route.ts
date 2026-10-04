@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
@@ -8,6 +8,7 @@ import { lineTotal, sumPrices } from "@/lib/money";
 import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
 import { findCoupon } from "@/lib/coupons-server";
 import { countdown, dropTime } from "@/lib/drop";
+import { notifyStoreOrder } from "@/lib/store-notify";
 
 // POST /api/orders  { slug, items:[{productId, qty}], note?, buyerPhone? }
 // המספר של הילדה לא יושב ב-HTML — הוא מוחזר מכאן, רק אחרי שההזמנה נוצרה.
@@ -267,6 +268,17 @@ export async function POST(req: NextRequest) {
   if (orderErr || typeof orderNumber !== "number") {
     return NextResponse.json({ error: "משהו השתבש, לנסות שוב" }, { status: 500 });
   }
+
+  // התראה לטלפון של הדוכן (0061) — אחרי שהקונה כבר קיבל/ה תשובה
+  const placed = orderNumber;
+  after(() =>
+    notifyStoreOrder({
+      storeId: store.id,
+      orderNumber: placed,
+      total,
+      itemCount: snapshot.reduce((n, i) => n + i.qty, 0),
+    })
+  );
 
   return NextResponse.json({
     orderNumber,

@@ -24,6 +24,7 @@ import ShareSection from "./share-section";
 import TeamSection from "./team-section";
 import { OWNER_ONLY_SECTIONS, partnerPatch } from "@/lib/team-fields";
 import InstallCard from "@/app/install-card";
+import OrderAlerts from "../order-alerts";
 import { setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 import { kupaCheck } from "../kupa/use-kupa";
 
@@ -666,7 +667,7 @@ export default function SettingsPage() {
     {
       title: "חשבון",
       rows: [
-        { key: "app", icon: "📲", tint: "#efe7f4", title: "אפליקציה בטלפון", summary: "אייקון במסך הבית — כניסה בלחיצה אחת" },
+        { key: "app", icon: "📲", tint: "#efe7f4", title: "אפליקציה והתראות", summary: "אייקון במסך הבית והתראה על כל הזמנה" },
         {
           key: "details", icon: "📱", tint: "#ece6de", title: "הפרטים שלי",
           summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, info.city].filter(Boolean).join(" · "),
@@ -1327,7 +1328,7 @@ export default function SettingsPage() {
               <RoleGuide who="partner" />
             </div>
           )}
-          {section === "app" && <InstallCard force />}
+          {section === "app" && <OrderAlerts storeId={store.id} />}
           {section === "coupons" && (
             <div className="bg-white border border-[var(--line)] p-3" id="coupons" data-testid="seller-coupons">
               <SellerCoupons store={store} />

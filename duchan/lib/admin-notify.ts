@@ -80,19 +80,25 @@ export async function vapidPublicKey(): Promise<string | null> {
   }
 }
 
-/** שליחה לכל המכשירים הפעילים. מחזיר לכמה יצא. */
-async function pushAll(a: Alert): Promise<number> {
+export type PushSub = { id: string; endpoint: string; p256dh: string; auth: string };
+export type PushPayload = { title: string; body?: string; url: string; tag?: string };
+
+/**
+ * שליחת פוש לרשימת מכשירים. מחזיר לכמה יצא. משותף להתראות למנהלת
+ * (admin_push_subscriptions) ולהתראות הזמנה לדוכן (store_push_subscriptions):
+ * מכשיר שעונה 404/410 (התראות כובו, האפליקציה נמחקה) מסומן כבוי בטבלה שלו.
+ */
+export async function pushTo(
+  table: "admin_push_subscriptions" | "store_push_subscriptions",
+  subs: PushSub[],
+  p: PushPayload
+): Promise<number> {
+  if (!subs.length) return 0;
   const keys = await vapidKeys();
   if (!keys) return 0;
   const db = supabaseAdmin();
-  const { data: subs } = await db
-    .from("admin_push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .is("disabled_at", null);
-  if (!subs?.length) return 0;
-
   webpush.setVapidDetails(SITE_URL.startsWith("https://") ? SITE_URL : "https://duchan.app", keys.publicKey, keys.privateKey);
-  const payload = JSON.stringify({ title: a.title, body: a.body ?? "", url: a.url ?? "/admin", tag: a.kind });
+  const payload = JSON.stringify({ title: p.title, body: p.body ?? "", url: p.url, tag: p.tag });
 
   let ok = 0;
   await Promise.all(
@@ -113,10 +119,10 @@ async function pushAll(a: Alert): Promise<number> {
         });
         if (res.ok) {
           ok++;
-          await db.from("admin_push_subscriptions").update({ last_ok_at: new Date().toISOString() }).eq("id", s.id);
+          await db.from(table).update({ last_ok_at: new Date().toISOString() }).eq("id", s.id);
         } else if (res.status === 404 || res.status === 410) {
           // הדפדפן ביטל את המנוי (כיבו התראות, מחקו את האפליקציה)
-          await db.from("admin_push_subscriptions").update({ disabled_at: new Date().toISOString() }).eq("id", s.id);
+          await db.from(table).update({ disabled_at: new Date().toISOString() }).eq("id", s.id);
         } else {
           console.error("[push] send failed:", res.status, (await res.text().catch(() => "")).slice(0, 200));
         }
@@ -126,6 +132,15 @@ async function pushAll(a: Alert): Promise<number> {
     })
   );
   return ok;
+}
+
+/** שליחה לכל המכשירים הפעילים של המנהלת. מחזיר לכמה יצא. */
+async function pushAll(a: Alert): Promise<number> {
+  const { data: subs } = await supabaseAdmin()
+    .from("admin_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .is("disabled_at", null);
+  return pushTo("admin_push_subscriptions", subs ?? [], { title: a.title, body: a.body, url: a.url ?? "/admin", tag: a.kind });
 }
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

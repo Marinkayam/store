@@ -137,6 +137,25 @@ try {
     });
   }), gaps.join(","));
   check("store-state-banner עדיין קיים (מבחן ההפעלה)", await p.locator("[data-testid=store-state-banner]").isVisible());
+
+  /* ── כל הצעדים נעשו: צעד 5 הוא ההמתנה, עם אפליקציה + התראות ──
+     מרינה: "תכתוב ב5 ועכשיו מחכים להזמנה הראשונה שתופיע לכם פה! אגב אפשר
+     לשמור את הדוכן כמו אפליקציה ולקבל התראה כשמגיעה הזמנה" */
+  check("לפני שהכל נעשה — צעד 5 בלי כפתור ההתראות", (await p.locator("[data-testid=alerts-open]").count()) === 0);
+  await db.query("update stores set activated_at=now() where id=$1", [st.id]);
+  await p.evaluate((id) => localStorage.setItem(`duchan-shared-${id}`, "1"), st.id);
+  await p.reload();
+  await p.waitForSelector("[data-testid=alerts-open]", { timeout: 15000 });
+  const s5 = (await p.textContent("[data-testid=first-step-order]")) ?? "";
+  check("צעד 5: 'ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!'", s5.includes("ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!"));
+  check("צעד 5: 'אגב, אפשר לשמור את הדוכן כמו אפליקציה'", s5.includes("אפשר לשמור את הדוכן כמו אפליקציה ולקבל התראה"));
+  check("צעד 5: הכפתור 'לחצו כאן לשמור על מסך הבית ולהפעיל התראות'",
+    ((await p.textContent("[data-testid=alerts-open]")) ?? "").includes("לחצו כאן לשמור על מסך הבית ולהפעיל התראות"));
+  if (process.env.SHOTS) await p.locator("[data-testid=orders-empty]").screenshot({ path: `${process.env.SHOTS}/first-steps-5.png` });
+  await p.click("[data-testid=alerts-open]");
+  await p.waitForSelector("[data-testid=order-alerts]");
+  check("לחיצה פותחת את שני הצעדים", (await p.locator("[data-testid=alerts-step-install]").count()) === 1 && (await p.locator("[data-testid=alerts-step-push]").count()) === 1);
+  if (process.env.SHOTS) await p.locator("[data-testid=orders-empty]").screenshot({ path: `${process.env.SHOTS}/first-steps-5-open.png` });
   check("בלי שגיאות בדפדפן", errs.length === 0, errs.join(" | "));
 } finally {
   await db.query("delete from stores where contact_phone=$1", [E164]);

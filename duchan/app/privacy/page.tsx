@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
         <a href="/" className="text-xs text-[var(--muted)] underline">← לדף הבית</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">מדיניות פרטיות</h1>
-        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.4 · עודכן ב-4 באוקטובר 2026</p>
+        <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.5 · עודכן ב-4 באוקטובר 2026</p>
 
         <Section title="העיקרון">
           דוכן נבנה סביב איסוף מידע מינימלי. אנחנו אוספים רק את מה שנדרש כדי
@@ -144,6 +144,14 @@ export default function PrivacyPage() {
           בטיחות. התראות אלינו (למשל &quot;לא קיבלתי קוד&quot; או דוכן חדש) מגיעות
           כהתראת פוש לטלפון שלנו, ואם הפעלנו את זה גם בהודעת טלגרם שרק אנחנו
           מקבלים.
+          <br />
+          <br />
+          <b className="text-[var(--ink)]">התראות על הזמנה:</b> מי שמנהל/ת דוכן
+          יכול/ה להדליק התראה לטלפון על כל הזמנה חדשה. בשביל זה נשמרת אצלנו
+          כתובת טכנית שהדפדפן נותן לטלפון (לא מספר טלפון ולא מיקום), ואיזה
+          מכשיר זה (אייפון, אנדרואיד או מחשב). בהתראה עצמה יש רק מספר הזמנה,
+          כמה מוצרים וסכום, בלי שם או טלפון של הקונה, כי היא קופצת גם על מסך
+          נעול. אפשר לכבות בכל רגע מהדוכן או מהגדרות הטלפון.
         </Section>
 
         <Section title="🍪 עוגיות (Cookies)" id="cookies">
