@@ -27,6 +27,12 @@ try {
   check("ולכבות: חזרה ליום", (await hero.getAttribute("data-night")) === "0");
   const h1 = guest.locator("h1");
   check("המילה 'דוכן' לא מוצגת מתחת לאיור (נשארת לקוראי מסך)", (await h1.textContent()) === "דוכן" && (await h1.evaluate((e) => getComputedStyle(e).position)) === "absolute");
+  // עוגיות: למטה ודביק (מרינה), ולא מכסה את "עזרה?"
+  const cn = await guest.locator("[data-testid=cookie-note]").boundingBox();
+  check("הודעת העוגיות למטה, דביקה", Math.abs(cn.y + cn.height - 844) <= 1, `${Math.round(cn.y)}+${Math.round(cn.height)}`);
+  await guest.mouse.wheel(0, 600); await guest.waitForTimeout(300);
+  const cn2 = await guest.locator("[data-testid=cookie-note]").boundingBox();
+  check("ונשארת במקום כשגוללים", Math.abs(cn2.y - cn.y) <= 1);
   check("אורחת רואה 'כבר פתחת דוכן?'", await guest.locator("a[href='/login']:has-text('כבר פתחת דוכן')").isVisible());
 
   /* מי שכבר יש לה דוכן */
@@ -49,6 +55,17 @@ try {
   await me.goto(BASE + "/", { waitUntil: "networkidle" });
   await me.waitForSelector("[data-testid=my-store-card]", { timeout: 15000 });
   check("עם דוכן: כרטיס 'כבר יש לך דוכן'", await me.locator("[data-testid=my-store-card]").isVisible());
+  // בדשבורד: העוגיות יושבות מעל שורת הניווט, לא עליה
+  await me.goto(BASE + "/dashboard", { waitUntil: "networkidle" });
+  await me.waitForTimeout(900);
+  const nav = await me.locator("nav[data-bottom-bar]").boundingBox();
+  const note = await me.locator("[data-testid=cookie-note]").boundingBox();
+  check("בדשבורד: העוגיות מעל שורת הניווט", !!note && !!nav && Math.abs(note.y + note.height - nav.y) <= 2, note && nav ? `${Math.round(note.y + note.height)} / ${Math.round(nav.y)}` : "חסר");
+  await me.click("nav[data-bottom-bar] >> text=מוצרים");
+  await me.waitForURL("**/dashboard/products");
+  check("ושורת הניווט לחיצה (לא מכוסה)", true);
+  await me.click("[data-testid=cookie-ok]");
+  check("'הבנתי' סוגר", (await me.locator("[data-testid=cookie-note]").count()) === 0);
   check("ו'כבר פתחת דוכן?' לא מופיע אפילו לרגע", seen.length === 0, `${seen.length} פריימים`);
 } finally {
   await browser.close();

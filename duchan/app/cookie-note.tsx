@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * 🍪 הודעת עוגיות — פעם אחת, בשפה של ילדים.
@@ -8,11 +8,21 @@ import { useEffect, useState } from "react";
  * בדוכן אין עוגיות פרסום ואין מעקב: רק עוגיית ההתחברות (בלעדיה צריך
  * להיכנס מחדש בכל פעם) והגדרות קטנות שנשמרות במכשיר. לכן אין כאן "לאשר
  * הכל / לסרב" — אין מה לסרב לו. רק לספר ביושר, בקצרה, ולתת קישור להסבר.
+ *
+ * מיקום: למטה ודביק (מרינה, 10.2026). פעם הוא כבר ישב למטה, וכיסה את שורת
+ * הניווט, את הסל ואת כפתורי השמירה עד שלחצו "הבנתי". לכן עכשיו:
+ *   • הוא יושב *מעל* כל פס תחתון קבוע (מסומנים data-bottom-bar: ניווט
+ *     הדשבורד, הסל בדוכן, שמירה, "מוצר חדש") ונמדד מחדש כשהם זזים.
+ *   • הדף מקבל ריפוד תחתון בגובה שלו, כך שאפשר לגלול כל דבר אל מעליו.
+ *   • גובהו נחשף כ- --cookie-h, וכפתור "עזרה?" עולה מעליו.
+ *   • גיליונות (z-40 ומעלה) נפתחים מעליו.
  */
 const KEY = "duchan-cookies-ok";
 
 export default function CookieNote() {
   const [show, setShow] = useState(false);
+  const [lift, setLift] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -21,6 +31,32 @@ export default function CookieNote() {
       setShow(false); // מצב פרטי בלי אחסון — לא נציק בכל עמוד
     }
   }, []);
+
+  /* כמה להרים: הגובה של הפס התחתון הקבוע הכי גבוה שמוצג עכשיו */
+  useEffect(() => {
+    if (!show) return;
+    const measure = () => {
+      const vh = window.innerHeight;
+      let top = vh;
+      document.querySelectorAll<HTMLElement>("[data-bottom-bar]").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.height > 0 && r.top < vh - 1 && getComputedStyle(el).visibility !== "hidden") top = Math.min(top, r.top);
+      });
+      setLift(Math.max(0, Math.round(vh - top)));
+      const h = ref.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty("--cookie-h", `${h}px`);
+      document.body.style.paddingBottom = `${h}px`;
+    };
+    measure();
+    const t = setInterval(measure, 400);
+    window.addEventListener("resize", measure);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("resize", measure);
+      document.documentElement.style.removeProperty("--cookie-h");
+      document.body.style.paddingBottom = "";
+    };
+  }, [show]);
 
   if (!show) return null;
 
@@ -31,13 +67,20 @@ export default function CookieNote() {
     setShow(false);
   };
 
-  /* פס דק בראש העמוד, בתוך הזרימה — לא צף מעל. כשהוא צף בתחתית הוא כיסה
-     את כפתורי השמירה, הסל ושורת הניווט עד שלחצו "הבנתי". */
   return (
-    /* pt עם safe-area: כשנכנסים מוואטסאפ באייפון הדף מתחיל מתחת לשורת השעון
-       (viewportFit: cover), והפס "התחבא" שם. ככה הוא תמיד מתחת לה. */
-    <div role="region" aria-label="עוגיות" data-testid="cookie-note" className="bg-[var(--cream)] border-b border-[var(--line)] px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]">
-      <div className="max-w-md mx-auto flex items-center gap-2.5">
+    <div
+      ref={ref}
+      role="region"
+      aria-label="עוגיות"
+      data-testid="cookie-note"
+      className="fixed inset-x-0 max-w-md mx-auto z-[35] bg-[var(--cream)] border-t-[1.5px] border-[var(--ink)] px-3 pt-2.5 transition-[bottom] duration-200"
+      style={{
+        bottom: lift,
+        // בלי פס תחתון — מתחת לשורת הבית של האייפון
+        paddingBottom: lift ? "0.625rem" : "calc(0.625rem + env(safe-area-inset-bottom))",
+      }}
+    >
+      <div className="flex items-center gap-2.5">
         <span className="text-[22px] leading-none" aria-hidden>🍪</span>
         <p className="flex-1 min-w-0 text-[12.5px] leading-snug text-[var(--ink)]">
           <b>ואי עוגיות, יאמי!</b> הן זוכרות שנכנסתם. בלי פרסומות ובלי מעקב.{" "}

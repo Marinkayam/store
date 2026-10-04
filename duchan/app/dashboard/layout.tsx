@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">{children}</div>
       {/* באייפון: רק כמה פיקסלים מעל פס הבית, לא כל אזור הבטיחות + ריווח —
           אחרת נשאר רווח לבן גדול מתחת לשורה */}
-      <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] flex pt-1.5 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.875rem))] z-40">
+      <nav data-bottom-bar className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] flex pt-1.5 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.875rem))] z-40">
         {TABS.map((t) => {
           const on = path === t.href;
           return (

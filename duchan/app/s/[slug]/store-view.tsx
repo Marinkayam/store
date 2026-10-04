@@ -975,6 +975,7 @@ export default function StoreView({
       {/* cart bar */}
       <div
         data-testid="cart-bar"
+        data-bottom-bar
         role="button"
         className={`s-sheet fixed bottom-0 inset-x-0 z-40 flex justify-between items-center px-5 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] cursor-pointer transition-transform ${cartCount ? "" : "translate-y-full"}`}
         style={{ background: "var(--s-primary)", color: "var(--s-onprimary)", boxShadow: "0 -2px 16px rgba(0,0,0,0.08)" }}

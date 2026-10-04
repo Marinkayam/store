@@ -1648,7 +1648,7 @@ export default function SettingsPage() {
           מעל שורת הניווט ברגע שיש שינוי, תמיד על המסך. */}
       {dirty && <div className="h-12" aria-hidden />}
       {dirty && (
-        <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] inset-x-0 max-w-md mx-auto px-3 z-40">
+        <div data-bottom-bar className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] inset-x-0 max-w-md mx-auto px-3 z-40">
           <button
             data-testid="save-settings"
             onClick={save}

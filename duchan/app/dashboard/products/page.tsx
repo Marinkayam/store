@@ -963,6 +963,7 @@ export default function ProductsPage() {
       <button
         onClick={() => openEditor(null)}
         aria-label="מוצר חדש"
+        data-bottom-bar
         className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] h-12 bg-[var(--ink)] text-white text-[15px] font-bold  z-30 flex items-center justify-center gap-2"
       >
         <Icon name="plus" size={18} /> מוצר חדש

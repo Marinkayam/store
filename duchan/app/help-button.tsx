@@ -12,7 +12,8 @@ export default function HelpButton({ context }: { context: string }) {
       target="_blank"
       rel="noreferrer"
       aria-label="עזרה בוואטסאפ"
-      className="fixed bottom-4 left-4 z-40 w-12 h-12 flex items-center justify-center bg-white border border-[var(--line)] text-[13px] font-medium text-[var(--muted)]"
+      style={{ bottom: "calc(1rem + var(--cookie-h, 0px))" }}
+      className="fixed left-4 z-40 w-12 h-12 flex items-center justify-center bg-white border border-[var(--line)] text-[13px] font-medium text-[var(--muted)]"
       
     >
       עזרה?
