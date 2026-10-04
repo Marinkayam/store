@@ -233,7 +233,7 @@ check("אחרי שנוצל: 'נוצל עד הסוף'", (third.error ?? "").inclu
 
 /* ── 6. כרטיס ההזמנה אצל המוכרת ── */
 await girl.goto(`${BASE}/dashboard`);
-await girl.waitForSelector("text=היי", { timeout: 15000 });
+await girl.waitForSelector("h1:has-text('הזמנות')", { timeout: 15000 });
 await girl.waitForTimeout(1200);
 check("כרטיס ההזמנה מציג 'קופון SALE10'",
   ((await girl.locator("[data-testid=order-coupon]").allTextContents()).join(" ")).includes("SALE10"));

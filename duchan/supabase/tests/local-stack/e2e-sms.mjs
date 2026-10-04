@@ -112,9 +112,13 @@ await back.click("button:has-text('שלחו לי קוד')");
 await back.waitForSelector("input[aria-label='קוד אימות']", { timeout: 15000 });
 await back.fill("input[aria-label='קוד אימות']", await lastCode(E164));
 await back.waitForURL("**/dashboard", { timeout: 25000 });
-// הדשבורד מקבל בברכה בשם הפרטי שנגזר משם החנות, לא בשם החנות המלא
+// נכנסים לדוכן הקיים: בשם שמופיע ב"הדוכן שלי", ולא באונבורדינג
 let backOk = true;
-try { await back.waitForSelector("text=היי אורי", { timeout: 15000 }); } catch { backOk = false; }
+try {
+  await back.waitForSelector("h1:has-text('הזמנות')", { timeout: 15000 });
+  await back.goto(`${BASE}/dashboard/settings`);
+  await back.waitForSelector("[data-testid=settings-hero]:has-text('אורי')", { timeout: 15000 });
+} catch { backOk = false; }
 check("logging in again lands in the existing store", backOk);
 await back.screenshot({ path: `${shots}/83-returning.png` });
 
@@ -131,7 +135,11 @@ if (tamar) {
   await old.waitForURL("**/dashboard", { timeout: 25000 });
   const firstName = tamar.display_name.split(" ").pop();
   let oldOk = true;
-  try { await old.waitForSelector(`text=היי ${firstName}`, { timeout: 15000 }); } catch { oldOk = false; }
+  try {
+    await old.waitForSelector("h1:has-text('הזמנות')", { timeout: 15000 });
+    await old.goto(`${BASE}/dashboard/settings`);
+    await old.waitForSelector(`[data-testid=settings-hero]:has-text('${firstName}')`, { timeout: 15000 });
+  } catch { oldOk = false; }
   check("a store that signed up by email opens with its phone", oldOk, tamar.display_name);
   const { rows: [linked] } = await db.query("select user_id from phone_accounts where phone='972501234567'");
   check("the old account is linked, not duplicated", linked?.user_id === tamar.owner_id);

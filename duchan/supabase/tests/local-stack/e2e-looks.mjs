@@ -109,7 +109,7 @@ check("place_order סגורה לציבור בכל הגרסאות", open.length =
 
 // בדשבורד ההזמנות הסכום מוצג עם אגורות
 await girl.goto(`${BASE}/dashboard`);
-await girl.waitForSelector("text=היי", { timeout: 15000 });
+await girl.waitForSelector("h1:has-text('הזמנות')", { timeout: 15000 });
 await girl.waitForTimeout(1200);
 const dash = (await girl.textContent("body")) ?? "";
 check("בכרטיס ההזמנה: ₪32.70", dash.includes("₪32.70"));

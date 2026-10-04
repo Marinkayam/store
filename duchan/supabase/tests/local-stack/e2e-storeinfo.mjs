@@ -245,7 +245,7 @@ check("והוא מספר על הסגנונות החדשים", whatsNewText.inclu
 await girl.click("button:has-text('מגניב, הבנתי!')");
 await girl.waitForTimeout(400);
 await girl.reload();
-await girl.waitForSelector("text=היי", { timeout: 15000 });
+await girl.waitForSelector("h1:has-text('הזמנות')", { timeout: 15000 });
 await girl.waitForTimeout(1200);
 check("אחרי סגירה הוא לא חוזר", (await girl.locator("[data-testid=release-popup]").count()) === 0);
 await db.query("update stores set created_at=$1 where id=$2", [orig.created_at, store.id]);
