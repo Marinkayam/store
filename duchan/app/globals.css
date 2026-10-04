@@ -417,11 +417,7 @@ h3 {
   100%    { transform: translateX(-220%) skewX(-18deg); }
 }
 .fx-shine { position: relative; overflow: hidden; isolation: isolate; }
-.fx-shine::after {
-  content: ""; position: absolute; inset: 0 auto 0 0; width: 14%;
-  background: rgba(255,255,255,.16);
-  animation: fx-shine 3.6s ease-in-out infinite; pointer-events: none; z-index: 1;
-}
+/* הפס המבהיק שעבר על הבאנרים הוסר — מרינה: "יש איזה פס מעצבן בתוך הבאנר" */
 /* המחיר קופץ פנימה פעם אחת */
 @keyframes fx-pop {
   0%   { transform: scale(.6); opacity: 0; }
@@ -451,7 +447,7 @@ h3 {
 
 @media (prefers-reduced-motion: reduce) {
   .fx-rise, .fx-slide, .fx-pop, .fx-wiggle { animation: none; }
-  .fx-shine::after, .fx-confetti { animation: none; display: none; }
+  .fx-confetti { animation: none; display: none; }
   .fx-press:active { transform: none; }
 }
 

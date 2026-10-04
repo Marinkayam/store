@@ -10,6 +10,9 @@ import { displayPhone } from "@/lib/phone";
  * הילד/ה זו אותה פעולה בדיוק. אין לו/לה מושג אם יש כבר חשבון, ואין סיבה
  * שהיא תצטרך לדעת.
  */
+/** אחרי כמה שניות בלי קוד מופיע כפתור "לא קיבלתי קוד" */
+const HELP_AFTER = 120;
+
 export default function PhoneVerify({
   title,
   subtitle,
@@ -28,6 +31,13 @@ export default function PhoneVerify({
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [showFindHelp, setShowFindHelp] = useState(false);
+  /* מתי נשלח הקוד — אחרי HELP_AFTER שניות מופיע "לא קיבלתי קוד". לפי שעון
+     ולא לפי ספירת טיקים: כשעוברים לאפליקציית ההודעות לחפש את הקוד, הדפדפן
+     מאט טיימרים ברקע, וספירה הייתה נתקעת. */
+  const [sentAt, setSentAt] = useState(0);
+  const [now, setNow] = useState(0);
+  const waited = sentAt ? (now - sentAt) / 1000 : 0;
+  const [help, setHelp] = useState<"idle" | "busy" | "sent" | "error">("idle");
   const codeRef = useRef<HTMLInputElement>(null);
 
   /* המספר האחרון שאומת *במכשיר הזה*, כדי שלא יצטרכו להקליד אותו שוב
@@ -53,6 +63,27 @@ export default function PhoneVerify({
     if (step === "code") codeRef.current?.focus();
   }, [step]);
 
+  useEffect(() => {
+    if (step !== "code") return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [step]);
+
+  /* "לא קיבלתי קוד" — מגיע לחמ"ל כפוש, ומשם שולחים קישור כניסה בוואטסאפ */
+  async function askHelp() {
+    setHelp("busy");
+    try {
+      const res = await fetch("/api/auth/sms/help", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      setHelp(res.ok ? "sent" : "error");
+    } catch {
+      setHelp("error");
+    }
+  }
+
   async function sendCode() {
     if (busy) return;
     setErr("");
@@ -71,6 +102,8 @@ export default function PhoneVerify({
       setStep("code");
       setCode("");
       setCooldown(60);
+      setSentAt(Date.now());
+      setNow(Date.now());
     } catch {
       setErr("אין חיבור לאינטרנט. אפשר לנסות שוב בעוד רגע.");
     } finally {
@@ -110,7 +143,24 @@ export default function PhoneVerify({
       <div className="w-full flex flex-col gap-3">
         <h1 className="t-title text-center">{title}</h1>
         <p className="t-sub text-center">{subtitle}</p>
+        <ol className="bg-white border border-[var(--line)] flex flex-col" data-testid="phone-how">
+          {[
+            ["מקלידים מספר טלפון", "שלך, או של אמא או אבא"],
+            ["מקבלים הודעת SMS", "עם קוד של 6 ספרות. בדרך כלל תוך דקה"],
+            ["מקלידים את הקוד", "וממשיכים. זהו!"],
+          ].map(([t, sub], i) => (
+            <li key={t} className={`flex items-center gap-3 px-3.5 py-2.5 ${i ? "border-t border-[var(--line)]" : ""}`}>
+              <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-[var(--ink)] text-white text-[13px] font-bold">{i + 1}</span>
+              <span className="text-[13.5px] leading-snug">
+                <b>{t}</b>
+                <span className="text-[var(--muted)]"> · {sub}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <label htmlFor="pv-phone" className="t-small font-medium -mb-1.5">מספר הטלפון</label>
         <input
+          id="pv-phone"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           type="tel"
@@ -193,9 +243,11 @@ export default function PhoneVerify({
 
   return (
     <div className="w-full flex flex-col gap-3">
-      <h1 className="t-title text-center">הקוד שקיבלת</h1>
+      <h1 className="t-title text-center">מחכים לקוד</h1>
       <p className="t-sub text-center">
-        שלחנו הודעה ל-{displayPhone(phone.replace(/\D/g, "").replace(/^0/, "972"))}
+        שלחנו SMS עם קוד של 6 ספרות ל-<bdi>{displayPhone(phone.replace(/\D/g, "").replace(/^0/, "972"))}</bdi>.
+        <br />
+        כשההודעה מגיעה, מקלידים את הקוד כאן:
       </p>
       <input
         ref={codeRef}
@@ -216,6 +268,32 @@ export default function PhoneVerify({
       />
       {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
       {busy && <p className="t-small text-[var(--muted)] text-center">רגע…</p>}
+
+      {/* אחרי 2 דקות בלי קוד: כפתור עזרה שמגיע ישר אלינו */}
+      {waited < HELP_AFTER ? (
+        <p className="t-small text-[var(--muted)] text-center" data-testid="code-wait">
+          ההודעה בדרך… אם לא תגיע תוך 2 דקות, יופיע כאן כפתור עזרה.
+        </p>
+      ) : help === "sent" ? (
+        <div role="status" data-testid="code-help-sent" className="bg-[var(--ok-bg)] border border-[var(--ok-line)] p-3.5 text-center">
+          <div className="t-body font-bold">קיבלנו! אנחנו על זה</div>
+          <p className="t-small text-[var(--muted)] mt-1 leading-relaxed">
+            נשלח הודעת וואטסאפ למספר הזה, עם קישור שנכנסים בו בלי קוד.
+            אפשר לסגור את המסך ולחכות להודעה.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white border-[1.5px] border-[var(--ink)] p-3.5 text-center" data-testid="code-help-box">
+          <div className="t-body font-bold">עברו 2 דקות ועוד אין קוד?</div>
+          <p className="t-small text-[var(--muted)] mt-1">לוחצים כאן, ואנחנו נעזור להיכנס.</p>
+          <button onClick={askHelp} disabled={help === "busy"} data-testid="code-help"
+            className="btn btn-primary w-full mt-2.5 disabled:opacity-50">
+            {help === "busy" ? "שולחים…" : "לא קיבלתי קוד"}
+          </button>
+          {help === "error" && <p className="t-small text-[var(--danger)] mt-2">לא הצלחנו לשלוח. אפשר לנסות שוב.</p>}
+        </div>
+      )}
+
       <button
         onClick={() => setStep("phone")}
         className="t-small text-[var(--muted)] underline"

@@ -12,6 +12,7 @@ import { kupaCheck } from "./kupa/use-kupa";
 import Icon from "@/app/icons";
 import Chevron from "@/app/chevron";
 import { storePath } from "@/lib/short-link";
+import FirstSteps from "./first-steps";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
 // "שולם" מנכה מלאי (בפונקציית DB אטומית). "נמסר" מקבל קונפטי — המיקרו-אינטראקציה היחידה.
@@ -259,8 +260,9 @@ export default function OrdersPage() {
         <WhatsNew />
       </header>
 
-      {/* החנות עוד לא פורסמה — זה הדבר הראשון שהיא רואה, ולא נעלם עד שמפעילים */}
-      {!store.activated_at && (
+      {/* החנות עוד לא פורסמה. כשאין הזמנות זה צעד במסלול "ככה הדוכן מתחיל
+          לעבוד" למטה, ולכן הבאנר מופיע רק כשכבר יש הזמנות (למשל אחרי ביטול פרסום) */}
+      {!store.activated_at && orders.length > 0 && (
         <a
           href="/activate"
           className="block mx-3 mt-3 bg-[var(--ink)] text-white p-3.5"
@@ -281,26 +283,8 @@ export default function OrdersPage() {
         </a>
       )}
 
-      {/* מה חסר בדוכן — נעלם כשהכל מוכן */}
-      {missing.length > 0 && (
-        <section className="mx-4 mt-4 bg-white border border-[var(--line)]" data-testid="store-missing" aria-labelledby="missing-title">
-          <h2 id="missing-title" className="px-4 pt-3.5 pb-1 text-[14px] font-bold">
-            {missing.length === 1 ? "נשאר דבר אחד כדי שהדוכן ייראה מוכן" : `נשארו ${missing.length} דברים כדי שהדוכן ייראה מוכן`}
-          </h2>
-          {missing.map((m) => (
-            <a key={m.key} href={m.href} className="flex items-center gap-3 px-4 py-3 border-t border-[var(--sand)] first-of-type:border-t-0" data-testid={`missing-${m.key}`}>
-              <span className="flex-1 min-w-0">
-                <span className="block text-[13.5px] font-bold">{m.title}</span>
-                <span className="block text-[12px] text-[var(--muted)] leading-snug mt-0.5">{m.why}</span>
-              </span>
-              <span className="shrink-0 text-[12.5px] font-bold text-[var(--ink)] flex items-center gap-1">
-                {m.cta}
-                <Chevron size={14} />
-              </span>
-            </a>
-          ))}
-        </section>
-      )}
+      {/* מה חסר בדוכן — נעלם כשהכל מוכן. כשאין הזמנות הוא יושב מתחת למסלול */}
+      {missing.length > 0 && orders.length > 0 && <Missing missing={missing} />}
 
       {/* הקופה שלי */}
       {revenue > 0 && (
@@ -356,79 +340,14 @@ export default function OrdersPage() {
         {/* "להוסיף למסך הבית" יושב כאן ולא בהגדרות: זה המסך שהיא פותחת
             הכי הרבה, וזה הרגע שבו כדאי לה שיהיה לזה קיצור. הכרטיס נעלם
             לבד כשהאפליקציה כבר במסך הבית, או כשסוגרים אותו. */}
-        <InstallCard />
+        {orders.length > 0 && <InstallCard />}
 
-        {/* אין הזמנות: במקום מסך ריק — מה עושים כדי שתגיע הראשונה */}
+        {/* אין הזמנות: מסלול ברור, צעד אחרי צעד, במקום מסך ריק */}
         {orders.length === 0 && (
-          <section className="bg-white border border-[var(--line)] p-4 flex flex-col gap-3" data-testid="orders-empty" aria-labelledby="first-order-title">
-            <div className="flex items-center gap-3">
-              <span className="w-12 h-12 shrink-0 bg-[var(--canvas)] flex items-center justify-center text-[#6f4b28]">
-                <Icon name="receipt" size={28} tone="var(--lavender)" />
-              </span>
-              <div>
-                <h2 id="first-order-title" className="text-[16px] font-bold leading-tight">
-                  {store.activated_at ? "איך מגיעה ההזמנה הראשונה?" : "הדוכן עוד לא פתוח להזמנות"}
-                </h2>
-                <p className="text-[12.5px] text-[var(--muted)] mt-0.5">
-                  {store.activated_at ? "שלושה דברים שמביאים קונים:" : "אפשר כבר לשלוח את הלינק ולהראות לחברים. הזמנות יגיעו אחרי שמפרסמים את הדוכן (בכפתור השחור למעלה)."}
-                </p>
-              </div>
-            </div>
-
-            <ol className="flex flex-col">
-              <li className="flex gap-3 py-3 border-t border-[var(--sand)]">
-                <span className="w-7 h-7 shrink-0 bg-[var(--ink)] text-white text-[13px] font-bold flex items-center justify-center">1</span>
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                  <div>
-                    <div className="text-[13.5px] font-bold">לשלוח את הלינק לחברים ולמשפחה</div>
-                    <div className="text-[12px] text-[var(--muted)] leading-snug">מי שנכנס לדוכן יכול להזמין. ועל כניסות לדוכן מקבלים גם מטבעות לקופה.</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-[var(--whatsapp)] text-white text-center py-2.5 text-[13px] font-bold"
-                      data-testid="orders-empty-whatsapp"
-                    >
-                      שליחה בוואטסאפ
-                    </a>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard?.writeText(link).catch(() => {});
-                        showToast("הלינק הועתק");
-                      }}
-                      className="flex-1 border-[1.5px] border-[var(--ink)] py-2.5 text-[13px] font-bold"
-                      data-testid="orders-empty-copy"
-                    >
-                      העתקת הלינק
-                    </button>
-                  </div>
-                </div>
-              </li>
-              <li className="border-t border-[var(--sand)]">
-                <a href="/dashboard/products?new=1" className="flex gap-3 py-3 items-center">
-                  <span className="w-7 h-7 shrink-0 bg-[var(--ink)] text-white text-[13px] font-bold flex items-center justify-center">2</span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-[13.5px] font-bold">להוסיף עוד מוצרים</span>
-                    <span className="block text-[12px] text-[var(--muted)] leading-snug">יותר מבחר = יותר סיכוי שכל מי שנכנס ימצא משהו.</span>
-                  </span>
-                  <Chevron className="text-[var(--faint)]" />
-                </a>
-              </li>
-              <li className="border-t border-[var(--sand)]">
-                <a href="/dashboard/settings#share" className="flex gap-3 py-3 items-center">
-                  <span className="w-7 h-7 shrink-0 bg-[var(--ink)] text-white text-[13px] font-bold flex items-center justify-center">3</span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-[13.5px] font-bold">לפרסם בסטטוס, בסטורי או בטיקטוק</span>
-                    <span className="block text-[12px] text-[var(--muted)] leading-snug">יש הודעות מוכנות ורעיונות לסרטון, רק מעתיקים ומפרסמים.</span>
-                  </span>
-                  <Chevron className="text-[var(--faint)]" />
-                </a>
-              </li>
-            </ol>
-          </section>
+          <FirstSteps store={store} link={link} shareText={shareText} onCopied={() => showToast("הלינק הועתק")} />
         )}
+        {orders.length === 0 && missing.length > 0 && <Missing missing={missing} optional />}
+        {orders.length === 0 && <InstallCard />}
 
         {filtered.length === 0 && orders.length > 0 && (
           <p className="text-center py-8 text-sm text-[var(--muted)]">אין הזמנות בסינון הזה.</p>
@@ -724,5 +643,34 @@ export default function OrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+type MissingItem = { key: string; title: string; why: string; cta: string; href: string };
+
+/** מה חסר כדי שהדוכן ייראה מוכן. כשאין הזמנות הוא מתחת למסלול, ומסומן "לא חובה" */
+function Missing({ missing, optional = false }: { missing: MissingItem[]; optional?: boolean }) {
+  return (
+    <section className={`bg-white border border-[var(--line)] ${optional ? "" : "mx-4 mt-4"}`} data-testid="store-missing" aria-labelledby="missing-title">
+      <h2 id="missing-title" className="px-4 pt-3.5 pb-1 text-[14px] font-bold">
+        {optional
+          ? "ואם יש זמן: לשפר את הדוכן (לא חובה)"
+          : missing.length === 1
+            ? "נשאר דבר אחד כדי שהדוכן ייראה מוכן"
+            : `נשארו ${missing.length} דברים כדי שהדוכן ייראה מוכן`}
+      </h2>
+      {missing.map((m) => (
+        <a key={m.key} href={m.href} className="flex items-center gap-3 px-4 py-3 border-t border-[var(--sand)] first-of-type:border-t-0" data-testid={`missing-${m.key}`}>
+          <span className="flex-1 min-w-0">
+            <span className="block text-[13.5px] font-bold">{m.title}</span>
+            <span className="block text-[12px] text-[var(--muted)] leading-snug mt-0.5">{m.why}</span>
+          </span>
+          <span className="shrink-0 text-[12.5px] font-bold text-[var(--ink)] flex items-center gap-1">
+            {m.cta}
+            <Chevron size={14} />
+          </span>
+        </a>
+      ))}
+    </section>
   );
 }

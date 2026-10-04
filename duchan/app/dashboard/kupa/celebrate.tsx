@@ -144,7 +144,17 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
         data-kind={kind}
         className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[91] bg-white px-5 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center flex flex-col gap-3 max-h-[92vh] overflow-y-auto"
       >
-        <div className="relative mx-auto">
+        <button
+          onClick={onClose}
+          aria-label="סגירה"
+          data-testid="kupa-x"
+          className="absolute top-2 left-2 z-10 w-11 h-11 flex items-center justify-center bg-white/85 text-[var(--ink)]"
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <div className={kind === "badge" && top ? "relative mx-auto" : "-mx-5 -mt-5"}>
           {kind === "badge" && top ? (
             <div className="relative w-[96px] h-[96px] mx-auto">
               <Medal icon={top.icon} reached size={96} className="kp-flip" />
@@ -159,9 +169,8 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
               ))}
             </div>
           ) : (
-            <div className="w-[200px] max-w-full border border-[var(--line)]">
-              <KupaStall level={kupa.level} name={kupa.name} build={kupa.level} night={night} deco={kupa.deco} className="w-full block" />
-            </div>
+            /* האיור פרוס על כל רוחב הדף, בלי מסגרת — מרינה */
+            <KupaStall level={kupa.level} name={kupa.name} build={kupa.level} night={night} deco={kupa.deco} className="w-full block" />
           )}
         </div>
 

@@ -1,64 +1,60 @@
-import { ACTIVATION_PRICE, GETS, LEARNS, PAYBACK } from "@/lib/pricing";
+import { ACTIVATION_PRICE, GETS, GET_GROUPS, LEARNS } from "@/lib/pricing";
+import Icon from "@/app/icons";
+import PaybackCalc from "./payback-calc";
 
-// חלקי התוכן של מסך ההפעלה (/activate). דף המחיר הפומבי (/price) בונה את
-// התצוגה שלו בעצמו, אבל שניהם שואבים מאותו `lib/pricing.ts`.
+// חלקי התוכן של מסך ההפעלה (/activate) ושל דף המחיר (/price). שניהם
+// שואבים מאותו `lib/pricing.ts`.
 //
 // גוף שני בכל מה שמופיע בזרימה הראשית — הילדה היא שקוראת את המסך הזה.
 // LearnsTable ו-AnchorTable יושבים בתוך הבלוק "להראות להורה" ולכן הם בגוף שלישי.
 
-export function GetsList({ compact = false }: { compact?: boolean }) {
-  const rows = compact ? GETS.slice(0, 6) : GETS;
+function GetRow({ g, compact }: { g: (typeof GETS)[number]; compact?: boolean }) {
   return (
-    <div className="flex flex-col gap-2.5">
-      {rows.map((g) => (
-        <div key={g.title} className="flex gap-3 border border-[var(--line)] p-3 bg-white">
-          <span className="text-xl leading-none pt-0.5">{g.icon}</span>
-          <div>
-            <div className="text-[14px] font-bold">{g.title}</div>
-            {!compact && (
-              <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-0.5">{g.body}</p>
-            )}
-          </div>
-        </div>
-      ))}
-      {compact && (
-        <p className="text-[12px] text-[var(--muted)] text-center">
-          ועוד: עוזרת כתיבה · מלאי · בלי מנוי, לתמיד ·{" "}
-          <a href="/price" target="_blank" className="underline">
-            הפירוט המלא
-          </a>
-        </p>
-      )}
+    <div className="flex gap-3 items-start border border-[var(--line)] p-3 bg-white">
+      <span className="w-10 h-10 shrink-0 flex items-center justify-center bg-[var(--canvas)]">
+        <Icon name={g.icon} size={24} tone="var(--lavender)" />
+      </span>
+      <div className="min-w-0">
+        <div className="text-[14px] font-bold leading-snug">{g.title}</div>
+        {!compact && <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-0.5">{g.body}</p>}
+      </div>
     </div>
   );
 }
 
-export function PaybackCard() {
-  return (
-    <div className=" bg-[var(--ok-bg)] border border-[var(--ok-line)] p-5 text-center">
-      <div className="text-3xl">📈</div>
-      <h2 className="text-lg font-bold mt-2">זה מחזיר את עצמו מהר</h2>
-      <p className="text-[13.5px] text-[var(--muted)] mt-1.5 leading-relaxed">
-        כמה מכירות וזה כבר שילם על עצמו.
-      </p>
-      <div className="bg-white border border-[var(--ok-line)] p-3.5 mt-3.5 text-[13px]">
-        {PAYBACK.map((r, i) => (
-          <div
-            key={r.what}
-            className={`flex justify-between py-1 ${i ? "border-t border-[var(--line)]" : ""}`}
-          >
-            <span className="text-[var(--muted)]">
-              {r.qty} {r.what} ב-₪{r.unit}
-            </span>
-            <span className="font-bold">₪{r.total}</span>
-          </div>
-        ))}
+export function GetsList({ compact = false }: { compact?: boolean }) {
+  if (compact)
+    return (
+      <div className="flex flex-col gap-2">
+        {GETS.slice(0, 6).map((g) => <GetRow key={g.title} g={g} compact />)}
+        <p className="text-[12px] text-[var(--muted)] text-center">
+          ועוד: קופונים · דרופים · קופת הדוכן עם מטבעות וחידות · דוכן משותף ·{" "}
+          <a href="/price" target="_blank" className="underline">
+            כל מה שמקבלים
+          </a>
+        </p>
       </div>
-      <p className="text-[12px] text-[var(--muted)] mt-3 leading-relaxed">
-        ומכאן, הכל שלך. אנחנו לא נוגעים בכסף ולא לוקחים עמלה.
-      </p>
+    );
+  return (
+    <div className="flex flex-col gap-7">
+      {GET_GROUPS.map((grp) => (
+        <section key={grp.key} aria-labelledby={`gets-${grp.key}`} data-testid={`gets-${grp.key}`}>
+          <h3 id={`gets-${grp.key}`} className="flex items-center gap-2.5 text-[16px] font-bold mb-2.5">
+            <span className="w-2.5 h-6" style={{ background: grp.tone }} aria-hidden />
+            {grp.title}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {grp.items.map((g) => <GetRow key={g.title} g={g} />)}
+          </div>
+        </section>
+      ))}
     </div>
   );
+}
+
+/** "תוך כמה מכירות זה חוזר?" — מחשבון לילדים (קודם: טבלה סטטית) */
+export function PaybackCard() {
+  return <PaybackCalc />;
 }
 
 export function LearnsTable() {

@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 import PromoBurst from "../promo-burst";
 import { GetsList, PaybackCard, LearnsTable, AnchorTable, SafetyList } from "./sections";
-import Icon from "@/app/icons";
+import BackBar from "./back-bar";
+import { KupaStall } from "@/app/kupa-art";
 
 export const metadata: Metadata = {
   title: "מה מקבלים בדוכן",
-  description: "דוכן אמיתי, לינק לשיתוף, וכל מה שצריך כדי למכור, בתשלום אחד.",
+  description: "דוכן אמיתי, לינק לשיתוף, קופה עם מטבעות וחידות, וכל מה שצריך כדי למכור, בתשלום אחד.",
 };
 
 /**
@@ -21,11 +22,12 @@ export const metadata: Metadata = {
 export default function PricePage() {
   return (
     <main className="min-h-screen bg-[var(--canvas)]">
-      {/* ── Hero ── */}
+      <BackBar />
+      {/* ── Hero: האיור של הדוכן במקום האייקון (מרינה לא אהבה את האייקון) ── */}
       <section className="border-b border-[var(--line)] bg-white">
-        <div className="max-w-lg mx-auto px-6 pt-12 pb-10 text-center">
-          <Icon name="shop" size={44} tone="var(--wood)" className="mx-auto" />
-          <h1 className="t-title text-[1.75rem] mt-4">
+        <KupaStall level={5} name="הדוכן שלך" className="w-full max-w-lg mx-auto block" />
+        <div className="max-w-lg mx-auto px-6 pt-6 pb-10 text-center">
+          <h1 className="t-title text-[1.75rem]">
             דוכן אמיתי משלך.
             <br />
             תשלום אחד, וזהו.
@@ -36,7 +38,7 @@ export default function PricePage() {
             לפרסם את הדוכן ולשלוח את הלינק לחברים.
           </p>
 
-          <div className={`mt-6 inline-flex flex-col items-center card px-8 py-5 ${IS_LAUNCH ? "fx-shine relative" : ""}`}>
+          <div className={`mt-6 inline-flex flex-col items-center card px-8 py-5 ${IS_LAUNCH ? "relative overflow-hidden" : ""}`}>
             {IS_LAUNCH && <PromoBurst />}
             {IS_LAUNCH && (
               <div className="relative z-[3] t-small font-bold text-white mb-2 px-3 py-1"
@@ -68,7 +70,7 @@ export default function PricePage() {
       <div className="max-w-lg mx-auto px-5 pb-16">
         {/* ── מה מקבלים ── */}
         <h2 className="t-heading mt-12 mb-1.5">מה מקבלים</h2>
-        <p className="t-sub mb-5">הכל נפתח ברגע שהדוכן מתפרסם.</p>
+        <p className="t-sub mb-6">הכל כלול, והכל נפתח ברגע שהדוכן מתפרסם.</p>
         <GetsList />
 
         {/* ── ההחזר ── */}

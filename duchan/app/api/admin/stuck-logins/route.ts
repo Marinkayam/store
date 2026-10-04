@@ -15,7 +15,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 const WINDOW_HOURS = 72;
 const MIN_REQUESTS = 2;
 
-type Otp = { phone: string; created_at: string; consumed_at: string | null; attempts: number };
+type Otp = { phone: string; created_at: string; consumed_at: string | null; attempts: number; help_requested_at: string | null };
 type Link = { phone: string; created_at: string; used_at: string | null; expires_at: string };
 
 export async function GET() {
@@ -26,7 +26,7 @@ export async function GET() {
 
   const { data: otps, error } = await db
     .from("phone_otps")
-    .select("phone, created_at, consumed_at, attempts")
+    .select("phone, created_at, consumed_at, attempts, help_requested_at")
     .gte("created_at", since)
     .order("created_at", { ascending: false })
     .limit(2000);
@@ -67,7 +67,9 @@ export async function GET() {
       ...ls.filter((l) => l.used_at).map((l) => new Date(l.used_at!).getTime())
     );
     const pending = rows.filter((r) => !r.consumed_at && new Date(r.created_at).getTime() > lastIn);
-    if (pending.length < MIN_REQUESTS) continue;
+    // "לא קיבלתי קוד" — מספיקה בקשה אחת, הם כבר אמרו שהם תקועים
+    const helpAt = pending.find((r) => r.help_requested_at)?.help_requested_at ?? null;
+    if (pending.length < MIN_REQUESTS && !helpAt) continue;
 
     const firstPending = new Date(pending[pending.length - 1].created_at).getTime();
     // קישור שכבר נשלח אחרי שנתקעה, ועוד לא נוצל
@@ -81,6 +83,7 @@ export async function GET() {
       firstAt: pending[pending.length - 1].created_at,
       lastAt: pending[0].created_at,
       linkSentAt: openLink?.created_at ?? null,
+      helpAt,
       store: null as null | { name: string; emoji: string },
     });
   }
@@ -97,6 +100,7 @@ export async function GET() {
     if (st) s.store = { name: st.display_name, emoji: st.emoji };
   }
 
-  stuck.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
+  // מי שלחצו "לא קיבלתי קוד" ראשונים, ואחריהם לפי הזמן
+  stuck.sort((a, b) => Number(!!b.helpAt) - Number(!!a.helpAt) || b.lastAt.localeCompare(a.lastAt));
   return NextResponse.json({ stuck });
 }

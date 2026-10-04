@@ -22,6 +22,8 @@ type Stuck = {
   firstAt: string;
   lastAt: string;
   linkSentAt: string | null;
+  /** מתי לחצו "לא קיבלתי קוד" במסך הקוד */
+  helpAt: string | null;
   store: { name: string; emoji: string } | null;
 };
 
@@ -81,7 +83,7 @@ export default function StuckLogins() {
         <span className="bg-[var(--danger)] text-white text-[11px] px-1.5 py-0.5 mr-1">{list.length}</span>
       </h2>
       <p className="text-[12.5px] text-[var(--muted)] mt-0.5 leading-relaxed">
-        ביקשו קוד כמה פעמים ולא נכנסו — כנראה הסמס לא מגיע (בקרת הורים, סינון ספאם).
+        לחצו "לא קיבלתי קוד", או ביקשו קוד כמה פעמים ולא נכנסו. כנראה הסמס לא מגיע (בקרת הורים, סינון ספאם).
         שולחים קישור כניסה בוואטסאפ. מי שנכנס יורד מהרשימה לבד.
       </p>
 
@@ -104,6 +106,11 @@ export default function StuckLogins() {
                     {" · "}
                     {ago(s.lastAt)}
                   </div>
+                  {s.helpAt && (
+                    <div className="inline-block mt-1 bg-[var(--danger)] text-white text-[11.5px] font-bold px-1.5 py-0.5" data-testid="stuck-help">
+                      🆘 לחצו "לא קיבלתי קוד" {ago(s.helpAt)}
+                    </div>
+                  )}
                   {s.linkSentAt && !url && (
                     <div className="text-[11.5px] text-[var(--wood)] mt-0.5" data-testid="stuck-link-sent">
                       🔑 כבר נוצר קישור {ago(s.linkSentAt)} · עוד לא נכנסה

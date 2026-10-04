@@ -324,11 +324,11 @@ export default function Onboarding() {
               <textarea
                 value={draft.tagline}
                 maxLength={140}
-                rows={2}
+                rows={Math.min(3, Math.max(1, Math.ceil(draft.tagline.length / 34)))}
                 aria-label="תיאור הדוכן"
                 placeholder="מה מוכרים כאן? (לא חובה)"
                 onChange={(e) => set({ tagline: e.target.value })}
-                className="editable block w-full text-center text-[13px] mt-1 resize-none leading-snug opacity-85"
+                className="editable block w-full text-center text-[13px] mt-1 py-1.5 resize-none leading-snug opacity-85"
                 style={{ color: th.ink }}
               />
 
@@ -457,19 +457,27 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* 3 — גיל ועיר (לא חובה) + מודעות הורים */}
+      {/* 3 — גיל ועיר (לא חובה) + מודעות הורים.
+          מרינה: "תעשה את זה ברור ממש לילדים ומוסבר". כל שדה עם שאלה ודוגמה,
+          ההורים בכרטיס משלו עם הסבר למה, ו"מה קורה עכשיו" כשלבים ממוספרים.
+          הגיל והעיר לא מוצגים בדוכן — הם רק בשבילנו, וכך כתוב. */}
       {draft.step === 3 && !result && (
         <div className="w-full flex flex-col gap-5">
           <div className="text-center">
-            <h1 className="t-title">עוד שני פרטים</h1>
+            <h1 className="t-title">עוד שני פרטים קטנים</h1>
             <p className="t-sub mt-2">
-              שניהם לא חובה, הם רק עוזרים למצוא את הדוכן לפי גיל ואזור.
+              שניהם לא חובה, אפשר להשאיר ריק.
+              <br />
+              הם עוזרים לנו להבין מי פותח דוכנים, ולא מופיעים בדוכן.
             </p>
           </div>
 
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <div className="t-small font-medium mb-2">גיל</div>
+          <div className="bg-white border border-[var(--line)] p-4 flex flex-col gap-4">
+            <label className="flex items-center gap-3">
+              <span className="flex-1">
+                <span className="block t-body font-bold">בן או בת כמה?</span>
+                <span className="block t-small text-[var(--muted)]">רק מספר, למשל 11</span>
+              </span>
               <input
                 value={draft.age}
                 onChange={(e) => set({ age: e.target.value.replace(/\D/g, "").slice(0, 2) })}
@@ -477,58 +485,66 @@ export default function Onboarding() {
                 aria-label="גיל"
                 inputMode="numeric"
                 maxLength={2}
-                className="field w-full px-4 py-4 text-center t-body"
+                className="field w-20 px-2 py-3 text-center t-body"
               />
-            </div>
-            <div className="flex-[1.4]">
-              <div className="t-small font-medium mb-2">עיר</div>
+            </label>
+            <label className="flex flex-col gap-1.5 border-t border-[var(--line)] pt-4">
+              <span>
+                <span className="block t-body font-bold">באיזו עיר?</span>
+                <span className="block t-small text-[var(--muted)]">רק העיר, בלי כתובת</span>
+              </span>
               <input
                 value={draft.city}
                 onChange={(e) => set({ city: e.target.value })}
-                placeholder="רמת גן"
+                placeholder="למשל: רמת גן"
                 aria-label="עיר"
                 maxLength={30}
-                className="field w-full px-4 py-4 text-center t-body"
+                className="field w-full px-4 py-3 text-center t-body"
               />
-            </div>
+            </label>
           </div>
 
           {/* מודעות הורים — לפני שמוזן מספר טלפון או שנוצר חשבון, לא אחרי.
               זו לא אותה הצהרה כמו זו שב-/activate: שם מאשרים לפרסם את
-              הדוכן לעולם, כאן רק שההורים יודעים שנפתח דוכן ושמוזנים פרטים.
-              שתי נקודות עצירה שונות לשתי החלטות שונות. */}
+              הדוכן לעולם, כאן רק שההורים יודעים שנפתח דוכן ושמוזנים פרטים. */}
           <div
-            className="p-3.5 border-[1.5px]"
-            style={{ borderColor: draft.parentAware ? "var(--olive)" : "var(--line)" }}
+            className="p-4 border-[1.5px] bg-white"
+            style={{ borderColor: draft.parentAware ? "var(--olive)" : "var(--ink)" }}
           >
-            <label className="flex items-start gap-2.5 cursor-pointer">
+            <div className="t-body font-bold">ועכשיו משהו חשוב: ההורים</div>
+            <p className="t-small text-[var(--muted)] mt-1 leading-relaxed">
+              דוכן הוא עסק אמיתי: אנשים יזמינו ממך ויכתבו לך בוואטסאפ.
+              לכן חשוב שההורים יידעו שפתחת דוכן. אפשר לקרוא איתם את המסך הזה.
+            </p>
+            <label className="flex items-center gap-2.5 cursor-pointer mt-3 bg-[var(--canvas)] px-3 py-3">
               <input
                 type="checkbox"
                 checked={draft.parentAware}
                 onChange={(e) => set({ parentAware: e.target.checked })}
                 aria-label="ההורים שלי יודעים"
-                className="mt-0.5 w-5 h-5 shrink-0 accent-[var(--olive)]"
+                className="w-5 h-5 shrink-0 accent-[var(--olive)]"
               />
-              <span className="t-body font-medium">
-                ההורים יודעים על פתיחת הדוכן כאן
-              </span>
+              <span className="t-body font-medium">ההורים יודעים על פתיחת הדוכן כאן</span>
             </label>
-            {/* הסיבה האמיתית לבקש טלפון בשלב הבא: ההזמנות מגיעות ישירות
-                לוואטסאפ. לא סליקה, לא משיכת כסף, לא מסירות — דוכן לא נוגע
-                בכסף ובמשלוח בכלל. */}
-            <p className="t-small text-[var(--muted)] mt-2">
-              בשלב הבא נבקש מספר טלפון, כדי שההזמנות יגיעו ישירות בוואטסאפ.
-              בלי זה אי אפשר לפרסם את הדוכן.
-            </p>
           </div>
 
-          <div className="t-small text-[var(--muted)]">
-            <div className="font-semibold text-[var(--ink)] mb-1">מה יקרה עכשיו:</div>
-            <ul className="flex flex-col gap-0.5 list-disc pr-4">
-              <li>הדוכן נפתח במצב פרטי, ועוד אי אפשר להזמין ממנו</li>
-              <li>מעלים מוצר ראשון עם תמונה ומחיר</li>
-              <li>מפרסמים ומשתפים את הקישור</li>
-            </ul>
+          <div>
+            <div className="t-body font-bold mb-2">מה קורה עכשיו?</div>
+            <ol className="bg-white border border-[var(--line)] flex flex-col">
+              {[
+                ["מאמתים מספר טלפון", "לשם יגיעו ההזמנות, בוואטסאפ"],
+                ["הדוכן נפתח, בינתיים רק לך", "אף אחד עוד לא רואה אותו ולא יכול להזמין"],
+                ["מוסיפים מוצרים ומפרסמים", "ואז שולחים את הלינק לחברים"],
+              ].map(([t, sub], i) => (
+                <li key={t} className={`flex items-center gap-3 px-3.5 py-2.5 ${i ? "border-t border-[var(--line)]" : ""}`}>
+                  <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-[var(--ink)] text-white text-[13px] font-bold">{i + 1}</span>
+                  <span className="text-[13.5px] leading-snug">
+                    <b>{t}</b>
+                    <span className="block text-[var(--muted)]">{sub}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
 
           <button
@@ -538,6 +554,11 @@ export default function Onboarding() {
           >
             הלאה, למספר הטלפון ←
           </button>
+          {!draft.parentAware && (
+            <p className="t-small text-[var(--muted)] text-center -mt-3">
+              כדי להמשיך, מסמנים שההורים יודעים
+            </p>
+          )}
         </div>
       )}
 
@@ -550,7 +571,7 @@ export default function Onboarding() {
           ) : (
             <PhoneVerify
               title="המספר שלך"
-              subtitle="לכאן יגיעו ההזמנות. שולחים קוד קצר כדי לוודא שהמספר נכון, ואז ממשיכים."
+              subtitle="לכאן יגיעו ההזמנות בוואטסאפ. כדי לוודא שהמספר נכון, נשלח אליו קוד."
               cta="שלחו לי קוד"
               onVerified={save}
             />
