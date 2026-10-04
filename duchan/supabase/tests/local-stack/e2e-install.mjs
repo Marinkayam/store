@@ -116,8 +116,10 @@ await p.context().close();
 p = await hubAs(UA.iosSafari, { standalone: true });
 check("כבר במסך הבית: בלי הצעה", (await card(p).count()) === 0);
 await p.click("[data-testid=hub-app]");
-await p.waitForSelector("[data-testid=install-done]");
-check("ובמקטע: 'כבר על המסך הבית'", true);
+// המקטע הוא עכשיו "אפליקציה והתראות": צעד המסך הבית כבר מסומן ✓, והבא הוא התראות
+await p.waitForSelector("[data-testid=alerts-step-install][data-state=done]");
+check("ובמקטע: הצעד 'לשמור במסך הבית' כבר מסומן", true);
+check("והצעד הבא הוא להפעיל התראות", (await p.getAttribute("[data-testid=alerts-step-push]", "data-state")) === "current");
 await p.context().close();
 
 /* ── הכפתור בתחתית עיצוב הקטגוריות לא נחתך ── */
