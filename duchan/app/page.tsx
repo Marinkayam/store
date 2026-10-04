@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import StallArt from "./stall-art";
+import StallHero from "./stall-hero";
 import HelpButton from "./help-button";
 import PromoBurst from "./promo-burst";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
@@ -17,6 +17,10 @@ export default function Landing() {
   const [from, setFrom] = useState<{ name: string; emoji: string } | null>(null);
   // יש כבר דוכן ומחוברת? הדף הזה חייב לומר את זה לפני הכל.
   const [mine, setMine] = useState<{ name: string; emoji: string } | null>(null);
+  /* האם כבר בדקנו אם יש דוכן. עד אז לא מציגים "כבר פתחת דוכן?" — אחרת מי
+     שכבר יש לה דוכן רואה את השאלה הזו לשנייה (מרינה: "אם כבר פתחתי דוכן
+     אז אתה יודע"). */
+  const [checked, setChecked] = useState(false);
 
   /**
    * מי שכבר מחוברת נחתה כאן וראתה "איך קוראים לדוכן שלך?" — כאילו המערכת
@@ -25,7 +29,7 @@ export default function Landing() {
   useEffect(() => {
     const supa = supabaseBrowser();
     supa.auth.getUser().then(({ data }) => {
-      if (!data.user) return;
+      if (!data.user) return setChecked(true);
       supa
         .from("stores")
         .select("display_name, emoji")
@@ -34,6 +38,7 @@ export default function Landing() {
         .maybeSingle()
         .then(({ data: store }) => {
           if (store) setMine({ name: store.display_name, emoji: store.emoji ?? "🛍️" });
+          setChecked(true);
         });
     });
   }, []);
@@ -91,10 +96,15 @@ export default function Landing() {
 
       {/* האיור נושא את המסך, לא הטקסט. השם קטן כי הוא כבר כתוב על האיור,
           והמשפט קצר ובצבע מלא — הגרסה הקודמת הייתה ארוכה ואפורה. */}
-      <div className="text-center flex flex-col items-center">
-        <StallArt className="w-64 h-auto" />
-        <h1 className="text-[1.5rem] leading-none font-semibold tracking-[-0.02em] mt-3">דוכן</h1>
-        <p className="text-[15px] leading-relaxed mt-3 max-w-[19rem] text-[var(--ink)]">
+      {/* הדוכן על כל רוחב המסך, בלי מסגרת, ועם אור שמדליקים (מרינה) */}
+      <div className="self-stretch -mx-6">
+        <StallHero name="דוכן" />
+      </div>
+      <div className="text-center flex flex-col items-center -mt-4">
+        {/* "דוכן" כבר כתוב על השלט באיור — מרינה: "אפשר להוריד את המילה דוכן".
+            הכותרת נשארת לקוראי מסך. */}
+        <h1 className="sr-only">דוכן</h1>
+        <p className="text-[15px] leading-relaxed max-w-[19rem] text-[var(--ink)]">
           יש לך אוסף ענקי של סקווישים?
           <br />
           צעצועים, בגדים וספרים שכבר לא צריך?
@@ -135,7 +145,7 @@ export default function Landing() {
 
       {/* הכניסה לדוכן קיים יושבת בתחתית: היא נועדה למי שכבר מכירה את
           המקום ויודעת לחפש אותה, ולמעלה היא רק גנבה מקום מהפעולה הראשית. */}
-      {!mine && (
+      {checked && !mine && (
         <a
           href="/login"
           className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"

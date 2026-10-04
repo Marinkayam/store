@@ -3,7 +3,7 @@ import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/prici
 import PromoBurst from "../promo-burst";
 import { GetsList, PaybackCard, LearnsTable, AnchorTable, SafetyList } from "./sections";
 import BackBar from "./back-bar";
-import { KupaStall } from "@/app/kupa-art";
+import StallHero from "@/app/stall-hero";
 
 export const metadata: Metadata = {
   title: "מה מקבלים בדוכן",
@@ -25,7 +25,7 @@ export default function PricePage() {
       <BackBar />
       {/* ── Hero: האיור של הדוכן במקום האייקון (מרינה לא אהבה את האייקון) ── */}
       <section className="border-b border-[var(--line)] bg-white">
-        <KupaStall level={5} name="הדוכן שלך" className="w-full max-w-lg mx-auto block" />
+        <StallHero />
         <div className="max-w-lg mx-auto px-6 pt-6 pb-10 text-center">
           <h1 className="t-title text-[1.75rem]">
             דוכן אמיתי משלך.
@@ -110,7 +110,7 @@ export default function PricePage() {
         {/* ── CTA ── */}
         <div className="mt-10 text-center">
           <a href="/onboarding" className="btn btn-primary block py-4 text-[15px]">
-            נבנה את הדוכן ←
+            קדימה, בואו נקים את הדוכן ←
           </a>
           <p className="text-[12.5px] text-[var(--muted)] mt-3 leading-relaxed">
             בונים קודם, ומשלמים רק כשרוצים לפרסם.

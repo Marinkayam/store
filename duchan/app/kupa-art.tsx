@@ -14,7 +14,7 @@ import { AWNING_FILL, type Deco } from "@/lib/kupa-shop";
 
 const W = "var(--wood)";
 const INK = "#6f4b28";
-const LINE = { stroke: INK, strokeWidth: 1.5, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+const LINE = { stroke: INK, strokeWidth: 1.1, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
 const SOFT = { ...LINE, strokeWidth: 1 };
 
 function part(lv: number, build: number | undefined, i = 0) {
@@ -54,7 +54,7 @@ function Plant({ x, y }: { x: number; y: number }) {
         ))}
       </g>
       <path d={`M${x} ${y - 14} h18 l-2.5 14 h-13 z`} fill="var(--blush)" />
-      <path d={`M${x - 1} ${y - 14} h20`} fill="none" strokeWidth={2.2} />
+      <path d={`M${x - 1} ${y - 14} h20`} fill="none" strokeWidth={1.58} />
     </g>
   );
 }
@@ -76,12 +76,12 @@ function Basket({ x, y }: { x: number; y: number }) {
         />
         <circle cx={x + 11.5} cy={y - 28} r="0.9" fill={INK} />
         <circle cx={x + 16.5} cy={y - 28} r="0.9" fill={INK} />
-        <path d={`M${x + 11.5} ${y - 25.5} q2.5 2 5 0`} fill="none" stroke={INK} strokeWidth={0.9} />
+        <path d={`M${x + 11.5} ${y - 25.5} q2.5 2 5 0`} fill="none" stroke={INK} strokeWidth={0.65} />
       </g>
       <g {...LINE}>
         <path d={`M${x} ${y - 17} h42 l-4 17 h-34 z`} fill="var(--sand)" />
-        <path d={`M${x + 2} ${y - 11} h38 M${x + 3} ${y - 5} h36`} fill="none" strokeWidth={0.9} />
-        <path d={`M${x + 10} ${y - 17} l1.5 17 M${x + 21} ${y - 17} v17 M${x + 32} ${y - 17} l-1.5 17`} fill="none" strokeWidth={0.7} />
+        <path d={`M${x + 2} ${y - 11} h38 M${x + 3} ${y - 5} h36`} fill="none" strokeWidth={0.65} />
+        <path d={`M${x + 10} ${y - 17} l1.5 17 M${x + 21} ${y - 17} v17 M${x + 32} ${y - 17} l-1.5 17`} fill="none" strokeWidth={0.5} />
       </g>
     </g>
   );
@@ -93,7 +93,7 @@ function Bag({ x, y }: { x: number; y: number }) {
       <path d={`M${x + 4} ${y - 25} a6 6 0 0 1 12 0`} fill="none" />
       <path d={`M${x} ${y} v-25 h20 v25 z`} fill="var(--canvas)" />
       <path d={`M${x + 20} ${y - 25} l5 4 v25 l-5 -4 z`} fill="var(--sand)" />
-      <path d={`M${x + 10} ${y - 5} v-11`} fill="none" strokeWidth={1} />
+      <path d={`M${x + 10} ${y - 5} v-11`} fill="none" strokeWidth={0.72} />
       <ellipse cx={x + 6} cy={y - 13} rx="4" ry="2.2" fill="var(--olive)" transform={`rotate(-26 ${x + 6} ${y - 13})`} />
       <ellipse cx={x + 14} cy={y - 10} rx="4" ry="2.2" fill="var(--olive)" transform={`rotate(26 ${x + 14} ${y - 10})`} />
     </g>
@@ -106,7 +106,7 @@ function Squishy({ x, y }: { x: number; y: number }) {
       <path d={`M${x} ${y} q0 -16 10 -16 q10 0 10 16 z`} fill="var(--blush)" {...LINE} />
       <circle cx={x + 7} cy={y - 8} r="1" fill={INK} />
       <circle cx={x + 13} cy={y - 8} r="1" fill={INK} />
-      <path d={`M${x + 7.5} ${y - 5} q2.5 2 5 0`} fill="none" stroke={INK} strokeWidth={0.9} />
+      <path d={`M${x + 7.5} ${y - 5} q2.5 2 5 0`} fill="none" stroke={INK} strokeWidth={0.65} />
       <circle cx={x + 4.5} cy={y - 5.5} r="1.6" fill="var(--lavender)" opacity=".6" />
       <circle cx={x + 15.5} cy={y - 5.5} r="1.6" fill="var(--lavender)" opacity=".6" />
     </g>
@@ -117,7 +117,7 @@ function Bracelets({ x, y }: { x: number; y: number }) {
   return (
     <g>
       <g {...LINE}>
-        <path d={`M${x + 8} ${y - 2} v-28`} fill="none" strokeWidth={1.8} />
+        <path d={`M${x + 8} ${y - 2} v-28`} fill="none" strokeWidth={1.3} />
         <rect x={x} y={y - 3} width="16" height="3" rx="1" fill={W} />
       </g>
       {[["var(--lavender)", 0], ["var(--olive)", 7], ["var(--warning)", 14]].map(([c, dy], i) => (
@@ -131,7 +131,7 @@ function Bracelets({ x, y }: { x: number; y: number }) {
           ry="2.6"
           fill="none"
           stroke={String(c)}
-          strokeWidth={2.4}
+          strokeWidth={1.73}
         />
       ))}
     </g>
@@ -142,7 +142,7 @@ function Bracelets({ x, y }: { x: number; y: number }) {
 function Tag({ x, y, text }: { x: number; y: number; text: string }) {
   return (
     <g className="kp-swing" style={{ transformOrigin: `${x}px ${y}px` }}>
-      <path d={`M${x} ${y} v5`} stroke={INK} strokeWidth={0.8} />
+      <path d={`M${x} ${y} v5`} stroke={INK} strokeWidth={0.58} />
       <path d={`M${x - 7} ${y + 5} h14 v9 h-14 z`} fill="var(--canvas)" {...SOFT} />
       <text x={x} y={y + 12} textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="6" fill={INK}>
         {text}
@@ -155,9 +155,9 @@ function Wheel({ cx, cy }: { cx: number; cy: number }) {
   return (
     <g className="kp-wheel" style={{ transformOrigin: `${cx}px ${cy}px` }} {...LINE}>
       <circle cx={cx} cy={cy} r="11" fill="var(--canvas)" />
-      <circle cx={cx} cy={cy} r="7.5" fill="none" strokeWidth={0.8} />
+      <circle cx={cx} cy={cy} r="7.5" fill="none" strokeWidth={0.58} />
       {[0, 60, 120].map((a) => (
-        <path key={a} d={`M${cx} ${cy - 11} v22`} transform={`rotate(${a} ${cx} ${cy})`} strokeWidth={1.1} />
+        <path key={a} d={`M${cx} ${cy - 11} v22`} transform={`rotate(${a} ${cx} ${cy})`} strokeWidth={0.79} />
       ))}
       <circle cx={cx} cy={cy} r="2.4" fill={W} />
     </g>
@@ -168,8 +168,8 @@ function Wheel({ cx, cy }: { cx: number; cy: number }) {
 function HopCoin({ x, y }: { x: number; y: number }) {
   return (
     <g className="kp-hop" aria-hidden>
-      <circle cx={x} cy={y} r="4.2" fill="#E3C26F" stroke={INK} strokeWidth={1} />
-      <path d={`M${x - 1.8} ${y - 0.8} h3.6`} stroke={INK} strokeWidth={0.8} />
+      <circle cx={x} cy={y} r="4.2" fill="#E3C26F" stroke={INK} strokeWidth={0.72} />
+      <path d={`M${x - 1.8} ${y - 0.8} h3.6`} stroke={INK} strokeWidth={0.58} />
     </g>
   );
 }
@@ -180,10 +180,10 @@ function Butterfly() {
     <g className="kp-butterfly" aria-hidden>
       <g transform="translate(14 96)">
         <g className="kp-wings" style={{ transformOrigin: "0px 0px" }}>
-          <ellipse cx="-3.2" cy="-1.5" rx="3.4" ry="4.4" fill="var(--blush)" stroke={INK} strokeWidth={0.8} />
-          <ellipse cx="3.2" cy="-1.5" rx="3.4" ry="4.4" fill="var(--lavender)" stroke={INK} strokeWidth={0.8} />
+          <ellipse cx="-3.2" cy="-1.5" rx="3.4" ry="4.4" fill="var(--blush)" stroke={INK} strokeWidth={0.58} />
+          <ellipse cx="3.2" cy="-1.5" rx="3.4" ry="4.4" fill="var(--lavender)" stroke={INK} strokeWidth={0.58} />
         </g>
-        <path d="M0 -4 v7" stroke={INK} strokeWidth={1.2} strokeLinecap="round" />
+        <path d="M0 -4 v7" stroke={INK} strokeWidth={0.86} strokeLinecap="round" />
       </g>
     </g>
   );
@@ -194,11 +194,11 @@ function Flowers({ x }: { x: number }) {
   return (
     <g data-deco="flowers">
       <g className="kp-sway" style={{ transformOrigin: `${x + 10}px 140px` }}>
-        <path d={`M${x + 6} 140 v-12 M${x + 10} 140 v-16 M${x + 14} 140 v-11`} stroke="var(--olive)" strokeWidth={1.4} fill="none" />
+        <path d={`M${x + 6} 140 v-12 M${x + 10} 140 v-16 M${x + 14} 140 v-11`} stroke="var(--olive)" strokeWidth={1.01} fill="none" />
         {[[x + 6, 126, "var(--blush)"], [x + 10, 122, "var(--warning)"], [x + 14, 127, "var(--lavender)"]].map(([cx, cy, c], i) => (
           <g key={i}>
             {[0, 72, 144, 216, 288].map((a) => (
-              <circle key={a} cx={Number(cx)} cy={Number(cy) - 3} r="2" fill={String(c)} stroke={INK} strokeWidth={0.6} transform={`rotate(${a} ${cx} ${cy})`} />
+              <circle key={a} cx={Number(cx)} cy={Number(cy) - 3} r="2" fill={String(c)} stroke={INK} strokeWidth={0.43} transform={`rotate(${a} ${cx} ${cy})`} />
             ))}
             <circle cx={Number(cx)} cy={Number(cy)} r="1.5" fill={INK} />
           </g>
@@ -213,13 +213,13 @@ function Flowers({ x }: { x: number }) {
 function Cat({ x, y }: { x: number; y: number }) {
   return (
     <g data-deco="cat">
-      <path className="kp-sway" style={{ transformOrigin: `${x + 14}px ${y - 3}px` }} d={`M${x + 14} ${y - 3} q9 -1 7 -12`} fill="none" stroke="#3a3a3a" strokeWidth={2.6} strokeLinecap="round" />
-      <path d={`M${x} ${y} q-1 -14 8 -15 q9 1 8 15 z`} fill="#3a3a3a" stroke={INK} strokeWidth={1} />
-      <circle cx={x + 8} cy={y - 18} r="6.5" fill="#3a3a3a" stroke={INK} strokeWidth={1} />
-      <path d={`M${x + 2.5} ${y - 21} l1 -6.5 l4 4 M${x + 13.5} ${y - 21} l-1 -6.5 l-4 4`} fill="#3a3a3a" stroke={INK} strokeWidth={1} strokeLinejoin="round" />
+      <path className="kp-sway" style={{ transformOrigin: `${x + 14}px ${y - 3}px` }} d={`M${x + 14} ${y - 3} q9 -1 7 -12`} fill="none" stroke="#3a3a3a" strokeWidth={1.87} strokeLinecap="round" />
+      <path d={`M${x} ${y} q-1 -14 8 -15 q9 1 8 15 z`} fill="#3a3a3a" stroke={INK} strokeWidth={0.72} />
+      <circle cx={x + 8} cy={y - 18} r="6.5" fill="#3a3a3a" stroke={INK} strokeWidth={0.72} />
+      <path d={`M${x + 2.5} ${y - 21} l1 -6.5 l4 4 M${x + 13.5} ${y - 21} l-1 -6.5 l-4 4`} fill="#3a3a3a" stroke={INK} strokeWidth={0.72} strokeLinejoin="round" />
       <circle cx={x + 5.5} cy={y - 18.5} r="1.2" fill="#E3C26F" />
       <circle cx={x + 10.5} cy={y - 18.5} r="1.2" fill="#E3C26F" />
-      <path d={`M${x + 7} ${y - 15.5} l1 0.8 l1 -0.8`} fill="none" stroke="#F2D9DC" strokeWidth={0.8} />
+      <path d={`M${x + 7} ${y - 15.5} l1 0.8 l1 -0.8`} fill="none" stroke="#F2D9DC" strokeWidth={0.58} />
     </g>
   );
 }
@@ -228,8 +228,8 @@ function Cat({ x, y }: { x: number; y: number }) {
 function OpenSign({ x, y }: { x: number; y: number }) {
   return (
     <g data-deco="open-sign" className="kp-swing" style={{ transformOrigin: `${x + 13}px ${y}px` }}>
-      <path d={`M${x + 6} ${y + 6} l7 -6 l7 6`} fill="none" stroke={INK} strokeWidth={0.9} />
-      <rect x={x} y={y + 6} width="26" height="12" rx="2" fill="var(--ok-bg, #EEF3EC)" stroke={INK} strokeWidth={1.2} />
+      <path d={`M${x + 6} ${y + 6} l7 -6 l7 6`} fill="none" stroke={INK} strokeWidth={0.65} />
+      <rect x={x} y={y + 6} width="26" height="12" rx="2" fill="var(--ok-bg, #EEF3EC)" stroke={INK} strokeWidth={0.86} />
       <text x={x + 13} y={y + 14.8} textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="7" fill="#4A6B4A">
         פתוח!
       </text>
@@ -255,6 +255,7 @@ export function KupaStall({
   build,
   night = false,
   deco,
+  bare = false,
   className = "",
 }: {
   level: number;
@@ -265,6 +266,9 @@ export function KupaStall({
   night?: boolean;
   /** קישוטים מחנות הקופה (lib/kupa-shop.ts) */
   deco?: Deco;
+  /** בלי "מסגרת": בלי ריבוע שמיים ובלי פס קרקע — הדוכן עומד על הדף עצמו.
+      בשביל מסך הפתיחה ודף המחיר (מרינה: "הדוכן לא יפה בתוך המסגרת"). */
+  bare?: boolean;
   className?: string;
 }) {
   const AW = AWNING_FILL[deco?.awning ?? "lavender"];
@@ -273,14 +277,14 @@ export function KupaStall({
   const day = !night;
   return (
     <svg viewBox="0 0 240 176" className={className} role="img" aria-label={`איור הדוכן ברמה ${level + 1}${night ? ", בלילה" : ""}`} data-night={night ? "1" : undefined} data-awning={deco?.awning ?? "lavender"}>
-      <rect x="0" y="0" width="240" height="176" className="kp-sky" style={{ fill: night ? "#2E3150" : "var(--cream)" }} />
+      {!bare && <rect x="0" y="0" width="240" height="176" className="kp-sky" style={{ fill: night ? "#2E3150" : "var(--cream)" }} />}
 
       {/* לילה: כוכבים מנצנצים וירח */}
       <g className="kp-fade" style={{ opacity: night ? 1 : 0 }} aria-hidden>
         {NIGHT_STARS.map(([x, y, r], i) => (
           <circle key={i} className="kp-twinkle" style={{ animationDelay: `${(i % 4) * 0.4}s` }} cx={x} cy={y} r={r} fill="#FFF3C4" />
         ))}
-        <path d="M212 8 a12 12 0 1 0 12 16 a9 9 0 1 1 -12 -16z" fill="#F6E7BF" stroke="#E3C26F" strokeWidth={1} />
+        <path d="M212 8 a12 12 0 1 0 12 16 a9 9 0 1 1 -12 -16z" fill="#F6E7BF" stroke="#E3C26F" strokeWidth={0.72} />
       </g>
 
       {/* שמש עם קרניים, וענן שזז לאט */}
@@ -288,25 +292,25 @@ export function KupaStall({
         <circle cx="214" cy="20" r="9" fill="var(--warning)" />
         <g className="kp-spin-slow" style={{ transformOrigin: "214px 20px" }}>
           {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
-            <path key={a} d="M214 6 v-3" stroke="var(--warning)" strokeWidth={2} strokeLinecap="round" transform={`rotate(${a} 214 20)`} />
+            <path key={a} d="M214 6 v-3" stroke="var(--warning)" strokeWidth={1.44} strokeLinecap="round" transform={`rotate(${a} 214 20)`} />
           ))}
         </g>
       </g>
       {/* שתי ציפורים שחוצות את השמיים מדי פעם (ביום) */}
       <g className="kp-bird" aria-hidden style={{ display: day ? undefined : "none" }}>
-        <path className="kp-flap" d="M0 0 q3 -3 6 0 q3 -3 6 0" fill="none" stroke={INK} strokeWidth={1.1} strokeLinecap="round" style={{ transformOrigin: "6px 0px" }} transform="translate(0 0)" />
-        <path className="kp-flap" d="M14 6 q2.5 -2.5 5 0 q2.5 -2.5 5 0" fill="none" stroke={INK} strokeWidth={1} strokeLinecap="round" style={{ transformOrigin: "19px 6px", animationDelay: ".2s" }} />
+        <path className="kp-flap" d="M0 0 q3 -3 6 0 q3 -3 6 0" fill="none" stroke={INK} strokeWidth={0.79} strokeLinecap="round" style={{ transformOrigin: "6px 0px" }} transform="translate(0 0)" />
+        <path className="kp-flap" d="M14 6 q2.5 -2.5 5 0 q2.5 -2.5 5 0" fill="none" stroke={INK} strokeWidth={0.72} strokeLinecap="round" style={{ transformOrigin: "19px 6px", animationDelay: ".2s" }} />
       </g>
       {level < 5 && (
         <g className="kp-drift">
-          <path d="M14 24 a6 6 0 0 1 10 -5 a8 8 0 0 1 15 2 a5 5 0 0 1 1 10 h-24 a4 4 0 0 1 -2 -7z" fill="var(--canvas)" stroke={INK} strokeWidth={1} opacity={night ? 0.35 : 0.9} className="kp-fade" />
+          <path d="M14 24 a6 6 0 0 1 10 -5 a8 8 0 0 1 15 2 a5 5 0 0 1 1 10 h-24 a4 4 0 0 1 -2 -7z" fill="var(--canvas)" stroke={INK} strokeWidth={0.72} opacity={night ? 0.35 : 0.9} className="kp-fade" />
         </g>
       )}
 
       {/* קרקע: אדמה, כמה גבעולי דשא, וצל רך מתחת לדוכן */}
-      <rect x="0" y="150" width="240" height="26" className="kp-sky" style={{ fill: night ? "#4A4560" : "var(--sand)" }} />
-      <path d="M0 150 h240" stroke={INK} strokeWidth={1} opacity=".5" />
-      <g stroke="var(--olive)" strokeWidth={1.4} strokeLinecap="round" fill="none">
+      {!bare && <rect x="0" y="150" width="240" height="26" className="kp-sky" style={{ fill: night ? "#4A4560" : "var(--sand)" }} />}
+      {!bare && <path d="M0 150 h240" stroke={INK} strokeWidth={0.72} opacity=".5" />}
+      <g stroke="var(--olive)" strokeWidth={1.01} strokeLinecap="round" fill="none">
         <path className="kp-sway" style={{ transformOrigin: "16px 162px" }} d="M14 162 l-2 -5 M16 162 l1 -6 M18 162 l3 -4" />
         <path className="kp-sway" style={{ transformOrigin: "224px 166px", animationDelay: "1s" }} d="M222 166 l-2 -5 M224 166 l1 -6 M226 166 l3 -4" />
         <path className="kp-sway" style={{ transformOrigin: "111px 170px", animationDelay: ".5s" }} d="M110 170 l-2 -4 M112 170 l2 -4" />
@@ -325,10 +329,10 @@ export function KupaStall({
         <g className="kp-bob">
           {/* שמשייה קטנה על העגלה — מתנדנדת סביב הבסיס של המוט */}
           <g {...LINE} className="kp-sway" style={{ transformOrigin: "70px 100px" }}>
-            <path d="M70 100 v-44" fill="none" strokeWidth={1.8} />
+            <path d="M70 100 v-44" fill="none" strokeWidth={1.3} />
             <path d="M44 62 Q70 34 96 62 z" fill={AW} />
             <path d="M57 62 Q63 46 70 41 Q77 46 83 62" fill="var(--canvas)" />
-            <path d="M44 62 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0" fill="none" strokeWidth={1.1} />
+            <path d="M44 62 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0 a6.5 4 0 0 0 13 0" fill="none" strokeWidth={0.79} />
           </g>
           <Plant x={80} y={100} />
           <Squishy x={104} y={100} />
@@ -337,10 +341,10 @@ export function KupaStall({
           {/* העגלה: קרשים, ידית וגלגלים */}
           <g {...LINE}>
             <rect x="60" y="100" width="112" height="34" fill={W} />
-            <path d="M60 111 h112 M60 122 h112" fill="none" strokeWidth={0.8} opacity=".7" />
-            <path d="M88 100 v34 M116 100 v34 M144 100 v34" fill="none" strokeWidth={0.6} opacity=".5" />
-            <path d="M172 106 l22 -15" fill="none" strokeWidth={3.2} />
-            <path d="M190 89 l8 -2" fill="none" strokeWidth={4.5} />
+            <path d="M60 111 h112 M60 122 h112" fill="none" strokeWidth={0.58} opacity=".7" />
+            <path d="M88 100 v34 M116 100 v34 M144 100 v34" fill="none" strokeWidth={0.43} opacity=".5" />
+            <path d="M172 106 l22 -15" fill="none" strokeWidth={2.3} />
+            <path d="M190 89 l8 -2" fill="none" strokeWidth={3.24} />
           </g>
           <Tag x={117} y={134} text="₪5" />
         </g>
@@ -354,7 +358,7 @@ export function KupaStall({
             <g {...LINE}>
               <rect x="36" y="38" width="9" height="112" fill={W} />
               <rect x="195" y="38" width="9" height="112" fill={W} />
-              <path d="M39 50 v20 M198 60 v24" stroke={INK} strokeWidth={0.6} opacity=".6" />
+              <path d="M39 50 v20 M198 60 v24" stroke={INK} strokeWidth={0.43} opacity=".6" />
             </g>
             {/* ארגז תפוחים על הקרקע */}
             <g {...LINE}>
@@ -362,7 +366,7 @@ export function KupaStall({
                 <circle key={cx} cx={cx} cy={cy} r="4.6" fill="var(--blush)" />
               ))}
               <rect x="3" y="126" width="30" height="24" fill={W} />
-              <path d="M3 138 h30" fill="none" strokeWidth={0.8} opacity=".7" />
+              <path d="M3 138 h30" fill="none" strokeWidth={0.58} opacity=".7" />
             </g>
           </g>
           <g {...part(1, build, 1)}>
@@ -374,7 +378,7 @@ export function KupaStall({
             </g>
             <g {...LINE}>
               <rect x="24" y="108" width="192" height="10" fill={W} />
-              <path d="M24 113 h192" fill="none" strokeWidth={0.6} opacity=".6" />
+              <path d="M24 113 h192" fill="none" strokeWidth={0.43} opacity=".6" />
             </g>
             <Tag x={70} y={118} text="₪8" />
             <Tag x={168} y={118} text="₪12" />
@@ -401,7 +405,7 @@ export function KupaStall({
                   const c = i % 2 ? "var(--canvas)" : AW;
                   return <path key={i} d={`M${x} 39 h24 v12 a12 9 0 0 1 -24 0 z`} fill={c} />;
                 })}
-                <path d="M24 44 h192" fill="none" strokeWidth={0.6} opacity=".5" />
+                <path d="M24 44 h192" fill="none" strokeWidth={0.43} opacity=".5" />
               </g>
             </g>
           )}
@@ -410,7 +414,7 @@ export function KupaStall({
           {level >= 3 && (
             <g {...part(3, build, 0)}>
               <g className="kp-swing" style={{ transformOrigin: "120px 30px" }}>
-                <path d="M96 30 l4 -8 M144 30 l-4 -8" stroke={INK} strokeWidth={1.2} />
+                <path d="M96 30 l4 -8 M144 30 l-4 -8" stroke={INK} strokeWidth={0.86} />
                 <rect x="68" y="4" width="104" height="20" rx="3" fill={W} {...LINE} />
                 <rect x="71" y="7" width="98" height="14" rx="2" fill="var(--canvas)" {...SOFT} />
                 <text x="120" y="17.5" textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="10" fill="var(--ink)">
@@ -419,7 +423,7 @@ export function KupaStall({
               </g>
               {/* לוח גיר קטן על הקרקע */}
               <g {...LINE}>
-                <path d="M212 150 l6 -26 M232 150 l-6 -26" fill="none" strokeWidth={1.6} />
+                <path d="M212 150 l6 -26 M232 150 l-6 -26" fill="none" strokeWidth={1.15} />
                 <rect x="210" y="122" width="24" height="18" fill="var(--ink)" />
                 <text x="222" y="134" textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={800} fontSize="6.5" fill="var(--canvas)" stroke="none">
                   חדש!
@@ -431,19 +435,19 @@ export function KupaStall({
           {/* רמה 5: נורות לאורך הסוכך ופנס על העמוד */}
           {level >= 4 && (
             <g {...part(4, build, 0)}>
-              <path d={`M${lights.a} Q${lights.c} ${lights.b}`} fill="none" stroke={INK} strokeWidth={0.9} />
+              <path d={`M${lights.a} Q${lights.c} ${lights.b}`} fill="none" stroke={INK} strokeWidth={0.65} />
               {Array.from({ length: 11 }, (_, i) => {
                 const [px, py] = onCurve((i + 0.5) / 11, lights.a, lights.c, lights.b);
                 return (
                   <g key={i}>
                     <rect x={px - 1.4} y={py - 0.5} width="2.8" height="2.5" fill={INK} />
                     {night && <circle className="kp-twinkle" style={{ animationDelay: `${(i % 3) * 0.5}s` }} cx={px} cy={py + 4.5} r="7" fill="#FFD966" opacity=".4" />}
-                    <circle className="kp-twinkle" style={{ animationDelay: `${(i % 3) * 0.5}s` }} cx={px} cy={py + 4.5} r="2.8" fill={night ? "#FFE98A" : i % 2 ? "var(--warning)" : "var(--blush)"} stroke={INK} strokeWidth={0.8} />
+                    <circle className="kp-twinkle" style={{ animationDelay: `${(i % 3) * 0.5}s` }} cx={px} cy={py + 4.5} r="2.8" fill={night ? "#FFE98A" : i % 2 ? "var(--warning)" : "var(--blush)"} stroke={INK} strokeWidth={0.58} />
                   </g>
                 );
               })}
               <g className="kp-swing" style={{ transformOrigin: "209px 92px" }}>
-                <path d="M204 92 h5 v6" fill="none" stroke={INK} strokeWidth={1} />
+                <path d="M204 92 h5 v6" fill="none" stroke={INK} strokeWidth={0.72} />
                 <rect x="204" y="98" width="10" height="3" fill={W} {...SOFT} />
                 {night && <circle cx="209" cy="106" r="11" fill="#FFD966" opacity=".35" />}
                 <rect x="205" y="101" width="8" height="10" rx="1.5" fill={night ? "#FFE98A" : "var(--warning)"} {...SOFT} />
@@ -463,13 +467,13 @@ export function KupaStall({
                 <path d="M54 4 l4.6 9.4 10.3 1.2 -7.6 7.1 2 10.2 -9.3 -5.1 -9.3 5.1 2 -10.2 -7.6 -7.1 10.3 -1.2z" fill="var(--lavender)" {...LINE} />
                 <circle cx="51" cy="17" r="1.1" fill={INK} />
                 <circle cx="57" cy="17" r="1.1" fill={INK} />
-                <path d="M51 20.5 q3 2.4 6 0" fill="none" stroke={INK} strokeWidth={1} />
+                <path d="M51 20.5 q3 2.4 6 0" fill="none" stroke={INK} strokeWidth={0.72} />
               </g>
               <g className="star-bob" style={{ animationDelay: ".7s" }}>
-                <path d="M204 112 q14 -20 22 -40" fill="none" stroke={INK} strokeWidth={0.8} />
+                <path d="M204 112 q14 -20 22 -40" fill="none" stroke={INK} strokeWidth={0.58} />
                 <ellipse cx="226" cy="62" rx="9" ry="11" fill="var(--blush)" {...LINE} />
                 <path d="M224 73 h4 l-2 3 z" fill="var(--blush)" {...SOFT} />
-                <path d="M222 56 q2 -3 5 -3" fill="none" stroke="var(--canvas)" strokeWidth={1.4} strokeLinecap="round" />
+                <path d="M222 56 q2 -3 5 -3" fill="none" stroke="var(--canvas)" strokeWidth={1.01} strokeLinecap="round" />
               </g>
             </g>
           )}
@@ -487,16 +491,16 @@ export function KupaStall({
 export function Coin({ size = 20, className = "" }: { size?: number; className?: string }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} aria-hidden style={{ flex: "none" }}>
-      <circle cx="12" cy="12" r="10.6" fill="#E3C26F" stroke="#6f4b28" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="7.7" fill="none" stroke="#6f4b28" strokeWidth="1" opacity=".45" />
+      <circle cx="12" cy="12" r="10.6" fill="#E3C26F" stroke="#6f4b28" strokeWidth="1.08" />
+      <circle cx="12" cy="12" r="7.7" fill="none" stroke="#6f4b28" strokeWidth="0.72" opacity=".45" />
       <path d="M7.2 9.3h9.6v1.2H7.2z" fill="#6f4b28" />
       <path
         d="M7.2 10.5h2.4v1.4a1.2 1.1 0 0 1-2.4 0zM9.6 10.5H12v1.4a1.2 1.1 0 0 1-2.4 0zM12 10.5h2.4v1.4a1.2 1.1 0 0 1-2.4 0zM14.4 10.5h2.4v1.4a1.2 1.1 0 0 1-2.4 0z"
         fill="#FFF8E6"
         stroke="#6f4b28"
-        strokeWidth=".6"
+        strokeWidth="0.43"
       />
-      <path d="M8.4 12.6v3.4M15.6 12.6v3.4M7.4 16h9.2" stroke="#6f4b28" strokeWidth="1.1" fill="none" strokeLinecap="round" />
+      <path d="M8.4 12.6v3.4M15.6 12.6v3.4M7.4 16h9.2" stroke="#6f4b28" strokeWidth="0.79" fill="none" strokeLinecap="round" />
     </svg>
   );
 }
@@ -522,11 +526,11 @@ export function Medal({
       <svg viewBox="0 0 56 56" width={size} height={size} className="absolute inset-0">
         {reached ? (
           <>
-            <circle cx="28" cy="28" r="26" fill="#E3C26F" stroke="#6f4b28" strokeWidth="1.8" />
-            <circle cx="28" cy="28" r="20.5" fill="#F6E7BF" stroke="#6f4b28" strokeWidth="1" opacity=".9" />
+            <circle cx="28" cy="28" r="26" fill="#E3C26F" stroke="#6f4b28" strokeWidth="1.3" />
+            <circle cx="28" cy="28" r="20.5" fill="#F6E7BF" stroke="#6f4b28" strokeWidth="0.72" opacity=".9" />
           </>
         ) : (
-          <circle cx="28" cy="28" r="25.5" fill="var(--canvas)" stroke="var(--stone)" strokeWidth="1.6" strokeDasharray="4 3.5" />
+          <circle cx="28" cy="28" r="25.5" fill="var(--canvas)" stroke="var(--stone)" strokeWidth="1.15" strokeDasharray="4 3.5" />
         )}
       </svg>
       <span className={`relative ${reached ? "text-[#6f4b28]" : "text-[var(--stone)]"}`}>
