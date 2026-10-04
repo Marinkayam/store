@@ -235,7 +235,7 @@ export default function KupaPage() {
           <div className="flex items-center gap-3">
             <Medal icon={nb.icon} reached={false} size={48} />
             <div className="flex-1 min-w-0">
-              <div className="text-[11.5px] font-bold text-[var(--wood)] tracking-wide">הצעד הבא</div>
+              <div className="text-[11.5px] font-bold text-[#6f4b28] tracking-wide">הצעד הבא</div>
               <div className="text-[16px] font-black leading-tight">{nb.title}</div>
               <div className="text-[12.5px] text-[var(--muted)] mt-0.5">{nb.how}</div>
             </div>
@@ -736,7 +736,7 @@ function QuickActions({ kupa }: { kupa: KupaData }) {
   const views = pending(["views10", "views50"]);
   const pay = b("pay_ready");
   const coin = (n: number) => (
-    <span className="inline-flex items-center gap-0.5 font-bold text-[var(--wood)]">+{n}<Coin size={11} /></span>
+    <span className="inline-flex items-center gap-0.5 font-bold text-[#6f4b28]">+{n}<Coin size={11} /></span>
   );
   return (
     <section aria-labelledby="kupa-actions">
