@@ -98,7 +98,7 @@ export default function CouponManager({
     <div className="flex flex-col gap-3" data-testid="coupon-manager">
       {live.length === 0 && !open && (
         <p className="text-[12.5px] text-[var(--muted)] leading-relaxed">
-          עוד אין קופונים. קוד שמקלידים בהזמנה ומקבלים הנחה — לתודה ללקוחות חוזרים, למבצע, או לחג.
+          עוד אין קופונים. קופון הוא קוד שהקונים מקלידים בהזמנה ומקבלים הנחה. למשל: תודה לקונים חוזרים, מבצע או חג.
         </p>
       )}
 
@@ -115,7 +115,7 @@ export default function CouponManager({
                 <div className="text-[13px] font-semibold mt-0.5">{couponLabel(c)}</div>
                 <div className="text-[11.5px] text-[var(--muted)] mt-0.5">{couponTerms(c)}</div>
                 {c.created_by === "admin" && !adminView && (
-                  <div className="text-[11px] text-[var(--muted)] mt-0.5">נוצר ע״י דוכן</div>
+                  <div className="text-[11px] text-[var(--muted)] mt-0.5">הקופון נוצר על ידי צוות דוכן</div>
                 )}
               </div>
               <span
@@ -176,7 +176,7 @@ export default function CouponManager({
 
           <div>
             <label htmlFor="cp-code" className="block text-[12px] text-[var(--muted)] mb-1.5">
-              הקוד שמקלידים בהזמנה · בעברית או באנגלית
+              הקוד שהקונים מקלידים בהזמנה · בעברית או באנגלית
             </label>
             <div className="flex gap-2">
               <input
@@ -228,19 +228,19 @@ export default function CouponManager({
 
           {!more ? (
             <button onClick={() => setMore(true)} className="self-start text-[12.5px] underline text-[var(--muted)] min-h-9">
-              + תנאים (לא חובה): מינימום, מספר שימושים, תאריך סיום
+              + תנאים (לא חובה): סכום מינימום, כמה פעמים אפשר להשתמש, עד מתי
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="cp-min" className="block text-[12px] text-[var(--muted)] mb-1.5">מסכום של (₪)</label>
+                <label htmlFor="cp-min" className="block text-[12px] text-[var(--muted)] mb-1.5">רק בהזמנה של לפחות (₪)</label>
                 <input id="cp-min" value={draft.minTotal} inputMode="decimal" aria-label="סכום מינימלי"
                   onChange={(e) => set({ minTotal: e.target.value.replace(/[^\d.,]/g, "") })}
                   placeholder="בלי"
                   className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]" />
               </div>
               <div>
-                <label htmlFor="cp-uses" className="block text-[12px] text-[var(--muted)] mb-1.5">כמה פעמים</label>
+                <label htmlFor="cp-uses" className="block text-[12px] text-[var(--muted)] mb-1.5">כמה פעמים אפשר להשתמש</label>
                 <input id="cp-uses" value={draft.maxUses} inputMode="numeric" aria-label="מספר שימושים"
                   onChange={(e) => set({ maxUses: e.target.value.replace(/\D/g, "") })}
                   placeholder="בלי הגבלה"
@@ -264,7 +264,7 @@ export default function CouponManager({
               data-testid="coupon-create"
               className="flex-1 min-h-12 bg-[var(--ink)] text-white text-[14px] font-bold disabled:opacity-50"
             >
-              {busy === "create" ? "יוצרת…" : "יצירת הקופון"}
+              {busy === "create" ? "יוצרים…" : "יצירת הקופון"}
             </button>
             <button onClick={() => { setOpen(false); setDraft(EMPTY); setError(""); setMore(false); }}
               className="min-h-12 px-4 border border-[var(--line)] text-[13px]">

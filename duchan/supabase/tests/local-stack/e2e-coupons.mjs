@@ -276,7 +276,7 @@ await girl.goto(`${BASE}/dashboard/settings#coupons`);
 await girl.reload(); // אותה כתובת בדיוק — goto לבד לא טוען מחדש
 await girl.waitForSelector("[data-testid=coupon-row][data-code=VIP20]", { timeout: 20000 });
 check("והמוכרת רואה אותו אצלה, עם 'נוצר ע״י דוכן'",
-  ((await girl.textContent("[data-testid=coupon-row][data-code=VIP20]")) ?? "").includes("נוצר ע״י דוכן"));
+  ((await girl.textContent("[data-testid=coupon-row][data-code=VIP20]")) ?? "").includes("הקופון נוצר על ידי צוות דוכן"));
 await girl.screenshot({ path: "/tmp/coupon-seller.png", fullPage: true });
 
 /* ── ניקוי ── */

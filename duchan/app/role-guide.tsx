@@ -13,22 +13,22 @@ export const EVERYONE = [
   { icon: "📦", text: "לראות הזמנות ולסמן \"שולם\" ו\"נמסר\"" },
   { icon: "🎨", text: "לעצב את הדוכן" },
   { icon: "🏷️", text: "ליצור קופונים" },
-  { icon: "🚚", text: "לקבוע משלוחים" },
+  { icon: "🚚", text: "לקבוע אם יש משלוח וכמה הוא עולה" },
   { icon: "🔗", text: "לשתף את הדוכן" },
-  { icon: "⏸️", text: "לפתוח את הדוכן או לשים בהפסקה" },
+  { icon: "⏸️", text: "לפתוח את הדוכן או לשים אותו בהפסקה" },
 ] as const;
 
 export const HEAD_ONLY = [
-  { icon: "💳", text: "איך משלמים (ביט, פייבוקס, מזומן)" },
-  { icon: "📲", text: "לאיזה טלפון מגיעות ההזמנות" },
-  { icon: "👥", text: "מי בצוות: להזמין או להוציא" },
+  { icon: "💳", text: "לקבוע איך משלמים (ביט, פייבוקס, מזומן)" },
+  { icon: "📲", text: "לקבוע לאיזה טלפון מגיעות ההזמנות" },
+  { icon: "👥", text: "להזמין שותפים לצוות או להוציא מהצוות" },
   { icon: "💰", text: "לשלם על הדוכן ולפתוח אותו להזמנות" },
 ] as const;
 
 type Who = "owner" | "partner" | "invitee";
 
 const TITLES: Record<Who, { can: string; cant: string; cantIcon: string }> = {
-  owner: { can: "✅ מה כל הצוות יכול", cant: "רק את/ה, ראש הדוכן", cantIcon: "👑" },
+  owner: { can: "✅ מה כל הצוות יכול לעשות", cant: "רק את/ה, ראש הדוכן", cantIcon: "👑" },
   partner: { can: "✅ מה אני יכול/ה לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
   invitee: { can: "✅ מה תוכלו לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
 };

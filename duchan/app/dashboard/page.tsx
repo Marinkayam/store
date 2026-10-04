@@ -86,10 +86,10 @@ export default function OrdersPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.rpc("mark_order_paid", { p_order: o.id });
     if (error) {
-      showToast("משהו השתבש, לנסות שוב");
+      showToast("לא הצלחנו לסמן ששולם. אפשר לנסות שוב");
       return;
     }
-    showToast("המלאי עודכן");
+    showToast("סומן ששולם, והכמות במלאי עודכנה");
     refresh();
     kupaCheck(); // מכירה = מטבעות, ואולי אות "המכירה הראשונה"
   }
@@ -107,10 +107,10 @@ export default function OrdersPage() {
     const supa = supabaseBrowser();
     const { error } = await supa.rpc("cancel_order", { p_order: o.id });
     if (error) {
-      showToast("משהו השתבש, לנסות שוב");
+      showToast("לא הצלחנו לבטל את ההזמנה. אפשר לנסות שוב");
       return;
     }
-    showToast(o.status === "sent" ? "ההזמנה בוטלה" : "ההזמנה בוטלה והמלאי חזר");
+    showToast(o.status === "sent" ? "ההזמנה בוטלה" : "ההזמנה בוטלה והכמות חזרה למלאי");
     refresh();
   }
 
@@ -125,7 +125,7 @@ export default function OrdersPage() {
       .eq("id", o.id);
     if (error) {
       console.error("[orders] hide failed:", error.message);
-      showToast("ההסתרה נכשלה, צריך עדכון דאטהבייס");
+      showToast("לא הצלחנו להוריד את ההזמנה מהרשימה. אפשר לנסות שוב מאוחר יותר");
       return;
     }
     setConfirmHide(null);
@@ -221,7 +221,7 @@ export default function OrdersPage() {
         !store.tagline?.trim() && {
           key: "about",
           title: "משפט על הדוכן",
-          why: "מי מוכר ומה מיוחד. קונים אוהבים לדעת ממי הם קונים.",
+          why: "מי מוכרים ומה מיוחד אצלכם. קונים אוהבים לדעת ממי הם קונים.",
           cta: "לכתוב משפט",
           href: "/dashboard/settings#design",
         },
@@ -273,8 +273,8 @@ export default function OrdersPage() {
               </div>
               <div className="text-[12.5px] opacity-70 leading-relaxed">
                 {store.payment_claimed_at
-                  ? "קיבלנו את ההודעה. ברגע שנאשר, אפשר יהיה לקבל הזמנות."
-                  : "הלינק כבר עובד ואפשר לשלוח אותו. כדי לקבל הזמנות צריך לפרסם →"}
+                  ? "קיבלנו את הדיווח על התשלום. אחרי שנאשר, הדוכן ייפתח להזמנות."
+                  : "הלינק כבר עובד ואפשר לשלוח אותו. כדי לקבל הזמנות צריך לפרסם את הדוכן →"}
               </div>
             </div>
           </div>
@@ -307,9 +307,9 @@ export default function OrdersPage() {
         <div className="mx-4 mt-4 bg-white border border-[var(--line)] p-4 flex items-center gap-3">
           <span className="text-2xl">💰</span>
           <div className="flex-1">
-            <div className="text-sm font-bold">₪{formatPrice(revenue)} בקופה</div>
+            <div className="text-sm font-bold">₪{formatPrice(revenue)} נכנסו ממכירות</div>
             <div className="text-[12px] text-[var(--muted)]">
-              {sold.length} הזמנות ששולמו{topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
+              {sold.length === 1 ? "הזמנה אחת ששולמה" : `${sold.length} הזמנות ששולמו`}{topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
             </div>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function OrdersPage() {
                   {store.activated_at ? "איך מגיעה ההזמנה הראשונה?" : "הדוכן עוד לא פתוח להזמנות"}
                 </h2>
                 <p className="text-[12.5px] text-[var(--muted)] mt-0.5">
-                  {store.activated_at ? "שלושה דברים שמביאים קונים:" : "אפשר כבר לשלוח את הלינק ולהראות לחברים. הזמנות יגיעו אחרי שהדוכן ייפתח (הכפתור השחור למעלה)."}
+                  {store.activated_at ? "שלושה דברים שמביאים קונים:" : "אפשר כבר לשלוח את הלינק ולהראות לחברים. הזמנות יגיעו אחרי שמפרסמים את הדוכן (בכפתור השחור למעלה)."}
                 </p>
               </div>
             </div>
@@ -381,7 +381,7 @@ export default function OrdersPage() {
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <div>
                     <div className="text-[13.5px] font-bold">לשלוח את הלינק לחברים ולמשפחה</div>
-                    <div className="text-[12px] text-[var(--muted)] leading-snug">מי שרואה את הדוכן יכול להזמין. כל כניסה גם שווה מטבעות.</div>
+                    <div className="text-[12px] text-[var(--muted)] leading-snug">מי שנכנס לדוכן יכול להזמין. ועל כניסות לדוכן מקבלים גם מטבעות לקופה.</div>
                   </div>
                   <div className="flex gap-2">
                     <a
@@ -421,7 +421,7 @@ export default function OrdersPage() {
                   <span className="w-7 h-7 shrink-0 bg-[var(--ink)] text-white text-[13px] font-bold flex items-center justify-center">3</span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-[13.5px] font-bold">לפרסם בסטטוס, בסטורי או בטיקטוק</span>
-                    <span className="block text-[12px] text-[var(--muted)] leading-snug">יש הודעות מוכנות ורעיונות לסרטון, רק להעתיק.</span>
+                    <span className="block text-[12px] text-[var(--muted)] leading-snug">יש הודעות מוכנות ורעיונות לסרטון, רק מעתיקים ומפרסמים.</span>
                   </span>
                   <Chevron className="text-[var(--faint)]" />
                 </a>
@@ -519,7 +519,7 @@ export default function OrdersPage() {
                 <input
                   value={whoName}
                   onChange={(e) => setWhoName(e.target.value)}
-                  placeholder="השם של מי שהזמינה"
+                  placeholder="שם הקונה"
                   aria-label="שם הקונה"
                   maxLength={24}
                   autoFocus
@@ -554,7 +554,7 @@ export default function OrdersPage() {
                 onClick={() => openWho(o)}
                 className="text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full text-right"
               >
-                מי הזמינה? להוסיף שם
+                מי הזמין/ה? להוסיף שם
               </button>
             ) : null}
 
@@ -595,7 +595,7 @@ export default function OrdersPage() {
                   }}
                   className="text-[12px] text-[var(--muted)] underline mt-1.5"
                 >
-                  📝 הוספת הערה לעצמי
+                  📝 הערה לעצמי (הקונה לא רואה אותה)
                 </button>
               )
             )}
@@ -683,8 +683,8 @@ export default function OrdersPage() {
                 ההחלטה "לארוז או לא" מתקבלת מול הכרטיס הזה. */}
             {o.status === "sent" && confirmHide !== o.id && (
               <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2">
-                הגיעה אליכם הודעה בוואטסאפ על ההזמנה הזו? אם לא, יכול להיות שהיא
-                נלחצה ולא נשלחה.
+                לא בטוחים שההזמנה אמיתית? כדאי לבדוק עם הקונה לפני שמכינים
+                אותה.
               </p>
             )}
 
@@ -711,7 +711,7 @@ export default function OrdersPage() {
                 onClick={() => setConfirmHide(o.id)}
                 className="text-[12px] text-[var(--muted)] underline mt-2"
               >
-                {o.status === "sent" ? "ההזמנה לא אמיתית, להוריד" : "להוריד מהרשימה"}
+                {o.status === "sent" ? "הזמנה לא אמיתית? להוריד מהרשימה" : "להוריד מהרשימה"}
               </button>
             )}
           </div>

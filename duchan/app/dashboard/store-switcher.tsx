@@ -67,7 +67,7 @@ export default function StoreSwitcher() {
         type="button"
         onClick={() => setOpen(true)}
         data-testid="store-switcher"
-        aria-label={`הדוכן הפתוח עכשיו: ${cur.display_name}. מעבר לדוכן אחר`}
+        aria-label={`הדוכן שנבחר עכשיו: ${cur.display_name}. מעבר לדוכן אחר`}
         aria-haspopup="dialog"
         className="w-full bg-white border-b border-[var(--line)] px-4 py-2.5 flex items-center gap-3 text-right"
       >
@@ -75,7 +75,7 @@ export default function StoreSwitcher() {
           {cur.emoji}
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block text-[11.5px] text-[var(--muted)] leading-tight">{tag(cur)} · פתוח עכשיו</span>
+          <span className="block text-[11.5px] text-[var(--muted)] leading-tight">{tag(cur)} · נבחר עכשיו</span>
           <span className="block text-[14.5px] font-bold text-[var(--ink)] truncate leading-snug" data-testid="store-switcher-current">
             {cur.display_name}
           </span>
@@ -122,7 +122,7 @@ export default function StoreSwitcher() {
                       <span className="block text-[14px] font-bold text-[var(--ink)] truncate">{r.display_name}</span>
                       <span className="block text-[12px] text-[var(--muted)]">{tag(r)}</span>
                     </span>
-                    {on && <span className="text-[12.5px] font-bold text-[var(--ok-ink)] shrink-0">✓ פתוח עכשיו</span>}
+                    {on && <span className="text-[12.5px] font-bold text-[var(--ok-ink)] shrink-0">✓ נבחר עכשיו</span>}
                   </button>
                 );
               })}

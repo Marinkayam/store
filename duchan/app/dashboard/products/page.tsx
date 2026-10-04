@@ -204,13 +204,13 @@ export default function ProductsPage() {
       });
       const data = await resp.json();
       if (!resp.ok) {
-        showToast(data.error ?? "לא הצלחנו לכתוב תיאור");
+        showToast(data.error ?? "לא הצלחנו לכתוב תיאור. אפשר לנסות שוב");
         return;
       }
       setEdit((e) => e && { ...e, description: data.description });
       showToast("כתבנו תיאור, אפשר לשנות אותו");
     } catch {
-      showToast("אין חיבור, לנסות שוב");
+      showToast("אין חיבור לאינטרנט. אפשר לנסות שוב");
     } finally {
       setAiBusy(false);
     }
@@ -254,7 +254,7 @@ export default function ProductsPage() {
     const { error } = await supa.from("stores").update({ categories: cleaned }).eq("id", store.id);
     if (error) {
       // העמודה עוד לא בדאטהבייס — אומרים את זה במקום להיכשל בשקט
-      showToast("הקטגוריות עוד לא זמינות, אפשר לנסות שוב מאוחר יותר");
+      showToast("לא הצלחנו לשמור את הקטגוריות. אפשר לנסות שוב מאוחר יותר");
       return false;
     }
     setStore({ ...store, categories: cleaned });
@@ -357,7 +357,7 @@ export default function ProductsPage() {
     try {
       blob = await squareImage(file, 900, "cover", { x: 50, y: 50 });
     } catch (e) {
-      showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה");
+      showToast(e instanceof MediaError ? e.message : "לא הצלחנו לקרוא את התמונה. אפשר לנסות תמונה אחרת");
       return;
     }
     setEdit((e) =>
@@ -439,7 +439,7 @@ export default function ProductsPage() {
         await videoRef.current.play();
       }
     } catch (e) {
-      showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה, אפשר לבחור 'מהגלריה'");
+      showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה. אפשר לבחור 'וידאו מהגלריה'");
       setRecOpen(false);
     }
   }
@@ -490,7 +490,7 @@ export default function ProductsPage() {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
       setRecOpen(false);
-      showToast(`הוידאו נשמר · עד ${RECORD_SECONDS} שניות`);
+      showToast("הוידאו מוכן. כדי לשמור אותו לוחצים \"שמירה\"");
     }
   }
 
@@ -571,7 +571,7 @@ export default function ProductsPage() {
         // 0056 עוד לא בדאטהבייס. דרופ אסור לאבד בשקט — מוצר שאמור להיות
         // נעול היה נפתח מיד. אז עוצרים ואומרים.
         if (edit.dropOn) {
-          showToast("דרופ עוד לא זמין כרגע. אפשר לשמור בלי דרופ");
+          showToast("דרופ לא זמין כרגע. אפשר לבחור \"כבר עכשיו\" ולשמור");
           return;
         }
         const { is_mystery: _m, drop_at: _d, ...noDrops } = row;
@@ -592,7 +592,7 @@ export default function ProductsPage() {
         }
       }
       if (error) {
-        showToast("השמירה נכשלה, לנסות שוב");
+        showToast("השמירה לא הצליחה. אפשר לנסות שוב");
         return;
       }
 
@@ -653,11 +653,11 @@ export default function ProductsPage() {
       sort_order: src.sort_order + 1,
     });
     if (error) {
-      showToast("השכפול נכשל, לנסות שוב");
+      showToast("השכפול לא הצליח. אפשר לנסות שוב");
       return;
     }
     setEdit(null);
-    showToast("המוצר שוכפל ✨");
+    showToast("נוצר עותק של המוצר");
     refresh();
     refreshStorePage();
   }
@@ -742,7 +742,7 @@ export default function ProductsPage() {
           <div className="bg-white border border-[var(--line)] p-5 mb-2" data-testid="categories-box">
             <div className="text-[14px] font-bold mb-1">קטגוריות בדוכן</div>
             <p className="text-[12px] text-[var(--faint)] leading-relaxed mb-4">
-              הקונים יוכלו לסנן לפי זה. אחרי שמגדירים, בוחרים קטגוריה לכל מוצר בעריכה שלו.
+              הקונים יוכלו לסנן את הדוכן לפי קטגוריות. אחרי שמוסיפים קטגוריה, בוחרים אותה בעריכה של כל מוצר.
             </p>
             <div className="flex gap-2 flex-wrap">
               {(store?.categories ?? []).map((c) => (
@@ -821,7 +821,7 @@ export default function ProductsPage() {
             <p className="text-sm text-[var(--muted)] leading-relaxed">
               הדוכן שלך ריק בינתיים.
               <br />
-              כל מוצר לוקח פחות מדקה: תמונה, שם, מחיר.
+              הוספת מוצר לוקחת פחות מדקה: תמונה, שם, מחיר.
             </p>
             <button
               onClick={() => openEditor(null)}
@@ -1057,7 +1057,7 @@ export default function ProductsPage() {
                 <Icon name="camera" size={19} tone="var(--cream)" />תמונה
               </button>
               <button onClick={() => galleryRef.current?.click()} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
-                <Icon name="gallery" size={19} tone="var(--cream)" />מהגלריה
+                <Icon name="gallery" size={19} tone="var(--cream)" />וידאו מהגלריה
               </button>
             </div>
 
@@ -1072,7 +1072,7 @@ export default function ProductsPage() {
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-4" />
 
             <p className="text-[12px] text-[var(--faint)] mb-2.5">
-              מכאן והלאה הכל לא חובה — אפשר לשמור גם בלעדיו.
+              מכאן והלאה הכל לא חובה. אפשר לשמור גם בלי למלא.
             </p>
 
             <div className="flex items-center justify-between mb-1">
@@ -1084,7 +1084,7 @@ export default function ProductsPage() {
                 </button>
               )}
             </div>
-            <textarea value={edit.description} maxLength={120} rows={2} placeholder={edit.isMystery ? "מה יכול להיות בפנים? למשל: 3 סקווישים מפתיעים" : "רך במיוחד, חוזר לאט"}
+            <textarea value={edit.description} maxLength={120} rows={2} placeholder={edit.isMystery ? "מה יכול להיות בפנים? למשל: 3 סקווישים מפתיעים" : "למשל: רך במיוחד, חוזר לאט"}
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3 resize-none" />
 
@@ -1126,7 +1126,7 @@ export default function ProductsPage() {
             {edit.optionKind !== "none" && (
               <>
                 <label className="block text-[11.5px] text-[var(--faint)] mb-1">
-                  {edit.optionKind === "color" ? "אילו צבעים אפשר לבחור?" : "אילו מידות אפשר לבחור?"}
+                  {edit.optionKind === "color" ? "אילו צבעים הקונים יכולים לבחור?" : "אילו מידות הקונים יכולים לבחור?"}
                 </label>
                 <div className="flex flex-col gap-1.5 mb-2">
                   {edit.optionList.map((v, i) => (
@@ -1184,7 +1184,7 @@ export default function ProductsPage() {
               <>
                 <label id="editor-categories" className="block text-[12px] text-[var(--muted)] mb-1 scroll-mt-24">
                   {store.categories?.length
-                    ? "באיזו קטגוריה המוצר יופיע בדוכן? (אפשר כמה)"
+                    ? "באיזו קטגוריה המוצר יופיע בדוכן? (אפשר לבחור כמה)"
                     : "קטגוריה (לא חובה) — הקונים יוכלו לסנן לפיה"}
                 </label>
                 <div className="flex gap-1.5 flex-wrap mb-3" role="group" aria-labelledby="editor-categories">
@@ -1271,7 +1271,7 @@ export default function ProductsPage() {
               ))}
             </div>
             <p className="text-[12px] text-[var(--faint)] mb-3 leading-relaxed">
-              ⭐ הכי נמכר · 🔥 חדש · ⌛ אחרון במלאי מופיעות לבד, לפי מה שבאמת קורה בדוכן.
+              התגיות "הכי נמכר", "חדש" ו"אחרון במלאי" מופיעות לבד, לפי המכירות ולפי מה שנשאר.
             </p>
 
             {/* ⭐ מומלץ — חלק משלו בראש הדוכן, לא קטגוריה ולא תגית */}
@@ -1335,7 +1335,7 @@ export default function ProductsPage() {
               />
               {edit.dropOn && (
                 <div className="mt-2.5">
-                  <label htmlFor="drop-at" className="block text-[12px] text-[var(--muted)] mb-1">נפתח ב (שעון ישראל):</label>
+                  <label htmlFor="drop-at" className="block text-[12px] text-[var(--muted)] mb-1">מתי נפתח להזמנה? (שעון ישראל)</label>
                   <input
                     id="drop-at"
                     type="datetime-local"
@@ -1364,7 +1364,7 @@ export default function ProductsPage() {
 
             {/* רואים אותו? — עם הסבר מה זה "מוסתר", כדי שיהיה ברור שזה לא מחיקה */}
             <div className="border border-[var(--line)] px-3 py-3 mb-3">
-              <div className="text-[13px] font-semibold mb-2">רואים אותו בדוכן?</div>
+              <div className="text-[13px] font-semibold mb-2">הקונים רואים אותו בדוכן?</div>
               <Choice
                 value={edit.isVisible}
                 onChange={(v) => setEdit((s) => s && { ...s, isVisible: v })}
@@ -1403,14 +1403,14 @@ export default function ProductsPage() {
               <Choice
                 value={edit.trackStock}
                 onChange={(v) => setEdit((s) => s && { ...s, trackStock: v })}
-                on="🔢 לספור"
+                on="🔢 כמות מוגבלת"
                 off="♾️ בלי הגבלה"
-                label="לספור כמה יש לי"
+                label="כמות מוגבלת או בלי הגבלה"
                 testid="track-stock-choice"
               />
               <p className="text-[12px] text-[var(--muted)] mt-1.5 leading-relaxed">
                 {edit.trackStock
-                  ? "קונים רואים \"נשארו X\" ו\"אזל\", ולא יוכלו להזמין יותר ממה שיש."
+                  ? "הקונים רואים כמה נשארו, ו\"אזל\" כשנגמר. אי אפשר להזמין יותר ממה שיש."
                   : "לא סופרים, והמוצר תמיד זמין להזמנה."}
               </p>
             </div>
@@ -1513,11 +1513,11 @@ export default function ProductsPage() {
       {celebrate && store && (
         <div data-testid="first-product-celebration" className="fixed inset-0 z-[95] bg-white flex flex-col items-center justify-center text-center px-8 gap-4">
           <Icon name="party" size={68} tone="var(--lavender)" className="text-[var(--wood)]" />
-          <h2 className="text-[22px] font-bold leading-tight">הדוכן שלך באוויר!</h2>
+          <h2 className="text-[22px] font-bold leading-tight">המוצר הראשון בדוכן!</h2>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">
             יש בו מוצר, יש לו לינק, והוא נראה בדיוק כמו שבנית אותו.
             <br />
-            עכשיו הדבר הכי כיף, לשלוח אותו.
+            עכשיו הדבר הכי כיף: לשלוח אותו לחברים.
           </p>
           <a
             href="/dashboard/settings#share"

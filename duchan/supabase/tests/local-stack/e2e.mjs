@@ -167,8 +167,8 @@ await page.click("button:has-text('שולם')");
 await page.waitForTimeout(1500);
 const stockAfterPaid = (await db.query("select stock from products where id=$1", [prodRow.id])).rows[0].stock;
 check("mark paid deducts stock atomically (4 - 2 = 2)", stockAfterPaid === 2, `stock=${stockAfterPaid}`);
-await page.waitForSelector("text=בקופה");
-check("my-register card shows revenue", (await page.textContent("body")).includes("₪30 בקופה"));
+await page.waitForSelector("text=נכנסו ממכירות");
+check("my-register card shows revenue", (await page.textContent("body")).includes("₪30 נכנסו ממכירות"));
 await page.screenshot({ path: `${shots}/13-dashboard-paid.png` });
 
 /* ── שלב 6: החנות מציגה "נשארו 2" ── */
