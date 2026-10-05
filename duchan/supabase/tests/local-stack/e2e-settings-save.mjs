@@ -137,6 +137,8 @@ check("פרטים: הגיל", r.age === 12, String(r.age));
 
 /* ── 7. קופונים ולשתף נפתחים ── */
 await open("coupons");
+// מנהל הקופונים נטען מהשרת — מחכים לו ולא סופרים מיד
+await page.waitForSelector("[data-testid=coupon-manager]", { timeout: 15000 }).catch(() => {});
 check("קופונים נפתחים במקום", (await page.locator("[data-testid=coupon-manager]").count()) === 1);
 await back();
 await open("share");

@@ -105,6 +105,7 @@ check("בהגדרות יש קיצור לקופונים", true);
 // הקופונים גרים ב"החנות שלי" — מקטע משלהם, לא קישור לדף אחר
 await girl.click("[data-testid=settings-coupons-link]");
 await girl.waitForSelector("[data-testid=seller-coupons]", { timeout: 20000 });
+await girl.waitForSelector("[data-testid=coupon-manager]", { timeout: 15000 }).catch(() => {});
 check("ב'החנות שלי' יש מקטע קופונים", (await girl.locator("[data-testid=coupon-manager]").count()) === 1);
 check("והכתובת היא #coupons", girl.url().endsWith("#coupons"), girl.url());
 await girl.goto(`${BASE}/dashboard/settings#share`);
