@@ -716,3 +716,29 @@ html.a11y-still .oops-fixing .oops-sign { transform: rotate(0); }
   .kp-sky, .kp-fade { transition: none; }
   .kp-firefly { animation: none; opacity: .8; }
 }
+
+/* ── דף הבית: הסיפור בגלילה (app/home) ──
+   כתב גדול ודק, תנועה רכה. מה שזז לבד (ריחוף, הבהוב, ניצוץ) נעצר
+   ב"בלי תנועה" ובהעדפת המערכת; מה שזז עם הגלילה נשאר, כי הגלילה בשליטה. */
+.home-display { font-weight: 300; font-size: clamp(40px, 11vw, 96px); line-height: 1.02; letter-spacing: -0.02em; }
+.home-huge { font-size: clamp(72px, 26vw, 220px); font-weight: 400; }
+@keyframes home-word-in { from { opacity: 0; transform: translateY(0.35em); } to { opacity: 1; transform: none; } }
+.home-word { display: inline-block; animation: home-word-in .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes home-float { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-7px) rotate(2deg); } }
+.home-float { animation: home-float 4.2s ease-in-out infinite; }
+@keyframes home-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+.home-bob { animation: home-bob 1.6s ease-in-out infinite; }
+@keyframes home-caret { 50% { opacity: 0; } }
+.home-caret { animation: home-caret 1s steps(1) infinite; }
+@keyframes home-burst {
+  from { transform: translate(-50%, -50%) rotate(var(--a)) translateY(0) scale(.4); opacity: 1; }
+  to { transform: translate(-50%, -50%) rotate(var(--a)) translateY(-120px) scale(1); opacity: 0; }
+}
+.home-burst { animation: home-burst 1.1s cubic-bezier(.2,.8,.3,1) both; }
+.home-reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s cubic-bezier(.2,.8,.2,1), transform .6s cubic-bezier(.2,.8,.2,1); }
+.home-reveal.is-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .home-float, .home-bob, .home-caret, .home-burst, .home-word { animation: none; }
+  .home-reveal { opacity: 1; transform: none; transition: none; }
+}
+html.a11y-still .home-reveal { opacity: 1; transform: none; }
