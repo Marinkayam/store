@@ -8,7 +8,7 @@ import HelpButton from "../help-button";
 import Icon from "../icons";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { BuildScene, DingScene, HeroScene, HowScene } from "../home/scenes";
-import { KupaSection, LearnSection, PriceSection, SafetySection } from "../home/sections";
+import { MonthSection, PriceGame, PriceSection, SafetySection } from "../home/sections";
 
 /**
  * אתר השיווק (/story): הסיפור של "מה זה דוכן", בגלילה. דף הבית (/) נשאר
@@ -164,22 +164,26 @@ export default function StoryPage() {
         </div>
       )}
 
+      {/* הסיפור של נועה: פרק לכל שלב, ובכל פרק גם הערה קטנה להורים */}
       <HeroScene />
-      <BuildScene />
       <HowScene />
+      <PriceGame />
       <DingScene />
-      <LearnSection />
-      <KupaSection />
+      <BuildScene />
+      <MonthSection />
       <SafetySection />
       <PriceSection />
 
       {/* ── הסוף: להדליק את האורות ולפתוח דוכן ── */}
       <section ref={endRef} className="pt-20 pb-28 flex flex-col items-center gap-6 bg-[var(--canvas)]" aria-labelledby="end-title" data-testid="home-end">
         <div className="text-center px-5">
-          <div className="text-[13px] font-medium tracking-wide text-[var(--muted)]">ועכשיו</div>
+          <div className="text-[12.5px] font-medium tracking-wide text-[var(--lavender-deep)]">והפרק הבא?</div>
           <h2 id="end-title" className="home-display mt-1">
-            להדליק את האורות.
+            שלך.
           </h2>
+          <p className="text-[15.5px] leading-relaxed mt-3 max-w-[22rem] mx-auto">
+            למגירה שלך יש סיפור משלה. מדליקים את האורות ופותחים דוכן.
+          </p>
         </div>
         <div className="self-stretch">
           <StallHero name="הדוכן שלך" />
@@ -188,8 +192,17 @@ export default function StoryPage() {
           <button className="btn btn-primary text-[16px]" data-testid="home-start">
             קדימה, בואו נקים את הדוכן ←
           </button>
-          <p className="text-[13px] text-center leading-relaxed">
-            לבנות זה חינם. משלמים פעם אחת, <bdi>₪{ACTIVATION_PRICE}</bdi>, רק כשרוצים לקבל הזמנות.
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent("תראו מה מצאתי: אפשר לפתוח דוכן משלי ולמכור לחברים! " + "https://duchan.app/story")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary text-[15px] text-center"
+            data-testid="home-send-parents"
+          >
+            לשלוח את הסיפור להורים
+          </a>
+          <p className="text-[13px] text-center leading-relaxed text-[var(--muted)]">
+            הורים? פותחים ביחד, ואתם מאשרים לפני שהדוכן נפתח להזמנות. לבנות זה חינם; משלמים פעם אחת, <bdi>₪{ACTIVATION_PRICE}</bdi>.
           </p>
         </form>
         {checked && !mine && (

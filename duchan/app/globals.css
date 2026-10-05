@@ -756,3 +756,10 @@ html.a11y-still .home-reveal { opacity: 1; transform: none; }
 .story-site { font-family: "Heebo Thin Site", "Heebo", system-ui, sans-serif; font-weight: 300; }
 .story-site b, .story-site strong { font-weight: 500; }
 .story-site .btn { font-weight: 500; }
+/* מחוון המחיר במשחק התמחור (/story) — פס דק, ידית מרובעת */
+.home-range { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; }
+.home-range::-webkit-slider-runnable-track { height: 2px; background: var(--ink); }
+.home-range::-moz-range-track { height: 2px; background: var(--ink); }
+.home-range::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -12px; background: var(--lavender); border: 2px solid var(--ink); }
+.home-range::-moz-range-thumb { width: 22px; height: 22px; background: var(--lavender); border: 2px solid var(--ink); border-radius: 0; }
+.home-range:focus-visible { outline: 2px solid var(--lavender-deep); outline-offset: 4px; }

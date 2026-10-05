@@ -5,6 +5,7 @@ import Icon, { type IconName } from "../icons";
 import { Coin, KupaStall } from "../kupa-art";
 import Art from "./art";
 import { useInView } from "./use-scene";
+import { Kicker, ParentNote } from "./scenes";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 
 /** כותרת פרק: מספר קטן, כותרת דקה וגדולה, ומשפט אחד */
@@ -189,7 +190,7 @@ export function SafetySection() {
   return (
     <section className="px-5 py-24" style={{ background: "var(--ink)", color: "#FBF8F3" }} aria-labelledby="safe-title" data-testid="home-safety">
       <Reveal>
-        <Head light kicker="להורים" title={<span id="safe-title">בטוח. באמת.</span>} sub="הדוכן בנוי לילדים, ולכן הבטיחות לא נתונה לבחירה. היא פשוט שם." />
+        <Head light kicker="להורים · מה שקורה מאחורי הקלעים" title={<span id="safe-title">בטוח. באמת.</span>} sub="נועה רק רצתה למכור סקווישים. כל השאר בנוי מראש, כי הדוכן נועד לילדים." />
       </Reveal>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-white/15 max-w-4xl mx-auto mt-12 border border-white/15">
         {SAFE.map((s, i) => (
@@ -213,7 +214,7 @@ export function PriceSection() {
   return (
     <section className="px-5 py-24 bg-[var(--canvas)]" aria-labelledby="price-title" data-testid="home-price">
       <Reveal>
-        <Head kicker="כמה זה עולה?" title={<span id="price-title">לבנות — חינם.</span>} sub="בונים, מעצבים ומוסיפים מוצרים בלי לשלם. משלמים פעם אחת רק כשרוצים לקבל הזמנות." />
+        <Head kicker="להורים · כמה זה עולה?" title={<span id="price-title">לבנות — חינם.</span>} sub="בונים, מעצבים ומוסיפים מוצרים בלי לשלם. משלמים פעם אחת רק כשרוצים לקבל הזמנות." />
       </Reveal>
       <Reveal className="max-w-md mx-auto mt-10 text-center">
         {IS_LAUNCH && (
@@ -242,6 +243,216 @@ export function PriceSection() {
         <a href="/price" className="inline-block underline font-medium text-[14.5px] mt-5" data-testid="promo-banner">
           כל מה שמקבלים בדוכן ←
         </a>
+      </Reveal>
+    </section>
+  );
+}
+
+/* ───────────────────────── פרק 3: כמה זה עולה? (משחק) ───────────────────────── */
+
+/**
+ * ההחלטה העסקית הראשונה של נועה, כמשחק: מזיזים את המחיר של צמיד ורואים
+ * כמה חברים יקנו וכמה נשאר ברווח. המודל פשוט ובכוונה: 16 חברים, וכל שקל
+ * מבריח קצת קונים. חומרים לצמיד: ₪4. המחיר הכי טוב יוצא בערך ₪20.
+ */
+const COST = 4;
+const buyersAt = (price: number) => Math.max(0, Math.round(16 - 0.45 * price));
+
+export function PriceGame() {
+  const [price, setPrice] = useState(8);
+  const [touched, setTouched] = useState(false);
+  const buyers = buyersAt(price);
+  const profit = buyers * (price - COST);
+  const best = Math.max(...Array.from({ length: 36 }, (_, i) => buyersAt(i + 5) * (i + 5 - COST)));
+  const great = profit >= best * 0.9;
+  const say = !touched
+    ? "מזיזים את המחיר ורואים מה קורה."
+    : great
+      ? "מחיר מעולה! כמעט הכי הרבה רווח שאפשר."
+      : price < 14
+        ? "זול מדי: הרבה קונים, אבל כמעט לא נשאר רווח."
+        : price > 28
+          ? "יקר מדי: כמעט אף אחד לא קונה."
+          : "לא רע! נסו לזוז עוד קצת.";
+  return (
+    <section className="px-5 py-24 bg-[var(--cream)]" aria-labelledby="game-title" data-testid="home-price-game">
+      <Reveal>
+        <div className="text-center max-w-[34rem] mx-auto">
+          <Kicker>פרק 3 · ההחלטה הראשונה</Kicker>
+          <h2 id="game-title" className="home-display mt-1">
+            כמה זה עולה?
+          </h2>
+          <p className="text-[15.5px] leading-relaxed mt-3">
+            נועה הכינה צמידים. החומרים לכל צמיד עלו <bdi>₪{COST}</bdi>. יותר מדי — אף אחד לא קונה. פחות מדי — לא נשאר כלום. נסו למצוא את
+            המחיר הכי טוב:
+          </p>
+        </div>
+      </Reveal>
+      <Reveal className="max-w-md mx-auto mt-10">
+        <div className="flex items-end justify-between">
+          <span className="w-24">
+            <Art name="bracelets" />
+          </span>
+          <bdi className="text-[64px] font-extralight leading-none tabular-nums" data-testid="game-price">
+            ₪{price}
+          </bdi>
+        </div>
+        <input
+          type="range"
+          min={5}
+          max={40}
+          value={price}
+          onChange={(e) => {
+            setPrice(Number(e.target.value));
+            setTouched(true);
+          }}
+          aria-label="המחיר של צמיד"
+          className="home-range w-full mt-5"
+          dir="ltr"
+          data-testid="game-slider"
+        />
+        <div className="flex justify-between text-[12px] text-[var(--muted)] mt-1" dir="ltr">
+          <bdi>₪5</bdi>
+          <bdi>₪40</bdi>
+        </div>
+        <div className="mt-6" aria-hidden>
+          <div className="flex flex-wrap gap-1.5 min-h-[44px]">
+            {Array.from({ length: 16 }, (_, i) => (
+              <span key={i} className="w-[18px] transition-opacity duration-200" style={{ opacity: i < buyers ? 1 : 0.15 }}>
+                <Icon name="heart" size={18} tone={i < buyers ? "var(--lavender)" : "none"} />
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-y border-[var(--stone)] mt-4 divide-x divide-x-reverse divide-[var(--stone)] text-center">
+          <div className="py-3">
+            <div className="text-[30px] font-extralight tabular-nums">{buyers}</div>
+            <div className="text-[12.5px] text-[var(--muted)]">חברים קונים</div>
+          </div>
+          <div className="py-3">
+            <bdi className="text-[30px] font-extralight tabular-nums" data-testid="game-profit">
+              ₪{profit}
+            </bdi>
+            <div className="text-[12.5px] text-[var(--muted)]">רווח</div>
+          </div>
+        </div>
+        <p className="text-[13px] text-[var(--muted)] mt-2 text-center" dir="rtl">
+          {buyers} × (<bdi>₪{price}</bdi> − <bdi>₪{COST}</bdi> חומרים) = <bdi>₪{profit}</bdi>
+        </p>
+        <p className="text-[16px] font-medium text-center mt-3 min-h-[26px]" aria-live="polite" data-testid="game-say">
+          {great && touched && (
+            <span className="inline-block w-5 align-[-3px] me-1">
+              <Art name="FSTAR" />
+            </span>
+          )}
+          {say}
+        </p>
+        <ParentNote className="mt-8">
+          ככה נראה שיעור בתמחור כשהכסף אמיתי: הכנסה, הוצאה ורווח. בקופת הדוכן מחכות עוד יותר מ-100 חידות כסף כאלה.
+        </ParentNote>
+      </Reveal>
+    </section>
+  );
+}
+
+/* ───────────────────────── פרק 6: חודש אחרי ───────────────────────── */
+
+const LEDGER: { label: string; value: number; money?: boolean; sign?: string }[] = [
+  { label: "מכירות", value: 14 },
+  { label: "הכנסות", value: 238, money: true },
+  { label: "חומרים ושקיות", value: 56, money: true, sign: "−" },
+  { label: "רווח", value: 182, money: true },
+];
+
+export function MonthSection() {
+  const { ref, seen } = useInView<HTMLDivElement>(0.3);
+  const [pick, setPick] = useState<number | null>(null);
+  const right = pick === RIDDLE.a;
+  return (
+    <section className="px-5 py-24 bg-[var(--canvas)]" aria-labelledby="month-title" data-testid="home-month">
+      <Reveal>
+        <div className="text-center max-w-[34rem] mx-auto">
+          <Kicker>פרק 6 · חודש אחרי</Kicker>
+          <h2 id="month-title" className="home-display mt-1">
+            מה נשאר בקופה?
+          </h2>
+        </div>
+      </Reveal>
+      <div ref={ref} className="max-w-md mx-auto mt-10">
+        <ul className="divide-y divide-[var(--sand)] border-y border-[var(--sand)]">
+          {LEDGER.map((r, i) => (
+            <li
+              key={r.label}
+              className={`home-reveal flex items-baseline justify-between py-3 ${seen ? "is-in" : ""}`}
+              style={{ transitionDelay: `${i * 140}ms` }}
+            >
+              <span className={`text-[15px] ${i === LEDGER.length - 1 ? "font-medium" : ""}`}>{r.label}</span>
+              <bdi dir="ltr" className={`tabular-nums ${i === LEDGER.length - 1 ? "text-[40px] font-extralight text-[var(--lavender-deep)]" : "text-[24px] font-extralight"}`}>
+                {r.sign}
+                {r.money ? "₪" : ""}
+                <CountUp to={r.value} run={seen} />
+              </bdi>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[15.5px] leading-relaxed mt-5 text-center">
+          <bdi>₪120</bdi> נכנסו לקופסה של האופניים, והשאר לחומרים לצמידים חדשים.
+        </p>
+        <p className="text-[11.5px] text-[var(--muted)] text-center mt-1">הסיפור והמספרים להמחשה.</p>
+      </div>
+
+      <Reveal className="mt-16">
+        <h3 className="text-center text-[20px] font-medium">ומה נועה למדה בדרך? בכלל לא על הדרך…</h3>
+      </Reveal>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8 max-w-4xl mx-auto mt-8">
+        {LEARNS.map((l, i) => (
+          <Reveal key={l.title} i={i} className="text-center">
+            <span className="inline-flex text-[var(--ink)]">
+              <Icon name={l.icon} size={36} />
+            </span>
+            <div className="text-[16px] font-medium mt-2">{l.title}</div>
+            <p className="text-[13.5px] leading-relaxed text-[var(--muted)] mt-1">{l.line}</p>
+          </Reveal>
+        ))}
+      </div>
+
+      <Reveal className="max-w-md mx-auto mt-16">
+        <div className="border-t-2 border-[var(--ink)] pt-6" data-testid="home-riddle">
+          <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--muted)]">
+            <span className="w-5 text-[#E3C26F]">
+              <Art name="FSTAR" />
+            </span>
+            חידה מקופת הדוכן · יש שם יותר מ-100
+          </div>
+          <p className="text-[20px] leading-snug mt-3">{RIDDLE.q}</p>
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            {RIDDLE.opts.map((o, i) => {
+              const state = pick === null ? "" : i === RIDDLE.a ? "ok" : i === pick ? "no" : "dim";
+              return (
+                <button
+                  key={o}
+                  onClick={() => setPick(i)}
+                  disabled={pick !== null && right}
+                  aria-pressed={pick === i}
+                  className="min-h-12 text-[18px] border-2 transition-colors"
+                  style={{
+                    background: state === "ok" ? "var(--ok-bg)" : state === "no" ? "var(--danger-bg)" : "#fff",
+                    borderColor: state === "ok" ? "var(--ok-ink)" : state === "no" ? "var(--danger)" : "var(--stone)",
+                    opacity: state === "dim" ? 0.5 : 1,
+                  }}
+                >
+                  <bdi>{o}</bdi>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[14px] leading-relaxed mt-3 min-h-[44px]" aria-live="polite" data-testid="home-riddle-answer">
+            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! כוכב לקופה.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
+          </p>
+        </div>
+        <ParentNote className="mt-8">
+          מה שנשאר אחרי חודש הוא לא רק <bdi>₪182</bdi>. זו הבנה של הכנסה, הוצאה ורווח, מהכסף של הילד/ה עצמו/ה, ובקצב שלו/ה.
+        </ParentNote>
       </Reveal>
     </section>
   );

@@ -19,7 +19,8 @@ try {
   const storyErrs = [];
   story.on("pageerror", (e) => storyErrs.push(e.message));
   await story.goto(BASE + "/story", { waitUntil: "networkidle" });
-  check("הוק: 'לכל אחד יש טונות של…'", ((await story.textContent("[data-testid=scene-hero]")) ?? "").includes("לכל אחד יש"));
+  check("פרק 1: 'לנועה יש מגירה'", ((await story.textContent("[data-testid=scene-hero]")) ?? "").includes("לנועה יש מגירה"));
+  check("לסיפור יש שני קולות: הערות להורים", (await story.locator("[data-testid=parent-note]").count()) >= 6, String(await story.locator("[data-testid=parent-note]").count()));
   check("כפתור 'לפתוח דוכן' גלוי כבר במסך הראשון", await story.locator("[data-testid=home-header-start]").isVisible());
   check("בלי גלילה הצידה (390)", await story.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   check("הכפתור הדביק למטה מוסתר בהתחלה", (await story.getAttribute("[data-testid=home-sticky-start]", "tabindex")) === "-1");
@@ -44,13 +45,22 @@ try {
   await scrollTo("scene-ding", 0.9);
   await story.waitForTimeout(500);
   check("דינג: הזמנה ראשונה", ((await story.textContent("[data-testid=scene-ding]")) ?? "").includes("איזו התרגשות"));
+  // פרק 3: משחק התמחור
+  await story.locator("[data-testid=game-slider]").scrollIntoViewIfNeeded();
+  await story.locator("[data-testid=game-slider]").fill("40");
+  const expensive = (await story.textContent("[data-testid=game-say]")) ?? "";
+  await story.locator("[data-testid=game-slider]").fill("20");
+  const sweet = (await story.textContent("[data-testid=game-say]")) ?? "";
+  check("משחק התמחור: יקר מדי → מחיר מעולה", expensive.includes("יקר מדי") && sweet.includes("מחיר מעולה"), `${expensive} / ${sweet}`);
+  check("והחשבון מוצג: רווח ₪112 ב-₪20", ((await story.textContent("[data-testid=game-profit]")) ?? "").includes("112"));
   await story.locator("[data-testid=home-riddle]").scrollIntoViewIfNeeded();
   await story.click("[data-testid=home-riddle] button:has-text('₪30')");
   check("חידה: תשובה נכונה מקבלת כוכב", ((await story.textContent("[data-testid=home-riddle-answer]")) ?? "").includes("נכון"));
-  for (const id of ["home-learn", "home-kupa", "home-safety", "home-price"]) check(`קטע ${id} קיים`, (await story.locator(`[data-testid=${id}]`).count()) === 1);
+  for (const id of ["home-month", "home-price-game", "home-safety", "home-price"]) check(`קטע ${id} קיים`, (await story.locator(`[data-testid=${id}]`).count()) === 1);
   await story.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await story.waitForTimeout(500);
   check("בסוף: הכפתור הדביק נעלם (יש כפתור גדול בעמוד)", (await story.getAttribute("[data-testid=home-sticky-start]", "tabindex")) === "-1");
+  check("בסוף: 'לשלוח את הסיפור להורים' בוואטסאפ", ((await story.getAttribute("[data-testid=home-send-parents]", "href")) ?? "").startsWith("https://wa.me/?text="));
   await story.click("[data-testid=home-start]");
   await story.waitForURL("**/onboarding", { timeout: 15000 });
   check("'קדימה, בואו נקים את הדוכן' פותח את ההקמה", true);

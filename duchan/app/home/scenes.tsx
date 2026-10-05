@@ -19,6 +19,8 @@ import { ease, lerp, seg, useSceneProgress } from "./use-scene";
  */
 
 const NIGHT = "#2E3150";
+/** סגול כהה מעט מה-lavender-deep — עובר ניגודיות גם על רקע חול */
+const KICK = "#634F84";
 
 export function Scene({
   height,
@@ -43,7 +45,38 @@ export function Scene({
   );
 }
 
-/* ───────────────────────── 1. פתיחה ───────────────────────── */
+/** "פרק 2 · יום ראשון, 16:30" — שורה קטנה מעל הכותרת */
+export function Kicker({ children, light = false }: { children: ReactNode; light?: boolean }) {
+  return (
+    <div className="text-[12.5px] font-medium tracking-wide" style={{ color: light ? "#FFF3C4" : KICK }}>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * הקול השני של הסיפור: הערת שוליים להורים בכל פרק. הסיפור הגדול מדבר
+ * לילדים; כאן, בקטן, מה הילד/ה לומד/ת ולמה זה בטוח (מרינה: "צריך להיות
+ * להורים שיבינו את הפוטנציאל, וגם לילדים שיהיה להם ממש מגניב").
+ */
+export function ParentNote({ children, light = false, className = "", style }: { children: ReactNode; light?: boolean; className?: string; style?: React.CSSProperties }) {
+  return (
+    <aside
+      className={`max-w-[25rem] mx-auto text-right border-t pt-2.5 pl-14 md:pl-0 ${className}`}
+      style={{ borderColor: light ? "#ffffff33" : "var(--stone)", ...style }}
+      data-testid="parent-note"
+    >
+      <span className="text-[11.5px] font-medium tracking-wide" style={{ color: light ? "#FFF3C4" : KICK }}>
+        להורים
+      </span>
+      <p className="text-[13.5px] leading-relaxed mt-0.5" style={{ opacity: light ? 0.85 : 1, color: light ? undefined : "var(--muted)" }}>
+        {children}
+      </p>
+    </aside>
+  );
+}
+
+/* ───────────────────────── פרק 1: המגירה ───────────────────────── */
 
 const ITEMS: { art: ArtName; x: number; y: number; w: number; r: number }[] = [
   { art: "teddy", x: 18, y: 15, w: 17, r: -8 },
@@ -55,23 +88,25 @@ const ITEMS: { art: ArtName; x: number; y: number; w: number; r: number }[] = [
   { art: "slime", x: 12, y: 88, w: 11, r: 5 },
   { art: "mug", x: 56, y: 70, w: 12, r: -6 },
 ];
-const WORDS = ["צעצועים.", "יצירות.", "סקווישים."];
+const WORDS = ["סקווישים.", "צמידים.", "ציורים."];
 
 export function HeroScene() {
   return (
-    <Scene height={2.4} label="לכל אחד יש טונות של צעצועים. מה עושים עם זה? עסק!" testid="scene-hero">
+    <Scene height={2.8} label="הסיפור של נועה. פרק 1: המגירה. לנועה יש מגירה מלאה בסקווישים שהיא כבר לא משחקת בהם. מה עושים עם זה? עסק!" testid="scene-hero">
       {(p) => {
-        const word = WORDS[Math.min(2, Math.floor(p / 0.12))];
-        const a = 1 - seg(p, 0.32, 0.37);
-        const b = seg(p, 0.38, 0.43) * (1 - seg(p, 0.55, 0.59));
-        const c = seg(p, 0.6, 0.67);
-        const conv = ease(seg(p, 0.4, 0.82));
-        const cart = seg(p, 0.66, 0.78);
+        const word = WORDS[Math.min(2, Math.floor(p / 0.08))];
+        const a = 1 - seg(p, 0.22, 0.26);
+        const b1 = seg(p, 0.27, 0.31) * (1 - seg(p, 0.4, 0.44));
+        const b = seg(p, 0.45, 0.49) * (1 - seg(p, 0.56, 0.6));
+        const c = seg(p, 0.61, 0.68);
+        const conv = ease(seg(p, 0.45, 0.84));
+        const cart = seg(p, 0.68, 0.8);
+        const note = seg(p, 0.78, 0.86);
         return (
           <div className="relative h-full bg-[var(--canvas)]">
             {ITEMS.map((it, i) => {
               const x = lerp(it.x, 50, conv);
-              const y = lerp(it.y, 76, conv);
+              const y = lerp(it.y, 60, conv);
               const s = lerp(1, 0.22, conv);
               return (
                 <div
@@ -93,13 +128,20 @@ export function HeroScene() {
             })}
 
             <div className="absolute inset-x-0 top-[27%] text-center px-5 pointer-events-none">
-              <p className="sr-only">לכל אחד יש טונות של צעצועים, יצירות וסקווישים. מה עושים עם זה? עסק!</p>
+              <p className="sr-only">הסיפור של נועה. לנועה יש מגירה מלאה בסקווישים, צמידים וציורים, שהיא כבר לא משחקת בהם. מה עושים עם זה? עסק!</p>
+              <div aria-hidden className="mb-3" style={{ opacity: 1 - seg(p, 0.12, 0.2) }}>
+                <Kicker>הסיפור של נועה · פרק 1: המגירה</Kicker>
+              </div>
               <div aria-hidden style={{ opacity: a, transform: `translateY(${(1 - a) * -30}px)` }}>
-                <div className="home-display">לכל אחד יש</div>
-                <div className="home-display">טונות של</div>
+                <div className="home-display">לנועה יש מגירה</div>
+                <div className="home-display">מלאה ב</div>
                 <div className="home-display text-[var(--lavender-deep)]" key={word}>
                   <span className="home-word">{word}</span>
                 </div>
+              </div>
+              <div aria-hidden className="absolute inset-x-0 top-0" style={{ opacity: b1, transform: `translateY(${(1 - b1) * 30}px)` }}>
+                <div className="home-display">שהיא כבר לא</div>
+                <div className="home-display">משחקת בהם.</div>
               </div>
               <div aria-hidden className="absolute inset-x-0 top-0" style={{ opacity: b, transform: `translateY(${(1 - b) * 30}px)` }}>
                 <div className="home-display">מה עושים</div>
@@ -115,11 +157,17 @@ export function HeroScene() {
             </div>
 
             <div
-              className="absolute left-1/2 bottom-[9%] w-[min(62vw,320px)]"
+              className="absolute left-1/2 bottom-[30%] md:bottom-[20%] w-[min(52vw,300px)]"
               style={{ opacity: cart, transform: `translate(-50%, ${(1 - cart) * 40}px)` }}
               aria-hidden
             >
               <KupaStall level={0} bare className="w-full block" />
+            </div>
+
+            <div className="absolute inset-x-0 bottom-[96px] md:bottom-8 px-5" style={{ opacity: note, transform: `translateY(${(1 - note) * 16}px)` }}>
+              <ParentNote>
+                בכל בית יש מגירה כזו. דוכן הופך אותה לשיעור הראשון בעסקים, עם כסף אמיתי, לקוחות אמיתיים ואחריות אמיתית.
+              </ParentNote>
             </div>
 
             <div
@@ -139,45 +187,46 @@ export function HeroScene() {
 /* ───────────────────────── 2. מעגלה לדוכן ───────────────────────── */
 
 const LEVELS: { name: string; line: string }[] = [
-  { name: "עגלה קטנה", line: "פותחים דוכן בשתי דקות, מהטלפון. בלי מייל ובלי סיסמה." },
-  { name: "דוכן", line: "מוסיפים מוצרים: מצלמים, כותבים שם ומחיר." },
-  { name: "דוכן עם סוכך", line: "בוחרים צבעים, רקע וסגנון. הדוכן נראה כמו שלך." },
-  { name: "דוכן עם שלט", line: "שולחים את הלינק לחברים, והם נכנסים לראות." },
-  { name: "דוכן מואר", line: "מגיעות הזמנות. הטלפון מצלצל על כל אחת." },
-  { name: "כוכב השוק", line: "העסק גדל, והקופה מתמלאת במטבעות." },
+  { name: "עגלה קטנה", line: "ביום הראשון: עגלה קטנה ושלושה מוצרים." },
+  { name: "דוכן", line: "עוד מוצרים, עוד מטבעות בקופה." },
+  { name: "דוכן עם סוכך", line: "נועה בחרה צבעים, רקע וסגנון. עכשיו הוא נראה כמו שלה." },
+  { name: "דוכן עם שלט", line: "חברים מספרים לחברים, והשלט נתלה." },
+  { name: "דוכן מואר", line: "הזמנות גם בערב. הטלפון מצלצל." },
+  { name: "כוכב השוק", line: "כוכב השוק. והקופה מלאה." },
 ];
 
 export function BuildScene() {
   return (
-    <Scene height={3.4} label="העסק הראשון מתחיל בדוכן: מעגלה קטנה עד כוכב השוק" testid="scene-build">
+    <Scene height={3.4} label="פרק 5, שבועיים אחרי: הדוכן של נועה גדל, מעגלה קטנה עד כוכב השוק" testid="scene-build">
       {(p) => {
         const level = Math.min(5, Math.floor(p * 6.2));
         const night = level >= 4;
         const L = LEVELS[level];
         return (
           <div
-            className="h-full flex flex-col items-center justify-center px-5 pt-16 pb-8 transition-colors duration-700"
+            className="h-full flex flex-col items-center justify-center px-5 pt-16 pb-[88px] md:pb-8 transition-colors duration-700"
             style={{ background: night ? NIGHT : "var(--canvas)", color: night ? "#FBF8F3" : "var(--ink)" }}
             data-level={level}
           >
-            <h2 className="text-center">
-              <span className="home-display block">העסק הראשון</span>
+            <Kicker light={night}>פרק 5 · שבועיים אחרי</Kicker>
+            <h2 className="text-center mt-1">
+              <span className="home-display block">הדוכן של נועה</span>
               <span className="home-display block" style={{ color: night ? "#FFF3C4" : "var(--lavender-deep)" }}>
-                מתחיל בדוכן.
+                גדל.
               </span>
             </h2>
-            <div className="w-full max-w-[460px] mt-4">
+            <div className="w-full max-w-[400px] mt-3">
               <KupaStall
                 level={level}
                 build={level}
                 bare
                 night={night}
-                name="הדוכן שלך"
+                name="הדוכן של נועה"
                 deco={{ awning: "lavender", flowers: level >= 3, openSign: level >= 3, cat: level >= 5 }}
                 className="w-full block"
               />
             </div>
-            <div className="text-center mt-3 min-h-[76px] max-w-[22rem]" aria-live="polite">
+            <div className="text-center mt-2 min-h-[70px] max-w-[22rem]" aria-live="polite">
               <div className="text-[19px] font-medium" key={level}>
                 <span className="home-word">{L.name}</span>
               </div>
@@ -185,6 +234,9 @@ export function BuildScene() {
                 {L.line}
               </p>
             </div>
+            <ParentNote light={night} className="mt-4 w-full">
+              על כל צעד אמיתי (מוצר, הזמנה, חידה שנפתרה) מקבלים מטבעות, והדוכן המצויר גדל. ככה נראית התמדה שילדים אוהבים.
+            </ParentNote>
             <div className="flex gap-1.5 mt-4" aria-hidden>
               {LEVELS.map((_, i) => (
                 <span
@@ -204,9 +256,9 @@ export function BuildScene() {
 /* ───────────────────────── 3. איך זה עובד ───────────────────────── */
 
 const STEPS = [
-  { n: "1", title: "מצלמים", line: "תמונה של המוצר, ישר מהטלפון. התמונה מנוקה מהמיקום של הבית." },
-  { n: "2", title: "שם ומחיר", line: "כותבים מה זה וכמה זה עולה. אפשר גם צבעים, מלאי ודרופ." },
-  { n: "3", title: "שולחים לינק", line: "הלינק לדוכן הולך לחברים בוואטסאפ, ומי שנכנס יכול להזמין." },
+  { n: "1", title: "מצלמים", line: "נועה מצלמת את הסקוויש הכי יפה, ישר מהטלפון." },
+  { n: "2", title: "שם ומחיר", line: "\"סקוויש חד-קרן\", ₪15. לוקח דקה." },
+  { n: "3", title: "שולחים לינק", line: "הלינק לדוכן יוצא לקבוצה של הכיתה. מי שנכנס יכול להזמין." },
 ];
 
 function Phone({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
@@ -224,7 +276,7 @@ function Phone({ children, dark = false }: { children: ReactNode; dark?: boolean
 
 export function HowScene() {
   return (
-    <Scene height={3} label="איך זה עובד: מצלמים, כותבים שם ומחיר, שולחים לינק" testid="scene-how">
+    <Scene height={3} label="פרק 2, יום ראשון 16:30: נועה פותחת דוכן. מצלמים, כותבים שם ומחיר, שולחים לינק" testid="scene-how">
       {(p) => {
         const step = p < 0.34 ? 0 : p < 0.67 ? 1 : 2;
         const flash = Math.max(0, 1 - Math.abs(p - 0.26) * 22);
@@ -233,9 +285,9 @@ export function HowScene() {
         const sent = p > 0.86;
         const S = STEPS[step];
         return (
-          <div className="h-full bg-[var(--sand)] flex flex-col md:flex-row items-center justify-center gap-5 md:gap-16 px-5 pt-16 pb-6">
+          <div className="h-full bg-[var(--sand)] flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-5 pt-16 pb-[88px] md:pb-6">
             <div className="text-center md:text-right max-w-[22rem]" aria-live="polite">
-              <div className="text-[13px] font-medium tracking-wide text-[var(--muted)]">איך זה עובד</div>
+              <Kicker>פרק 2 · יום ראשון, 16:30</Kicker>
               <div key={step} className="home-word">
                 <div className="home-display mt-1">
                   <span className="text-[var(--lavender-deep)]">{S.n}.</span> {S.title}
@@ -247,6 +299,9 @@ export function HowScene() {
                   <span key={i} className="h-1.5 transition-all duration-300" style={{ width: i === step ? 22 : 8, background: i <= step ? "var(--ink)" : "var(--stone)" }} />
                 ))}
               </div>
+              <ParentNote className="mt-4 hidden md:block">
+                שתי דקות, בלי מייל ובלי סיסמה. בלי כתובת ובלי פרטי תשלום, והתמונות מנוקות מהמיקום של הבית.
+              </ParentNote>
             </div>
 
             <Phone>
@@ -303,6 +358,9 @@ export function HowScene() {
                 </div>
               </div>
             </Phone>
+            <ParentNote className="md:hidden w-full">
+              שתי דקות, בלי מייל ובלי סיסמה. בלי כתובת ובלי פרטי תשלום, והתמונות מנוקות מהמיקום של הבית.
+            </ParentNote>
           </div>
         );
       }}
@@ -310,19 +368,22 @@ export function HowScene() {
   );
 }
 
-/* ───────────────────────── 4. דינג! ───────────────────────── */
+/* ───────────────────────── פרק 4: דינג! ───────────────────────── */
 
 export function DingScene() {
   return (
-    <Scene height={2.4} label="דינג! הזמנה ראשונה מגיעה לטלפון" testid="scene-ding">
+    <Scene height={2.6} label="פרק 4, ערב 19:42: דינג! ההזמנה הראשונה של נועה" testid="scene-ding">
       {(p) => {
         const note = seg(p, 0.14, 0.24);
         const buzz = p > 0.14 && p < 0.3 ? Math.sin(p * 400) * 5 * (1 - seg(p, 0.14, 0.3)) : 0;
         const orders = p >= 0.5;
         const paid = p >= 0.74;
         return (
-          <div className="h-full flex flex-col md:flex-row items-center justify-center gap-5 md:gap-16 px-5 pt-16 pb-6" style={{ background: NIGHT, color: "#FBF8F3" }}>
+          <div className="h-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-5 pt-16 pb-[88px] md:pb-6" style={{ background: NIGHT, color: "#FBF8F3" }}>
             <div className="text-center md:text-right min-h-[96px] md:min-w-[22rem]" aria-live="polite">
+              <div className="mb-1">
+                <Kicker light>פרק 4 · ערב, 19:42</Kicker>
+              </div>
               {!orders ? (
                 <div key="ding" className="home-word">
                   <div className="home-display text-[#E3C26F]">דינג!</div>
@@ -334,6 +395,9 @@ export function DingScene() {
                   <p className="text-[17px] mt-1 text-[#FFF3C4]">איזו התרגשות!!!</p>
                 </div>
               )}
+              <ParentNote light className="mt-4 hidden md:block" style={{ opacity: seg(p, 0.5, 0.6) }}>
+                לקוח אמיתי. עכשיו צריך לעמוד בהבטחה: לענות יפה, לסמן &quot;שולם&quot; ולמסור בזמן.
+              </ParentNote>
             </div>
             <div style={{ transform: `translateX(${buzz}px)` }}>
               <Phone dark={!orders}>
@@ -407,6 +471,9 @@ export function DingScene() {
                 )}
               </Phone>
             </div>
+            <ParentNote light className="md:hidden w-full" style={{ opacity: seg(p, 0.5, 0.6) }}>
+              לקוח אמיתי. עכשיו צריך לעמוד בהבטחה: לענות יפה, לסמן &quot;שולם&quot; ולמסור בזמן.
+            </ParentNote>
           </div>
         );
       }}
