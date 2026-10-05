@@ -59,17 +59,19 @@ export function Kicker({ children, light = false }: { children: ReactNode; light
  * לילדים; כאן, בקטן, מה הילד/ה לומד/ת ולמה זה בטוח (מרינה: "צריך להיות
  * להורים שיבינו את הפוטנציאל, וגם לילדים שיהיה להם ממש מגניב").
  */
-export function ParentNote({ children, light = false, className = "", style }: { children: ReactNode; light?: boolean; className?: string; style?: React.CSSProperties }) {
+export function ParentNote({ children, light = false, label = true, className = "", style }: { children: ReactNode; light?: boolean; label?: boolean; className?: string; style?: React.CSSProperties }) {
   return (
     <aside
       className={`max-w-[25rem] mx-auto text-right border-t pt-2.5 pl-14 md:pl-0 ${className}`}
       style={{ borderColor: light ? "#ffffff33" : "var(--stone)", ...style }}
       data-testid="parent-note"
     >
-      <span className="text-[11.5px] font-medium tracking-wide" style={{ color: light ? "#FFF3C4" : KICK }}>
-        להורים
-      </span>
-      <p className="text-[13.5px] leading-relaxed mt-0.5" style={{ opacity: light ? 0.85 : 1, color: light ? undefined : "var(--muted)" }}>
+      {label && (
+        <span className="text-[11.5px] font-medium tracking-wide" style={{ color: light ? "#FFF3C4" : KICK }}>
+          להורים
+        </span>
+      )}
+      <p className={`text-[13.5px] leading-relaxed ${label ? "mt-0.5" : ""}`} style={{ opacity: light ? 0.85 : 1, color: light ? undefined : "var(--muted)" }}>
         {children}
       </p>
     </aside>
@@ -165,8 +167,8 @@ export function HeroScene() {
             </div>
 
             <div className="absolute inset-x-0 bottom-[96px] md:bottom-8 px-5" style={{ opacity: note, transform: `translateY(${(1 - note) * 16}px)` }}>
-              <ParentNote>
-                בכל בית יש מגירה כזו. דוכן הופך אותה לשיעור הראשון בעסקים, עם כסף אמיתי, לקוחות אמיתיים ואחריות אמיתית.
+              <ParentNote label={false}>
+                בכל בית יש מגירה / ארון / חדר מפוצץ עם הרבה אוצרות. דוכן הופך אותה לשיעור הראשון בעסקים, עם כסף אמיתי, לקוחות אמיתיים ואחריות אמיתית.
               </ParentNote>
             </div>
 

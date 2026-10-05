@@ -21,6 +21,7 @@ try {
   await story.goto(BASE + "/story", { waitUntil: "networkidle" });
   check("פרק 1: 'לנועה יש מגירה'", ((await story.textContent("[data-testid=scene-hero]")) ?? "").includes("לנועה יש מגירה"));
   check("לסיפור יש שני קולות: הערות להורים", (await story.locator("[data-testid=parent-note]").count()) >= 6, String(await story.locator("[data-testid=parent-note]").count()));
+  { const n = story.locator("[data-testid=scene-hero] [data-testid=parent-note]"); const t = await n.textContent(); check("פרק 1: מגירה / ארון / חדר, בלי הכותרת להורים", t.includes("מגירה / ארון / חדר מפוצץ עם הרבה אוצרות") && !t.includes("להורים"), t); }
   check("כפתור 'לפתוח דוכן' גלוי כבר במסך הראשון", await story.locator("[data-testid=home-header-start]").isVisible());
   check("בלי גלילה הצידה (390)", await story.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   check("הכפתור הדביק למטה מוסתר בהתחלה", (await story.getAttribute("[data-testid=home-sticky-start]", "tabindex")) === "-1");
