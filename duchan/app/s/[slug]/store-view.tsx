@@ -18,6 +18,7 @@ import type { PublicProduct, PublicStore } from "@/lib/types";
 import { dropTime, dropWhen } from "@/lib/drop";
 import DropCountdown from "@/app/drop-countdown";
 import MysteryBag from "@/app/mystery-bag";
+import { detectSource, type Source } from "@/lib/stats";
 import { confettiBurst } from "@/app/confetti";
 
 interface CartLine {
@@ -88,6 +89,73 @@ export default function StoreView({
   const [toast, setToast] = useState("");
   // null = לא בעלת החנות (או שעוד לא נבדק). קונה לא רואה מזה כלום.
   const [owner, setOwner] = useState<{ newOrders: number } | null>(null);
+  /* מי מסתכל: הצוות של הדוכן לא נספר בסטטיסטיקה (0062). עד שיודעים —
+     לא שולחים כלום. */
+  const [viewer, setViewer] = useState<"unknown" | "team" | "visitor">("unknown");
+  const stat = useRef<{ sid: string; src: Source; opened: Set<string>; carted: Set<string> } | null>(null);
+  const track = (payload: Record<string, unknown>) => {
+    const t = stat.current;
+    if (!t) return;
+    const body = JSON.stringify({ slug: store.slug, src: t.src, sid: t.sid, ...payload });
+    // sendBeacon שורד סגירת טאב — קונה שנוחתת ויוצאת מיד עדיין נספרת
+    const sent =
+      typeof navigator.sendBeacon === "function" &&
+      navigator.sendBeacon("/api/track", new Blob([body], { type: "application/json" }));
+    if (!sent) {
+      fetch("/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+    }
+  };
+
+  /**
+   * ספירה (0062) — רק מונים, בלי לזהות אף אחד:
+   *   • ביקור: פעם אחת ללשונית (sessionStorage).
+   *   • "מבקר/ת שונה היום" ו"ביקור ראשון אי פעם" — הדפדפן זוכר את זה אצלו
+   *     (localStorage) ושולח רק כן/לא.
+   *   • "עכשיו בדוכן": מספר אקראי ללשונית, ו"עדיין כאן" כל 30 שניות
+   *     כשהדף פתוח מול העיניים.
+   */
+  useEffect(() => {
+    if (viewer !== "visitor") return;
+    const key = `duchan-stat-${store.slug}`;
+    let session: { sid: string; src: Source } | null = null;
+    try {
+      session = JSON.parse(sessionStorage.getItem(key) ?? "null");
+    } catch {}
+    const firstInTab = !session;
+    if (!session) {
+      session = {
+        sid: Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(36).padStart(2, "0")).join("").slice(0, 20),
+        src: detectSource(navigator.userAgent, document.referrer, location.hostname),
+      };
+      try {
+        sessionStorage.setItem(key, JSON.stringify(session));
+      } catch {}
+    }
+    stat.current = { ...session, opened: new Set(), carted: new Set() };
+    if (firstInTab) {
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+      let visitor = true, fresh = true;
+      try {
+        visitor = localStorage.getItem(`duchan-day-${store.slug}`) !== today;
+        fresh = !localStorage.getItem(`duchan-seen-${store.slug}`);
+        localStorage.setItem(`duchan-day-${store.slug}`, today);
+        localStorage.setItem(`duchan-seen-${store.slug}`, "1");
+      } catch {}
+      track({ ev: "visit", visitor, fresh });
+    } else {
+      track({ ev: "ping" });
+    }
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") track({ ev: "ping" });
+    }, 30_000);
+    const onVis = () => document.visibilityState === "visible" && track({ ev: "ping" });
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewer, store.slug]);
   const gridRef = useRef<HTMLDivElement>(null);
 
   // אמצעי התשלום שהחנות מקבלת — שמות בלבד, בלי מספרים ובלי פרטי חשבון
@@ -116,26 +184,6 @@ export default function StoreView({
   // מוצגת מלכתחילה.
   const [wantsShipping, setWantsShipping] = useState(true);
 
-  // ספירת כניסה — פעם אחת לביקור (sessionStorage מונע ספירה כפולה בניווט פנימי)
-  useEffect(() => {
-    const key = `duchan-visited-${store.slug}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
-    // sendBeacon שורד סגירת טאב — קונה שנוחתת ויוצאת מיד עדיין נספרת
-    const payload = JSON.stringify({ slug: store.slug });
-    const sent =
-      typeof navigator.sendBeacon === "function" &&
-      navigator.sendBeacon("/api/track", new Blob([payload], { type: "application/json" }));
-    if (!sent) {
-      fetch("/api/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: payload,
-        keepalive: true,
-      }).catch(() => {});
-    }
-  }, [store.slug]);
-
   /**
    * בעלת/בעל החנות רואה אותה *וגם* את הדרך לניהול; קונים רואים חנות בלבד.
    * הבדיקה נשענת על RLS — השורה חוזרת רק לבעלת החנות, ולכן אין כאן שום
@@ -146,7 +194,9 @@ export default function StoreView({
     let alive = true;
     (async () => {
       const { data } = await supa.from("stores").select("id").eq("slug", store.slug).maybeSingle();
-      if (!alive || !data) return;
+      if (!alive) return;
+      setViewer(data ? "team" : "visitor");
+      if (!data) return;
       const { count } = await supa
         .from("orders")
         .select("id", { count: "exact", head: true })
@@ -334,6 +384,11 @@ export default function StoreView({
   const maxQty = (p: PublicProduct) => (p.track_stock ? Math.max(0, p.stock - inCart(p.id)) : 99);
 
   function openProduct(p: PublicProduct) {
+    const t = stat.current;
+    if (t && !t.opened.has(p.id)) {
+      track({ ev: "product", product: p.id, first: t.opened.size === 0 });
+      t.opened.add(p.id);
+    }
     setCurrent(p);
     setQty(1);
     // בחירה יחידה נבחרת מראש — אין מה להחליט
@@ -351,6 +406,11 @@ export default function StoreView({
       return [...c, { id: p.id, name: p.name, price: Number(p.price), qty: amount, ...(option ? { option } : {}) }];
     });
     showToast("נוסף לסל");
+    const t = stat.current;
+    if (t && !t.carted.has(p.id)) {
+      track({ ev: "cart", product: p.id, first: t.carted.size === 0 });
+      t.carted.add(p.id);
+    }
   }
 
   function addToCart() {

@@ -17,7 +17,7 @@ export type IconName =
   | "camera" | "video" | "gallery" | "plus" | "check" | "pencil" | "trash"
   | "hourglass" | "gift" | "gem" | "leaf" | "sparkle" | "coins" | "link"
   | "palette" | "box" | "eye" | "party" | "moon" | "search" | "cloud"
-  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun" | "flame" | "pin" | "cookie";
+  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun" | "flame" | "pin" | "cookie" | "chart" | "bell";
 
 interface Props {
   name: IconName;
@@ -220,6 +220,18 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
     <>
       <path d="M12 3c.4 3.2 5.5 5.4 5.5 10.5A5.5 5.5 0 0 1 12 19a5.5 5.5 0 0 1-5.5-5.5c0-2.6 1.6-3.8 2.4-5.6.9 1 1.2 2.2 1.2 3.2C11.6 9 12.6 6.2 12 3z" fill={t} />
       <path d="M12 19a2.3 2.3 0 0 1-2.3-2.4c0-1.5 1.4-2.2 2.3-3.8.9 1.6 2.3 2.3 2.3 3.8A2.3 2.3 0 0 1 12 19z" fill="none" />
+    </>
+  ),
+  chart: (t) => (
+    <>
+      <path d="M5 13h3.5v7H5zM10.25 8h3.5v12h-3.5zM15.5 4H19v16h-3.5z" fill={t} />
+      <path d="M3 20.5h18" fill="none" />
+    </>
+  ),
+  bell: (t) => (
+    <>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" fill={t} />
+      <path d="M10 20.5a2 2 0 0 0 4 0M12 3v2" fill="none" />
     </>
   ),
   pin: (t) => (

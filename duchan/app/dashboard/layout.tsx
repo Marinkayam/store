@@ -4,7 +4,6 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Icon, { type IconName } from "../icons";
-import ReleasePopup from "./release-popup";
 import StoreSwitcher from "./store-switcher";
 import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 import KupaCelebrate from "./kupa/celebrate";
@@ -29,7 +28,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
        בצבע הדף מכסה את האזור הזה גם כשגוללים (אחרת התוכן עובר מתחת לשעון). */
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto pt-[env(safe-area-inset-top)]">
       <div aria-hidden className="fixed top-0 inset-x-0 h-[env(safe-area-inset-top)] bg-[var(--canvas)] z-[45]" />
-      <ReleasePopup />
       {/* חגיגות של קופת הדוכן: אות חדש, עלייה ברמה */}
       <KupaCelebrate />
       <StoreSwitcher />

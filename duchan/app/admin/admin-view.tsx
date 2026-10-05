@@ -16,6 +16,7 @@ import AdminCoupons from "./admin-coupons";
 import NoSmsLogin from "./no-sms-login";
 import StuckLogins from "./stuck-logins";
 import AdminPush from "./admin-push";
+import AdminStats from "./admin-stats";
 
 /* ---------- types ---------- */
 
@@ -391,6 +392,7 @@ function SchemaWarning() {
 
         {/* תמיד גלוי: "הקוד לא מגיע" הוא פנייה שמגיעה בוואטסאפ, ועונים עליה מיד */}
         {/* מי שתקועה בכניסה — מוצג רק כשיש כאלה */}
+        <AdminStats />
         <StuckLogins />
         <AdminPush />
         <NoSmsLogin />

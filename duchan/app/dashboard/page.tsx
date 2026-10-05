@@ -13,6 +13,8 @@ import Icon from "@/app/icons";
 import Chevron from "@/app/chevron";
 import { storePath } from "@/lib/short-link";
 import FirstSteps from "./first-steps";
+import WhatsNewBanner from "./whats-new-banner";
+import StatsPeek from "./stats-peek";
 
 // מסך ההזמנות — מסך הבית של הדשבורד.
 // "שולם" מנכה מלאי (בפונקציית DB אטומית). "נמסר" מקבל קונפטי — המיקרו-אינטראקציה היחידה.
@@ -259,6 +261,11 @@ export default function OrdersPage() {
         </div>
         <WhatsNew />
       </header>
+
+      {/* מה חדש בדוכן — לדוכנים ותיקים, עד שסוגרים */}
+      <WhatsNewBanner createdAt={store.created_at} />
+      {/* מי מסתכל — מהרגע שהדוכן פתוח לקונים */}
+      {store.activated_at && <StatsPeek storeId={store.id} />}
 
       {/* החנות עוד לא פורסמה. כשאין הזמנות זה צעד במסלול "ככה הדוכן מתחיל
           לעבוד" למטה, ולכן הבאנר מופיע רק כשכבר יש הזמנות (למשל אחרי ביטול פרסום) */}
