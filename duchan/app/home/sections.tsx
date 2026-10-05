@@ -11,7 +11,7 @@ import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/prici
 function Head({ kicker, title, sub, light = false }: { kicker: string; title: ReactNode; sub?: ReactNode; light?: boolean }) {
   return (
     <div className="text-center max-w-[34rem] mx-auto">
-      <div className="text-[13px] font-bold tracking-wide" style={{ color: light ? "#FFF3C4" : "var(--muted)" }}>
+      <div className="text-[13px] font-medium tracking-wide" style={{ color: light ? "#FFF3C4" : "var(--muted)" }}>
         {kicker}
       </div>
       <h2 className="home-display mt-1">{title}</h2>
@@ -66,7 +66,7 @@ export function LearnSection() {
             <span className="inline-flex text-[var(--ink)]">
               <Icon name={l.icon} size={40} />
             </span>
-            <div className="text-[16px] font-bold mt-2">{l.title}</div>
+            <div className="text-[16px] font-medium mt-2">{l.title}</div>
             <p className="text-[13.5px] leading-relaxed text-[var(--muted)] mt-1">{l.line}</p>
           </Reveal>
         ))}
@@ -74,7 +74,7 @@ export function LearnSection() {
 
       <Reveal className="max-w-md mx-auto mt-16">
         <div className="border-t-2 border-[var(--ink)] pt-6" data-testid="home-riddle">
-          <div className="flex items-center gap-2 text-[13px] font-bold text-[var(--muted)]">
+          <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--muted)]">
             <span className="w-5 text-[#E3C26F]">
               <Art name="FSTAR" />
             </span>
@@ -90,7 +90,7 @@ export function LearnSection() {
                   onClick={() => setPick(i)}
                   disabled={pick !== null && right}
                   aria-pressed={pick === i}
-                  className="min-h-12 text-[18px] font-bold border-2 transition-colors"
+                  className="min-h-12 text-[18px] font-medium border-2 transition-colors"
                   style={{
                     background: state === "ok" ? "var(--ok-bg)" : state === "no" ? "var(--danger-bg)" : "#fff",
                     borderColor: state === "ok" ? "var(--ok-ink)" : state === "no" ? "var(--danger)" : "var(--stone)",
@@ -151,7 +151,7 @@ export function KupaSection() {
       <div ref={ref} className="max-w-md mx-auto mt-10 text-center">
         <div className="inline-flex items-center gap-3">
           <Coin size={44} />
-          <span className="text-[56px] font-light leading-none tabular-nums">
+          <span className="text-[56px] font-extralight leading-none tabular-nums">
             <CountUp to={345} run={seen} />
           </span>
         </div>
@@ -160,7 +160,7 @@ export function KupaSection() {
           {COIN_WAYS.map(([w, c], i) => (
             <li key={w} className={`home-reveal flex items-center justify-between py-3 ${seen ? "is-in" : ""}`} style={{ transitionDelay: `${300 + i * 120}ms` }}>
               <span className="text-[15px]">{w}</span>
-              <span className="flex items-center gap-1.5 font-bold">
+              <span className="flex items-center gap-1.5 font-medium">
                 +{c} <Coin size={18} />
               </span>
             </li>
@@ -197,7 +197,7 @@ export function SafetySection() {
             <span className="inline-flex text-[#FBF8F3]">
               <Icon name={s.icon} size={30} tone="var(--lavender-deep)" />
             </span>
-            <div className="text-[16px] font-bold mt-2">{s.title}</div>
+            <div className="text-[16px] font-medium mt-2">{s.title}</div>
             <p className="text-[13.5px] leading-relaxed mt-1 opacity-80">{s.line}</p>
           </Reveal>
         ))}
@@ -217,7 +217,7 @@ export function PriceSection() {
       </Reveal>
       <Reveal className="max-w-md mx-auto mt-10 text-center">
         {IS_LAUNCH && (
-          <div className="inline-block text-[12.5px] font-bold bg-[var(--wood)] text-white px-3 py-1">
+          <div className="inline-block text-[12.5px] font-medium bg-[var(--wood)] text-white px-3 py-1">
             <span className="fx-wiggle inline-block align-[-2px]">
               <Icon name="party" size={14} tone="none" />
             </span>{" "}
@@ -225,10 +225,10 @@ export function PriceSection() {
           </div>
         )}
         <div className="flex items-end justify-center gap-4 mt-4">
-          <bdi className="text-[96px] font-light leading-none">₪{ACTIVATION_PRICE}</bdi>
+          <bdi className="text-[96px] font-extralight leading-none">₪{ACTIVATION_PRICE}</bdi>
           {IS_LAUNCH && <bdi className="text-[28px] text-[var(--muted)] line-through mb-3">₪{FULL_PRICE}</bdi>}
         </div>
-        <div className="text-[17px] font-bold mt-2">פעם אחת. הדוכן שלך לתמיד.</div>
+        <div className="text-[17px] font-medium mt-2">פעם אחת. הדוכן שלך לתמיד.</div>
         <div className="flex items-center justify-center gap-3 mt-8">
           {Array.from({ length: units }, (_, i) => (
             <span key={i} className="w-16">

@@ -46,14 +46,14 @@ export function Scene({
 /* ───────────────────────── 1. פתיחה ───────────────────────── */
 
 const ITEMS: { art: ArtName; x: number; y: number; w: number; r: number }[] = [
-  { art: "teddy", x: 16, y: 17, w: 23, r: -10 },
-  { art: "bracelets", x: 80, y: 15, w: 24, r: 8 },
-  { art: "squishy", x: 14, y: 64, w: 27, r: -6 },
-  { art: "painting", x: 84, y: 62, w: 25, r: 7 },
-  { art: "car", x: 40, y: 85, w: 26, r: -4 },
-  { art: "ball", x: 82, y: 86, w: 18, r: 0 },
-  { art: "slime", x: 10, y: 88, w: 15, r: 6 },
-  { art: "mug", x: 58, y: 66, w: 17, r: -8 },
+  { art: "teddy", x: 18, y: 15, w: 17, r: -8 },
+  { art: "bracelets", x: 80, y: 13, w: 18, r: 6 },
+  { art: "squishy", x: 16, y: 66, w: 20, r: -5 },
+  { art: "painting", x: 82, y: 64, w: 19, r: 6 },
+  { art: "car", x: 42, y: 84, w: 19, r: -3 },
+  { art: "ball", x: 78, y: 86, w: 13, r: 0 },
+  { art: "slime", x: 12, y: 88, w: 11, r: 5 },
+  { art: "mug", x: 56, y: 70, w: 12, r: -6 },
 ];
 const WORDS = ["צעצועים.", "יצירות.", "סקווישים."];
 
@@ -178,7 +178,7 @@ export function BuildScene() {
               />
             </div>
             <div className="text-center mt-3 min-h-[76px] max-w-[22rem]" aria-live="polite">
-              <div className="text-[19px] font-bold" key={level}>
+              <div className="text-[19px] font-medium" key={level}>
                 <span className="home-word">{L.name}</span>
               </div>
               <p className="text-[14.5px] leading-relaxed mt-1" style={{ opacity: 0.85 }}>
@@ -235,7 +235,7 @@ export function HowScene() {
         return (
           <div className="h-full bg-[var(--sand)] flex flex-col md:flex-row items-center justify-center gap-5 md:gap-16 px-5 pt-16 pb-6">
             <div className="text-center md:text-right max-w-[22rem]" aria-live="polite">
-              <div className="text-[13px] font-bold tracking-wide text-[var(--muted)]">איך זה עובד</div>
+              <div className="text-[13px] font-medium tracking-wide text-[var(--muted)]">איך זה עובד</div>
               <div key={step} className="home-word">
                 <div className="home-display mt-1">
                   <span className="text-[var(--lavender-deep)]">{S.n}.</span> {S.title}
@@ -265,22 +265,22 @@ export function HowScene() {
               </div>
               {/* 2: שם ומחיר */}
               <div className="absolute inset-0 pt-10 px-4 transition-opacity duration-300" style={{ opacity: step === 1 ? 1 : 0 }} aria-hidden>
-                <div className="text-[17px] font-bold">מוצר חדש</div>
+                <div className="text-[17px] font-medium">מוצר חדש</div>
                 <div className="mt-3 bg-[var(--cream)] border-2 border-[var(--sand)] px-8 py-3">
                   <Art name="squishy" />
                 </div>
                 <div className="text-[11px] mt-3">שם המוצר</div>
                 <div className="text-[13px] border-2 border-[var(--stone)] bg-white px-2 py-1.5 mt-1">סקוויש חד-קרן</div>
                 <div className="text-[11px] mt-2.5">מחיר</div>
-                <div className="text-[16px] font-bold border-2 border-[var(--ink)] bg-white px-2 py-1 mt-1 h-[34px] flex items-center gap-0.5">
+                <div className="text-[16px] font-medium border-2 border-[var(--ink)] bg-white px-2 py-1 mt-1 h-[34px] flex items-center gap-0.5">
                   <bdi>₪{price}</bdi>
                   <span className="home-caret w-[2px] h-[18px] bg-[var(--ink)]" />
                 </div>
-                <div className="mt-3 bg-[var(--ink)] text-white text-center text-[14px] font-bold py-2.5">שמירה</div>
+                <div className="mt-3 bg-[var(--ink)] text-white text-center text-[14px] font-medium py-2.5">שמירה</div>
               </div>
               {/* 3: שולחים */}
               <div className="absolute inset-0 transition-opacity duration-300" style={{ opacity: step === 2 ? 1 : 0 }} aria-hidden>
-                <div className="bg-[var(--lavender)] h-[24%] pt-9 px-4 text-[15px] font-bold">הדוכן של נועה</div>
+                <div className="bg-[var(--lavender)] h-[24%] pt-9 px-4 text-[15px] font-medium">הדוכן של נועה</div>
                 <div className="grid grid-cols-2 gap-2 p-3">
                   {(["squishy", "bracelets", "painting", "mug"] as ArtName[]).map((a) => (
                     <div key={a} className="bg-white border border-[var(--sand)]">
@@ -340,7 +340,7 @@ export function DingScene() {
                 {!orders ? (
                   <div aria-hidden>
                     <div className="text-center text-white/80 text-[11px] mt-10">יום שלישי, 6 באוקטובר</div>
-                    <div className="text-center text-white text-[56px] font-light leading-none mt-1" dir="ltr">
+                    <div className="text-center text-white text-[56px] font-extralight leading-none mt-1" dir="ltr">
                       16:42
                     </div>
                     <div
@@ -355,7 +355,7 @@ export function DingScene() {
                           <span>דוכן</span>
                           <span>עכשיו</span>
                         </span>
-                        <span className="block text-[12.5px] font-bold">הזמנה חדשה בדוכן! #1</span>
+                        <span className="block text-[12.5px] font-medium">הזמנה חדשה בדוכן! #1</span>
                         <span className="block text-[11px] leading-snug">
                           מוצר אחד · <bdi>₪15</bdi>. נכנסים לראות מי הזמין.
                         </span>
@@ -364,7 +364,7 @@ export function DingScene() {
                   </div>
                 ) : (
                   <div className="pt-9 px-3 text-[var(--ink)]" aria-hidden>
-                    <div className="text-[17px] font-bold">הזמנות</div>
+                    <div className="text-[17px] font-medium">הזמנות</div>
                     <div
                       className="mt-3 border-2 p-3 transition-colors duration-500"
                       style={{ background: paid ? "var(--ok-bg)" : "#fff", borderColor: paid ? "var(--ok-line)" : "var(--stone)" }}
@@ -374,7 +374,7 @@ export function DingScene() {
                           #1 · <b className="text-[var(--ink)] text-[12.5px]">יעל</b>
                         </span>
                         <span
-                          className="px-1.5 py-0.5 font-bold transition-colors duration-500"
+                          className="px-1.5 py-0.5 font-medium transition-colors duration-500"
                           style={paid ? { background: "#E4F3E9", color: "var(--ok-ink)" } : { background: "var(--warn-bg)", color: "var(--warn-ink)" }}
                         >
                           {paid ? "שולם" : "חדש"}
@@ -384,11 +384,11 @@ export function DingScene() {
                         • סקוויש חד-קרן × 1 · <bdi>₪15</bdi>
                       </div>
                       <div className="text-[11px] text-[var(--muted)] mt-1.5">מסירה אישית · ביט</div>
-                      <div className="flex justify-between text-[13px] font-bold border-t border-[var(--sand)] mt-2 pt-1.5">
+                      <div className="flex justify-between text-[13px] font-medium border-t border-[var(--sand)] mt-2 pt-1.5">
                         <span>סה&quot;כ</span>
                         <bdi>₪15</bdi>
                       </div>
-                      <div className="mt-2.5 bg-[var(--ink)] text-white text-center text-[12.5px] font-bold py-2">{paid ? "נמסר" : "שולם"}</div>
+                      <div className="mt-2.5 bg-[var(--ink)] text-white text-center text-[12.5px] font-medium py-2">{paid ? "נמסר" : "שולם"}</div>
                     </div>
                     {paid && (
                       <div className="absolute inset-0 pointer-events-none">

@@ -101,13 +101,13 @@ export default function StoryPage() {
   }
 
   return (
-    <main id="top" className="bg-[var(--canvas)] text-[var(--ink)]">
+    <main id="top" className="story-site bg-[var(--canvas)] text-[var(--ink)]">
       <h1 className="sr-only">דוכן</h1>
 
       {/* ── כותרת קבועה + פס התקדמות ── */}
       <header className="fixed top-0 inset-x-0 z-40 bg-[var(--canvas)] border-b border-[var(--line)] pt-[env(safe-area-inset-top)]">
         <div className="max-w-5xl mx-auto px-4 h-12 flex items-center justify-between">
-          <a href="#top" className="flex items-center gap-1.5 text-[17px] font-extrabold" aria-label="דוכן, לתחילת הדף">
+          <a href="#top" className="flex items-center gap-1.5 text-[17px] font-medium" aria-label="דוכן, לתחילת הדף">
             <span className="text-[var(--ink)]">
               <Icon name="stall" size={22} />
             </span>
@@ -119,7 +119,7 @@ export default function StoryPage() {
             </a>
             {checked &&
               (mine ? (
-                <a href="/dashboard" className="font-bold">
+                <a href="/dashboard" className="font-medium">
                   לדוכן שלי ←
                 </a>
               ) : (
@@ -127,7 +127,7 @@ export default function StoryPage() {
                   כניסה
                 </a>
               ))}
-            <button onClick={() => start()} className="bg-[var(--ink)] text-white px-3 py-1.5 font-bold" data-testid="home-header-start">
+            <button onClick={() => start()} className="bg-[var(--ink)] text-white px-3 py-1.5 font-medium" data-testid="home-header-start">
               לפתוח דוכן
             </button>
           </nav>
@@ -158,7 +158,7 @@ export default function StoryPage() {
           )}
           {from && (
             <div data-testid="referred-from" className="card px-4 py-3 t-small text-center max-w-sm">
-              {from.emoji} הגעת מ<span className="font-bold">{from.name}</span>, עכשיו תורך
+              {from.emoji} הגעת מ<span className="font-medium">{from.name}</span>, עכשיו תורך
             </div>
           )}
         </div>
@@ -176,7 +176,7 @@ export default function StoryPage() {
       {/* ── הסוף: להדליק את האורות ולפתוח דוכן ── */}
       <section ref={endRef} className="pt-20 pb-28 flex flex-col items-center gap-6 bg-[var(--canvas)]" aria-labelledby="end-title" data-testid="home-end">
         <div className="text-center px-5">
-          <div className="text-[13px] font-bold tracking-wide text-[var(--muted)]">ועכשיו</div>
+          <div className="text-[13px] font-medium tracking-wide text-[var(--muted)]">ועכשיו</div>
           <h2 id="end-title" className="home-display mt-1">
             להדליק את האורות.
           </h2>
