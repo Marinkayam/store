@@ -1,42 +1,32 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import StallHero from "./stall-hero";
 import HelpButton from "./help-button";
+import PromoBurst from "./promo-burst";
 import Icon from "./icons";
-import { ACTIVATION_PRICE } from "@/lib/pricing";
-import { BuildScene, DingScene, HeroScene, HowScene } from "./home/scenes";
-import { KupaSection, LearnSection, PriceSection, SafetySection } from "./home/sections";
+import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 
-/**
- * דף הבית: הסיפור של "מה זה דוכן", בגלילה.
- *
- * מרינה: "אתר בסגנון של awwards עם גלילה שמספרת סיפור של מה זה בעצם דוכן,
- * בשפה הגרפית של האפליקציה, עם אפשרות לפתוח דוכן, והכל מותאם מובייל".
- *
- * הסדר: הוק ("לכל אחד יש טונות של צעצועים… עסק!!!") → מעגלה לדוכן → איך זה
- * עובד → דינג, הזמנה ראשונה → מה לומדים (עם חידה אמיתית) → הקופה → בטוח
- * (להורים) → כמה זה עולה → להדליק את האורות ולפתוח דוכן.
- *
- * מה שנשאר מדף הנחיתה הקודם, כמו שהיה:
- *   • ?ref=<slug> — הגיעו מדוכן של חבר/ה. נספר ב-/api/track/ref ועובר ליצירת הדוכן.
- *   • מי שכבר מחובר/ת עם דוכן רואה "כבר יש לך דוכן", ולא "כבר פתחת דוכן?".
- *   • הכפתור "לפתוח דוכן" מתחיל את ההקמה (/onboarding) — בלי שדה שם כאן.
- */
+// עמוד הנחיתה: שדה אחד. בלי אימייל. הבנייה מתחילה לפני ההרשמה.
+// ?ref=<slug> — הגיעה מחנות של חברה. השיוך נשמר בטיוטה ועובר ליצירת החנות.
 
 export default function Landing() {
   const router = useRouter();
   const [ref, setRef] = useState<string | null>(null);
   const [from, setFrom] = useState<{ name: string; emoji: string } | null>(null);
+  // יש כבר דוכן ומחוברת? הדף הזה חייב לומר את זה לפני הכל.
   const [mine, setMine] = useState<{ name: string; emoji: string } | null>(null);
-  /* עד שבדקנו אם יש דוכן — לא מציגים "כבר פתחת דוכן?" (גם לא לרגע) */
+  /* האם כבר בדקנו אם יש דוכן. עד אז לא מציגים "כבר פתחת דוכן?" — אחרת מי
+     שכבר יש לה דוכן רואה את השאלה הזו לשנייה (מרינה: "אם כבר פתחתי דוכן
+     אז אתה יודע"). */
   const [checked, setChecked] = useState(false);
-  const [scrolled, setScrolled] = useState(0);
-  const [showBar, setShowBar] = useState(false);
-  const endRef = useRef<HTMLElement>(null);
 
+  /**
+   * מי שכבר מחוברת נחתה כאן וראתה "איך קוראים לדוכן שלך?" — כאילו המערכת
+   * לא מכירה אותה. הסשן היה שם כל הזמן; פשוט אף אחד לא שאל אותו.
+   */
   useEffect(() => {
     const supa = supabaseBrowser();
     supa.auth.getUser().then(({ data }) => {
@@ -69,158 +59,110 @@ export default function Landing() {
       .catch(() => {});
   }, []);
 
-  // פס ההתקדמות למעלה, והכפתור הדביק למטה (אחרי ההוק, ולא כשהסוף כבר על המסך)
-  useEffect(() => {
-    let raf = 0;
-    const calc = () => {
-      raf = 0;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setScrolled(max > 0 ? Math.min(1, window.scrollY / max) : 0);
-      const end = endRef.current?.getBoundingClientRect();
-      setShowBar(window.scrollY > window.innerHeight * 1.6 && !!end && end.top > window.innerHeight * 0.85);
-    };
-    const on = () => {
-      if (!raf) raf = requestAnimationFrame(calc);
-    };
-    calc();
-    window.addEventListener("scroll", on, { passive: true });
-    window.addEventListener("resize", on);
-    return () => {
-      window.removeEventListener("scroll", on);
-      window.removeEventListener("resize", on);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  function start(e?: React.FormEvent) {
-    e?.preventDefault();
+  function start(e: React.FormEvent) {
+    e.preventDefault();
     // רק ההפניה נשמרת. השם נשאל במסך הראשון של ההקמה ולא כאן.
     sessionStorage.setItem("duchan-draft", JSON.stringify({ step: 1, ref }));
     router.push("/onboarding");
   }
 
   return (
-    <main className="bg-[var(--canvas)] text-[var(--ink)]">
-      <h1 className="sr-only">דוכן</h1>
+    // ריפוד תחתון גדול מהעליון: התוכן ממורכז, אז זה מה שמרים את הדוכן
+    // מעט מעל אמצע המסך במקום להשאיר אותו בדיוק במרכז.
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 pt-6 pb-24 gap-7 bg-[var(--canvas)]">
+      <HelpButton context="פתיחת דוכן" />
+      {mine && (
+        // כרטיס בתוך זרימת הדף, לא רצועה שחורה שנתלשת ממנה. הרצועה השחורה
+        // המקורית התנגשה עם האיור הרך שמתחתיה ונראתה כמו שני אתרים שונים.
+        <a
+          href="/dashboard"
+          data-testid="my-store-card"
+          className="w-full max-w-sm border-[1.5px] border-[var(--olive)] bg-white px-4 py-3 flex items-center gap-3"
+        >
+          <span className="text-xl">{mine.emoji}</span>
+          <span className="flex-1 t-small leading-snug">
+            <span className="text-[var(--muted)]">כבר יש לך דוכן</span>
+            <br />
+            <b>{mine.name}</b>
+          </span>
+          <span className="t-small font-medium text-[var(--ink)]">לניהול ←</span>
+        </a>
+      )}
 
-      {/* ── כותרת קבועה + פס התקדמות ── */}
-      <header className="fixed top-0 inset-x-0 z-40 bg-[var(--canvas)] border-b border-[var(--line)] pt-[env(safe-area-inset-top)]">
-        <div className="max-w-5xl mx-auto px-4 h-12 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-1.5 text-[17px] font-extrabold" aria-label="דוכן, לתחילת הדף">
-            <span className="text-[var(--ink)]">
-              <Icon name="stall" size={22} />
-            </span>
-            דוכן
-          </a>
-          <nav className="flex items-center gap-3.5 text-[13.5px]" aria-label="ראשי">
-            <a href="/price" className="hidden sm:inline">
-              מה מקבלים
-            </a>
-            {checked &&
-              (mine ? (
-                <a href="/dashboard" className="font-bold">
-                  לדוכן שלי ←
-                </a>
-              ) : (
-                <a href="/login" className="font-medium">
-                  כניסה
-                </a>
-              ))}
-            <button onClick={() => start()} className="bg-[var(--ink)] text-white px-3 py-1.5 font-bold" data-testid="home-header-start">
-              לפתוח דוכן
-            </button>
-          </nav>
-        </div>
-        <div className="h-[3px] bg-[var(--lavender-deep)] origin-right" style={{ transform: `scaleX(${scrolled})` }} aria-hidden />
-      </header>
-      <div className="h-[calc(3rem+env(safe-area-inset-top))]" aria-hidden />
-
-      <HelpButton context="פתיחת דוכן" lift={showBar ? 68 : 0} />
-
-      {/* מי שכבר יש לו/ה דוכן, ומי שהגיע/ה מדוכן של חבר/ה — לפני הסיפור */}
-      {(mine || from) && (
-        <div className="px-4 pt-3 flex flex-col items-center gap-2">
-          {mine && (
-            <a
-              href="/dashboard"
-              data-testid="my-store-card"
-              className="w-full max-w-sm border-[1.5px] border-[var(--olive)] bg-white px-4 py-3 flex items-center gap-3"
-            >
-              <span className="text-xl">{mine.emoji}</span>
-              <span className="flex-1 t-small leading-snug">
-                <span className="text-[var(--muted)]">כבר יש לך דוכן</span>
-                <br />
-                <b>{mine.name}</b>
-              </span>
-              <span className="t-small font-medium text-[var(--ink)]">לניהול ←</span>
-            </a>
-          )}
-          {from && (
-            <div data-testid="referred-from" className="card px-4 py-3 t-small text-center max-w-sm">
-              {from.emoji} הגעת מ<span className="font-bold">{from.name}</span>, עכשיו תורך
-            </div>
-          )}
+      {from && (
+        <div data-testid="referred-from" className="card px-4 py-3 t-small text-center max-w-sm">
+          {from.emoji} הגעת מ<span className="font-bold">{from.name}</span>, עכשיו תורך
         </div>
       )}
 
-      <HeroScene />
-      <BuildScene />
-      <HowScene />
-      <DingScene />
-      <LearnSection />
-      <KupaSection />
-      <SafetySection />
-      <PriceSection />
+      {/* האיור נושא את המסך, לא הטקסט. השם קטן כי הוא כבר כתוב על האיור,
+          והמשפט קצר ובצבע מלא — הגרסה הקודמת הייתה ארוכה ואפורה. */}
+      {/* הדוכן על כל רוחב המסך, בלי מסגרת, ועם אור שמדליקים (מרינה) */}
+      <div className="self-stretch -mx-6">
+        <StallHero name="דוכן" />
+      </div>
+      <div className="text-center flex flex-col items-center -mt-4">
+        {/* "דוכן" כבר כתוב על השלט באיור — מרינה: "אפשר להוריד את המילה דוכן".
+            הכותרת נשארת לקוראי מסך. */}
+        <h1 className="sr-only">דוכן</h1>
+        <p className="text-[15px] leading-relaxed max-w-[19rem] text-[var(--ink)]">
+          יש לך אוסף ענקי של סקווישים?
+          <br />
+          צעצועים, בגדים וספרים שכבר לא צריך?
+          <br />
+          <span className="font-medium">פותחים דוכן ומוכרים לחברים.</span>
+        </p>
+      </div>
 
-      {/* ── הסוף: להדליק את האורות ולפתוח דוכן ── */}
-      <section ref={endRef} className="pt-20 pb-28 flex flex-col items-center gap-6 bg-[var(--canvas)]" aria-labelledby="end-title" data-testid="home-end">
-        <div className="text-center px-5">
-          <div className="text-[13px] font-bold tracking-wide text-[var(--muted)]">ועכשיו</div>
-          <h2 id="end-title" className="home-display mt-1">
-            להדליק את האורות.
-          </h2>
-        </div>
-        <div className="self-stretch">
-          <StallHero name="הדוכן שלך" />
-        </div>
-        <form onSubmit={start} className="w-full max-w-sm px-5 flex flex-col gap-2.5">
-          <button className="btn btn-primary text-[16px]" data-testid="home-start">
-            קדימה, בואו נקים את הדוכן ←
-          </button>
-          <p className="text-[13px] text-center leading-relaxed">
-            לבנות זה חינם. משלמים פעם אחת, <bdi>₪{ACTIVATION_PRICE}</bdi>, רק כשרוצים לקבל הזמנות.
-          </p>
-        </form>
-        {checked && !mine && (
+      {/* בלי שדה שם כאן: השם נשאל ממילא במסך הראשון של ההקמה, ושתי
+          שאלות לאותו דבר גרמו לתחושה של טופס כפול. */}
+      <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-2.5">
+        {IS_LAUNCH && (
           <a
-            href="/login"
-            className="w-[calc(100%-2.5rem)] max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
+            href="/price"
+            data-testid="promo-banner"
+            className="fx-shine fx-press fx-rise block text-center text-white px-4 pt-3 pb-3.5"
+            style={{ background: "var(--wood)", animationDelay: ".1s" }}
           >
-            <span>כבר פתחת דוכן?</span>
-            <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
+            <PromoBurst />
+            <span className="relative z-[3] inline-block text-[11.5px] font-bold bg-black/25 px-2.5 py-0.5">
+              <span className="fx-wiggle inline-block align-[-2px]"><Icon name="party" size={14} tone="none" /></span> {DEAL_LABEL}
+            </span>
+            <span className="relative z-[3] block text-[17px] font-bold leading-snug mt-1">
+              רק <bdi className="fx-pop text-[24px] align-[-2px]">₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן!{" "}
+              <bdi className="text-[13px] font-medium line-through">₪{FULL_PRICE}</bdi>
+            </span>
           </a>
         )}
-        <p className="t-small text-[var(--muted)] mt-4">
-          <a href="/terms" className="underline">תנאי שימוש</a>
-          {" · "}
-          <a href="/privacy" className="underline">מדיניות פרטיות</a>
-          {" · "}
-          <a href="/accessibility" className="underline">נגישות</a>
+        <button className="btn btn-primary">לפתוח דוכן ←</button>
+        {/* הקישור בשורה נפרדת: כשהוא נגרר לסוף המשפט הוא נשבר באמצע
+            ("איך" בשורה אחת ו"זה עובד?" בשנייה) ונראה כמו טעות. */}
+        <p className="text-[13px] text-center text-[var(--ink)] leading-relaxed">
+          לבנות זה חינם. משלמים פעם אחת רק כשרוצים לפרסם.
+          <br />
+          <a href="/price" className="underline font-medium">איך זה עובד?</a>
         </p>
-      </section>
+      </form>
 
-      {/* כפתור דביק למטה — מופיע אחרי ההוק ונעלם כשמגיעים לסוף */}
-      <div
-        data-bottom-bar={showBar ? "" : undefined}
-        aria-hidden={!showBar}
-        className={`md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--canvas)] border-t border-[var(--line)] px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] transition-transform duration-300 ${
-          showBar ? "translate-y-0" : "translate-y-full"
-        }`}
-      >
-        <button onClick={() => start()} tabIndex={showBar ? 0 : -1} className="btn btn-primary w-full max-w-sm mx-auto block" data-testid="home-sticky-start">
-          לפתוח דוכן ←
-        </button>
-      </div>
+      {/* הכניסה לדוכן קיים יושבת בתחתית: היא נועדה למי שכבר מכירה את
+          המקום ויודעת לחפש אותה, ולמעלה היא רק גנבה מקום מהפעולה הראשית. */}
+      {checked && !mine && (
+        <a
+          href="/login"
+          className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
+        >
+          <span>כבר פתחת דוכן?</span>
+          <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
+        </a>
+      )}
+
+      <p className="t-small text-[var(--muted)]">
+        <a href="/terms" className="underline">תנאי שימוש</a>
+        {" · "}
+        <a href="/privacy" className="underline">מדיניות פרטיות</a>
+        {" · "}
+        <a href="/accessibility" className="underline">נגישות</a>
+      </p>
     </main>
   );
 }

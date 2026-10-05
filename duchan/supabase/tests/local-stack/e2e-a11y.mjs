@@ -47,7 +47,7 @@ async function ctx(viewport = { width: 390, height: 844 }) {
 /* ── ציבורי ── */
 const pub = await ctx();
 for (const [path, label] of [
-  ["/", "דף הבית"], ["/price", "מחיר"], ["/login", "כניסה"], ["/onboarding", "פתיחת דוכן"],
+  ["/", "דף הבית"], ["/story", "אתר השיווק"], ["/price", "מחיר"], ["/login", "כניסה"], ["/onboarding", "פתיחת דוכן"],
   ["/terms", "תנאי שימוש"], ["/privacy", "פרטיות"], ["/accessibility", "הצהרת נגישות"],
   [`/s/${store.slug}`, "הדוכן לקונים"], ["/s/nosuchstore", "דוכן שלא קיים"],
   ["/join/nosuchinvitetoken", "הצטרפות לדוכן (לינק שבור)"],

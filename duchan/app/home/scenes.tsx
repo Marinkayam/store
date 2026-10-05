@@ -212,6 +212,7 @@ const STEPS = [
 function Phone({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   return (
     <div
+      data-art
       className="relative w-[min(56vw,250px,26svh)] md:w-[min(300px,36svh)] aspect-[9/18.5] border-[8px] border-[var(--ink)] rounded-[38px] overflow-hidden"
       style={{ background: dark ? NIGHT : "#FBF8F3" }}
     >

@@ -21,7 +21,8 @@ async function scan(path) {
   const found = await p.evaluate(() => {
     const out = [];
     for (const el of document.querySelectorAll("body *")) {
-      if (el.closest("svg") || el.closest(".s-look")) continue;
+      // איורים (svg, וגם מכשיר מצויר בדף הבית — data-art) הם חלק מהאיור ולא מהממשק
+      if (el.closest("svg") || el.closest(".s-look") || el.closest("[data-art]")) continue;
       const cs = getComputedStyle(el);
       const r = ["borderTopLeftRadius", "borderTopRightRadius", "borderBottomLeftRadius", "borderBottomRightRadius"].some((k) => parseFloat(cs[k]) > 0);
       if (r && el.getClientRects().length && cs.visibility !== "hidden" && cs.display !== "none")
@@ -33,7 +34,7 @@ async function scan(path) {
 }
 
 try {
-  for (const u of ["/", "/price", "/login", "/onboarding", "/terms", "/privacy", "/accessibility"]) await scan(u);
+  for (const u of ["/", "/story", "/price", "/login", "/onboarding", "/terms", "/privacy", "/accessibility"]) await scan(u);
   await p.goto(`${BASE}/login`);
   await verifyPhone(p, "0501234567");
   await p.waitForURL("**/dashboard", { timeout: 20000 });
