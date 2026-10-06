@@ -1,0 +1,21 @@
+import { chromium } from "playwright";
+import pg from "pg";
+import { lastCode, closeHelper } from "./e2e/helpers/sms.mjs";
+const db = new pg.Pool({ host: "/tmp", port: 5433, user: "postgres", database: "duchan" });
+await db.query("delete from phone_otps where phone='972527770001'");
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+await c.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); } catch {} });
+const p = await c.newPage();
+await p.goto("http://localhost:3777/login", { waitUntil: "networkidle" });
+const f = p.locator("input[aria-label='מספר טלפון']");
+for (let i = 0; i < 5; i++) { await f.fill("0527770001"); await p.waitForTimeout(250); if ((await f.inputValue()) === "0527770001") break; }
+await p.click("button:has-text('שלחו לי קוד')");
+await p.waitForSelector("input[aria-label='קוד אימות']");
+await p.fill("input[aria-label='קוד אימות']", await lastCode("0527770001"));
+await p.waitForURL("**/dashboard", { timeout: 20000 });
+await p.goto("http://localhost:3777/dashboard/products?new=1", { waitUntil: "networkidle" });
+await p.waitForTimeout(1500);
+await p.screenshot({ path: process.argv[2], fullPage: true });
+await p.screenshot({ path: process.argv[3] });
+await b.close(); await closeHelper(); await db.end();

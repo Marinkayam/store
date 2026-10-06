@@ -109,6 +109,21 @@ export default function ProductsPage() {
   const [newCategory, setNewCategory] = useState("");
   const [designOpen, setDesignOpen] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);
+  /* "עוד אפשרויות" בעורך — סגור כברירת מחדל. מי שפתחה פעם אחת (מוכרת
+     ותיקה שמשתמשת בדרופים, צבעים, קטגוריות) תמצא אותו פתוח גם בפעם הבאה. */
+  const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setMoreOpen(localStorage.getItem("duchan-editor-more") === "1");
+    } catch {}
+  }, []);
+  const toggleMore = () =>
+    setMoreOpen((o) => {
+      try {
+        localStorage.setItem("duchan-editor-more", o ? "0" : "1");
+      } catch {}
+      return !o;
+    });
   // "+ קטגוריה" בשורת מוצר: פותחים את העורך וגוללים ישר לבחירת הקטגוריה
   const [focusCats, setFocusCats] = useState(false);
   const [sorting, setSorting] = useState(false);
@@ -1013,64 +1028,57 @@ export default function ProductsPage() {
               <CloseX onClick={() => setEdit(null)} testid="editor-close" />
             </div>
 
-            {/* מה מותר למכור — רק במוצר חדש, לפני שמעלים תמונה. בתקנון זה
-                קיים, אבל אף אחת לא קוראת תקנון; כאן זה נראה ברגע הנכון. */}
-            {!edit.id && (
-              <p className="text-[12px] text-[var(--muted)] bg-[var(--canvas)] px-3 py-2 mb-3 leading-relaxed">
-                דוכן מיועד למוצרים לא שימושיים ופריטי יד שנייה: צעצועים,
-                תכשיטים, פריטי תחביב. בלי אלכוהול, טבק, כלי נשק, תרופות,
-                בעלי חיים או מוצרים מזויפים.{" "}
-                <a href="/terms" target="_blank" className="underline">עוד בתקנון</a>
-              </p>
+            {/* מרינה, 10.2026: "להוסיף תמונה / להוסיף מוצר — איזה בלאגן. תחשוב
+                כמו ילדה בת 9". היו כאן 13 חלקים בגלילה אחת. עכשיו: תמונה, שם,
+                מחיר וכמה יש — וכל השאר מקופל תחת "עוד אפשרויות". */}
+            {!edit.previewUrl ? (
+              <button
+                onClick={() => photoRef.current?.click()}
+                data-testid="editor-photo"
+                className="w-full bg-[var(--canvas)] border-[1.5px] border-dashed border-[var(--line)] flex flex-col items-center justify-center gap-2 mb-1"
+                style={{ height: "13rem" }}
+              >
+                <Icon name="camera" size={40} />
+                <span className="text-[15px] font-medium">להוסיף תמונה</span>
+              </button>
+            ) : (
+              <div
+                className="bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex flex-col items-center justify-center overflow-hidden relative mb-1 touch-none select-none"
+                style={{ height: "13rem" }}
+                onPointerDown={onPosPointerDown}
+                onPointerMove={onPosPointerMove}
+                onPointerUp={onPosPointerUp}
+                onPointerCancel={onPosPointerUp}
+              >
+                <button
+                  onClick={() =>
+                    setEdit((e) => e && {
+                      ...e,
+                      previewUrl: null, previewIsVideo: false,
+                      pendingImage: null, pendingImageRaw: null, imagePos: { x: 50, y: 50 },
+                      pendingVideo: null, pendingPoster: null,
+                      imageKey: null, videoKey: null, posterKey: null,
+                    })
+                  }
+                  aria-label="הסרת התמונה"
+                  className="absolute top-1.5 left-1.5 bg-black/55 text-white w-8 h-8 text-sm z-10"
+                >
+                  ✕
+                </button>
+                {edit.previewIsVideo ? (
+                  <video src={edit.previewUrl} muted loop playsInline autoPlay className="w-full h-full object-cover" />
+                ) : (
+                  <img
+                    src={edit.previewUrl}
+                    alt=""
+                    className="w-full h-full pointer-events-none"
+                    style={{ objectFit: "cover", objectPosition: `${edit.imagePos.x}% ${edit.imagePos.y}%` }}
+                  />
+                )}
+              </div>
             )}
-
-            <label className="block text-[12px] font-semibold mb-1.5">1. תמונה או וידאו</label>
-            <div
-              className="bg-[var(--canvas)] border-[1.5px] border-dashed border-[#D3D5DC] flex flex-col items-center justify-center text-5xl overflow-hidden relative mb-1 touch-none select-none"
-              style={{ height: "13rem" }}
-              onPointerDown={onPosPointerDown}
-              onPointerMove={onPosPointerMove}
-              onPointerUp={onPosPointerUp}
-              onPointerCancel={onPosPointerUp}
-            >
-              {edit.previewUrl ? (
-                <>
-                  <button
-                    onClick={() =>
-                      setEdit((e) => e && {
-                        ...e,
-                        previewUrl: null, previewIsVideo: false,
-                        pendingImage: null, pendingImageRaw: null, imagePos: { x: 50, y: 50 },
-                        pendingVideo: null, pendingPoster: null,
-                        imageKey: null, videoKey: null, posterKey: null,
-                      })
-                    }
-                    className="absolute top-1.5 left-1.5 bg-black/55 text-white w-6 h-6 text-sm z-10"
-                  >
-                    ✕
-                  </button>
-                  {edit.previewIsVideo ? (
-                    <video src={edit.previewUrl} muted loop playsInline autoPlay className="w-full h-full object-cover" />
-                  ) : (
-                    <img
-                      src={edit.previewUrl}
-                      alt=""
-                      className="w-full h-full pointer-events-none"
-                      style={{ objectFit: "cover", objectPosition: `${edit.imagePos.x}% ${edit.imagePos.y}%` }}
-                    />
-                  )}
-                </>
-              ) : (
-                <>
-                  <span>🛍️</span>
-                  <span className="text-[12px] text-[var(--muted)] font-sans mt-1">
-                    עוד אין תמונה. בוחרים אחד מהכפתורים למטה
-                  </span>
-                </>
-              )}
-            </div>
             {edit.previewUrl && !edit.previewIsVideo && edit.pendingImageRaw && (
-              <p className="text-[12px] text-[var(--muted)] text-center mb-2.5">
+              <p className="text-[12px] text-[var(--muted)] text-center mb-1">
                 גוררים בתמונה כדי לבחור מה יופיע בריבוע
               </p>
             )}
@@ -1082,38 +1090,73 @@ export default function ProductsPage() {
             <input ref={galleryRef} type="file" accept="video/*" hidden
               onChange={(e) => e.target.files?.[0] && onGalleryVideo(e.target.files[0])} />
 
-            <div className="flex gap-2 mt-2 mb-3.5">
-              <button onClick={openRecorder} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
-                <Icon name="video" size={19} tone="var(--cream)" />הקלטת וידאו
-              </button>
-              <button onClick={() => photoRef.current?.click()} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
-                <Icon name="camera" size={19} tone="var(--cream)" />תמונה
-              </button>
-              <button onClick={() => galleryRef.current?.click()} className="flex-1 border border-[var(--line)] py-2.5 text-xs font-medium flex flex-col items-center gap-0.5">
-                <Icon name="gallery" size={19} tone="var(--cream)" />וידאו מהגלריה
-              </button>
+            {/* סרטון — אפשרות משנית, שורה קטנה ולא שלושה כפתורים שווים */}
+            <div className="flex items-center justify-center gap-1 text-[13px] text-[var(--muted)] mb-4">
+              <span>אפשר גם סרטון:</span>
+              <button onClick={openRecorder} className="underline text-[var(--ink)] px-1.5 min-h-11">לצלם</button>
+              <span aria-hidden>·</span>
+              <button onClick={() => galleryRef.current?.click()} className="underline text-[var(--ink)] px-1.5 min-h-11">מהגלריה</button>
             </div>
 
-            <label className="block text-[12px] font-semibold mb-1.5">2. שם המוצר</label>
-            <input value={edit.name} maxLength={40} aria-label="שם המוצר" placeholder="למשל: סקוויש אבוקדו"
+            <label htmlFor="ed-name" className="block text-[13px] font-medium mb-1.5">איך קוראים למוצר?</label>
+            <input id="ed-name" value={edit.name} maxLength={40} aria-label="שם המוצר" placeholder="למשל: סקוויש אבוקדו"
               onChange={(e) => setEdit((s) => s && { ...s, name: e.target.value })}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3" />
+              className="w-full border border-[var(--line)] px-3 py-3 text-[15px] mb-4" />
 
-            <label className="block text-[12px] font-semibold mb-1.5">3. מחיר (₪)</label>
-            <input value={edit.price} type="text" inputMode="decimal" aria-label="מחיר" placeholder="למשל: 15 או 10.90"
-              onChange={(e) => setEdit((s) => s && { ...s, price: typedPrice(e.target.value) })}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-4" />
+            <div className="flex gap-3 mb-4">
+              <div className="flex-1">
+                <label htmlFor="ed-price" className="block text-[13px] font-medium mb-1.5">כמה זה עולה?</label>
+                <div className="relative">
+                  <input id="ed-price" value={edit.price} type="text" inputMode="decimal" aria-label="מחיר" placeholder="15"
+                    onChange={(e) => setEdit((s) => s && { ...s, price: typedPrice(e.target.value) })}
+                    className="w-full border border-[var(--line)] px-3 py-3 pl-8 text-[15px]" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[15px] text-[var(--muted)]" aria-hidden>₪</span>
+                </div>
+              </div>
+              <div className="shrink-0">
+                <div className="block text-[13px] font-medium mb-1.5">כמה יש לך?</div>
+                {edit.trackStock ? (
+                  <div className="flex items-center border border-[var(--line)] h-[50px]">
+                    <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
+                      aria-label="הורדה מהמלאי"
+                      className="w-11 h-full text-[18px] text-[var(--ink)]">−</button>
+                    <span className="min-w-8 text-center text-[16px] font-bold tabular-nums" data-testid="editor-stock">{edit.stock}</span>
+                    <button onClick={() => setEdit((s) => s && { ...s, stock: s.stock + 1 })}
+                      aria-label="הוספה למלאי"
+                      className="w-11 h-full text-[18px] text-[var(--ink)]">+</button>
+                  </div>
+                ) : (
+                  <div className="h-[50px] flex items-center text-[14px] text-[var(--muted)]" data-testid="editor-stock-unlimited">בלי הגבלה</div>
+                )}
+              </div>
+            </div>
 
-            <p className="text-[12px] text-[var(--faint)] mb-2.5">
-              מכאן והלאה הכל לא חובה. אפשר לשמור גם בלי למלא.
-            </p>
+            {/* מה מותר למכור — שורה אחת, רק במוצר חדש */}
+            {!edit.id && (
+              <p className="text-[12px] text-[var(--muted)] mb-3 leading-relaxed">
+                מוכרים צעצועים, תכשיטים ודברים שיצרת. בלי דברים מסוכנים.{" "}
+                <a href="/terms" target="_blank" className="underline">מה מותר?</a>
+              </p>
+            )}
 
+            <button
+              onClick={toggleMore}
+              aria-expanded={moreOpen}
+              data-testid="editor-more"
+              className="w-full flex items-center justify-between border-t border-[var(--line)] py-3 min-h-11 text-[14px] font-medium"
+            >
+              <span>עוד אפשרויות</span>
+              <span className="text-[12px] text-[var(--muted)] font-normal">
+                {moreOpen ? "סגירה" : "תיאור, צבעים, מבצע ועוד"}
+              </span>
+            </button>
+            <div hidden={!moreOpen} data-testid="editor-more-panel" className="pt-1">
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[12px] text-[var(--muted)]">תיאור קצר (לא חובה)</label>
+              <label className="block text-[12px] text-[var(--muted)]">תיאור קצר</label>
               {store.ai_enabled && (edit.pendingImage || edit.imageKey || edit.posterKey) && (
                 <button data-testid="ai-describe" onClick={writeDescription} disabled={aiBusy}
                   className="text-[12px] text-[var(--ink)] border border-[var(--line)] px-2 py-1 disabled:opacity-50">
-                  {aiBusy ? "כותבים…" : "✨ לכתוב לי תיאור"}
+                  {aiBusy ? "כותבים…" : "לכתוב לי תיאור"}
                 </button>
               )}
             </div>
@@ -1339,7 +1382,7 @@ export default function ProductsPage() {
                 edit.isMystery ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)] bg-white"
               }`}
             >
-              <span className="text-xl leading-none" aria-hidden>🎁</span>
+              <Icon name="gift" size={22} />
               <span className="flex-1">
                 <span className="block text-[13px] font-bold">שקית הפתעה</span>
                 <span className="block text-[11.5px] text-[var(--muted)] leading-snug">
@@ -1355,14 +1398,14 @@ export default function ProductsPage() {
 
             {/* 🔥 דרופ — נפתח להזמנה בזמן קבוע, עם ספירה לאחור בדוכן */}
             <div id="editor-drop" className="border border-[var(--line)] px-3 py-3 mb-3 scroll-mt-24">
-              <div className="text-[13px] font-semibold mb-2">🔥 מתי אפשר להזמין?</div>
+              <div className="text-[13px] font-semibold mb-2">מתי אפשר להזמין?</div>
               <Choice
                 value={!edit.dropOn}
                 onChange={(v) =>
                   setEdit((s) => s && { ...s, dropOn: !v, dropInput: !v && !s.dropInput ? defaultDropInput() : s.dropInput })
                 }
-                on="✅ כבר עכשיו"
-                off="🔥 דרופ בשעה קבועה"
+                on="כבר עכשיו"
+                off="דרופ בשעה קבועה"
                 label="מתי אפשר להזמין"
                 testid="drop-choice"
               />
@@ -1401,8 +1444,8 @@ export default function ProductsPage() {
               <Choice
                 value={edit.isVisible}
                 onChange={(v) => setEdit((s) => s && { ...s, isVisible: v })}
-                on="👀 כן, מוצג"
-                off="🙈 מוסתר"
+                on="כן, מוצג"
+                off="מוסתר"
                 label="מוצג בדוכן"
                 testid="visible-choice"
               />
@@ -1413,31 +1456,14 @@ export default function ProductsPage() {
               </p>
             </div>
 
-            {/* כמה יש לי — הכמות קודם (זו השאלה שבאמת שואלים), ומתחתיה
-                הבחירה אם בכלל לספור. "בלי הגבלה" מחליף את הכמות. */}
+            {/* לספור או לא — הכמות עצמה למעלה, ליד המחיר */}
             <div className="border border-[var(--line)] px-3 py-3 mb-3">
-              {/* שורה אחת: השאלה מימין, ובצד שמאל מונה קטן — לא מספר ענק באמצע */}
-              <div className="flex items-center justify-between gap-3 mb-2.5">
-                <div className="text-[13px] font-semibold">כמה יש לי כאלה?</div>
-                {edit.trackStock ? (
-                  <div className="flex items-center border border-[var(--line)]">
-                    <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
-                      aria-label="הורדה מהמלאי"
-                      className="w-9 h-9 text-[15px] text-[var(--ink)]">−</button>
-                    <span className="min-w-9 text-center text-[14px] font-bold tabular-nums" data-testid="editor-stock">{edit.stock}</span>
-                    <button onClick={() => setEdit((s) => s && { ...s, stock: s.stock + 1 })}
-                      aria-label="הוספה למלאי"
-                      className="w-9 h-9 text-[15px] text-[var(--ink)]">+</button>
-                  </div>
-                ) : (
-                  <span className="text-[13px] text-[var(--muted)]" data-testid="editor-stock-unlimited">בלי הגבלה</span>
-                )}
-              </div>
+              <div className="text-[13px] font-semibold mb-2">לספור כמה נשארו?</div>
               <Choice
                 value={edit.trackStock}
                 onChange={(v) => setEdit((s) => s && { ...s, trackStock: v })}
-                on="🔢 כמות מוגבלת"
-                off="♾️ בלי הגבלה"
+                on="כמות מוגבלת"
+                off="בלי הגבלה"
                 label="כמות מוגבלת או בלי הגבלה"
                 testid="track-stock-choice"
               />
@@ -1446,6 +1472,7 @@ export default function ProductsPage() {
                   ? "הקונים רואים כמה נשארו, ו\"אזל\" כשנגמר. אי אפשר להזמין יותר ממה שיש."
                   : "לא סופרים, והמוצר תמיד זמין להזמנה."}
               </p>
+            </div>
             </div>
 
           </div>

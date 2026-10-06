@@ -35,6 +35,9 @@ export async function verifyPhone(page, local) {
     // אותו דבר לחגיגות של קופת הדוכן (app/dashboard/kupa/celebrate.tsx).
     // e2e-kupa.mjs מוחק את הסימון ובודק אותן.
     try { localStorage.setItem("kupa-quiet", "1"); } catch {}
+    // "עוד אפשרויות" בעורך המוצר פתוח — הבדיקות של צבעים, דרופים וקטגוריות
+    // לוחצות שם. e2e-firststeps בודק את העורך הפשוט ומוחק את הסימון.
+    try { localStorage.setItem("duchan-editor-more", "1"); } catch {}
   }).catch(() => {});
 }
 

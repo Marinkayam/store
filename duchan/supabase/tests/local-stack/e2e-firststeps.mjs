@@ -128,6 +128,19 @@ try {
   await p.reload();
   await p.waitForSelector("[data-testid=first-step-product][data-state=current]", { timeout: 15000 });
   check("בלי מוצר: הצעד הנוכחי הוא מוצר ראשון", await p.locator("[data-testid=first-steps-product]").isVisible());
+  // מרינה: "להוסיף תמונה / להוסיף מוצר — איזה בלאגן. תחשוב כמו ילדה בת 9"
+  await p.click("[data-testid=first-steps-product]");
+  await p.waitForSelector("[data-testid=editor-photo]", { timeout: 15000 });
+  check("מוצר חדש: ריבוע אחד 'להוסיף תמונה'", ((await p.textContent("[data-testid=editor-photo]")) ?? "").includes("להוסיף תמונה"));
+  check("שם, מחיר וכמה יש — גלויים", await p.locator("input[aria-label='שם המוצר']").isVisible() &&
+    await p.locator("input[aria-label='מחיר']").isVisible() && await p.locator("[data-testid=editor-stock]").isVisible());
+  check("כל השאר מקופל תחת 'עוד אפשרויות'", !(await p.locator("[data-testid=editor-more-panel]").isVisible()) &&
+    !(await p.locator("[data-testid=featured-toggle]").isVisible()) && !(await p.locator("[data-testid=drop-choice-on]").isVisible()));
+  await p.click("[data-testid=editor-more]");
+  check("ולחיצה פותחת אותן", await p.locator("[data-testid=featured-toggle]").isVisible());
+  await p.click("[data-testid=editor-more]");
+  await p.click("[data-testid=editor-close]");
+  await p.goto(`${BASE}/dashboard`);
   await db.query("update products set deleted_at=null where store_id=$1", [st.id]);
   await p.reload();
   await p.waitForSelector("[data-testid=first-step-publish][data-state=current]", { timeout: 15000 });
