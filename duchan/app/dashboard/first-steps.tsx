@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Store } from "@/lib/types";
-import VSteps from "@/app/v-steps";
+import Icon from "@/app/icons";
 import OrderAlerts from "./order-alerts";
 
 /**
@@ -68,43 +68,41 @@ export default function FirstSteps({
   /* הצעד הפתוח: הראשון שלא נעשה. בזמן שהתשלום בבדיקה אפשר כבר לשלוח
      את הלינק, אז הצעד הבא נפתח במקביל. */
   const current = order.find((k) => !done[k] && !(k === "publish" && claimed)) ?? "order";
-  const allBefore = done.open && done.product && done.publish && done.share;
 
-  /* כל צעד שנעשה מקבל מילה טובה במקום שם המשימה (מרינה: "איפה שיש וי —
-     הוספת מוצרים, מדהים / שילמת דמי דוכן, מעולה (לא שילמת? זה הזמן)").
-     "שילמת" רק כשבאמת היה תשלום — דוכן שנפתח בלי תשלום (הזמנת חברה,
-     פתיחה מהחמ"ל) מקבל "הדוכן פתוח להזמנות". */
-  const steps: { key: StepKey; title: string; doneTitle?: string; sub: string; body?: React.ReactNode }[] = [
-    { key: "open", title: "פתחת דוכן", doneTitle: "פתחת דוכן, איזה כיף!", sub: `הדוכן "${store.display_name}" נוצר ונשמר.` },
-    {
-      key: "product",
-      title: "להוסיף מוצר ראשון",
-      doneTitle: "הוספת מוצרים, מדהים!",
-      sub: "מצלמים, כותבים שם ומחיר. לוקח דקה.",
+  /* מרינה, 10.2026, צילום מהטלפון: "המסכים האלו עמוסים מאוד, לא ברורים".
+     קודם: חמישה צעדים, כל אחד עם פסקה, ומתחת עוד רשימת "לא חובה".
+     עכשיו: פס התקדמות קצר (ארבע מילים), וכרטיס אחד — מה עושים עכשיו,
+     במשפט אחד, עם כפתור אחד. */
+  const TRACK: { key: Exclude<StepKey, "order">; label: string }[] = [
+    { key: "open", label: "דוכן" },
+    { key: "product", label: "מוצר" },
+    { key: "publish", label: "פרסום" },
+    { key: "share", label: "חברים" },
+  ];
+
+  const card: Record<StepKey, { title: React.ReactNode; line: string; body?: React.ReactNode }> = {
+    open: { title: "פתחת דוכן", line: "" },
+    product: {
+      title: "מוסיפים מוצר ראשון",
+      line: "תמונה, שם ומחיר. לוקח דקה.",
       body: (
         <a href="/dashboard/products?new=1" className="btn btn-primary w-full" data-testid="first-steps-product">
-          להוסיף מוצר
+          להוסיף מוצר ←
         </a>
       ),
     },
-    {
-      key: "publish",
-      title: claimed ? "הדוכן מחכה לאישור" : "לא שילמת דמי דוכן? זה הזמן",
-      doneTitle: claimed ? "שילמת דמי דוכן, מעולה!" : "הדוכן פתוח להזמנות, מעולה!",
-      sub: claimed
-        ? "קיבלנו את הדיווח על התשלום. אחרי שנאשר, הדוכן ייפתח להזמנות. בינתיים אפשר כבר לשלוח את הלינק."
-        : "עכשיו הדוכן בתצוגה מקדימה: רואים אותו, אבל עוד אי אפשר להזמין. פרסום פותח אותו להזמנות.",
-      body: claimed ? null : (
+    publish: {
+      title: <span data-testid="store-state-banner">עכשיו מפרסמים את הדוכן</span>,
+      line: "ככה החברים יוכלו להזמין.",
+      body: (
         <a href="/activate" className="btn btn-primary w-full" data-testid="first-steps-publish">
-          לפרסם את הדוכן
+          לפרסם את הדוכן ←
         </a>
       ),
     },
-    {
-      key: "share",
-      title: "לשלוח את הלינק לחברים",
-      doneTitle: "שלחת לחברים, יופי!",
-      sub: "מי שמקבל את הלינק נכנס לדוכן ויכול להזמין. על כל כניסה מקבלים גם מטבעות לקופה.",
+    share: {
+      title: "שולחים את הלינק לחברים",
+      line: claimed && !published ? "התשלום בבדיקה. בינתיים אפשר כבר לשלוח." : "מי שמקבל את הלינק יכול להזמין.",
       body: (
         <div className="flex gap-2">
           <a
@@ -112,7 +110,7 @@ export default function FirstSteps({
             target="_blank"
             rel="noopener noreferrer"
             onClick={markShared}
-            className="flex-1 bg-[var(--whatsapp)] text-white text-center py-3 text-[13.5px] font-bold"
+            className="flex-1 bg-[var(--whatsapp)] text-white text-center py-3 text-[14px] font-bold"
             data-testid="orders-empty-whatsapp"
           >
             שליחה בוואטסאפ
@@ -123,7 +121,7 @@ export default function FirstSteps({
               markShared();
               onCopied();
             }}
-            className="flex-1 border-[1.5px] border-[var(--ink)] py-3 text-[13.5px] font-bold"
+            className="flex-1 border-[1.5px] border-[var(--ink)] py-3 text-[14px] font-bold"
             data-testid="orders-empty-copy"
           >
             העתקת הלינק
@@ -131,62 +129,41 @@ export default function FirstSteps({
         </div>
       ),
     },
-    {
-      key: "order",
-      /* כשכל הצעדים הקודמים נעשו — זה כבר לא עוד משימה, זו ההמתנה. ומה
-         שאפשר לעשות בינתיים: לשמור את הדוכן כאפליקציה ולהדליק התראה. */
-      title: allBefore ? "ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!" : "ההזמנה הראשונה מגיעה",
-      sub: allBefore
-        ? "אגב, אפשר לשמור את הדוכן כמו אפליקציה ולקבל התראה כשמגיעה הזמנה."
-        : "היא מופיעה כאן וגם בוואטסאפ. כשמקבלים את הכסף מסמנים \"שולם\", וכשהמוצר אצל הקונה מסמנים \"נמסר\".",
-      body: allBefore ? (
-        <OrderAlerts storeId={store.id} cta="לחצו כאן לשמור על מסך הבית ולהפעיל התראות" />
-      ) : undefined,
+    order: {
+      title: "ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!",
+      line: "אגב, אפשר לשמור את הדוכן כמו אפליקציה ולקבל התראה כשמגיעה הזמנה.",
+      body: <OrderAlerts storeId={store.id} cta="לחצו כאן לשמור על מסך הבית ולהפעיל התראות" />,
     },
-  ];
+  };
+  const now = card[current];
+  const waiting = claimed && !published;
 
   return (
-    <section data-testid="orders-empty" aria-labelledby="first-steps-title">
-      <div className="pt-1 pb-3">
-        <h2 id="first-steps-title" className="text-[17px] font-bold leading-tight">
-          ככה הדוכן מתחיל לעבוד
-        </h2>
-        <p className="text-[13px] text-[var(--muted)] mt-1 leading-relaxed">
-          עוד אין הזמנות, וזה בסדר. עושים את הצעדים לפי הסדר, וכל צעד שנעשה מקבל ✓.
-        </p>
-      </div>
+    <section data-testid="orders-empty" aria-labelledby="first-steps-title" className="flex flex-col gap-4">
+      <ol className="grid grid-cols-4 gap-1.5" aria-label="ההתקדמות של הדוכן">
+        {TRACK.map((t) => {
+          const state = done[t.key] ? "done" : t.key === current ? "current" : t.key === "publish" && waiting ? "waiting" : "later";
+          return (
+            <li key={t.key} data-testid={`first-step-${t.key}`} data-state={state} className="flex flex-col gap-1.5">
+              <span
+                className="h-[5px]"
+                aria-hidden
+                style={{ background: state === "done" ? "var(--olive)" : state === "current" ? "var(--ink)" : state === "waiting" ? "var(--warn-ink)" : "var(--sand)" }}
+              />
+              <span className={`flex items-center gap-1 text-[12.5px] ${state === "later" ? "text-[var(--muted)]" : "text-[var(--ink)] font-medium"}`}>
+                {state === "done" && <Icon name="check" size={13} tone="var(--olive)" />}
+                {t.label}
+                <span className="sr-only">{state === "done" ? " — נעשה" : state === "current" ? " — עכשיו" : state === "waiting" ? " — בבדיקה" : ""}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
-      <div className="pt-1 pb-2">
-        <VSteps
-          steps={steps.map((st) => {
-            const isDone = done[st.key];
-            const isCurrent = st.key === current;
-            const waiting = st.key === "publish" && claimed && !published;
-            const state = isDone ? "done" : isCurrent ? "current" : waiting ? "waiting" : "later";
-            const showSub = isCurrent || waiting || (st.key === "order" && !isDone);
-            return {
-              key: st.key,
-              testid: `first-step-${st.key}`,
-              state,
-              title: (() => {
-                const t = isDone && st.doneTitle ? st.doneTitle : st.title;
-                return st.key === "publish" ? <span data-testid="store-state-banner">{t}</span> : t;
-              })(),
-              sub: showSub ? st.sub : undefined,
-              body: isCurrent && st.body ? st.body : st.key === "share" && isDone ? (
-                <button
-                  onClick={() => {
-                    navigator.clipboard?.writeText(link).catch(() => {});
-                    onCopied();
-                  }}
-                  className="text-[12.5px] underline text-[var(--muted)]"
-                >
-                  להעתיק את הלינק שוב
-                </button>
-              ) : undefined,
-            };
-          })}
-        />
+      <div className="bg-white border border-[var(--line)] p-5 flex flex-col gap-3" data-testid={current === "order" ? "first-step-order" : "first-step-card"}>
+        <h2 id="first-steps-title" className="text-[20px] font-bold leading-snug">{now.title}</h2>
+        {now.line && <p className="text-[14px] text-[var(--muted)] leading-relaxed -mt-1">{now.line}</p>}
+        {now.body}
       </div>
     </section>
   );

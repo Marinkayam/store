@@ -103,46 +103,34 @@ try {
   await p.fill("input[aria-label='קוד אימות']", m.msg.match(/\d{6}/)[0]);
   await p.waitForSelector("text=נפתח דוכן", { timeout: 40000 });
 
-  /* ── מסך ההזמנות הראשון + חגיגת הקופה ── */
+  /* ── מסך ההזמנות הראשון ──
+     מרינה, 10.2026: "המסכים האלו עמוסים מאוד, לא ברורים" — בלי חגיגת
+     קופה לפני הפרסום, ובמקום חמישה צעדים עם פסקאות: פס קצר וכרטיס אחד. */
   await p.evaluate(() => localStorage.setItem("duchan-whatsnew-2026-09-looks", "1"));
   await p.goto(`${BASE}/dashboard`);
-  const cele = p.locator("[data-testid=kupa-celebrate]");
-  await cele.waitFor({ timeout: 15000 });
-  check("'פתחנו לך קופה' מופיע עם איקס", await p.locator("[data-testid=kupa-x]").isVisible());
-  const framed = await cele.locator("svg[role=img]").first().evaluate((svg) => {
-    const box = svg.getBoundingClientRect(), sheet = svg.closest("[role=dialog]").getBoundingClientRect();
-    return { w: Math.round(box.width), sw: Math.round(sheet.width), border: getComputedStyle(svg.parentElement).borderTopWidth };
-  });
-  check("האיור פרוס על כל רוחב החלון, בלי מסגרת", Math.abs(framed.w - framed.sw) <= 2 && framed.border === "0px", JSON.stringify(framed));
-  await p.click("[data-testid=kupa-x]");
-  check("האיקס סוגר", (await cele.count()) === 0);
-
-  const steps = p.locator("[data-testid=orders-empty]");
-  check("מסלול 'ככה הדוכן מתחיל לעבוד'", ((await steps.textContent()) ?? "").includes("ככה הדוכן מתחיל לעבוד"));
-  check("צעד 1 'פתחת דוכן' מסומן כנעשה", (await p.getAttribute("[data-testid=first-step-open]", "data-state")) === "done");
-  check("הצעד הנוכחי: מוצר ראשון", (await p.getAttribute("[data-testid=first-step-product]", "data-state")) === "current");
-  check("עם כפתור אחד ברור", await p.locator("[data-testid=first-steps-product]").isVisible());
-  check("בלי הבאנר השחור הכפול", (await p.locator("a[href='/activate'].bg-\\[var\\(--ink\\)\\]").count()) === 0);
-  // מוצר ראשון → הצעד הבא הוא פרסום
+  await p.waitForSelector("[data-testid=orders-empty]", { timeout: 15000 });
+  await p.waitForTimeout(2000);
+  check("לפני הפרסום: בלי 'פתחנו לך קופה'", (await p.locator("[data-testid=kupa-celebrate]").count()) === 0);
+  check("בלי 'ואם יש זמן' לפני הפרסום", (await p.locator("[data-testid=store-missing]").count()) === 0);
+  check("פס התקדמות של ארבע מילים", (await p.locator("[data-testid=orders-empty] ol > li").count()) === 4);
   const { rows: [st] } = await db.query("select id from stores where contact_phone=$1", [E164]);
-  await db.query("insert into products (store_id, name, price, stock) values ($1, 'סקוויש', 15, 3)", [st.id]);
+  // המוצר מההקמה כבר קיים, אז הצעד הנוכחי הוא פרסום
+  await p.waitForSelector("[data-testid=first-step-publish][data-state=current]", { timeout: 15000 });
+  check("'דוכן' ו'מוצר' מסומנים כנעשו", (await p.getAttribute("[data-testid=first-step-open]", "data-state")) === "done" &&
+    (await p.getAttribute("[data-testid=first-step-product]", "data-state")) === "done");
+  check("כרטיס אחד, כפתור אחד: לפרסם", await p.locator("[data-testid=first-steps-publish]").isVisible() &&
+    (await p.locator("[data-testid=orders-empty] a.btn, [data-testid=orders-empty] button.btn").count()) === 1);
+  check("הכרטיס קצר — בלי פסקאות", ((await p.textContent("[data-testid=first-step-card]")) ?? "").length < 70,
+    String(((await p.textContent("[data-testid=first-step-card]")) ?? "").length));
+  if (process.env.SHOTS) await p.locator("[data-testid=orders-empty]").screenshot({ path: `${process.env.SHOTS}/first-steps.png` });
+  // בלי מוצרים — הצעד הנוכחי הוא מוצר ראשון
+  await db.query("update products set deleted_at=now() where store_id=$1", [st.id]);
+  await p.reload();
+  await p.waitForSelector("[data-testid=first-step-product][data-state=current]", { timeout: 15000 });
+  check("בלי מוצר: הצעד הנוכחי הוא מוצר ראשון", await p.locator("[data-testid=first-steps-product]").isVisible());
+  await db.query("update products set deleted_at=null where store_id=$1", [st.id]);
   await p.reload();
   await p.waitForSelector("[data-testid=first-step-publish][data-state=current]", { timeout: 15000 });
-  check("אחרי מוצר: הצעד הנוכחי הוא לפרסם", await p.locator("[data-testid=first-steps-publish]").isVisible());
-  if (process.env.SHOTS) await p.locator("[data-testid=orders-empty]").screenshot({ path: `${process.env.SHOTS}/first-steps.png` });
-  // המרווחים בין הסימנים שווים כשאין בשלב תוכן נוסף (מרינה: "הקווים והרווחים בכלל לא שווים")
-  const gaps = await p.evaluate(() => {
-    const ys = [...document.querySelectorAll("[data-testid=orders-empty] ol > li > span[aria-hidden]:not(.absolute)")].map((m) => m.getBoundingClientRect().top);
-    return ys.slice(1).map((y, i) => Math.round(y - ys[i]));
-  });
-  check("הקו רציף: כל קטע מגיע בדיוק עד הסימן הבא", await p.evaluate(() => {
-    const lis = [...document.querySelectorAll("[data-testid=orders-empty] ol > li")];
-    return lis.slice(0, -1).every((li, i) => {
-      const line = li.querySelector("span.absolute").getBoundingClientRect();
-      const next = lis[i + 1].querySelector("span[aria-hidden]:not(.absolute)").getBoundingClientRect();
-      return Math.abs(line.bottom - (next.top + next.height / 2)) <= 1;
-    });
-  }), gaps.join(","));
   check("store-state-banner עדיין קיים (מבחן ההפעלה)", await p.locator("[data-testid=store-state-banner]").isVisible());
 
   /* ── כל הצעדים נעשו: צעד 5 הוא ההמתנה, עם אפליקציה + התראות ──
