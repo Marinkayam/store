@@ -914,7 +914,8 @@ export default function StoreView({
           {store.city && <span><Icon name="pin" size={14} tone="none" className="inline-block align-[-2px] me-0.5" />{store.city}</span>}
           {store.city && <span aria-hidden>·</span>}
           <span>{visibleProducts.length === 1 ? "מוצר אחד" : `${visibleProducts.length} מוצרים`}</span>
-          {store.ships && (
+          {/* יש הערת משלוח? היא כבר אומרת הכל, בלי לחזור על המחיר בשורה */}
+          {store.ships && !store.shipping_note && (
             <>
               <span aria-hidden>·</span>
               <span>
@@ -1437,7 +1438,7 @@ export default function StoreView({
               לאסוף בעצמה לא צריכה "לקבל" משלוח שהיא לא ביקשה. */}
           {store.ships && (
             <section className="mt-8">
-              <h3 className="text-[13.5px] font-bold mb-3">📦 איך לקבל את ההזמנה?</h3>
+              <h3 className="text-[13.5px] font-bold mb-3">איך לקבל את ההזמנה?</h3>
               <PickRows
                 label="איך לקבל את ההזמנה"
                 value={wantsShipping ? "ship" : "pickup"}
@@ -1445,11 +1446,11 @@ export default function StoreView({
                 options={[
                   {
                     key: "ship",
-                    title: "🚚 משלוח",
+                    title: "משלוח",
                     sub: [store.shipping_note || "עד הבית", typeof store.shipping_price === "number" ? `₪${formatPrice(store.shipping_price)}` : ""]
                       .filter(Boolean).join(" · "),
                   },
-                  { key: "pickup", title: "🤝 מסירה אישית", sub: "קובעים עם בעלי הדוכן איפה ומתי" },
+                  { key: "pickup", title: "מסירה אישית", sub: "קובעים עם בעלי הדוכן איפה ומתי" },
                 ]}
               />
               {/* כתובת — טופס רגיל: עיר, רחוב, ואם גרים בבניין גם קומה ודירה.
@@ -1457,7 +1458,7 @@ export default function StoreView({
                   "זה לא התנהגות נורמלית ומבלבלת". עכשיו סוג הבית נגזר ממה שמילאו. */}
               {wantsShipping && (
                 <div className="mt-5 flex flex-col gap-4" data-testid="ship-address">
-                  <h3 className="text-[13.5px] font-bold">🏠 לאן לשלוח?</h3>
+                  <h3 className="text-[13.5px] font-bold">לאן לשלוח?</h3>
                   <label className="block">
                     <span className="block text-[12px] opacity-75 mb-1.5">עיר *</span>
                     <input
@@ -1530,7 +1531,7 @@ export default function StoreView({
           {/* שם פרטי בלבד — אין כאן שם משפחה או גיל. הטלפון חובה מאז
               שההזמנה נקלטת במערכת: זו הדרך של המוכרת לחזור לקונה. */}
           <section className="mt-8">
-            <h3 className="text-[13.5px] font-bold mb-3.5">👋 הפרטים שלך</h3>
+            <h3 className="text-[13.5px] font-bold mb-3.5">הפרטים שלך</h3>
             <div className="flex flex-col gap-4">
               <div className="flex gap-3">
                 <label className="flex-1 min-w-0 block">
@@ -1575,7 +1576,7 @@ export default function StoreView({
                   ההזמנה. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?". */}
               {methods.length > 0 && (
                 <>
-                  <h3 className="text-[13.5px] font-bold mb-3">💜 איך משלמים?</h3>
+                  <h3 className="text-[13.5px] font-bold mb-3">איך משלמים?</h3>
                   <PickRows
                     label="איך משלמים"
                     value={chosenPay ?? ""}

@@ -103,7 +103,9 @@ await p.waitForSelector("[data-testid=kupa-page]");
 check("העמוד: מטבעות ורמה", ((await p.textContent("[data-testid=kupa-coins]")) ?? "").includes(String(k0.coins)) &&
   (await p.textContent("[data-testid=kupa-level]")) === k0.levelName);
 check("4 טאבים פנימיים: הדוכן, משימות, חידות, חנות", (await p.locator("[role=tablist][aria-label='קופת הדוכן'] [role=tab]").allTextContents()).join("|") === "הדוכן|משימות|חידות|חנות");
-check("בטאב הדוכן: 'מה נותן מטבעות עכשיו'", (await p.locator("[data-testid^=kupa-action-]").count()) === 4);
+// רק פעולות שעוד אפשר לעשות (שורות "בוצע" ירדו) — תמיד לפחות "לסמן הזמנה ששולמה"
+check("בטאב הדוכן: 'מה נותן מטבעות עכשיו'", (await p.locator("[data-testid^=kupa-action-]").count()) >= 1 &&
+  (await p.locator("[data-testid=kupa-action-orders]").count()) === 1);
 await p.click("[data-testid=kupa-tab-tasks]");
 check("בטאב משימות: 12 אותות, משימת השבוע וכרטיסייה", (await p.locator("[data-testid=kupa-badge]").count()) === 12 &&
   (await p.locator("[data-testid=week-quest], [data-testid=week-quest-all-done]").count()) === 1 &&

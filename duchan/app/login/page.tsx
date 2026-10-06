@@ -1,5 +1,6 @@
 "use client";
 
+import Icon from "../icons";
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import PhoneVerify from "../phone-verify";
@@ -49,7 +50,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6">
       <div className="text-center">
-        <div className="text-4xl mb-2">🛍️</div>
+        <div className="flex justify-center mb-2"><Icon name="stall" size={44} /></div>
       </div>
       <div className="w-full max-w-sm">
         <Suspense>

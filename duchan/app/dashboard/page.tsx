@@ -275,7 +275,6 @@ export default function OrdersPage() {
           className="block mx-3 mt-3 bg-[var(--ink)] text-white p-3.5"
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{store.payment_claimed_at ? "⏳" : "🚀"}</span>
             <div className="flex-1">
               <div className="text-[13.5px] font-bold">
                 <span data-testid="store-state-banner">{store.payment_claimed_at ? "התשלום בבדיקה" : "הדוכן שלך בתצוגה מקדימה"}</span>
@@ -290,19 +289,15 @@ export default function OrdersPage() {
         </a>
       )}
 
-      {/* מה חסר בדוכן — נעלם כשהכל מוכן. כשאין הזמנות הוא יושב מתחת למסלול */}
-      {missing.length > 0 && orders.length > 0 && <Missing missing={missing} />}
-
-      {/* הקופה שלי */}
+      {/* הקופה שלי — שורה אחת, לא קופסה */}
       {revenue > 0 && (
-        <div className="mx-4 mt-4 bg-white border border-[var(--line)] p-4 flex items-center gap-3">
-          <span className="text-2xl">💰</span>
-          <div className="flex-1">
-            <div className="text-sm font-bold">₪{formatPrice(revenue)} נכנסו ממכירות</div>
-            <div className="text-[12px] text-[var(--muted)]">
-              {sold.length === 1 ? "הזמנה אחת ששולמה" : `${sold.length} הזמנות ששולמו`}{topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
-            </div>
-          </div>
+        <div className="px-4 pt-3.5 text-[13.5px]">
+          <b>₪{formatPrice(revenue)} נכנסו ממכירות</b>
+          <span className="text-[var(--muted)]">
+            {" · "}
+            {sold.length === 1 ? "הזמנה אחת ששולמה" : `${sold.length} הזמנות ששולמו`}
+            {topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
+          </span>
         </div>
       )}
 
@@ -361,6 +356,14 @@ export default function OrdersPage() {
           <p className="text-center py-8 text-sm text-[var(--muted)]">אין הזמנות בסינון הזה.</p>
         )}
 
+        {/* תזכורת אחת לכל הרשימה, לא בכל כרטיס. ההחלטה "לארוז או לא" נשארת
+            אצלה, אבל לא צריך לקרוא את אותו משפט עשר פעמים. */}
+        {orders.some((o) => o.status === "sent") && (
+          <p className="text-[12.5px] text-[var(--muted)] leading-relaxed -mb-1" data-testid="orders-check-note">
+            לפני שמכינים הזמנה, כדאי לוודא עם הקונה שהיא אמיתית.
+          </p>
+        )}
+
         {filtered.map((o) => (
           <div
             key={o.id}
@@ -392,7 +395,7 @@ export default function OrdersPage() {
             </div>
             {o.items.map((it, i) => (
               <div key={i} className="text-[13px] py-px">
-                • {it.mystery ? "🎁 " : ""}{it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{formatPrice(lineTotal(it.price, it.qty))}
+                • {it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{formatPrice(lineTotal(it.price, it.qty))}
                 {/* שקית הפתעה — תזכורת להכין הפתעה, לא לשלוח את מה שבתמונה */}
                 {it.mystery && <span className="text-[11px] text-[var(--muted)]" data-testid="order-mystery"> · שקית הפתעה</span>}
               </div>
@@ -408,8 +411,8 @@ export default function OrdersPage() {
               <div className="text-[12px] text-[var(--muted)] mt-3 flex flex-col gap-1.5" data-testid="order-details">
                 {o.buyer_phone && (
                   <span className="flex items-center gap-2 flex-wrap">
-                    <span>
-                      📞{" "}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="phone" size={14} tone="var(--muted)" />
                       {/* המספר שמור מנורמל (972...), בדיוק מה ש-wa.me צריך */}
                       <a dir="ltr" className="underline" href={`https://wa.me/${o.buyer_phone}`}>
                         {displayPhone(o.buyer_phone)}
@@ -425,16 +428,16 @@ export default function OrdersPage() {
                       rel="noopener noreferrer"
                       className="text-[11.5px] font-bold px-2 py-1 border border-[var(--line)] bg-white"
                     >
-                      💬 לסגור תשלום
+                      לסגור תשלום בוואטסאפ
                     </a>
                   </span>
                 )}
                 {o.wants_shipping === true && (
-                  <span>📦 משלוח{o.ship_address ? `: ${o.ship_address}, ${o.ship_city ?? ""}` : ""}</span>
+                  <span>משלוח{o.ship_address ? `: ${o.ship_address}, ${o.ship_city ?? ""}` : ""}</span>
                 )}
-                {o.wants_shipping === false && <span>🤝 מסירה אישית</span>}
+                {o.wants_shipping === false && <span>מסירה אישית</span>}
                 {o.pay_method && (
-                  <span>💰 {o.pay_method === "bit" ? "ביט" : o.pay_method === "paybox" ? "פייבוקס" : "מזומן"}</span>
+                  <span>תשלום: {o.pay_method === "bit" ? "ביט" : o.pay_method === "paybox" ? "פייבוקס" : "מזומן"}</span>
                 )}
               </div>
             )}
@@ -491,7 +494,7 @@ export default function OrdersPage() {
                 <input
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="לארוז בורוד, לתת ביום שלישי…"
+                  placeholder="רק את רואה את זה. למשל: לארוז בורוד"
                   maxLength={120}
                   autoFocus
                   className="flex-1 border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
@@ -511,7 +514,7 @@ export default function OrdersPage() {
                 }}
                 className="block text-right text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full"
               >
-                📝 {o.owner_note}
+                {o.owner_note}
               </button>
             ) : (
               o.status !== "cancelled" && (
@@ -522,14 +525,14 @@ export default function OrdersPage() {
                   }}
                   className="text-[12px] text-[var(--muted)] underline mt-1.5"
                 >
-                  📝 הערה לעצמי (הקונה לא רואה אותה)
+                  הערה לעצמי
                 </button>
               )
             )}
 
             {o.coupon_code && (
               <div className="flex justify-between text-[12px] text-[var(--muted)] border-t border-[var(--line)] mt-3.5 pt-3" data-testid="order-coupon">
-                <span>🏷️ קופון <bdi>{o.coupon_code}</bdi> · לפני הנחה ₪{formatPrice(o.subtotal)}</span>
+                <span>קופון <bdi>{o.coupon_code}</bdi> · לפני הנחה ₪{formatPrice(o.subtotal)}</span>
                 <bdi dir="ltr">−₪{formatPrice(o.discount)}</bdi>
               </div>
             )}
@@ -595,7 +598,7 @@ export default function OrdersPage() {
                   onClick={() => cancelOrder(o)}
                   className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2.5 min-h-11 px-3.5 text-xs"
                 >
-                  ביטול והחזרת מלאי
+                  ביטול
                 </button>
               </div>
             )}
@@ -608,12 +611,6 @@ export default function OrdersPage() {
                 מהזמנה שלא קרתה היא הייתה צריכה קודם "לבטל" אותה. */}
             {/* התזכורת יושבת על ההזמנה החדשה עצמה ולא רק בראש המסך, כי
                 ההחלטה "לארוז או לא" מתקבלת מול הכרטיס הזה. */}
-            {o.status === "sent" && confirmHide !== o.id && (
-              <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2">
-                לא בטוחים שההזמנה אמיתית? כדאי לבדוק עם הקונה לפני שמכינים
-                אותה.
-              </p>
-            )}
 
             {confirmHide === o.id ? (
               <div className="flex items-center gap-1.5 mt-2">
@@ -644,6 +641,9 @@ export default function OrdersPage() {
           </div>
         ))}
       </div>
+
+      {/* מה חסר בדוכן — למטה, אחרי ההזמנות: זה שיפור, לא משימה דחופה */}
+      {missing.length > 0 && orders.length > 0 && <Missing missing={missing} />}
 
       {toast && (
         <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">

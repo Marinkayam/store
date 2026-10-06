@@ -112,6 +112,14 @@ if (promo) {
     shown.length === 1, priceText);
 }
 
+/* מרינה, 10.2026: "המסכים עמוסים" — לילדה מסך קצר, ושלב ההורה נפתח בלחיצה */
+check("שלב ההורה (אישור ותשלום) סגור כברירת מחדל",
+  (await girl.locator("[data-testid=parent-stage]").count()) === 0 && (await girl.locator("[data-testid=declare-paid]").count()) === 0);
+check("לילדה כפתור אחד ראשי: לשלוח להורה", await usable(girl, "[data-testid=send-parent]"));
+check("'מה נפתח לך' ו'תוך כמה מכירות' מקופלים", !(await girl.locator("[data-testid=gets-details]").evaluate((e) => e.open)) &&
+  !(await girl.locator("[data-testid=payback-details]").evaluate((e) => e.open)));
+await girl.click("[data-testid=parent-here]");
+await girl.waitForSelector("[data-testid=parent-stage]");
 check("ההסבר להורה מקופל כברירת מחדל",
   (await girl.locator("[data-testid=parent-explainer]").count()) === 0);
 await girl.click("button:has-text('או להראות את זה כאן')");

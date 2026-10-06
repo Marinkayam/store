@@ -724,7 +724,7 @@ export default function ProductsPage() {
   async function restore(p: Product) {
     const supa = supabaseBrowser();
     await supa.from("products").update({ deleted_at: null }).eq("id", p.id);
-    showToast("המוצר חזר לדוכן 🎉");
+    showToast("המוצר חזר לדוכן");
     refresh();
     refreshStorePage();
     loadDeleted();
@@ -826,7 +826,7 @@ export default function ProductsPage() {
             onSaved={(patch) => {
               setStore({ ...store, ...patch });
               setDesignOpen(false);
-              showToast("עיצוב הקטגוריות נשמר ✨");
+              showToast("עיצוב הקטגוריות נשמר");
             }}
           />
         )}
@@ -907,7 +907,7 @@ export default function ProductsPage() {
               className={`bg-white border border-[var(--line)] p-4 flex gap-4 items-center text-right max-[340px]:p-3 max-[340px]:gap-2.5 ${sorting ? "" : "cursor-pointer"} ${out || hidden ? "opacity-60" : ""}`}
             >
               <div className="w-[72px] h-[72px] max-[340px]:w-12 max-[340px]:h-12 shrink-0 bg-[var(--canvas)] flex items-center justify-center text-3xl overflow-hidden relative">
-                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
+                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Icon name="bag" size={20} />}
                 {p.video_key && (
                   <span className="absolute bottom-0.5 left-1 text-[9px] bg-black/60 text-white px-1">וידאו</span>
                 )}
@@ -1520,7 +1520,7 @@ export default function ProductsPage() {
               return (
                 <div key={p.id} className="flex gap-3 items-center py-2 border-b border-[var(--line)] last:border-0">
                   <div className="w-10 h-10 bg-[var(--canvas)] flex items-center justify-center text-lg overflow-hidden">
-                    {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
+                    {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Icon name="bag" size={20} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>

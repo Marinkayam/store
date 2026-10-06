@@ -37,17 +37,17 @@ import { kupaCheck } from "../kupa/use-kupa";
  * עובד, ואפשר לשלוח קישור ישר למקטע.
  */
 const SECTIONS = {
-  share: { icon: "🔗", title: "לשתף את הדוכן", intro: "" }, // האיור והמשפט שבמקטע עצמו מסבירים — מרינה: "מינימליסטי"
-  design: { icon: "🎨", title: "עיצוב הדוכן", intro: "כל מה שקשור לאיך הדוכן נראה, במקום אחד. לוחצים על השם, התיאור או התמונה כדי לשנות." },
-  products: { icon: "⭐", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
-  promo: { icon: "📣", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
-  coupons: { icon: "🏷️", title: "קופונים", intro: "יוצרים כאן קוד הנחה, ושולחים אותו לחברים." },
-  payment: { icon: "💳", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
-  shipping: { icon: "🚚", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
-  order: { icon: "💬", title: "איך מגיעה הזמנה", intro: "איך הזמנה מגיעה אליך, ואיך נראית הודעת וואטסאפ מקונים. אין כאן מה למלא." },
-  app: { icon: "📲", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית. זיהינו את הטלפון ואת הדפדפן — אלה הצעדים בדיוק בשבילו." },
-  details: { icon: "📱", title: "הפרטים שלי", intro: "הטלפון שקונים כותבים אליו, וקצת עליכם. בלי כתובת מגורים." },
-  team: { icon: "🤝", title: "לנהל ביחד", intro: "לא חובה. אפשר לנהל את הדוכן לבד, ואפשר עם עוד אחד/ת — חבר/ה, אח או אחות. כל אחד נכנס עם הטלפון שלו." },
+  share: { icon: "link", title: "לשתף את הדוכן", intro: "" }, // האיור והמשפט שבמקטע עצמו מסבירים — מרינה: "מינימליסטי"
+  design: { icon: "palette", title: "עיצוב הדוכן", intro: "כל מה שקשור לאיך הדוכן נראה, במקום אחד. לוחצים על השם, התיאור או התמונה כדי לשנות." },
+  products: { icon: "star", title: "המוצרים בדוכן", intro: "מה מופיע בראש הדוכן, ומה קורה כשמשהו נגמר." },
+  promo: { icon: "megaphone", title: "הודעה לקונים", intro: "מבצע, מתנה או עדכון. מופיע בדוכן מתחת לשם." },
+  coupons: { icon: "gift", title: "קופונים", intro: "יוצרים כאן קוד הנחה, ושולחים אותו לחברים." },
+  payment: { icon: "coins", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
+  shipping: { icon: "box", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
+  order: { icon: "chat", title: "איך מגיעה הזמנה", intro: "איך הזמנה מגיעה אליך, ואיך נראית הודעת וואטסאפ מקונים. אין כאן מה למלא." },
+  app: { icon: "bell", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית. זיהינו את הטלפון ואת הדפדפן — אלה הצעדים בדיוק בשבילו." },
+  details: { icon: "phone", title: "הפרטים שלי", intro: "הטלפון שקונים כותבים אליו, וקצת עליכם. בלי כתובת מגורים." },
+  team: { icon: "heart", title: "לנהל ביחד", intro: "לא חובה. אפשר לנהל את הדוכן לבד, ואפשר עם עוד אחד/ת — חבר/ה, אח או אחות. כל אחד נכנס עם הטלפון שלו." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
 /* העוגנים של הגרסה הקודמת (גלילה אחת) — קישורים ישנים ממשיכים לעבוד */
@@ -593,7 +593,7 @@ export default function SettingsPage() {
       <div className=" bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
         <div className="flex items-center gap-3">
         <span className="w-10 h-10 shrink-0 flex items-center justify-center text-[19px] bg-[var(--sand)]" aria-hidden>
-          {store.status === "active" ? "🟢" : "⏸️"}
+          <Icon name={store.status === "active" ? "shop" : "hourglass"} size={20} tone="var(--ink)" />
         </span>
         <div className="flex-1 min-w-0">
           <div className="text-[14px] font-bold">{store.status === "active" ? "הדוכן פתוח" : "הדוכן בהפסקה"}</div>
@@ -609,8 +609,8 @@ export default function SettingsPage() {
         <Choice
           value={store.status === "active"}
           onChange={() => togglePause()}
-          on="🟢 פתוח להזמנות"
-          off="⏸️ בהפסקה"
+          on="פתוח להזמנות"
+          off="בהפסקה"
           label="הדוכן פתוח או בהפסקה"
           testid="store-open"
         />
@@ -755,7 +755,7 @@ export default function SettingsPage() {
             >
               →
             </button>
-            <span className="text-[19px]" aria-hidden>{SECTIONS[section].icon}</span>
+            <span aria-hidden className="inline-flex"><Icon name={SECTIONS[section].icon} size={22} /></span>
             <h1 className="text-[16px] font-bold text-[var(--ink)]">{SECTIONS[section].title}</h1>
           </div>
 
@@ -1215,8 +1215,8 @@ export default function SettingsPage() {
             <Choice
               value={!showSoldOut}
               onChange={(hide) => { setShowSoldOut(!hide); setDirty(true); }}
-              on="🙈 להסתיר אותו"
-              off="🏷️ להציג עם 'אזל'"
+              on="להסתיר אותו"
+              off="להציג עם 'אזל'"
               label="מה קורה למוצר שאזל"
               testid="show-sold-out-toggle"
             />
@@ -1246,8 +1246,8 @@ export default function SettingsPage() {
             <Choice
               value={promo.promo_on}
               onChange={(v) => { setPromo({ ...promo, promo_on: v }); setDirty(true); }}
-              on="📣 מופיעה בדוכן"
-              off="💤 כבויה"
+              on="מופיעה בדוכן"
+              off="כבויה"
               label="להציג את ההודעה בדוכן"
               testid="promo-toggle"
             />
@@ -1491,8 +1491,8 @@ export default function SettingsPage() {
           <Choice
             value={info.ships}
             onChange={(v) => { setInfo({ ...info, ships: v }); setDirty(true); }}
-            on="🚚 גם משלוח"
-            off="🤝 רק מסירה ביד"
+            on="גם משלוח"
+            off="רק מסירה ביד"
             label="יש משלוחים"
             testid="ships-choice"
           />

@@ -135,7 +135,6 @@ export default function KupaPage() {
     <div className="px-4 pt-4 pb-8 flex flex-col gap-5" data-testid="kupa-page">
       <header>
         <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">קופת הדוכן</h1>
-        <p className="text-[13px] text-[var(--muted)] mt-0.5">כל צעד בדוכן שווה מטבעות, והמטבעות בונות ומשדרגות את הדוכן.</p>
         {/* מטבעות וכוכבים — באותו גודל, קטנים, בלי קופסאות. לחיצה מסבירה מה זה (מרינה) */}
         <div className="flex items-center gap-4 mt-2.5">
           <button
@@ -361,8 +360,7 @@ export default function KupaPage() {
       )}
 
       <p className="text-[12px] text-[var(--muted)] leading-relaxed">
-        מטבעות דוכן הן משחק בתוך האתר. הן לא כסף, ואי אפשר לקנות אותן בכסף.
-        בחנות אפשר לקנות בהן קישוטים לדוכן. הרמה נקבעת לפי כל מה שהרווחתם, אז קנייה לא מורידה רמה.
+        מטבעות דוכן הן משחק. הן לא כסף, ואי אפשר לקנות אותן בכסף.
       </p>
 
       {open && (
@@ -672,7 +670,7 @@ function RiddleSheet({
         {current ? (
           <RiddleBox key={current.id} lesson={current} solved={false} onSolved={(answer) => onSolved(current.id, answer)} />
         ) : (
-          <p className="text-center text-[15px] font-bold py-6">פתרת את כל החידות במאגר! 🎉</p>
+          <p className="text-center text-[15px] font-bold py-6">פתרת את כל החידות במאגר!</p>
         )}
 
         {done && (
@@ -743,10 +741,11 @@ function QuickActions({ kupa }: { kupa: KupaData }) {
   return (
     <section aria-labelledby="kupa-actions">
       <h2 id="kupa-actions" className="text-[15px] font-black mb-2 px-0.5">מה נותן מטבעות עכשיו</h2>
+      {/* רק מה שעוד אפשר לעשות. שורות עם "✓ בוצע" הן רעש: הן לא נותנות כלום. */}
       <div className="flex flex-col">
-        {tile("product", "להוסיף מוצר", "/dashboard/products?new=1", "bag", prod ? <>{prod.title} {coin(prod.coins)}</> : <>השגת את כל אותות המוצרים</>, !prod)}
-        {tile("share", "לשתף את הדוכן", "/dashboard/settings#share", "share", views ? <>{views.title} {coin(views.coins)}</> : <>השגת את כל אותות הכניסות</>, !views)}
-        {tile("pay", "איך משלמים לי", "/dashboard/settings#payment", "coins", pay.reached ? <>מסודר</> : <>ביט, פייבוקס או מזומן {coin(pay.coins)}</>, pay.reached)}
+        {prod && tile("product", "להוסיף מוצר", "/dashboard/products?new=1", "bag", <>{prod.title} {coin(prod.coins)}</>)}
+        {views && tile("share", "לשתף את הדוכן", "/dashboard/settings#share", "share", <>{views.title} {coin(views.coins)}</>)}
+        {!pay.reached && tile("pay", "איך משלמים לי", "/dashboard/settings#payment", "coins", <>ביט, פייבוקס או מזומן {coin(pay.coins)}</>)}
         {tile("orders", "לסמן הזמנה ששולמה", "/dashboard", "receipt", <>כל הזמנה ששולמה {coin(SALE_COINS)}</>)}
       </div>
     </section>
@@ -802,7 +801,7 @@ function WeekQuest({ kupa, storeId }: { kupa: KupaData; storeId: string }) {
         </div>
       ) : (
         <div className="bg-[var(--ok-bg)] p-4 text-center text-[14px] font-bold text-[var(--ok-ink)]" data-testid="week-quest-all-done">
-          כל המשימות בוצעו! 🎉
+          כל המשימות בוצעו!
         </div>
       )}
       <details className="bg-white border border-[var(--line)]" data-testid="quest-list">
@@ -905,7 +904,7 @@ function Shop({
       }
       onChange(j);
       if (action === "buy") {
-        setMsg({ ok: true, text: `${shopTitle(item)} — שלך! 🎉` });
+        setMsg({ ok: true, text: `${shopTitle(item)} — שלך!` });
         confettiBurst(window.innerWidth / 2, window.innerHeight * 0.3);
       }
       setPicked(null);
