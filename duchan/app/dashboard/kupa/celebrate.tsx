@@ -36,6 +36,10 @@ export default function KupaCelebrate() {
 
   const check = useCallback(async () => {
     if (!store || busy.current || show) return;
+    // לפני הפרסום יש לילד/ה משימה אחת: מוצרים ופרסום. חגיגות מטבעות באמצע
+    // זה עוד דבר להבין (מרינה, 10.2026: "עמוס... לא מובן מה לעשות").
+    // הן מחכות לרגע שהדוכן מתפרסם, ואז מגיעות כ"פתחנו לך קופה".
+    if (!store.activated_at) return;
     if (document.querySelector("[data-testid=first-product-celebration]")) return;
     // בדיקות אוטומטיות שלא בודקות את הקופה מדליקות את זה (e2e/helpers/sms.mjs)
     try {

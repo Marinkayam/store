@@ -103,6 +103,7 @@ await girl.waitForSelector("[data-testid=settings-coupons-link]", { timeout: 200
 check("בהגדרות יש קיצור לקופונים", true);
 
 // הקופונים גרים ב"החנות שלי" — מקטע משלהם, לא קישור לדף אחר
+if (!(await girl.locator("[data-testid=settings-coupons-link]").isVisible())) await girl.click("[data-testid=hub-more]");
 await girl.click("[data-testid=settings-coupons-link]");
 await girl.waitForSelector("[data-testid=seller-coupons]", { timeout: 20000 });
 await girl.waitForSelector("[data-testid=coupon-manager]", { timeout: 15000 }).catch(() => {});

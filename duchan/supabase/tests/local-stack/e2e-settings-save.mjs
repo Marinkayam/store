@@ -46,7 +46,9 @@ await page.goto(`${BASE}/dashboard/settings`);
 await page.waitForSelector("[data-testid=settings-hub]", { timeout: 20000 });
 
 const open = async (key) => {
-  await page.click(key === "coupons" ? "[data-testid=settings-coupons-link]" : `[data-testid=hub-${key}]`);
+  const sel = key === "coupons" ? "[data-testid=settings-coupons-link]" : `[data-testid=hub-${key}]`;
+  if (!(await page.locator(sel).isVisible())) await page.click("[data-testid=hub-more]");
+  await page.click(sel);
   await page.waitForSelector(`[data-testid=section-${key}]`);
 };
 const back = async () => {

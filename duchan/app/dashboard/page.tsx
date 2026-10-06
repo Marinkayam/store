@@ -353,7 +353,8 @@ export default function OrdersPage() {
         {orders.length === 0 && (
           <FirstSteps store={store} link={link} shareText={shareText} onCopied={() => showToast("הלינק הועתק")} />
         )}
-        {orders.length === 0 && missing.length > 0 && <Missing missing={missing} optional />}
+        {/* "ואם יש זמן" רק אחרי הפרסום. לפני זה יש משימה אחת — הצעדים שלמעלה. */}
+        {orders.length === 0 && missing.length > 0 && store?.activated_at && <Missing missing={missing} optional />}
         {/* בלי הזמנות, ההוספה למסך הבית וההתראות יושבות בצעד 5 של FirstSteps */}
 
         {filtered.length === 0 && orders.length > 0 && (

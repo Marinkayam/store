@@ -57,20 +57,27 @@ try {
   await p.clock.install();
   await p.goto(`${BASE}/onboarding`);
   await p.fill("input[aria-label='שם הדוכן']", "הדוכן של שלב ראשון");
-  await p.click("button:has-text('הלאה, לעיצוב הדוכן')");
-  const tag = p.locator("textarea[aria-label='תיאור הדוכן']");
-  check("'מה מוכרים כאן' ממורכז ובשורה אחת כשהוא ריק",
-    (await tag.evaluate((e) => getComputedStyle(e).textAlign)) === "center" && (await tag.getAttribute("rows")) === "1");
-  await p.click("button:has-text('הלאה ←')");
-  const s3 = (await p.textContent("main")) ?? "";
-  check("שלב 3: כותרת ברורה", s3.includes("עוד שני פרטים קטנים"));
-  check("שלב 3: אומר בכנות שהפרטים לא מופיעים בדוכן", s3.includes("ולא מופיעים בדוכן"));
-  check("שלב 3: מסביר למה ההורים", s3.includes("דוכן הוא עסק אמיתי"));
-  check("שלב 3: 'מה קורה עכשיו?' בשלבים", s3.includes("מה קורה עכשיו?") && s3.includes("מאמתים מספר טלפון"));
+  await p.click("[data-testid=ob-next]");
+  // מרינה, 10.2026: "איזה עמוס זה ולא מובן מה לעשות" — שאלה אחת בכל מסך
+  check("שלב 2: רק המוצר הראשון", (await p.textContent("h1")) === "מה מוכרים ראשון?" &&
+    (await p.locator("textarea[aria-label='תיאור הדוכן']").count()) === 0 && (await p.locator("button[aria-label^='ערכת']").count()) === 0);
+  check("בלי שם ומחיר אי אפשר להמשיך", await p.locator("[data-testid=ob-next]").isDisabled());
+  await p.fill("input[aria-label='שם המוצר']", "צמיד");
+  check("שם בלי מחיר — עדיין לא", await p.locator("[data-testid=ob-next]").isDisabled());
+  await p.fill("input[aria-label='מחיר המוצר']", "8");
+  await p.click("[data-testid=ob-next]");
+  check("שלב 3: רק צבע — שש ערכות", (await p.textContent("h1")) === "באיזה צבע הדוכן?" && (await p.locator("button[aria-label^='ערכת']").count()) === 6);
+  await p.click("button[aria-label='ערכת לבנדר']");
+  check("הדוכן משתנה מיד, עם המוצר שהוסיפו",
+    (await p.getAttribute("button[aria-label='ערכת לבנדר']", "aria-checked")) === "true" && ((await p.textContent("[data-testid=ob-preview]")) ?? "").includes("צמיד"));
+  await p.click("[data-testid=ob-next]");
+  const s4 = (await p.textContent("main")) ?? "";
+  check("שלב 4: ההורים, בלי גיל ועיר", s4.includes("ההורים יודעים?") && s4.includes("וכותבים לך בוואטסאפ") &&
+    (await p.locator("input[aria-label='גיל'], input[aria-label='עיר']").count()) === 0);
   check("בלי סימון ההורים אי אפשר להמשיך", await p.locator("button:has-text('הלאה, למספר הטלפון')").isDisabled());
   await p.check("input[aria-label='ההורים שלי יודעים']");
   await p.click("button:has-text('הלאה, למספר הטלפון')");
-  check("מסך הטלפון: שלושה שלבים ברורים", await p.locator("[data-testid=phone-how] li").count() === 3);
+  check("מסך הטלפון: בלי רשימת הסברים", await p.locator("[data-testid=phone-how]").count() === 0);
   await p.fill("input[aria-label='מספר טלפון']", LOCAL);
   await p.click("button:has-text('שלחו לי קוד')");
   await p.waitForSelector("input[aria-label='קוד אימות']");

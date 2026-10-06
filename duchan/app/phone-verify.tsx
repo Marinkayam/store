@@ -144,17 +144,6 @@ export default function PhoneVerify({
       <div className="w-full flex flex-col gap-3">
         <h1 className="t-title text-center">{title}</h1>
         <p className="t-sub text-center">{subtitle}</p>
-        <div className="bg-white border border-[var(--line)] px-4 py-3.5">
-          <VSteps
-            testid="phone-how"
-            compact
-            steps={[
-              { key: "phone", title: "מקלידים מספר טלפון", sub: "שלך, או של אמא או אבא" },
-              { key: "sms", title: "מקבלים הודעת SMS", sub: "עם קוד של 6 ספרות. בדרך כלל תוך דקה" },
-              { key: "code", title: "מקלידים את הקוד", sub: "וממשיכים. זהו!" },
-            ]}
-          />
-        </div>
         <label htmlFor="pv-phone" className="t-small font-medium -mb-1.5">מספר הטלפון</label>
         <input
           id="pv-phone"

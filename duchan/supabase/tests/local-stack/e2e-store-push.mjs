@@ -141,6 +141,7 @@ try {
   /* ── המסך בהגדרות ── */
   await p.goto(`${BASE}/dashboard/settings`);
   await p.waitForSelector("[data-testid=settings-hub]", { timeout: 20000 });
+  if (!(await p.locator("[data-testid=hub-app]").isVisible())) await p.click("[data-testid=hub-more]");
   await p.click("[data-testid=hub-app]");
   await p.waitForSelector("[data-testid=order-alerts]", { timeout: 15000 });
   const txt = (await p.textContent("[data-testid=order-alerts]")) ?? "";

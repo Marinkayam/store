@@ -483,7 +483,7 @@ input, textarea, select, button { border-radius: 0; }
   padding: 10px 16px;
   font-weight: 700;
 }
-.skip-link:focus { top: 8px; }
+.skip-link:focus-visible { top: 8px; }
 
 /* תפריט הנגישות: הגדרות על <html> (a11y-menu.tsx) */
 

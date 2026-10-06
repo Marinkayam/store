@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { useStore } from "./use-store";
 
 interface Announcement {
   id: string;
@@ -32,7 +33,10 @@ export default function WhatsNew() {
       .then(({ data }) => setNews((data as Announcement[]) ?? []));
   }, []);
 
-  const unread = news.filter((n) => n.created_at > seenAt).length;
+  // דוכן חדש לא צריך "מה חדש" על דברים שהיו שם לפני שנפתח
+  const { store } = useStore();
+  const since = [seenAt, store?.created_at ?? ""].sort().pop() ?? "";
+  const unread = news.filter((n) => n.created_at > since).length;
 
   function openSheet() {
     setOpen(true);

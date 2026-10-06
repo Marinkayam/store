@@ -41,19 +41,19 @@ await page.waitForTimeout(700);
 
 /* שלב 1 — השם */
 await page.fill("input[aria-label='שם הדוכן']", "החנות של תמר");
-await page.click("button:has-text('הלאה, לעיצוב הדוכן')");
+await page.click("[data-testid=ob-next]");
 await page.waitForTimeout(900);
 
-/* שלב 2 — מוצר ראשון וערכת צבעים */
-await page.click("button:has-text('+ להוסיף מוצר')");
-await page.waitForTimeout(600);
-await page.setInputFiles("input[type=file] >> nth=1", IMG);
+/* שלב 2 — מוצר ראשון */
+await page.setInputFiles("input[type=file]", IMG);
 await page.waitForTimeout(1500);
 await page.fill("input[aria-label='שם המוצר']", "סקוויש חד-קרן");
 await page.fill("input[aria-label='מחיר המוצר']", "15");
-await page.click("button:has-text('הוספה לדוכן')");
+await page.click("[data-testid=ob-next]");
 await page.waitForTimeout(900);
-await page.click("button:has-text('הלאה ←')");
+
+/* שלב 3 — צבע */
+await page.click("[data-testid=ob-next]");
 await page.waitForTimeout(1100);
 
 /* שלב 3 — ההורים יודעים */

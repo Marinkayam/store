@@ -738,8 +738,10 @@ export default function ProductsPage() {
       <div className="px-4 pt-5 pb-8 flex flex-col gap-4">
         {/* ── קטגוריות של החנות ──
             המוכרת מגדירה כאן רשימה משלה (נידו, מים, קרח...), מתייגת
-            מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות. */}
-        {products.length > 0 && (
+            מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות.
+            רק כשיש מה לסנן: עם מוצר אחד או שניים זה עוד דבר להבין (מרינה,
+            10.2026: "עמוס"). מי שכבר הגדירה קטגוריות רואה אותן תמיד. */}
+        {(products.length >= 4 || (store?.categories?.length ?? 0) > 0) && (
           <div className="bg-white border border-[var(--line)] p-5 mb-2" data-testid="categories-box">
             <div className="text-[14px] font-bold mb-1">קטגוריות בדוכן</div>
             <p className="text-[12px] text-[var(--faint)] leading-relaxed mb-4">

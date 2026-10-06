@@ -1,6 +1,7 @@
 "use client";
 
 import RoleGuide from "@/app/role-guide";
+import Icon from "@/app/icons";
 import Chevron from "@/app/chevron";
 import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -522,10 +523,10 @@ export default function SettingsPage() {
 
   /* ── מסך הבית ── */
   const statusChip =
-    store.status === "blocked" ? { t: "⛔ הושבת", bg: "var(--danger-bg)", fg: "var(--danger)" }
-    : store.status !== "active" ? { t: "⏸️ בהפסקה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
-    : !store.activated_at ? { t: "👀 תצוגה מקדימה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
-    : { t: "🟢 פתוח להזמנות", bg: "var(--ok-bg)", fg: "var(--ok-ink)" };
+    store.status === "blocked" ? { t: "הושבת", bg: "var(--danger-bg)", fg: "var(--danger)" }
+    : store.status !== "active" ? { t: "בהפסקה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
+    : !store.activated_at ? { t: "תצוגה מקדימה", bg: "var(--warn-bg)", fg: "var(--warn-ink)" }
+    : { t: "פתוח להזמנות", bg: "var(--ok-bg)", fg: "var(--ok-ink)" };
 
   const hero = (
     <div
@@ -577,7 +578,7 @@ export default function SettingsPage() {
           style={{ fontFamily: "var(--font-body)" }}
           data-testid="view-store"
         >
-          👀 לראות את הדוכן כמו שהקונים רואים
+          לראות את הדוכן כמו שהקונים רואים ←
         </a>
       </div>
     </div>
@@ -618,58 +619,52 @@ export default function SettingsPage() {
 
   const bgLabel = bgPattern === "photo" ? "התמונה שלי" : bgPattern && isPatternKey(bgPattern) ? PATTERNS[bgPattern].label : "בלי רקע";
   const catCount = store.categories?.length ?? 0;
-  const groups: HubGroup[] = [
-    {
-      title: "לשתף",
-      rows: [{ key: "share", icon: "🔗", tint: "#e3f5ea", title: "לשתף את הדוכן", summary: "הלינק לדוכן והודעות מוכנות לוואטסאפ" }],
-    },
-    {
-      title: "איך הדוכן נראה",
-      rows: [
-        {
-          key: "design", icon: "🎨", tint: "#ece2f3", title: "עיצוב הדוכן",
-          summary: [name || "בלי שם", themeOrDefault(theme).label, lookOrBase(look).label, bgLabel].filter(Boolean).join(" · "),
-        },
-      ],
-    },
+  const rowShare = { key: "share", icon: "link", title: "לשתף את הדוכן", summary: "הלינק לדוכן והודעות מוכנות לוואטסאפ" } as const;
+  const rowDesign = {
+    key: "design", icon: "palette", title: "עיצוב הדוכן",
+    summary: [name || "בלי שם", themeOrDefault(theme).label, lookOrBase(look).label, bgLabel].filter(Boolean).join(" · "),
+  } as const;
+  const rowPayment = {
+    key: "payment", icon: "coins", title: "איך משלמים לי",
+    summary: payLabels.length ? payLabels.join(" · ") : "עוד לא סומן",
+    ...(isPartner ? { locked: "רק ראש הדוכן משנה את זה" } : {}),
+  } as const;
+  /* למעלה רק שלושה: לשתף, איך נראה, ואיך משלמים. כל השאר ב"עוד הגדרות". */
+  const groups: HubGroup[] = [{ title: "", rows: [rowShare, rowDesign, rowPayment] }];
+  const more: HubGroup[] = [
     {
       title: "מה רואים בדוכן",
       rows: [
         {
-          key: "products", icon: "⭐", tint: "#f8f1e3", title: "המוצרים בדוכן",
+          key: "products", icon: "star", title: "המוצרים בדוכן",
           summary: `${featuredTitle.trim() || "המומלצים שלי"} · ${showSoldOut ? "מציג גם מה שאזל" : "מה שאזל מוסתר"}`,
         },
         {
-          key: "promo", icon: "📣", tint: "#eef3ec", title: "הודעה לקונים",
+          key: "promo", icon: "megaphone", title: "הודעה לקונים",
           summary: promo.promo_on && promo.promo_text.trim() ? `מופיעה: ${promo.promo_title.trim() || promo.promo_text.trim()}` : "כבויה",
         },
         {
-          key: "coupons", icon: "🏷️", tint: "#e6eef6", title: "קופונים",
+          key: "coupons", icon: "gift", title: "קופונים",
           summary: "קוד הנחה שקונים מקלידים בהזמנה", testid: "settings-coupons-link",
         },
       ],
     },
     {
-      title: "הזמנות וכסף",
+      title: "הזמנות",
       rows: [
         {
-          key: "payment", icon: "💳", tint: "#e9efe3", title: "איך משלמים לי",
-          summary: payLabels.length ? payLabels.join(" · ") : "עוד לא סומן",
-          ...(isPartner ? { locked: "רק ראש הדוכן משנה את זה" } : {}),
-        },
-        {
-          key: "shipping", icon: "🚚", tint: "#f6efe6", title: "משלוחים",
+          key: "shipping", icon: "box", title: "משלוחים",
           summary: info.ships ? (info.shipping_price !== "" ? `משלוח ₪${formatPrice(parsePrice(info.shipping_price))}` : "משלוח · המחיר בתיאום") : "מסירה ביד בלבד",
         },
-        { key: "order", icon: "💬", tint: "#e3f5ea", title: "איך מגיעה הזמנה", summary: "מה קורה כשמישהו מזמין" },
+        { key: "order", icon: "chat", title: "איך מגיעה הזמנה", summary: "מה קורה כשמישהו מזמין" },
       ],
     },
     {
       title: "חשבון",
       rows: [
-        { key: "app", icon: "📲", tint: "#efe7f4", title: "אפליקציה והתראות", summary: "אייקון במסך הבית והתראה על כל הזמנה" },
+        { key: "app", icon: "bell", title: "אפליקציה והתראות", summary: "אייקון במסך הבית והתראה על כל הזמנה" },
         {
-          key: "details", icon: "📱", tint: "#ece6de", title: "הפרטים שלי",
+          key: "details", icon: "phone", title: "הפרטים שלי",
           summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, info.city].filter(Boolean).join(" · "),
           ...(isPartner ? { locked: "רק ראש הדוכן משנה את זה" } : {}),
         },
@@ -686,8 +681,9 @@ export default function SettingsPage() {
       {!section ? (
         <SettingsHub
           hero={hero}
-          status={statusRow}
+          status={store.activated_at || store.status === "blocked" ? statusRow : null}
           groups={groups}
+          more={more}
           onOpen={openSection}
           /* דוכן משותף (0057) — אזור נפרד בסוף, ולא שורה בין ההגדרות, כדי
              שלא ייראה כמו עוד דבר שחייבים למלא. מרינה: "שלא יחשבו שזה חובה". */
@@ -698,7 +694,7 @@ export default function SettingsPage() {
               aria-label="לנהל את הדוכן ביחד"
               className="fx-press w-full text-right border border-dashed border-[var(--line)] bg-transparent px-4 py-3.5 flex items-center gap-3"
             >
-              <span className="text-[22px]" aria-hidden>🤝</span>
+              <span className="w-10 h-10 shrink-0 flex items-center justify-center bg-[var(--canvas)]" aria-hidden><Icon name="heart" size={22} /></span>
               <span className="flex-1 min-w-0">
                 <span className="flex items-center gap-2">
                   <span className="text-[14px] font-bold text-[var(--ink)]">לנהל את הדוכן ביחד</span>
@@ -719,23 +715,21 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-3">
               {!store.activated_at && isPartner ? (
                 <div data-testid="publish-partner" className="bg-[var(--canvas)] border border-[var(--line)] p-4 text-[13px] leading-relaxed">
-                  <b>⏳ הדוכן עוד לא פתוח להזמנות.</b> את הפרסום ואת התשלום עושה ראש הדוכן. בינתיים אפשר להוסיף מוצרים ולעצב.
+                  <b>הדוכן עוד לא פתוח להזמנות.</b> את הפרסום ואת התשלום עושה ראש הדוכן. בינתיים אפשר להוסיף מוצרים ולעצב.
                 </div>
               ) : !store.activated_at ? (
                 <a href="/activate" data-testid="publish-cta" className="fx-shine bg-[var(--ink)] text-white p-4 block">
-                  <div className="text-[13px] font-bold">
-                    {store.payment_claimed_at ? "⏳ התשלום בבדיקה" : "🚀 לפתוח את הדוכן להזמנות"}
+                  <div className="text-[15px] font-bold">
+                    {store.payment_claimed_at ? "התשלום בבדיקה" : "לפתוח את הדוכן להזמנות ←"}
                   </div>
                   {store.payment_claimed_at ? (
                     <div className="text-[12px] opacity-80 leading-relaxed mt-1">
                       סימנתם ששילמתם. ברגע שנראה שהכסף הגיע, הדוכן יתחיל לקבל הזמנות.
                     </div>
                   ) : (
-                    <ol className="text-[12px] opacity-80 leading-relaxed mt-1.5 flex flex-col gap-0.5">
-                      <li>1. משלמים ₪{ACTIVATION_PRICE} פעם אחת בפייבוקס (בלי עמלה) או בביט</li>
-                      <li>2. אנחנו בודקים שהכסף הגיע</li>
-                      <li>3. הדוכן נפתח והחברים יכולים להזמין</li>
-                    </ol>
+                    <div className="text-[12.5px] opacity-80 leading-relaxed mt-1">
+                      משלמים ₪{ACTIVATION_PRICE} פעם אחת, ואנחנו פותחים את הדוכן לחברים.
+                    </div>
                   )}
                 </a>
               ) : null}

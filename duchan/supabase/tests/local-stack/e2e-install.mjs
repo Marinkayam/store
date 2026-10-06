@@ -64,6 +64,7 @@ await p.screenshot({ path: "/tmp/claude-0/-home-user-store/b8ef833d-fc75-574f-b1
 // "לא עכשיו" — נעלם מהבית, נשאר במקטע
 await card(p).locator("button[aria-label='לא עכשיו']").click();
 check("'לא עכשיו' מסתיר את ההצעה", (await card(p).count()) === 0);
+if (!(await p.locator("[data-testid=hub-app]").isVisible())) await p.click("[data-testid=hub-more]");
 await p.click("[data-testid=hub-app]");
 await p.waitForSelector("[data-testid=section-app] [data-testid=install-card]");
 check("אבל 'אפליקציה בטלפון' תמיד זמין", (await p.locator("[data-testid=section-app] [data-testid=install-ios-steps]").count()) === 1);
@@ -107,6 +108,7 @@ await p.context().close();
 /* ── מחשב — זה לטלפון ── */
 p = await hubAs(UA.desktop);
 check("מחשב: בלי הצעה בבית", (await card(p).count()) === 0);
+if (!(await p.locator("[data-testid=hub-app]").isVisible())) await p.click("[data-testid=hub-more]");
 await p.click("[data-testid=hub-app]");
 await p.waitForSelector("[data-testid=install-desktop]");
 check("ובמקטע: הסבר לפתוח בטלפון", ((await p.textContent("[data-testid=install-desktop]")) ?? "").includes("בטלפון"));
@@ -115,6 +117,7 @@ await p.context().close();
 /* ── כבר מותקן ── */
 p = await hubAs(UA.iosSafari, { standalone: true });
 check("כבר במסך הבית: בלי הצעה", (await card(p).count()) === 0);
+if (!(await p.locator("[data-testid=hub-app]").isVisible())) await p.click("[data-testid=hub-more]");
 await p.click("[data-testid=hub-app]");
 // המקטע הוא עכשיו "אפליקציה והתראות": צעד המסך הבית כבר מסומן ✓, והבא הוא התראות
 await p.waitForSelector("[data-testid=alerts-step-install][data-state=done]");
