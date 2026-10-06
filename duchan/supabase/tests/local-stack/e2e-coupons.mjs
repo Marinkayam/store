@@ -99,7 +99,7 @@ check("בעלת הדוכן רואה 'עוד אין לך קופון' עם קיש�
   ((await girl.getAttribute("[data-testid=coupon-owner-hint]", "href")) ?? "").includes("/dashboard/settings#coupons"));
 check("וקונה לא רואה את ההודעה הזו", (await buyer.locator("[data-testid=coupon-owner-hint]").count()) === 0);
 await girl.goto(`${BASE}/dashboard/settings`);
-await girl.waitForSelector("[data-testid=settings-coupons-link]", { timeout: 20000 });
+await girl.waitForSelector("[data-testid=settings-coupons-link]", { state: "attached", timeout: 20000 });
 check("בהגדרות יש קיצור לקופונים", true);
 
 // הקופונים גרים ב"החנות שלי" — מקטע משלהם, לא קישור לדף אחר

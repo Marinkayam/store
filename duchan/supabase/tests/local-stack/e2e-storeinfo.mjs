@@ -71,6 +71,7 @@ const openSection = async (key) => {
     await girl.click("[data-testid=section-back]");
     await girl.waitForSelector("[data-testid=settings-hub]");
   }
+  if (!(await girl.locator(`[data-testid=hub-${key}]`).isVisible())) await girl.click("[data-testid=hub-more]");
   await girl.click(`[data-testid=hub-${key}]`);
   await girl.waitForSelector(`[data-testid=section-${key}]`);
 };
