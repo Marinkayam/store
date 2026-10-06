@@ -14,11 +14,27 @@ import Icon from "./icons";
  * מחשיכה את השמיים על כל רוחב המסך: הנורות נדלקות, כוכבים מנצנצים
  * וגחליליות מרחפות. לחיצה נוספת מחזירה ליום. מי שביקש פחות תנועה מקבל
  * את המעבר בלי האנימציות (globals.css).
+ *
+ * still — רק האיור, בלי האור. מסך הכניסה (מרינה, 10.2026: "תוריד את כל
+ * הלהדליק את האור... זה אמור להיות ממש ממש פשוט").
  */
 const NIGHT_SKY = "#2E3150";
 
-export default function StallHero({ name = "הדוכן שלך", className = "" }: { name?: string; className?: string }) {
+export default function StallHero({ name = "הדוכן שלך", className = "", still = false }: { name?: string; className?: string; still?: boolean }) {
   const [night, setNight] = useState(false);
+  if (still) {
+    return (
+      <div data-testid="stall-hero" data-night="0" className={`w-full ${className}`}>
+        <KupaStall
+          level={5}
+          name={name}
+          bare
+          deco={{ awning: "lavender", flowers: true, openSign: true, cat: true }}
+          className="w-full max-w-md mx-auto block pt-2"
+        />
+      </div>
+    );
+  }
   const toggle = () => setNight((n) => !n);
   return (
     <div

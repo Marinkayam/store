@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import StallHero from "./stall-hero";
 import HelpButton from "./help-button";
-import PromoBurst from "./promo-burst";
-import Icon from "./icons";
-import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 
-// עמוד הנחיתה: שדה אחד. בלי אימייל. הבנייה מתחילה לפני ההרשמה.
+// עמוד הנחיתה: איור, משפט אחד, כפתור אחד. בלי מחיר ובלי צעצועים.
+// מרינה, 10.2026, אחרי שנכנסה כמו ילדה: "איזה עמוס זה ולא מובן מה לעשות...
+// זה אמור להיות ממש ממש פשוט בלי המחיר אפילו בשלב הזה". המחיר מוסבר
+// במקום שבו הוא רלוונטי: במסך הפרסום, בסוף ההקמה.
 // ?ref=<slug> — הגיעה מחנות של חברה. השיוך נשמר בטיוטה ועובר ליצירת החנות.
 
 export default function Landing() {
@@ -95,68 +95,32 @@ export default function Landing() {
         </div>
       )}
 
-      {/* האיור נושא את המסך, לא הטקסט. השם קטן כי הוא כבר כתוב על האיור,
-          והמשפט קצר ובצבע מלא — הגרסה הקודמת הייתה ארוכה ואפורה. */}
-      {/* הדוכן על כל רוחב המסך, בלי מסגרת, ועם אור שמדליקים (מרינה) */}
       <div className="self-stretch -mx-6">
-        <StallHero name="דוכן" />
+        <StallHero name="דוכן" still />
       </div>
-      <div className="text-center flex flex-col items-center -mt-4">
-        {/* "דוכן" כבר כתוב על השלט באיור — מרינה: "אפשר להוריד את המילה דוכן".
-            הכותרת נשארת לקוראי מסך. */}
+      <div className="text-center -mt-2">
+        {/* "דוכן" כבר כתוב על השלט באיור. הכותרת נשארת לקוראי מסך. */}
         <h1 className="sr-only">דוכן</h1>
-        <p className="text-[15px] leading-relaxed max-w-[19rem] text-[var(--ink)]">
-          יש לך אוסף ענקי של סקווישים?
-          <br />
-          צעצועים, בגדים וספרים שכבר לא צריך?
+        <p className="text-[17px] leading-relaxed max-w-[19rem] text-[var(--ink)]">
+          יש לך דברים שכבר לא צריך?
           <br />
           <span className="font-medium">פותחים דוכן ומוכרים לחברים.</span>
         </p>
       </div>
 
-      {/* בלי שדה שם כאן: השם נשאל ממילא במסך הראשון של ההקמה, ושתי
-          שאלות לאותו דבר גרמו לתחושה של טופס כפול. */}
-      <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-2.5">
-        {IS_LAUNCH && (
-          <a
-            href="/price"
-            data-testid="promo-banner"
-            className="fx-shine fx-press fx-rise block text-center text-white px-4 pt-3 pb-3.5"
-            style={{ background: "var(--wood)", animationDelay: ".1s" }}
-          >
-            <PromoBurst />
-            <span className="relative z-[3] inline-block text-[11.5px] font-bold bg-black/25 px-2.5 py-0.5">
-              <span className="fx-wiggle inline-block align-[-2px]"><Icon name="party" size={14} tone="none" /></span> {DEAL_LABEL}
-            </span>
-            <span className="relative z-[3] block text-[17px] font-bold leading-snug mt-1">
-              רק <bdi className="fx-pop text-[24px] align-[-2px]">₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן!{" "}
-              <bdi className="text-[13px] font-medium line-through">₪{FULL_PRICE}</bdi>
-            </span>
-          </a>
-        )}
-        <button className="btn btn-primary">לפתוח דוכן ←</button>
-        {/* הקישור בשורה נפרדת: כשהוא נגרר לסוף המשפט הוא נשבר באמצע
-            ("איך" בשורה אחת ו"זה עובד?" בשנייה) ונראה כמו טעות. */}
-        <p className="text-[13px] text-center text-[var(--ink)] leading-relaxed">
-          לבנות זה חינם. משלמים פעם אחת רק כשרוצים לפרסם.
-          <br />
-          <a href="/price" className="underline font-medium">איך זה עובד?</a>
-        </p>
+      <form onSubmit={start} className="w-full max-w-sm">
+        <button className="btn btn-primary w-full" data-testid="home-start">
+          לפתוח דוכן ←
+        </button>
       </form>
 
-      {/* הכניסה לדוכן קיים יושבת בתחתית: היא נועדה למי שכבר מכירה את
-          המקום ויודעת לחפש אותה, ולמעלה היא רק גנבה מקום מהפעולה הראשית. */}
       {checked && !mine && (
-        <a
-          href="/login"
-          className="w-full max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
-        >
-          <span>כבר פתחת דוכן?</span>
-          <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
+        <a href="/login" className="t-small text-[var(--ink)] -mt-3 py-2">
+          כבר פתחת דוכן? <span className="underline font-medium">כניסה</span>
         </a>
       )}
 
-      <p className="t-small text-[var(--muted)]">
+      <p className="text-[12px] text-[var(--muted)] mt-2">
         <a href="/terms" className="underline">תנאי שימוש</a>
         {" · "}
         <a href="/privacy" className="underline">מדיניות פרטיות</a>

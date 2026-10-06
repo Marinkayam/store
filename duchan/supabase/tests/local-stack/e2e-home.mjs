@@ -1,4 +1,4 @@
-// E2E: מסך הפתיחה — מרינה, 10.2026:
+// E2E: מסך הפתיחה — מרינה, 10.2026 (ה"אור" הוסר אחר כך — מסך פשוט):
 //   • "הדוכן לא יפה בתוך המסגרת", "קווים יותר דקים", "להדליק את האור"
 //   • "אפשר להוריד את המילה דוכן"
 //   • "אם כבר פתחתי דוכן אז אתה יודע — אל תכתוב 'כבר פתחת דוכן?'"
@@ -19,12 +19,11 @@ try {
   const hero = guest.locator("[data-testid=stall-hero]");
   check("הדוכן על כל רוחב המסך", Math.round((await hero.boundingBox()).width) === 390);
   check("בלי ריבוע שמיים מאחורי הדוכן (בלי מסגרת)", (await hero.locator("svg rect.kp-sky").count()) === 0);
-  await guest.click("[data-testid=stall-light]");
-  await guest.waitForTimeout(900);
-  check("להדליק את האור: לילה", (await hero.getAttribute("data-night")) === "1" && (await hero.locator("svg[data-night='1']").count()) === 1);
-  check("השמיים מחשיכים על כל הרוחב", (await hero.evaluate((el) => getComputedStyle(el).backgroundColor)) === "rgb(46, 49, 80)");
-  await guest.click("[data-testid=stall-light]");
-  check("ולכבות: חזרה ליום", (await hero.getAttribute("data-night")) === "0");
+  // מרינה, 10.2026: "איזה עמוס זה... תוריד את כל הלהדליק את האור... בלי המחיר אפילו בשלב הזה"
+  check("מסך פשוט: בלי כפתור 'להדליק את האורות'", (await guest.locator("[data-testid=stall-light]").count()) === 0 && !((await guest.textContent("main")) ?? "").includes("להדליק"));
+  check("ובלי מחיר או באנר מבצע", (await guest.locator("[data-testid=promo-banner]").count()) === 0 && !(await guest.evaluate(() => { const m = document.querySelector("main").cloneNode(true); m.querySelectorAll("svg").forEach((x) => x.remove()); return m.textContent; })).includes("₪"));
+  check("כפתור ראשי אחד: 'לפתוח דוכן'", (await guest.locator("main button").count()) === 1 && (await guest.locator("[data-testid=home-start]").isVisible()));
+  { const b = await guest.locator("[data-testid=home-start]").boundingBox(); check("הכפתור נראה בלי לגלול", b.y + b.height <= 844, String(Math.round(b.y + b.height))); }
   const h1 = guest.locator("h1");
   check("המילה 'דוכן' לא מוצגת מתחת לאיור (נשארת לקוראי מסך)", (await h1.textContent()) === "דוכן" && (await h1.evaluate((e) => getComputedStyle(e).position)) === "absolute");
   // עוגיות: למטה ודביק (מרינה), ולא מכסה את "עזרה?"
