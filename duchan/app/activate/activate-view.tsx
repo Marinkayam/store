@@ -5,6 +5,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../dashboard/use-store";
 import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../price/sections";
 import HelpButton from "../help-button";
+import LegalLinks from "../legal-links";
 import Icon from "../icons";
 import { displayPhone } from "@/lib/phone";
 
@@ -514,18 +515,11 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         </div>
       )}
 
-      <div className="text-center mt-8 mb-16">
+      <div className="text-center mt-8 mb-6">
         <a href="/dashboard" className="text-[14px] text-[var(--muted)] underline">
           לא עכשיו, חזרה לדוכן
         </a>
         <p className="text-[12px] text-[var(--faint)] mt-3">כל מה שבנית נשמר.</p>
-        <p className="text-[12px] text-[var(--faint)] mt-3">
-          <a href="/terms" className="underline">תנאי שימוש</a>
-          {" · "}
-          <a href="/privacy" className="underline">מדיניות פרטיות</a>
-          {" · "}
-          <a href="/accessibility" className="underline">נגישות</a>
-        </p>
       </div>
     </Shell>
   );
@@ -536,9 +530,10 @@ const payBtn =
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[var(--canvas)]">
+    <main className="min-h-screen flex flex-col bg-[var(--canvas)]">
       <HelpButton context="הפעלת הדוכן" />
-      <div className="max-w-md mx-auto px-5 py-10">{children}</div>
+      <div className="w-full max-w-md mx-auto px-5 pt-10 pb-4">{children}</div>
+      <LegalLinks />
     </main>
   );
 }

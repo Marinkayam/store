@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import StallHero from "./stall-hero";
 import HelpButton from "./help-button";
+import LegalLinks from "./legal-links";
 
 // עמוד הנחיתה: איור, משפט אחד, כפתור אחד. בלי מחיר ובלי צעצועים.
 // מרינה, 10.2026, אחרי שנכנסה כמו ילדה: "איזה עמוס זה ולא מובן מה לעשות...
@@ -67,10 +68,10 @@ export default function Landing() {
   }
 
   return (
-    // ריפוד תחתון גדול מהעליון: התוכן ממורכז, אז זה מה שמרים את הדוכן
-    // מעט מעל אמצע המסך במקום להשאיר אותו בדיוק במרכז.
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 pt-6 pb-24 gap-7 bg-[var(--canvas)]">
+    // המסך עמודה בגובה מסך: התוכן ממורכז באמצע, וקישורי החובה דבוקים למטה.
+    <main className="min-h-screen flex flex-col bg-[var(--canvas)]">
       <HelpButton context="פתיחת דוכן" />
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-8 gap-7">
       {mine && (
         // כרטיס בתוך זרימת הדף, לא רצועה שחורה שנתלשת ממנה. הרצועה השחורה
         // המקורית התנגשה עם האיור הרך שמתחתיה ונראתה כמו שני אתרים שונים.
@@ -120,13 +121,8 @@ export default function Landing() {
         </a>
       )}
 
-      <p className="text-[12px] text-[var(--muted)] mt-2">
-        <a href="/terms" className="underline">תנאי שימוש</a>
-        {" · "}
-        <a href="/privacy" className="underline">מדיניות פרטיות</a>
-        {" · "}
-        <a href="/accessibility" className="underline">נגישות</a>
-      </p>
+      </div>
+      <LegalLinks />
     </main>
   );
 }

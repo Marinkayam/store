@@ -9,6 +9,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "../phone-verify";
 import Icon from "../icons";
 import HelpButton from "../help-button";
+import LegalLinks from "../legal-links";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 
 // חמישה מסכים, שאלה אחת בכל אחד: שם → מוצר ראשון → צבע → הורים → טלפון.
@@ -91,19 +92,6 @@ function StepHeader({ step, onBack }: { step: 1 | 2 | 3 | 4; onBack: () => void 
         </div>
       </div>
     </header>
-  );
-}
-
-/** קישורי החובה — מופיעים בתחתית כל מסך בפלואו, לא רק בדף הבית */
-function LegalFooter() {
-  return (
-    <p className="t-small text-[var(--muted)] text-center pt-2">
-      <a href="/terms" className="underline">תנאי שימוש</a>
-      {" · "}
-      <a href="/privacy" className="underline">פרטיות</a>
-      {" · "}
-      <a href="/accessibility" className="underline">נגישות</a>
-    </p>
   );
 }
 
@@ -229,7 +217,7 @@ export default function Onboarding() {
       <HelpButton context="פתיחת הדוכן" />
       {barStep && <StepHeader step={barStep} onBack={goBack} />}
 
-      <main className="flex-1 w-full max-w-md mx-auto px-6 py-8 flex flex-col gap-5">
+      <main className="flex-1 w-full max-w-md mx-auto px-6 pt-8 pb-0 flex flex-col gap-5">
       {/* 1 — שם הדוכן */}
       {draft.step === 1 && !result && (
         <div className="w-full flex flex-col gap-5">
@@ -502,9 +490,7 @@ export default function Onboarding() {
         </div>
       )}
 
-      <div className="mt-auto">
-        <LegalFooter />
-      </div>
+      <LegalLinks />
       </main>
     </div>
   );

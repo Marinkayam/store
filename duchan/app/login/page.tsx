@@ -1,6 +1,7 @@
 "use client";
 
 import Icon from "../icons";
+import LegalLinks from "../legal-links";
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import PhoneVerify from "../phone-verify";
@@ -48,7 +49,8 @@ function Login() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6">
+    <main className="min-h-screen flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
       <div className="text-center">
         <div className="flex justify-center mb-2"><Icon name="stall" size={44} /></div>
       </div>
@@ -60,13 +62,8 @@ export default function LoginPage() {
       <a href="/" className="text-xs text-[var(--muted)]">
         עוד אין דוכן? <span className="underline">פותחים אחד בדקות</span>
       </a>
-      <p className="text-[12px] text-[var(--muted)]">
-        <a href="/terms" className="underline">תנאי שימוש</a>
-        {" · "}
-        <a href="/privacy" className="underline">פרטיות</a>
-        {" · "}
-        <a href="/accessibility" className="underline">נגישות</a>
-      </p>
+      </div>
+      <LegalLinks />
     </main>
   );
 }
