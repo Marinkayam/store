@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import { randomPassword } from "@/lib/otp";
+import { logLoginEvent } from "@/lib/login-events";
 
 // /enter/[token] — כניסה בקישור חד-פעמי, בלי סמס.
 //
@@ -111,12 +112,24 @@ export async function POST(
     .maybeSingle();
 
   if (!link?.phone) {
+    // ללחיצה על קישור שנוצל/פג עדיין יש מספר — כדי שהמנהלת תראה ש"הקישור לא עבד"
+    const { data: known } = await db.from("login_links").select("phone, used_at").eq("token", token).maybeSingle();
+    if (known?.phone) {
+      await logLoginEvent(_req, { phone: known.phone, kind: "link_failed", detail: known.used_at ? "הקישור כבר נוצל" : "הקישור פג תוקף" });
+    }
     return failPage(
       "הקישור כבר נוצל או שפג תוקפו",
       "קישור כניסה עובד פעם אחת בלבד, ותקף 24 שעות. אפשר לבקש חדש ממי ששלח אותו."
     );
   }
   const phone = link.phone;
+  /* הקישור כבר נשרף. אם משהו נשבר מכאן, החמ"ל צריך לדעת שזה קרה ואיפה —
+     אחרת היא תראה "קישור שנוצל" ותחשוב שהיא נכנסה. */
+  const failAfter = async (step: string) => {
+    await logLoginEvent(_req, { phone, kind: "link_failed", detail: step });
+    return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע, או לבקש קישור חדש.");
+  };
+  await logLoginEvent(_req, { phone, kind: "link_used" });
 
   /* ── מי המשתמשת — אותם שלושה שלבים כמו באימות סמס ── */
   let userId: string | null = null;
@@ -142,17 +155,17 @@ export async function POST(
         user_metadata: { phone },
       });
       if (createErr || !created.user) {
-        return failPage("הכניסה לא הצליחה", "משהו השתבש אצלנו. אפשר ללחוץ שוב על הקישור בעוד רגע.");
+        return failAfter("פתיחת חשבון");
       }
       userId = created.user.id;
     }
     await db.from("phone_accounts").insert({ phone, user_id: userId });
   }
-  if (!userId) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
+  if (!userId) return failAfter("זיהוי החשבון");
 
   const { data: existing } = await db.auth.admin.getUserById(userId);
   const email = existing.user?.email;
-  if (!email) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
+  if (!email) return failAfter("חשבון בלי כתובת פנימית");
 
   /* ── פתיחת סשן — magic link שנצרך כאן בשרת, כמו באימות סמס ── */
   const supa = await supabaseServer();
@@ -173,9 +186,9 @@ export async function POST(
   if (!signedIn) {
     const password = randomPassword();
     const { error: updErr } = await db.auth.admin.updateUserById(userId, { password });
-    if (updErr) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
+    if (updErr) return failAfter("החלפת סיסמה");
     const { error: signInErr } = await supa.auth.signInWithPassword({ email, password });
-    if (signInErr) return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע.");
+    if (signInErr) return failAfter("פתיחת סשן");
   }
 
   /* ── סימון פיילוט לילדה חדשה — אותו מנגנון כמו במסלול הסמס ── */

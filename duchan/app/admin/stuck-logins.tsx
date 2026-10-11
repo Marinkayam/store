@@ -25,6 +25,8 @@ type Stuck = {
   /** מתי לחצו "לא קיבלתי קוד" במסך הקוד */
   helpAt: string | null;
   store: { name: string; emoji: string } | null;
+  /** מה קרה, במשפט (מיומן הכניסות) */
+  headline?: string | null;
 };
 
 function ago(iso: string): string {
@@ -106,6 +108,9 @@ export default function StuckLogins() {
                     {" · "}
                     {ago(s.lastAt)}
                   </div>
+                  {s.headline && (
+                    <div className="text-[12.5px] mt-1 leading-snug" data-testid="stuck-headline">{s.headline}</div>
+                  )}
                   {s.helpAt && (
                     <div className="inline-block mt-1 bg-[var(--danger)] text-white text-[11.5px] font-bold px-1.5 py-0.5" data-testid="stuck-help">
                       🆘 לחצו "לא קיבלתי קוד" {ago(s.helpAt)}
@@ -117,16 +122,25 @@ export default function StuckLogins() {
                     </div>
                   )}
                 </div>
-                {!url && (
+                <div className="shrink-0 flex flex-col gap-1.5">
                   <button
-                    onClick={() => mint(s.phone)}
-                    disabled={busy === s.phone}
-                    data-testid="stuck-mint"
-                    className="shrink-0 bg-[var(--ink)] text-white px-3 py-2 text-[12px] font-bold disabled:opacity-50"
+                    onClick={() => window.dispatchEvent(new CustomEvent("login-flow-open", { detail: s.phone }))}
+                    data-testid="stuck-timeline"
+                    className="border border-[var(--line)] bg-white px-2.5 py-2 text-[12px]"
                   >
-                    {busy === s.phone ? "רגע…" : s.linkSentAt ? "🔑 קישור חדש" : "🔑 ליצור קישור"}
+                    ציר זמן
                   </button>
-                )}
+                  {!url && (
+                    <button
+                      onClick={() => mint(s.phone)}
+                      disabled={busy === s.phone}
+                      data-testid="stuck-mint"
+                      className="bg-[var(--ink)] text-white px-3 py-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                      {busy === s.phone ? "רגע…" : s.linkSentAt ? "🔑 קישור חדש" : "🔑 ליצור קישור"}
+                    </button>
+                  )}
+                </div>
               </div>
               {url && (
                 <div className="flex gap-2">

@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { requireAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
+import { logLoginEvent } from "@/lib/login-events";
 
 // POST /api/admin/login-link { phone } — קישור כניסה חד-פעמי לילדה.
 //
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  await logLoginEvent(req, { phone, kind: "link_minted", detail: "מהחמ\"ל" });
   const origin = req.nextUrl.origin;
   return NextResponse.json({
     url: `${origin}/enter/${token}${storeLink ? "?to=store" : ""}`,

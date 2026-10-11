@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/phone";
 import { codeMatches, randomPassword, OTP_MAX_ATTEMPTS } from "@/lib/otp";
 import { PILOT_COOKIE } from "@/lib/squish-pilot";
+import { logLoginEvent } from "@/lib/login-events";
 
 // POST /api/auth/sms/verify { phone, code } — מאמת את הקוד ופותח סשן.
 //
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
   const phone = normalizePhone(body.phone ?? "");
   const code = (body.code ?? "").replace(/\D/g, "");
   if (!phone || code.length !== 6) {
+    if (phone) await logLoginEvent(req, { phone, kind: "verify_format", detail: `${code.length} ספרות` });
     return NextResponse.json({ error: "הקוד צריך להיות שש ספרות" }, { status: 400 });
   }
 
@@ -62,12 +64,14 @@ export async function POST(req: NextRequest) {
       .is("consumed_at", null)
       .limit(1)
       .maybeSingle();
+    await logLoginEvent(req, { phone, kind: stale ? "verify_expired" : "verify_none" });
     return NextResponse.json(
       { error: stale ? "תוקף הקוד פג. אפשר לבקש קוד חדש" : "לא נשלח קוד למספר הזה. אפשר לבקש קוד חדש" },
       { status: 400 }
     );
   }
   if (newest.attempts >= OTP_MAX_ATTEMPTS) {
+    await logLoginEvent(req, { phone, kind: "verify_locked" });
     return NextResponse.json({ error: "יותר מדי ניסיונות. אפשר לבקש קוד חדש" }, { status: 429 });
   }
 
@@ -76,6 +80,9 @@ export async function POST(req: NextRequest) {
     // הספירה עולה לפני התשובה, אחרת אפשר לנסות בלי הגבלה במקביל
     await db.from("phone_otps").update({ attempts: newest.attempts + 1 }).eq("id", newest.id);
     const left = OTP_MAX_ATTEMPTS - newest.attempts - 1;
+    await logLoginEvent(req, left > 0
+      ? { phone, kind: "verify_wrong", detail: `נשארו ${left} ניסיונות` }
+      : { phone, kind: "verify_locked", detail: "ניסיון אחרון שגוי" });
     return NextResponse.json(
       { error: left > 0 ? `הקוד לא נכון. נשארו ${left} ניסיונות` : "יותר מדי ניסיונות. אפשר לבקש קוד חדש" },
       { status: 400 }
@@ -88,6 +95,17 @@ export async function POST(req: NextRequest) {
     .from("phone_otps")
     .update({ consumed_at: new Date().toISOString() })
     .in("id", candidates.map((c) => c.id));
+
+  /**
+   * הקוד היה נכון, אבל משהו אצלנו נשבר בדרך לפתיחת הסשן. הקוד כבר נשרף
+   * למעלה, כלומר היא הייתה נאלצת לבקש סמס חדש (ועוד אחד על המכסה) בגלל
+   * תקלה שלנו. מחזירים אותו, ורושמים ביומן איפה זה נשבר.
+   */
+  const failSession = async (step: string, msg: string) => {
+    await db.from("phone_otps").update({ consumed_at: null }).in("id", candidates.map((c) => c.id));
+    await logLoginEvent(req, { phone, kind: "session_failed", detail: step });
+    return NextResponse.json({ error: msg }, { status: 500 });
+  };
 
   // מי המשתמשת:
   // 1. מספר שכבר אומת בעבר
@@ -120,18 +138,18 @@ export async function POST(req: NextRequest) {
         user_metadata: { phone },
       });
       if (createErr || !created.user) {
-        return NextResponse.json({ error: "לא הצלחנו לפתוח חשבון. לנסות שוב" }, { status: 500 });
+        return failSession(`פתיחת חשבון: ${createErr?.message ?? "בלי משתמשת"}`, "לא הצלחנו לפתוח חשבון. לנסות שוב");
       }
       userId = created.user.id;
       isNew = true;
     }
     await db.from("phone_accounts").insert({ phone, user_id: userId });
   }
-  if (!userId) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
+  if (!userId) return failSession("זיהוי החשבון", "לא הצלחנו להיכנס. לנסות שוב");
 
   const { data: existing } = await db.auth.admin.getUserById(userId);
   const email = existing.user?.email;
-  if (!email) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
+  if (!email) return failSession("חשבון בלי כתובת פנימית", "לא הצלחנו להיכנס. לנסות שוב");
 
   /* טוקן פיילוט, אם הילדה פתחה את הקישור לפני האונבורדינג.
      נצמד כאן ולא ביצירת הפרופיל: בין האימות ליצירת הפרופיל היא כבר
@@ -175,9 +193,9 @@ export async function POST(req: NextRequest) {
   if (!signedIn) {
     const password = randomPassword();
     const { error: updErr } = await db.auth.admin.updateUserById(userId, { password });
-    if (updErr) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
+    if (updErr) return failSession(`החלפת סיסמה: ${updErr.message}`, "לא הצלחנו להיכנס. לנסות שוב");
     const { error: signInErr } = await supa.auth.signInWithPassword({ email, password });
-    if (signInErr) return NextResponse.json({ error: "לא הצלחנו להיכנס. לנסות שוב" }, { status: 500 });
+    if (signInErr) return failSession(`פתיחת סשן: ${signInErr.message}`, "לא הצלחנו להיכנס. לנסות שוב");
   }
 
   // האם כבר יש לה חנות — הלקוח צריך לדעת אם להמשיך לאונבורדינג או לדשבורד
@@ -223,6 +241,7 @@ export async function POST(req: NextRequest) {
     invite = inv?.token ?? null;
   }
 
+  await logLoginEvent(req, { phone, kind: "verify_ok", detail: isNew ? "משתמשת חדשה" : null });
   const res = NextResponse.json({ ok: true, isNew, hasStore, phone, ...(invite ? { invite } : {}) });
   // העוגייה סיימה את תפקידה — מכאן ההוכחה יושבת בדאטהבייס
   if (pilotToken) res.cookies.set(PILOT_COOKIE, "", { path: "/", maxAge: 0 });

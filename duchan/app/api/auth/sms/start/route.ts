@@ -5,6 +5,7 @@ import { displayPhone, normalizePhone } from "@/lib/phone";
 import { notifyAdmins } from "@/lib/admin-notify";
 import { sendSms, smsConfigured } from "@/lib/sms";
 import { generateCode, hashCode, OTP_TTL_MINUTES } from "@/lib/otp";
+import { logLoginEvent } from "@/lib/login-events";
 
 /**
  * האם המספר הזה הוא של המנהלת.
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
   const trusted = phone ? await isTrusted(phone) : false;
 
   if (!smsConfigured()) {
+    if (phone) await logLoginEvent(req, { phone, kind: "sms_off" });
     // למנהלת מפרטים איזה משתנה בדיוק חסר, כדי שלא תצטרך לנחש בין ארבעה
     const missing = (["SMS4FREE_KEY", "SMS4FREE_USER", "SMS4FREE_PASS"] as const).filter(
       (k) => !process.env[k]
@@ -85,7 +87,24 @@ export async function POST(req: NextRequest) {
   }
 
   if (!phone) {
+    // המספר שהוקלד נרשם כפי שהוא (ספרות בלבד): כשהיא מספרת מה הקלידה, המנהלת
+    // יכולה לחפש אותו ולראות שזו הסיבה — קווי, ספרה חסרה, מספר זר.
+    const typed = String(body.phone ?? "").replace(/\D/g, "").slice(0, 15);
+    if (typed.length >= 3) await logLoginEvent(req, { phone: typed, kind: "phone_invalid", detail: typed });
     return NextResponse.json({ error: "המספר לא נראה תקין, כדאי לבדוק אותו שוב" }, { status: 400 });
+  }
+
+  /* טלפון קווי עובר את normalizePhone (הוא מספר ישראלי תקין), אבל סמס לא
+     מגיע אליו לעולם. בלי הבדיקה הזו המערכת "שלחה קוד", הילדה חיכתה, לחצה
+     "שלחו שוב", וכל מה שנשאר הוא קוד שאף אחת לא קיבלה ועוד בקשה על המכסה.
+     עכשיו היא שומעת מיד מה לא בסדר, והמנהלת רואה את זה ביומן הכניסות. */
+  if (!phone.startsWith("9725")) {
+    const typed = String(body.phone ?? "").replace(/\D/g, "").slice(0, 15);
+    await logLoginEvent(req, { phone: typed, kind: "phone_invalid", detail: typed });
+    return NextResponse.json(
+      { error: "צריך מספר נייד, שמתחיל ב-05, כי הקוד מגיע בהודעת סמס" },
+      { status: 400 }
+    );
   }
 
   const db = supabaseAdmin();
@@ -110,6 +129,7 @@ export async function POST(req: NextRequest) {
   if (!owner && !trusted && recent
       && now - new Date(recent.created_at).getTime() < RESEND_SECONDS * 1000) {
     const wait = Math.ceil((RESEND_SECONDS * 1000 - (now - new Date(recent.created_at).getTime())) / 1000);
+    await logLoginEvent(req, { phone, kind: "resend_wait", detail: `${wait} שניות` });
     return NextResponse.json({ error: `כבר שלחנו קוד. אפשר לבקש שוב בעוד ${wait} שניות` }, { status: 429 });
   }
 
@@ -120,16 +140,20 @@ export async function POST(req: NextRequest) {
     db.from("phone_otps").select("id", { count: "exact", head: true }).eq("ip_hash", ipHash).gte("created_at", dayAgo),
   ]);
   if (!owner && !trusted && ((phoneCount ?? 0) >= PER_PHONE_PER_DAY || (ipCount ?? 0) >= PER_IP_PER_DAY)) {
+    await logLoginEvent(req, {
+      phone, kind: "day_limit",
+      detail: (phoneCount ?? 0) >= PER_PHONE_PER_DAY ? "מכסה למספר" : "מכסה למכשיר/רשת",
+    });
     return NextResponse.json({ error: "יותר מדי בקשות היום. לנסות שוב מחר" }, { status: 429 });
   }
 
   const code = generateCode();
-  const { error: insErr } = await db.from("phone_otps").insert({
+  const { data: otpRow, error: insErr } = await db.from("phone_otps").insert({
     phone,
     code_hash: hashCode(phone, code),
     expires_at: new Date(now + OTP_TTL_MINUTES * 60 * 1000).toISOString(),
     ip_hash: ipHash,
-  });
+  }).select("id").single();
   if (insErr) {
     // עד עכשיו השגיאה הזו נבלעה בלי לוג ובלי פירוט, וכל תקלה בכתיבה — טבלה
     // חסרה, מפתח service role שגוי, הרשאה — נראתה בדיוק אותו דבר.
@@ -144,6 +168,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  await logLoginEvent(req, { phone, kind: "code_requested" });
+
   /* בקשה שנייה בלי כניסה ביניהן = כנראה הסמס לא מגיע. מודיעים למנהלת
      פעם אחת לכל "תקיעה" (המפתח הוא הכניסה המוצלחת האחרונה), כדי שתשלח
      קישור בוואטסאפ לפני שהילדה מוותרת. */
@@ -152,6 +178,14 @@ export async function POST(req: NextRequest) {
   const sent = await sendSms(phone, `קוד הכניסה שלך לדוכן: ${code}. תקף ל-${OTP_TTL_MINUTES} דקות.`);
   if (!sent.ok) {
     console.error("[sms] send failed:", sent.reason, sent.code ?? "");
+    /* סמס שלא יצא הוא לא "בקשת קוד": בלי למחוק אותו, הוא היה סופר למכסה
+       היומית ופותח חלון המתנה של דקה — כלומר אצלה זה נראה כמו "ביקשתי קוד
+       והתקעתי את עצמי", כשהבעיה בכלל אצל הספק. הסיפור נשאר ביומן הכניסות. */
+    if (otpRow?.id) await db.from("phone_otps").delete().eq("id", otpRow.id);
+    await logLoginEvent(req, {
+      phone, kind: "sms_failed",
+      detail: `${sent.reason}${sent.code ? ` (${sent.code})` : ""}`,
+    });
     after(() =>
       notifyAdmins({
         kind: "sms_failed",
@@ -171,6 +205,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  await logLoginEvent(req, { phone, kind: "sms_sent" });
   return NextResponse.json({ ok: true, ttlMinutes: OTP_TTL_MINUTES });
 }
 

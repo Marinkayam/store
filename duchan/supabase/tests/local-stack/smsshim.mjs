@@ -39,6 +39,12 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ status: -1, message: "bad credentials" }));
       return;
     }
+    // מספר שהספק תמיד דוחה — כדי לבדוק את מסלול "הסמס לא יצא" ביומן הכניסות
+    if (/^05000\d{3}99$/.test(b.recipient)) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: -2, message: "no balance" }));
+      return;
+    }
     await db.query("insert into sms_outbox (recipient, sender, msg) values ($1,$2,$3)", [
       b.recipient,
       b.sender,

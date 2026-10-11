@@ -18,7 +18,7 @@ import { notifyTelegram } from "@/lib/telegram";
  * phone_accounts אף אחת לא הייתה יכולה להיכנס לדוכן שלה אחרי שחזור.
  * **טבלה חדשה צריכה להיכנס לכאן באותה מיגרציה שיוצרת אותה.**
  *
- * במפורש *לא* כאן: phone_otps ו-sms_outbox (חולפות, וקוד חד-פעמי שפג
+ * במפורש *לא* כאן: login_events (נשמרת 30 יום ונמחקת למטה), phone_otps ו-sms_outbox (חולפות, וקוד חד-פעמי שפג
  * תוקפו הוא רק סיכון בקובץ), ו-schema_migrations (נגזרת מהקוד).
  */
 const TABLES = [
@@ -88,6 +88,20 @@ export async function GET(req: NextRequest) {
   }
 
   const db = supabaseAdmin();
+
+  /* יומן הכניסות (0063) נשמר 30 יום ואז נמחק. הוא לא נכנס לגיבוי בכוונה:
+     מספרי טלפון של ניסיונות כניסה הם בדיוק מה שלא צריך להישמר מעבר למה
+     שנחוץ לתמיכה. כישלון כאן (טבלה שעוד לא קיימת) לא עוצר את הגיבוי. */
+  await db
+    .from("login_events")
+    .delete()
+    .lt("at", new Date(Date.now() - 30 * 24 * 3600_000).toISOString())
+    .then(({ error }) => {
+      if (error && !/does not exist|schema cache|could not find the table/i.test(error.message)) {
+        console.error("[cron] login_events purge:", error.message);
+      }
+    });
+
   const dumps = await Promise.all(TABLES.map((t) => dumpTable(db, t).then((d) => [t, d] as const)));
   const users = await dumpUsers(db);
 

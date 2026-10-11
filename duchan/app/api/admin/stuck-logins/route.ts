@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { diagnose, type EventRow } from "@/lib/login-events";
 
 // GET /api/admin/stuck-logins — מי ביקשה קוד כמה פעמים ולא הצליחה להיכנס.
 //
@@ -85,9 +86,32 @@ export async function GET() {
       linkSentAt: openLink?.created_at ?? null,
       helpAt,
       store: null as null | { name: string; emoji: string },
+      /** מה קרה, במשפט — מיומן הכניסות (0063). ריק אם היומן עוד לא פעיל. */
+      headline: null as string | null,
     });
   }
   if (!stuck.length) return NextResponse.json({ stuck: [] });
+
+  // יומן הכניסות: משפט אחד לכל שורה. טבלה חסרה = בלי משפט, לא תקלה.
+  const { data: evs } = await db
+    .from("login_events")
+    .select("phone, at, kind, detail, client")
+    .in("phone", stuck.map((s) => s.phone))
+    .gte("at", since)
+    .order("at", { ascending: true })
+    .limit(3000);
+  if (evs?.length) {
+    const by = new Map<string, EventRow[]>();
+    for (const e of evs as (EventRow & { phone: string })[]) {
+      const l = by.get(e.phone) ?? [];
+      l.push(e);
+      by.set(e.phone, l);
+    }
+    for (const s of stuck) {
+      const rows = by.get(s.phone);
+      if (rows?.length) s.headline = diagnose(rows).headline;
+    }
+  }
 
   // שם הדוכן, אם יש — כדי לדעת למי כותבים
   const { data: stores } = await db

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { displayPhone, normalizePhone } from "@/lib/phone";
 import { notifyAdmins } from "@/lib/admin-notify";
+import { logLoginEvent } from "@/lib/login-events";
 
 // POST /api/auth/sms/help { phone } — "לא קיבלתי קוד".
 //
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
+    await logLoginEvent(req, { phone, kind: "help_clicked" });
     after(() =>
       notifyAdmins({
         kind: "login_stuck",

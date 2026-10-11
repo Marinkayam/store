@@ -15,6 +15,7 @@ import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import AdminCoupons from "./admin-coupons";
 import NoSmsLogin from "./no-sms-login";
 import StuckLogins from "./stuck-logins";
+import LoginFlow from "./login-flow";
 import AdminPush from "./admin-push";
 import AdminStats from "./admin-stats";
 
@@ -393,6 +394,7 @@ function SchemaWarning() {
         {/* תמיד גלוי: "הקוד לא מגיע" הוא פנייה שמגיעה בוואטסאפ, ועונים עליה מיד */}
         {/* מי שתקועה בכניסה — מוצג רק כשיש כאלה */}
         <AdminStats />
+        <LoginFlow />
         <StuckLogins />
         <AdminPush />
         <NoSmsLogin />
