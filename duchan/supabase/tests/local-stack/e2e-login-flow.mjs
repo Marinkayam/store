@@ -153,11 +153,12 @@ check("בלי כניסה אין גישה", anon.status === 403);
 
 /* ── הממשק ── */
 await admin.goto(`${BASE}/admin`);
+await admin.click("[data-testid=admin-tab-logins]", { timeout: 20000 });
 await admin.waitForSelector("[data-testid=login-flow]", { timeout: 20000 });
 await admin.waitForSelector("[data-testid=login-health]", { timeout: 15000 });
 check("הכרטיס 'כניסות' מציג תמונת מצב", ((await admin.textContent("[data-testid=login-health]")) ?? "").includes("ניסו"));
 check("ובאנר תקלה כללית בספק", await admin.locator("[data-testid=login-outage]").isVisible());
-check("ורשימת 'צריכות עזרה'", (await admin.locator("[data-testid=login-needhelp-row]").count()) >= 3);
+check("ורשימת 'צריכות עזרה'", (await admin.locator("[data-testid=stuck-row]").count()) >= 3);
 
 await admin.fill("[data-testid=login-search-input]", NOREC.replace(/^972/, "0"));
 await admin.click("[data-testid=login-search]");

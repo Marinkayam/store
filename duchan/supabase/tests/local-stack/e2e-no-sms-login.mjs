@@ -41,19 +41,22 @@ await admin.goto(`${BASE}/login`);
 await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 await admin.goto(`${BASE}/admin`);
-await admin.waitForSelector("[data-testid=no-sms-login]", { timeout: 20000 });
-check("הכרטיס גלוי בראש החמ\"ל", true);
-
-await admin.fill("input[aria-label='מספר טלפון לכניסה בלי סמס']", local);
-await admin.click("[data-testid=no-sms-mint]");
-await admin.waitForSelector("[data-testid=no-sms-result]", { timeout: 10000 });
-const url = ((await admin.textContent("[data-testid=no-sms-result] [dir=ltr]")) ?? "").trim();
+// כניסה בלי סמס: בטאב "כניסות" — חיפוש המספר, ומשם קישור + וואטסאפ
+await admin.click("[data-testid=admin-tab-logins]", { timeout: 20000 });
+await admin.fill("[data-testid=login-search-input]", local);
+await admin.click("[data-testid=login-search]");
+await admin.waitForSelector("[data-testid=login-timeline]", { timeout: 10000 });
+check("טאב הכניסות מוצא את המספר", ((await admin.textContent("[data-testid=login-timeline]")) ?? "").includes(store.display_name));
+await admin.click("[data-testid=login-mint]");
+await admin.waitForSelector("[data-testid=login-whatsapp]", { timeout: 10000 });
+const waText = decodeURIComponent(((await admin.getAttribute("[data-testid=login-whatsapp]", "href")) ?? "").split("?text=")[1] ?? "");
+const url = waText.match(/https?:\/\/\S+\/enter\/\S+/)?.[0] ?? "";
 check("נוצר קישור לדוכן", /\/enter\/[\w-]{16,}\?to=store$/.test(url), url.replace(/enter\/[\w-]+/, "enter/…"));
 const { rows: [{ n: pilotsAfter }] } = await db.query("select count(*)::int as n from squish_pilot_tokens");
 check("בלי טוקן פיילוט של סקוויש", pilotsAfter === pilotsBefore, `${pilotsBefore} → ${pilotsAfter}`);
 
 // בתיק החנות — מקוצר, עם המספר ממולא
-await admin.click("button:has-text('דוכנים')");
+await admin.click("[data-testid=admin-tab-stores]");
 await admin.waitForTimeout(500);
 await admin.locator("button", { hasText: store.display_name }).first().click();
 await admin.waitForSelector("[data-testid=no-sms-open]", { timeout: 15000 });

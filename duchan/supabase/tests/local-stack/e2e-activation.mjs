@@ -406,7 +406,7 @@ check("והוא גם מתחיל כטיוטה", noa?.activated_at === null);
 /* ── 8: החמ"ל מראה את הרשת ── */
 await admin.goto(`${BASE}/admin`);
 await admin.waitForTimeout(1200);
-await admin.click("button:has-text('רשת')");
+await admin.click("[data-testid=admin-tab-network]");
 await admin.waitForTimeout(1500);
 const net = await admin.textContent("body");
 check("לשונית הרשת מציגה את האשכול עם שני הדוכנים",

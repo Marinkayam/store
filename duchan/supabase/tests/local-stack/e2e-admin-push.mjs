@@ -67,6 +67,7 @@ await admin.goto(`${BASE}/login`);
 await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 await admin.goto(`${BASE}/admin`);
+await admin.click("[data-testid=admin-tab-news]", { timeout: 20000 });
 await admin.waitForSelector("[data-testid=admin-push]", { timeout: 20000 });
 const card = (await admin.textContent("[data-testid=admin-push]")) ?? "";
 check("כרטיס ההתראות בחמ\"ל", card.includes("התראות לטלפון"));

@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
 import { diagnose, KIND_LABEL, KIND_TONE, type EventRow, type LoginKind } from "@/lib/login-events";
+import { findStuck, storesByPhone } from "@/lib/stuck-logins";
 
 // GET /api/admin/login-flow            — תמונת מצב: מי ניסה, מי נכנס, מי תקוע ולמה
 // GET /api/admin/login-flow?phone=...  — הציר המלא של מספר אחד + מה קרה ומה עושים
@@ -112,22 +113,23 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  /* ── תמונת מצב ── */
+  /* ── תמונת מצב ──
+     "צריכות עזרה" היא רשימה אחת: מי שהיומן (0063) אומר שהפרק האחרון שלה לא
+     נגמר בכניסה, ומי ש-phone_otps אומר שביקשה קוד כמה פעמים ולא נכנסה (זה
+     מכסה גם ניסיונות מלפני שהיומן נפתח). קודם אלה היו שני כרטיסים נפרדים. */
   const since = new Date(Date.now() - WINDOW_HOURS * 3600_000).toISOString();
-  const { data: all, error } = await db
-    .from("login_events")
-    .select("phone, at, kind, detail, client")
-    .gte("at", since)
-    .order("at", { ascending: true })
-    .limit(6000);
-  if (error) {
-    if (isMissingTable(error.message, error.code)) return NextResponse.json({ missing: true });
+  const [{ data: all, error }, stuckList] = await Promise.all([
+    db.from("login_events").select("phone, at, kind, detail, client").gte("at", since).order("at", { ascending: true }).limit(6000),
+    findStuck(db),
+  ]);
+  const missing = !!error && isMissingTable(error.message, error.code);
+  if (error && !missing) {
     console.error("[admin/login-flow]", error.message);
     return NextResponse.json({ error: "לא הצלחנו לטעון" }, { status: 500 });
   }
 
   const byPhone = new Map<string, Row[]>();
-  for (const r of (all ?? []) as Row[]) {
+  for (const r of (missing ? [] : (all ?? [])) as Row[]) {
     const l = byPhone.get(r.phone) ?? [];
     l.push(r);
     byPhone.set(r.phone, l);
@@ -164,33 +166,48 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // מי צריכה עזרה עכשיו: הפרק האחרון שלה לא נגמר בכניסה
-  const needing: { phone: string; diagnosis: ReturnType<typeof diagnose>; lastAt: string }[] = [];
+  type Need = {
+    phone: string; valid: boolean; headline: string; action: string; lastAt: string;
+    requests: number | null; wrongCodes: number | null; helpAt: string | null; linkSentAt: string | null;
+  };
+  const need = new Map<string, Need>();
   for (const [phone, rows] of byPhone) {
     const d = diagnose(rows);
-    if (d.state === "bad") needing.push({ phone, diagnosis: d, lastAt: rows[rows.length - 1].at });
+    if (d.state !== "bad") continue;
+    need.set(phone, {
+      phone, valid: /^972\d{9}$/.test(phone), headline: d.headline, action: d.action,
+      lastAt: rows[rows.length - 1].at, requests: null, wrongCodes: null, helpAt: null, linkSentAt: null,
+    });
   }
-  needing.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
-  const top = needing.slice(0, 20);
-
-  const real = top.filter((n) => /^972\d{9}$/.test(n.phone)).map((n) => n.phone);
-  const { data: stores } = real.length
-    ? await db.from("stores").select("contact_phone, display_name, emoji, created_at").in("contact_phone", real).order("created_at", { ascending: true })
-    : { data: [] as { contact_phone: string; display_name: string; emoji: string }[] };
+  for (const st of stuckList ?? []) {
+    const ev = byPhone.get(st.phone);
+    const cur = need.get(st.phone);
+    // היומן אומר שהיא נכנסה *אחרי* הבקשה האחרונה? אז היא לא תקועה, גם אם
+    // phone_otps עוד זוכר בקשות. כניסה ישנה יותר לא מבטלת תקיעה חדשה.
+    const lastOk = (ev ?? []).filter((e) => e.kind === "verify_ok" || e.kind === "link_used").map((e) => e.at).sort().pop();
+    if (!cur && lastOk && lastOk > st.lastAt) continue;
+    need.set(st.phone, {
+      phone: st.phone,
+      valid: true,
+      headline: cur?.headline ?? `ביקשה קוד ${st.requests === 1 ? "פעם אחת" : `${st.requests} פעמים`} ולא נכנסה`,
+      action: cur?.action ?? "link",
+      lastAt: [cur?.lastAt ?? "", st.lastAt].sort().pop()!,
+      requests: st.requests,
+      wrongCodes: st.wrongCodes,
+      helpAt: st.helpAt,
+      linkSentAt: st.linkSentAt,
+    });
+  }
+  // מי שלחצו "לא קיבלתי קוד" ראשונים, ואחריהם לפי הזמן
+  const top = [...need.values()]
+    .sort((a, b) => Number(!!b.helpAt) - Number(!!a.helpAt) || b.lastAt.localeCompare(a.lastAt))
+    .slice(0, 25);
+  const stores = await storesByPhone(db, top.map((n) => n.phone));
 
   return NextResponse.json({
-    health: { hours: HEALTH_HOURS, tried, entered, smsFailed, wrong },
+    missing,
+    health: missing ? null : { hours: HEALTH_HOURS, tried, entered, smsFailed, wrong },
     outage,
-    needHelp: top.map((n) => {
-      const st = (stores ?? []).find((s) => s.contact_phone === n.phone);
-      return {
-        phone: n.phone,
-        valid: /^972\d{9}$/.test(n.phone),
-        headline: n.diagnosis.headline,
-        action: n.diagnosis.action,
-        lastAt: n.lastAt,
-        store: st ? { name: st.display_name, emoji: st.emoji } : null,
-      };
-    }),
+    needHelp: top.map((n) => ({ ...n, store: stores.get(n.phone) ?? null })),
   });
 }

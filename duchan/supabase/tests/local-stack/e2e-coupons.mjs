@@ -260,7 +260,7 @@ await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 await admin.goto(`${BASE}/admin`);
 await admin.waitForSelector("text=חמ\"ל", { timeout: 15000 });
-await admin.click("button:has-text('דוכנים')");
+await admin.click("[data-testid=admin-tab-stores]");
 await admin.waitForTimeout(500);
 await admin.locator("button", { hasText: store.display_name }).first().click();
 await admin.waitForSelector("[data-testid=admin-coupons] [data-testid=coupon-manager]", { timeout: 15000 });

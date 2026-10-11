@@ -32,6 +32,8 @@ const ALL = [STUCK, ONCE, LATER, store.contact_phone];
 const reset = async () => {
   await db.query("delete from phone_otps where phone = any($1)", [ALL]);
   await db.query("delete from login_links where phone = any($1)", [ALL]);
+  // כניסה מוצלחת אמיתית מבדיקה קודמת (verify_ok ביומן) מוציאה אותה מהרשימה, בצדק
+  await db.query("delete from login_events where phone = any($1)", [ALL]);
   await db.query("delete from phone_accounts where phone = $1", [STUCK]);
   await db.query("delete from auth.users where email like $1", [`${STUCK}@%`]);
 };
@@ -56,9 +58,11 @@ await admin.goto(`${BASE}/login`);
 await verifyPhone(admin, "0509990000");
 await admin.waitForTimeout(1500);
 await admin.goto(`${BASE}/admin`);
+await admin.click("[data-testid=admin-tab-logins]", { timeout: 20000 });
 await admin.waitForSelector("[data-testid=stuck-logins]", { timeout: 20000 });
 
 const row = (p) => admin.locator(`[data-testid=stuck-row][data-phone='${p}']`);
+await row(STUCK).first().waitFor({ timeout: 15000 });
 check("מי שביקשה 3 פעמים — ברשימה", (await row(STUCK).count()) === 1);
 const stuckText = (await row(STUCK).textContent()) ?? "";
 check("עם מספר הבקשות והקודים השגויים", stuckText.includes("3 בקשות קוד") && stuckText.includes("3 קוד שגוי"), stuckText);
@@ -78,7 +82,9 @@ const linkUrl = text.match(/https?:\/\/\S+\/enter\/\S+/)?.[0] ?? "";
 check("עם קישור כניסה לדוכן", /\/enter\/[\w-]{16,}\?to=store$/.test(linkUrl), linkUrl.replace(/enter\/[\w-]+/, "enter/…"));
 
 await admin.reload();
+await admin.click("[data-testid=admin-tab-logins]", { timeout: 20000 });
 await admin.waitForSelector("[data-testid=stuck-logins]", { timeout: 20000 });
+await row(STUCK).locator("[data-testid=stuck-link-sent]").waitFor({ timeout: 10000 }).catch(() => {});
 check("אחרי רענון: 'כבר נוצר קישור'", (await row(STUCK).locator("[data-testid=stuck-link-sent]").count()) === 1);
 
 /* ── נכנסה בקישור → יורדת מהרשימה ── */
@@ -86,6 +92,7 @@ const u = new URL(linkUrl);
 const enter = await fetch(`${BASE}${u.pathname}${u.search}`, { method: "POST", redirect: "manual" });
 check("הקישור עובד", enter.status === 303, `status=${enter.status} → ${enter.headers.get("location")}`);
 await admin.reload();
+await admin.click("[data-testid=admin-tab-logins]", { timeout: 20000 });
 await admin.waitForTimeout(2500);
 check("אחרי שנכנסה — יורדת מהרשימה", (await row(STUCK).count()) === 0);
 check("השאר עדיין שם", (await row(store.contact_phone).count()) === 1);

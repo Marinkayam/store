@@ -46,14 +46,14 @@ await admin.waitForTimeout(1500);
 
 await admin.goto(`${BASE}/admin`);
 await admin.waitForSelector("text=חמ\"ל", { timeout: 15000 });
-await admin.waitForSelector("text=כניסות · 7 ימים");
+await admin.waitForSelector("[data-testid=admin-stats]");
 const overviewText = await admin.textContent("body");
 check("overview loads with live stats", overviewText.includes("כניסות"));
 check("overview counts our 3 views", overviewText.includes("3"));
 await admin.screenshot({ path: `${shots}/20-overview.png` });
 
 /* ── 3. תיק חנות: וואטסאפ + ארכיון מוצרים ── */
-await admin.click("button:has-text('דוכנים')");
+await admin.click("[data-testid=admin-tab-stores]");
 await admin.waitForTimeout(500);
 await admin.locator("button", { hasText: store.display_name }).first().click();
 await admin.waitForSelector("text=וואטסאפ לבעלי הדוכן");
@@ -85,7 +85,7 @@ await db.query("delete from products where id=$1", [oldDeleted.id]); // ניקו
 await db.query("delete from announcements");
 await admin.click("button[aria-label='סגירה']");
 await admin.waitForTimeout(400);
-await admin.click("button:has-text('עדכונים')");
+await admin.click("[data-testid=admin-tab-news]");
 await admin.fill("input[placeholder*='כותרת']", "אפשר להעלות וידאו!");
 await admin.fill("textarea", "מהיום אפשר לצלם סרטון של 5 שניות לכל מוצר 🎬");
 await admin.click("button:has-text('פרסום לכל הדשבורדים')");

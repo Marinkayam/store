@@ -1,8 +1,15 @@
 "use client";
 
-// מרכז הניהול של מרינה. שישה אזורים:
-// לאישור (חנויות ששילמו ומחכות) · סקירה (מספרים חיים) · חנויות (תיק חנות + וואטסאפ)
-// · רשת (מי הביאה את מי) · מה מוכרות (גלריה) · עדכונים (הודעות לבנות)
+// מרכז הניהול של מרינה.
+//
+// למעלה "מחכה לך" — רק מה שמישהי מחכה לו עכשיו: תשלומים לאישור, ומי שלא
+// מצליחה להיכנס. מתחת חמש לשוניות: סקירה (מספרים חיים) · דוכנים (רשימה, מה
+// מוכרות, תיק דוכן) · כניסות (ציר זמן ועזרה) · רשת (מי הביאה את מי) · עדכונים
+// (התראות לטלפון והודעות לבנות).
+//
+// מרינה, 10.2026: "צריך לשפר את האדמין, יש שם כפילויות". קודם אותו דבר הופיע
+// בכמה מקומות: התשלומים לאישור גם ב"לאישור" וגם ב"סקירה"; הכניסות בשלושה
+// כרטיסים; הצפיות בשלוש צורות; "מה מוכרות" כלשונית נפרדת מ"דוכנים".
 
 import Chevron from "@/app/chevron";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -14,7 +21,6 @@ import { QUOTAS } from "@/lib/quotas";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import AdminCoupons from "./admin-coupons";
 import NoSmsLogin from "./no-sms-login";
-import StuckLogins from "./stuck-logins";
 import LoginFlow from "./login-flow";
 import AdminPush from "./admin-push";
 import AdminStats from "./admin-stats";
@@ -142,7 +148,8 @@ const STATUS_LABEL: Record<string, string> = { active: "פעילה", paused: "מ
 
 /* ---------- component ---------- */
 
-type Tab = "approvals" | "overview" | "stores" | "network" | "explore" | "news";
+const TABS = ["overview", "stores", "logins", "network", "news"] as const;
+type Tab = (typeof TABS)[number];
 
 const METHOD_LABEL: Record<string, string> = {
   bit: "ביט",
@@ -152,10 +159,20 @@ const METHOD_LABEL: Record<string, string> = {
 };
 
 export default function AdminView({ aiConfigured = false }: { aiConfigured?: boolean }) {
-  const [tab, setTab] = useState<Tab>("overview");
-  // אם מישהי מחכה לאישור — נוחתים שם. הסקירה נעימה, אבל ילדה ששילמה
-  // ומחכה היא הדבר היחיד בחמ"ל שכל שעה שעוברת עולה בו אמון.
-  const [landed, setLanded] = useState(false);
+  const [tab, setTabState] = useState<Tab>("overview");
+  // הטאב נשמר בכתובת (#logins), כדי שרענון או חזרה מוואטסאפ לא יזרקו לסקירה
+  const setTab = useCallback((t: Tab) => {
+    setTabState(t);
+    try { history.replaceState(null, "", t === "overview" ? location.pathname + location.search : `#${t}`); } catch {}
+  }, []);
+  useEffect(() => {
+    const h = location.hash.slice(1);
+    if (TABS.includes(h as Tab)) setTabState(h as Tab);
+  }, []);
+  // "דוכנים": רשימה, או מה מוכרות (הייתה לשונית נפרדת על אותם דוכנים)
+  const [storesView, setStoresView] = useState<"list" | "products">("list");
+  // מי שלא מצליחה להיכנס — למעלה ב"מחכה לך", מאותו מקור כמו לשונית הכניסות
+  const [loginNeed, setLoginNeed] = useState<{ count: number; outage: string | null } | null>(null);
   const [totals, setTotals] = useState<Totals | null>(null);
   const [stores, setStores] = useState<AdminStore[]>([]);
   const [search, setSearch] = useState("");
@@ -185,13 +202,20 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
   }, [refresh]);
 
   useEffect(() => {
-    if (tab === "explore" && explore.length === 0) {
+    fetch("/api/admin/login-flow", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setLoginNeed({ count: d.needHelp?.length ?? 0, outage: d.outage?.reason ?? null }))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (tab === "stores" && storesView === "products" && explore.length === 0) {
       fetch("/api/admin/explore").then(async (r) => r.ok && setExplore((await r.json()).stores));
     }
     if (tab === "news") {
       fetch("/api/admin/announcements").then(async (r) => r.ok && setNews((await r.json()).announcements));
     }
-  }, [tab, explore.length]);
+  }, [tab, storesView, explore.length]);
 
   async function openDetail(id: string) {
     const res = await fetch(`/api/admin/store?id=${id}`);
@@ -218,7 +242,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     });
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
-    showToast(activate ? "הדוכן הופעל, הלינק פתוח 🎉" : "ההפעלה בוטלה");
+    showToast(activate ? "הדוכן הופעל, הלינק פתוח" : "ההפעלה בוטלה");
   }
 
   async function setAi(storeId: string, aiEnabled: boolean, aiCredits?: number | null) {
@@ -299,12 +323,6 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     );
   }
 
-  useEffect(() => {
-    if (landed || !totals) return;
-    setLanded(true);
-    if (totals.pendingActivation > 0) setTab("approvals");
-  }, [totals, landed]);
-
   const filtered = useMemo(() => {
     const q = search.trim();
     if (!q) return stores;
@@ -378,131 +396,147 @@ function SchemaWarning() {
       <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4 pb-16">
         <SchemaWarning />
         <header className="flex items-center justify-between gap-2">
-          <h1 className="text-lg font-bold">דוכן · חמ"ל 👑</h1>
+          <h1 className="text-lg font-bold">דוכן · חמ&quot;ל</h1>
           {/* סקוויש קלאב הוא חמ"ל נפרד. בלי הקישור הזה הוא היה מסך
               שצריך לדעת את הכתובת שלו כדי להגיע אליו. */}
           <a href="/admin/squish" className="text-[12.5px] border border-[var(--line)] bg-white px-2.5 py-1.5 shrink-0">
-            סקוויש קלאב →
+            סקוויש קלאב ←
           </a>
         </header>
-        {totals && (
-          <div className="text-xs text-[var(--muted)] -mt-2">
-            {totals.activeStores}/{totals.stores} דוכנים פעילים
-          </div>
+
+        {/* ── מחכה לך ──
+            רק מה שמישהי מחכה לו עכשיו. קודם התשלומים לאישור הופיעו פעמיים
+            (לשונית "לאישור" וגם ב"סקירה"), והכניסות בשלושה כרטיסים נפרדים. */}
+        {!(tab === "logins" && waitingPayment.length === 0) && (
+        <section className="flex flex-col gap-2" data-testid="admin-inbox">
+          <h2 className="text-[13px] font-bold text-[var(--muted)]">מחכה לך</h2>
+          {waitingPayment.map((s) => (
+            <div key={s.id} className="bg-white border border-[var(--warn-line)] p-3">
+              <div className="flex items-center gap-2.5">
+                <Avatar s={s} size={10} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11.5px] font-bold text-[var(--warn-ink)]">שילמו, מחכים לאישור</div>
+                  <button
+                    onClick={() => { setTab("stores"); openDetail(s.id); }}
+                    className="text-[14px] font-bold truncate block text-right"
+                  >
+                    {s.display_name}
+                  </button>
+                  <div className="text-[12.5px] text-[var(--muted)]">
+                    הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
+                    {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
+                    {s.payment_ref && ` · על שם ${s.payment_ref}`}
+                  </div>
+                  <div className="text-[12.5px] text-[var(--muted)]">
+                    {s.products} מוצרים · {s.viewsTotal} כניסות
+                    {/* אישור ההורים הוא תנאי להצהרה, ולכן הוא אמור להיות מסומן
+                        תמיד. אם הוא חסר — זו חנות ותיקה, ושווה לדעת. */}
+                    {s.parent_consent_at ? " · ההורים מאשרים" : " · בלי אישור הורים"}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-1.5 mt-2.5">
+                <button
+                  data-testid="approve-store"
+                  onClick={() => setActivation(s.id, true, ACTIVATION_PRICE)}
+                  className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
+                >
+                  אישור והפעלה
+                </button>
+                <a href={`/s/${s.slug}`} target="_blank" className="border border-[var(--line)] py-2.5 px-3 text-[12.5px] font-medium text-center">
+                  לדוכן
+                </a>
+                <a href={waLink(s)} target="_blank" className="border border-[var(--line)] py-2.5 px-3 text-[12.5px] font-medium text-center">
+                  וואטסאפ
+                </a>
+              </div>
+            </div>
+          ))}
+          {/* בטאב הכניסות הרשימה עצמה כבר פתוחה — בלי כרטיס שמפנה אליה */}
+          {tab !== "logins" && loginNeed && (loginNeed.count > 0 || loginNeed.outage) && (
+            <button
+              onClick={() => setTab("logins")}
+              data-testid="inbox-logins"
+              className={`bg-white border p-3 text-right flex items-center gap-3 ${loginNeed.outage ? "border-[var(--danger)]" : "border-[var(--danger-line)]"}`}
+            >
+              <span className="flex-1 min-w-0">
+                <span className="block text-[14px] font-bold">
+                  {loginNeed.outage
+                    ? "הספק לא שולח סמסים"
+                    : loginNeed.count === 1 ? "מישהי לא מצליחה להיכנס" : `${loginNeed.count} לא מצליחות להיכנס`}
+                </span>
+                <span className="block text-[12.5px] text-[var(--muted)] truncate">
+                  {loginNeed.outage ?? "לראות מה קרה לכל אחת ולשלוח קישור כניסה"}
+                </span>
+              </span>
+              <Chevron className="text-[var(--muted)]" size={14} />
+            </button>
+          )}
+          {totals && waitingPayment.length === 0 && !(loginNeed && (loginNeed.count > 0 || loginNeed.outage)) && (
+            <div className="bg-white border border-[var(--line)] p-3 text-[13px] text-[var(--muted)]" data-testid="inbox-empty">
+              אין כלום שמחכה לך עכשיו.
+            </div>
+          )}
+        </section>
         )}
 
-        {/* תמיד גלוי: "הקוד לא מגיע" הוא פנייה שמגיעה בוואטסאפ, ועונים עליה מיד */}
-        {/* מי שתקועה בכניסה — מוצג רק כשיש כאלה */}
-        <AdminStats />
-        <LoginFlow />
-        <StuckLogins />
-        <AdminPush />
-        <NoSmsLogin />
-
-        <div className="flex bg-[var(--sub)] p-0.5 sticky top-2 z-20 ">
+        <div className="flex bg-[var(--sub)] p-0.5 sticky top-2 z-20" role="tablist" aria-label="חמ&quot;ל">
           {([
-            ["approvals", "לאישור"],
             ["overview", "סקירה"],
             ["stores", "דוכנים"],
+            ["logins", "כניסות"],
             ["network", "רשת"],
-            ["explore", "מה מוכרות"],
             ["news", "עדכונים"],
           ] as [Tab, string][]).map(([k, label]) => (
             <button
               key={k}
+              role="tab"
+              aria-selected={tab === k}
               onClick={() => setTab(k)}
+              data-testid={`admin-tab-${k}`}
               className={`flex-1 py-2 text-[13px] font-medium transition ${tab === k ? "bg-white " : "text-[var(--muted)]"}`}
             >
               {label}
-              {/* הספירה יושבת על הלשונית ולא רק בפנים: חנות שמחכה לאישור היא
-                  ילדה שכבר שילמה ומחכה, וזה הדבר היחיד בחמ"ל שדוחק בזמן. */}
-              {k === "approvals" && (totals?.pendingActivation ?? 0) > 0 && (
-                <span className="mr-1.5 bg-[var(--danger)] text-white text-[11px] font-bold px-1.5 py-0.5">
-                  {totals!.pendingActivation}
-                </span>
+              {k === "logins" && (loginNeed?.count ?? 0) > 0 && (
+                <span className="mr-1 bg-[var(--danger)] text-white text-[11px] font-bold px-1.5 py-0.5">{loginNeed!.count}</span>
               )}
             </button>
           ))}
         </div>
 
-        {/* ── לאישור ── המסך שבו מרינה מאשרת חנויות ששילמו.
-            הוא לשונית ראשונה ולא פינה בתוך "סקירה", כי זו הפעולה היחידה
-            בחמ"ל שילדה ממתינה לה בפועל. */}
-        {tab === "approvals" && (
+        {/* ── סקירה ── */}
+        {tab === "overview" && (
           <>
-            <section className="bg-white border border-[var(--line)] p-3">
-              <h2 className="text-sm font-bold">דוכנים שהצהירו על תשלום</h2>
-              <p className="text-[12.5px] text-[var(--muted)] mt-0.5 leading-relaxed">
-                הכסף מגיע בביט או בפייבוקס, מחוץ למערכת. כאן מאשרים שהוא התקבל,
-                והלינק של הדוכן נפתח להזמנות מיד.
-              </p>
-            </section>
-
-            {waitingPayment.length === 0 ? (
-              <div className="bg-white border border-[var(--line)] p-8 text-center">
-                <div className="text-3xl">✓</div>
-                <p className="text-[13px] font-bold mt-2">אין דוכנים שמחכים</p>
-                <p className="text-[12.5px] text-[var(--muted)] mt-1">
-                  כשדוכן יסמן "שילמנו", הוא יופיע כאן.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {waitingPayment.map((s) => (
-                  <div key={s.id} className="bg-white border border-[var(--warn-line)] p-3">
-                    <div className="flex items-center gap-2.5">
-                      <Avatar s={s} size={10} />
-                      <div className="flex-1 min-w-0">
-                        <button
-                          onClick={() => { setTab("stores"); openDetail(s.id); }}
-                          className="text-[14px] font-bold truncate block text-right"
-                        >
-                          {s.display_name}
-                        </button>
-                        <div className="text-[12.5px] text-[var(--muted)]">
-                          הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
-                          {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
-                          {s.payment_ref && ` · על שם ${s.payment_ref}`}
-                        </div>
-                        <div className="text-[12.5px] text-[var(--muted)]">
-                          {s.products} מוצרים · {s.viewsTotal} כניסות
-                          {/* אישור ההורים הוא תנאי להצהרה, ולכן הוא אמור להיות
-                              מסומן תמיד. אם הוא חסר — זו חנות ותיקה, ושווה לדעת. */}
-                          {s.parent_consent_at
-                            ? " · ✓ ההורים מאשרים"
-                            : " · ⚠ בלי אישור הורים"}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-1.5 mt-2.5">
-                      <button
-                        data-testid="approve-store"
-                        onClick={() => setActivation(s.id, true, ACTIVATION_PRICE)}
-                        className="flex-1 bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold"
-                      >
-                        אישור והפעלה
-                      </button>
-                      <a
-                        href={`/s/${s.slug}`}
-                        target="_blank"
-                        className="border border-[var(--line)] py-2.5 px-3 text-[12.5px] font-medium text-center"
-                      >
-                        לדוכן
-                      </a>
-                      <a
-                        href={waLink(s)}
-                        target="_blank"
-                        className="border border-[var(--line)] py-2.5 px-3 text-[12.5px] font-medium text-center"
-                      >
-                        וואטסאפ
-                      </a>
-                    </div>
-                  </div>
-                ))}
+            {/* צפיות: מקום אחד, עם בחירת טווח וחלוקה לדוכנים. קודם הן הופיעו
+                גם כמספר "כניסות · 7 ימים" וגם כרשימת "הכי נצפות השבוע". */}
+            <AdminStats />
+            {totals && (
+              <div className="grid grid-cols-2 gap-2" data-testid="admin-kpis">
+                <Stat label="דוכנים באוויר" value={totals.live} sub={`${totals.drafts} טיוטות`} />
+                <Stat label="הכנסה מהפעלות" value={`₪${totals.paidTotal}`} sub={`${totals.live} דוכנים ששולמו`} />
+                <Stat label="הזמנות חדשות" value={totals.newOrders} sub={`${totals.orders} סה"כ`} />
+                <Stat label="מכירות ששולמו" value={`₪${formatPrice(totals.revenue)}`} sub="בכל הדוכנים" />
               </div>
             )}
 
-            {/* בנות שבנו דוכן ועוד לא ביקשו לפרסם — לא פעולה, אבל כן תמונת מצב */}
+            <section className="bg-white border border-[var(--line)] p-3">
+              <h2 className="text-sm font-bold mb-2">דורשים תשומת לב</h2>
+              {stores.filter((s) => s.ordersNew > 0 || (s.products === 0 && s.status === "active")).slice(0, 8).map((s) => (
+                <button key={s.id} onClick={() => { setTab("stores"); openDetail(s.id); }}
+                  className="w-full flex items-center gap-2.5 py-1.5 text-right">
+                  <Avatar s={s} size={8} />
+                  <span className="flex-1 text-[13px] truncate">{s.display_name}</span>
+                  <span className="text-[12px] text-[var(--warn-ink)]">
+                    {s.ordersNew > 0 ? `${s.ordersNew} הזמנות מחכות` : "דוכן ריק"}
+                  </span>
+                </button>
+              ))}
+              {stores.every((s) => s.ordersNew === 0 && !(s.products === 0 && s.status === "active")) && (
+                <p className="text-xs text-[var(--muted)] py-2">הכל מטופל.</p>
+              )}
+            </section>
+
+            {/* בנו דוכן ועוד לא ביקשו לפרסם — לא פעולה, תמונת מצב */}
             {draftsNoClaim.length > 0 && (
               <section className="bg-white border border-[var(--line)] p-3">
                 <h2 className="text-[13px] font-bold">בנו דוכן ועוד לא פרסמו · {draftsNoClaim.length}</h2>
@@ -524,153 +558,125 @@ function SchemaWarning() {
           </>
         )}
 
-        {/* ── סקירה ── */}
-        {tab === "overview" && totals && (
-          <>
-            {/* ממתינות להפעלה — הדבר היחיד שחוסם כסף וילדה מרוצה. תמיד ראשון. */}
-            {totals.pendingActivation > 0 && (
-              <section className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3">
-                <h2 className="text-sm font-bold mb-2 text-[var(--warn-ink)]">
-                  ⏳ ממתינות לאישור תשלום · {totals.pendingActivation}
-                </h2>
-                <div className="flex flex-col gap-2">
-                  {stores
-                    .filter((s) => !s.activated_at && s.payment_claimed_at)
-                    .map((s) => (
-                      <div key={s.id} className="bg-white border border-[var(--warn-line)] p-2.5">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar s={s} size={9} />
-                          <div className="flex-1 min-w-0">
-                            <button
-                              onClick={() => { setTab("stores"); openDetail(s.id); }}
-                              className="text-[13px] font-bold truncate block text-right"
-                            >
-                              {s.display_name}
-                            </button>
-                            <div className="text-[12px] text-[var(--muted)]">
-                              הצהירה {new Date(s.payment_claimed_at!).toLocaleDateString("he-IL")}
-                              {s.payment_method && ` · ${METHOD_LABEL[s.payment_method] ?? s.payment_method}`}
-                              {s.payment_ref && ` · ${s.payment_ref}`}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-1.5 mt-2">
-                          <button
-                            onClick={() => setActivation(s.id, true, ACTIVATION_PRICE)}
-                            className="flex-1 bg-[var(--ink)] text-white py-2 text-[12.5px] font-bold"
-                          >
-                            אישור והפעלה
-                          </button>
-                          <a
-                            href={waLink(s)}
-                            target="_blank"
-                            className="flex-1 border border-[var(--line)] py-2 text-[12.5px] font-medium text-center"
-                          >
-                            וואטסאפ
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </section>
-            )}
-
-            <div className="grid grid-cols-2 gap-2">
-              <Stat label="דוכנים באוויר" value={totals.live} sub={`${totals.drafts} טיוטות`} icon="🚀" />
-              <Stat label="הכנסה מהפעלות" value={`₪${totals.paidTotal}`} sub={`${totals.live} דוכנים ששולמו`} icon="🏦" />
-              <Stat label="כניסות · 7 ימים" value={totals.views7d} sub={`${totals.viewsTotal} סה"כ`} icon="👀" />
-              <Stat label="הזמנות חדשות" value={totals.newOrders} sub={`${totals.orders} סה"כ`} icon="🧾" />
-              <Stat label='מכירות ששולמו' value={`₪${formatPrice(totals.revenue)}`} sub="בכל הדוכנים" icon="💰" />
-              <Stat label="מוצרים באוויר" value={totals.products} sub={`${totals.stores} דוכנים`} icon="🛍️" />
-            </div>
-
-            <section className="bg-white border border-[var(--line)] p-3">
-              <h2 className="text-sm font-bold mb-2">הכי נצפות השבוע</h2>
-              {[...stores]
-                .sort((a, b) => b.views7d - a.views7d)
-                .slice(0, 5)
-                .map((s) => (
-                  <button key={s.id} onClick={() => { setTab("stores"); openDetail(s.id); }}
-                    className="w-full flex items-center gap-2.5 py-1.5 text-right">
-                    <Avatar s={s} size={8} />
-                    <span className="flex-1 text-[13px] font-medium truncate">{s.display_name}</span>
-                    <span className="text-[12px] text-[var(--muted)]">{s.views7d} כניסות · ₪{formatPrice(s.revenue)}</span>
-                  </button>
-                ))}
-              {stores.length === 0 && <p className="text-xs text-[var(--muted)] py-3">עוד אין דוכנים.</p>}
-            </section>
-
-            <section className="bg-white border border-[var(--line)] p-3">
-              <h2 className="text-sm font-bold mb-2">דורשות תשומת לב</h2>
-              {stores.filter((s) => s.ordersNew > 0 || (s.products === 0 && s.status === "active")).slice(0, 6).map((s) => (
-                <button key={s.id} onClick={() => { setTab("stores"); openDetail(s.id); }}
-                  className="w-full flex items-center gap-2.5 py-1.5 text-right">
-                  <Avatar s={s} size={8} />
-                  <span className="flex-1 text-[13px] truncate">{s.display_name}</span>
-                  <span className="text-[12px] text-[var(--warn-ink)]">
-                    {s.ordersNew > 0 ? `${s.ordersNew} הזמנות מחכות` : "דוכן ריק"}
-                  </span>
-                </button>
-              ))}
-              {stores.every((s) => s.ordersNew === 0 && !(s.products === 0 && s.status === "active")) && (
-                <p className="text-xs text-[var(--muted)] py-2">הכל מטופל ✨</p>
-              )}
-            </section>
-          </>
-        )}
-
-        {/* ── חנויות ── */}
+        {/* ── דוכנים ── */}
         {tab === "stores" && (
           <>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="חיפוש לפי שם, טלפון או לינק…"
-              className="w-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm"
-            />
-            <div className="flex flex-col gap-2">
-              {filtered.map((s) => (
-                <button key={s.id} onClick={() => openDetail(s.id)}
-                  className="bg-white border border-[var(--line)] p-3 text-right hover:border-[var(--ink)] transition">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar s={s} size={10} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold truncate">{s.display_name}</span>
-                        <span className={`text-[11px] px-2 py-0.5 ${STATUS_PILL[s.status]}`}>
-                          {STATUS_LABEL[s.status]}
-                        </span>
-                        {s.claim_token && (
-                          <span className="text-[11px] px-2 py-0.5 bg-[var(--sub)] text-[var(--muted)]">לא נתבעה</span>
-                        )}
-                        {!s.activated_at && (
-                          <span className={`text-[11px] px-2 py-0.5 ${s.payment_claimed_at ? "bg-[var(--warn-bg)] text-[var(--warn-ink)]" : "bg-[var(--sub)] text-[var(--muted)]"}`}>
-                            {s.payment_claimed_at ? "ממתינה לאישור" : "טיוטה"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[12px] text-[var(--muted)] mt-0.5">
-                        {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{formatPrice(s.revenue)}
-                        {s.ordersNew > 0 && <b className="text-[var(--warn-ink)]"> · {s.ordersNew} חדשות</b>}
-                      </div>
-                      <div className="text-[12px] text-[var(--muted)] mt-0.5">
-                        📈 התקדמות: {reachedCount(milestones({
-                          products: s.products, orders: s.ordersTotal, paidOrders: s.ordersPaid,
-                          revenue: s.revenue, views: s.viewsTotal,
-                        }))}/7
-                        {s.ai_enabled && <span className="text-[var(--ok-ink)]"> · ✨ פרימיום</span>}
-                      </div>
-                    </div>
-                    <Chevron className="text-[var(--muted)]" size={14} />
-                  </div>
+            <div className="flex gap-1.5" role="group" aria-label="תצוגת דוכנים">
+              {([["list", "רשימה"], ["products", "מה מוכרות"]] as const).map(([k, l]) => (
+                <button
+                  key={k}
+                  onClick={() => setStoresView(k)}
+                  aria-pressed={storesView === k}
+                  data-testid={`stores-view-${k}`}
+                  className={`px-3 py-1.5 text-[12.5px] border ${storesView === k ? "bg-[var(--ink)] text-white border-[var(--ink)]" : "bg-white border-[var(--line)]"}`}
+                >
+                  {l}
                 </button>
               ))}
-              {filtered.length === 0 && (
-                <p className="text-center text-sm text-[var(--muted)] py-8">לא נמצאו דוכנים.</p>
-              )}
             </div>
+
+            {storesView === "list" && (
+              <>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="חיפוש לפי שם, טלפון או לינק…"
+                  aria-label="חיפוש דוכן"
+                  className="w-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm"
+                />
+                <div className="flex flex-col gap-2">
+                  {filtered.map((s) => {
+                    // מצב אחד לכל דוכן. קודם היו שני תגים ("פעילה" + "טיוטה") שנראו כמו סתירה.
+                    const state =
+                      s.status === "blocked" ? { t: "חסום", c: STATUS_PILL.blocked }
+                      : s.status === "paused" ? { t: "בהפסקה", c: STATUS_PILL.paused }
+                      : s.activated_at ? { t: "באוויר", c: STATUS_PILL.active }
+                      : s.payment_claimed_at ? { t: "ממתין לאישור", c: "bg-[var(--warn-bg)] text-[var(--warn-ink)]" }
+                      : { t: "טיוטה", c: "bg-[var(--sub)] text-[var(--muted)]" };
+                    return (
+                      <button key={s.id} onClick={() => openDetail(s.id)}
+                        className="bg-white border border-[var(--line)] p-3 text-right hover:border-[var(--ink)] transition">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar s={s} size={10} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold truncate">{s.display_name}</span>
+                              <span className={`text-[11px] px-2 py-0.5 shrink-0 ${state.c}`} data-testid="store-state">{state.t}</span>
+                              {s.claim_token && (
+                                <span className="text-[11px] px-2 py-0.5 bg-[var(--sub)] text-[var(--muted)] shrink-0">לא נתבע</span>
+                              )}
+                            </div>
+                            <div className="text-[12px] text-[var(--muted)] mt-0.5">
+                              {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{formatPrice(s.revenue)}
+                              {s.ordersNew > 0 && <b className="text-[var(--warn-ink)]"> · {s.ordersNew} חדשות</b>}
+                            </div>
+                            <div className="text-[12px] text-[var(--muted)] mt-0.5">
+                              התקדמות: {reachedCount(milestones({
+                                products: s.products, orders: s.ordersTotal, paidOrders: s.ordersPaid,
+                                revenue: s.revenue, views: s.viewsTotal,
+                              }))}/7
+                              {s.ai_enabled && <span className="text-[var(--ok-ink)]"> · פרימיום</span>}
+                            </div>
+                          </div>
+                          <Chevron className="text-[var(--muted)]" size={14} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <p className="text-center text-sm text-[var(--muted)] py-8">לא נמצאו דוכנים.</p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {storesView === "products" && (
+              <div className="flex flex-col gap-3">
+                {explore.length === 0 && <p className="text-center text-sm text-[var(--muted)] py-10">עוד אין דוכנים פעילים.</p>}
+                {explore.map((s) => (
+                  <div key={s.id} className="bg-white border border-[var(--line)] p-3">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <Avatar s={s} size={10} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold truncate">{s.display_name}</div>
+                        {s.tagline && <div className="text-[12px] text-[var(--muted)] truncate">{s.tagline}</div>}
+                      </div>
+                      <a href={`/s/${s.slug}`} target="_blank"
+                        className="border border-[var(--line)] px-3 py-1.5 text-[12px] whitespace-nowrap">
+                        לדוכן ←
+                      </a>
+                    </div>
+                    {s.products.length === 0 ? (
+                      <p className="text-[12px] text-[var(--muted)]">עוד אין מוצרים.</p>
+                    ) : (
+                      <div className="flex gap-1.5 overflow-x-auto pb-1">
+                        {s.products.map((p, i) => {
+                          const img = mediaUrl(p.poster_key) ?? mediaUrl(p.image_key);
+                          const out = p.track_stock && p.stock === 0;
+                          return (
+                            <div key={i} className={`min-w-20 w-20 ${out ? "opacity-45" : ""}`}>
+                              <div className="w-20 h-20 bg-[var(--canvas)] flex items-center justify-center overflow-hidden relative">
+                                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <span className="text-[11px] text-[var(--faint)]">בלי תמונה</span>}
+                                {p.video_key && (
+                                  <span className="absolute bottom-0.5 left-1 text-[8px] bg-black/60 text-white px-1 ">▶</span>
+                                )}
+                              </div>
+                              <div className="text-[11px] truncate mt-0.5">{p.name}</div>
+                              <div className="text-[11px] font-bold">₪{formatPrice(p.price)}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
+
+        {/* ── כניסות: מצב, מי צריכה עזרה, חיפוש וציר זמן, קישור כניסה ── */}
+        {tab === "logins" && <LoginFlow />}
 
         {/* ── רשת ── */}
         {tab === "network" && totals && (
@@ -681,53 +687,12 @@ function SchemaWarning() {
           />
         )}
 
-        {/* ── מה מוכרות ── */}
-        {tab === "explore" && (
-          <div className="flex flex-col gap-3">
-            {explore.length === 0 && <p className="text-center text-sm text-[var(--muted)] py-10">עוד אין דוכנים פעילים.</p>}
-            {explore.map((s) => (
-              <div key={s.id} className="bg-white border border-[var(--line)] p-3">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <Avatar s={s} size={10} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">{s.display_name}</div>
-                    {s.tagline && <div className="text-[12px] text-[var(--muted)] truncate">{s.tagline}</div>}
-                  </div>
-                  <a href={`/s/${s.slug}`} target="_blank"
-                    className="border border-[var(--line)] px-3 py-1.5 text-[12px] whitespace-nowrap">
-                    לדוכן ←
-                  </a>
-                </div>
-                {s.products.length === 0 ? (
-                  <p className="text-[12px] text-[var(--muted)]">עוד אין מוצרים.</p>
-                ) : (
-                  <div className="flex gap-1.5 overflow-x-auto pb-1">
-                    {s.products.map((p, i) => {
-                      const img = mediaUrl(p.poster_key) ?? mediaUrl(p.image_key);
-                      const out = p.track_stock && p.stock === 0;
-                      return (
-                        <div key={i} className={`min-w-20 w-20 ${out ? "opacity-45" : ""}`}>
-                          <div className="w-20 h-20 bg-[var(--canvas)] flex items-center justify-center text-2xl overflow-hidden relative">
-                            {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : "🛍️"}
-                            {p.video_key && (
-                              <span className="absolute bottom-0.5 left-1 text-[8px] bg-black/60 text-white px-1 ">▶</span>
-                            )}
-                          </div>
-                          <div className="text-[11px] truncate mt-0.5">{p.name}</div>
-                          <div className="text-[11px] font-bold">₪{formatPrice(p.price)}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── עדכונים ── */}
+        {/* ── עדכונים: התראות לטלפון שלי, והודעות לבנות ── */}
         {tab === "news" && (
-          <NewsTab news={news} setNews={setNews} showToast={showToast} />
+          <>
+            <AdminPush />
+            <NewsTab news={news} setNews={setNews} showToast={showToast} />
+          </>
         )}
       </div>
 
@@ -1169,11 +1134,10 @@ function SchemaWarning() {
 
 /* ---------- helpers ---------- */
 
-function Stat({ label, value, sub, icon }: { label: string; value: number | string; sub: string; icon: string }) {
+function Stat({ label, value, sub }: { label: string; value: number | string; sub: string }) {
   return (
     <div className="bg-white border border-[var(--line)] p-3">
-      <div className="text-lg">{icon}</div>
-      <div className="text-xl font-bold mt-1">{value}</div>
+      <div className="text-xl font-bold">{value}</div>
       <div className="text-[12px] text-[var(--muted)]">{label} · {sub}</div>
     </div>
   );
@@ -1256,8 +1220,8 @@ function NetworkTab({
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
-        <Stat label="הגיעו מדוכן" value={totals.referred} sub={`מתוך ${totals.stores}`} icon="🔗" />
-        <Stat label="לחיצות על 'לפתוח דוכן'" value={totals.refClicks} sub={`${conversion}% נפתחו`} icon="👆" />
+        <Stat label="הגיעו מדוכן" value={totals.referred} sub={`מתוך ${totals.stores}`} />
+        <Stat label="לחיצות על 'לפתוח דוכן'" value={totals.refClicks} sub={`${conversion}% נפתחו`} />
       </div>
 
       <section className="bg-white border border-[var(--line)] p-3">
