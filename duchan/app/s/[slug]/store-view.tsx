@@ -226,9 +226,14 @@ export default function StoreView({
     return () => io.disconnect();
   }, [products]);
 
+  /* הטיימר של ההודעה הקודמת מתבטל: בלי זה, "נוסף לסל" שקפץ שנייה לפני
+     הודעת שגיאה בצ'קאאוט היה מכבה אותה אחרי שנייה אחת במקום 2.6, וקונה
+     לא הייתה מספיקה לקרוא מה חסר. */
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = (m: string) => {
     setToast(m);
-    setTimeout(() => setToast(""), 2600);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), 2600);
   };
 
   /* סינון לפי קטגוריה שהמוכרת הגדירה. מוצר יכול לשבת בכמה קטגוריות
