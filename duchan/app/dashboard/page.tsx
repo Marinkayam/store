@@ -385,7 +385,7 @@ export default function OrdersPage() {
             אצלה, אבל לא צריך לקרוא את אותו משפט עשר פעמים. */}
         {orders.some((o) => o.status === "sent") && (
           <p className="text-[12.5px] text-[var(--muted)] leading-relaxed -mb-1" data-testid="orders-check-note">
-            לפני שמכינים הזמנה, כדאי לוודא עם הקונה שהיא אמיתית.
+            לפני שמכינים הזמנה, כדאי לוודא עם הקונה שזה אמיתי.
           </p>
         )}
 
@@ -596,7 +596,7 @@ export default function OrdersPage() {
                   <input
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="רק את רואה את זה. למשל: לארוז בורוד"
+                    placeholder="רק אתם רואים את זה. למשל: לארוז בורוד"
                     maxLength={120}
                     autoFocus
                     className="flex-1 border border-[var(--line)] px-2.5 py-1.5 text-[12px]"

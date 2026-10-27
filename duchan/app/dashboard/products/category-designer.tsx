@@ -317,7 +317,7 @@ export default function CategoryDesigner({
           data-testid="save-category-design"
           className="w-full bg-[var(--ink)] text-white py-3.5 text-[14px] font-bold disabled:opacity-60"
         >
-          {saving ? "שומרת…" : "שמירה"}
+          {saving ? "שומרים…" : "שמירה"}
         </button>
       </div>
     </div>
