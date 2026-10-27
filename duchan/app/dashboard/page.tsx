@@ -26,6 +26,21 @@ const PILL: Record<string, { label: string; cls: string }> = {
   cancelled: { label: "בוטל", cls: "bg-[var(--danger-bg)] text-[var(--danger)]" },
 };
 
+/** ₪4,076.20 — עם מפריד אלפים, ואגורות רק כשיש */
+const money = (n: number) =>
+  `₪${Number(n).toLocaleString("he-IL", { minimumFractionDigits: Number(n) % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+
+/** "27.10 · 20:27" — שנה רק כשזו לא השנה הנוכחית */
+function orderWhen(iso: string): string {
+  const d = new Date(iso);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  const date = `${d.getDate()}.${d.getMonth() + 1}${sameYear ? "" : `.${String(d.getFullYear()).slice(2)}`}`;
+  const time = d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${date} · ${time}`;
+}
+
+const PAY_LABEL: Record<string, string> = { bit: "ביט", paybox: "פייבוקס", cash: "מזומן" };
+
 type Filter = "all" | "sent" | "paid" | "delivered" | "cancelled";
 
 const FILTERS: { key: Filter; label: string }[] = [
@@ -289,21 +304,31 @@ export default function OrdersPage() {
         </a>
       )}
 
-      {/* הקופה שלי — שורה אחת, לא קופסה */}
+      {/* הקופה שלי — שני מספרים גדולים, ומה הכי נמכר מתחתם */}
       {revenue > 0 && (
-        <div className="px-4 pt-3.5 text-[13.5px]">
-          <b>₪{formatPrice(revenue)} נכנסו ממכירות</b>
-          <span className="text-[var(--muted)]">
-            {" · "}
-            {sold.length === 1 ? "הזמנה אחת ששולמה" : `${sold.length} הזמנות ששולמו`}
-            {topProduct ? ` · הכי נמכר: ${topProduct}` : ""}
-          </span>
-        </div>
+        <section className="mx-4 mt-4 bg-white border border-[var(--line)]" data-testid="orders-summary">
+          <div className="grid grid-cols-2">
+            <div className="px-4 py-3">
+              <div className="text-[22px] font-bold leading-tight">{money(revenue)}</div>
+              <div className="text-[12px] text-[var(--muted)] mt-0.5">נכנסו ממכירות</div>
+            </div>
+            <div className="px-4 py-3 border-r border-[var(--line)]">
+              <div className="text-[22px] font-bold leading-tight">{sold.length}</div>
+              <div className="text-[12px] text-[var(--muted)] mt-0.5">{sold.length === 1 ? "הזמנה ששולמה" : "הזמנות ששולמו"}</div>
+            </div>
+          </div>
+          {topProduct && (
+            <div className="px-4 py-2.5 border-t border-[var(--line)] text-[12.5px] flex gap-1.5 min-w-0">
+              <span className="text-[var(--muted)] shrink-0">הכי נמכר:</span>
+              <span className="font-medium truncate">{topProduct}</span>
+            </div>
+          )}
+        </section>
       )}
 
       {/* חיפוש — מופיע רק כשיש מספיק הזמנות בשביל שיהיה בו טעם */}
       {orders.length >= 5 && (
-        <div className="px-3 pt-3">
+        <div className="px-4 pt-3">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -364,87 +389,109 @@ export default function OrdersPage() {
           </p>
         )}
 
-        {filtered.map((o) => (
-          <div
+        {filtered.map((o) => {
+          const done = o.status === "delivered" || o.status === "cancelled";
+          // הודעת וואטסאפ אחת, עם ההזמנה והסכום — לא "היי" ריק
+          const wa = o.buyer_phone
+            ? `https://wa.me/${o.buyer_phone}?text=${encodeURIComponent(
+                o.status === "sent"
+                  ? `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! קיבלתי את ההזמנה שלך (#${o.order_number} · ₪${formatPrice(o.total)}) 💜 אפשר לסגור את התשלום — איך נוח לך?`
+                  : `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! לגבי ההזמנה #${o.order_number} 💜`
+              )}`
+            : null;
+          return (
+          <article
             key={o.id}
-            className={`bg-white border p-4 ${
+            className={`border ${
               o.status === "paid"
                 ? "bg-[var(--ok-bg)] border-[var(--ok-line)]"
-                : o.status === "delivered" || o.status === "cancelled"
-                  ? "opacity-45 border-[var(--line)]"
-                  : "border-[var(--line)]"
+                : done
+                  ? "bg-white border-[var(--line)] opacity-50"
+                  : "bg-white border-[var(--line)]"
             }`}
+            data-testid="order-card"
           >
-            <div className="flex justify-between items-center mb-1.5">
-              {/* השם צמוד למספר ההזמנה ובולט: זה מה שהעין מחפשת כשמנסים
-                  להצליב בין הרשימה הזו לשיחות בוואטסאפ. */}
-              <span className="text-[12px] text-[var(--muted)]">
-                #{o.order_number}
-                {o.buyer_name && (
+            {/* מי ומתי — השם הוא מה שהעין מחפשת מול השיחות בוואטסאפ */}
+            <header className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-3">
+              <div className="min-w-0">
+                <div className="text-[16px] font-bold leading-snug truncate">{o.buyer_name || "בלי שם"}</div>
+                <div className="text-[12px] text-[var(--muted)] mt-0.5">
+                  <bdi>#{o.order_number}</bdi> · <bdi>{orderWhen(o.created_at)}</bdi>
+                </div>
+              </div>
+              <span className={`shrink-0 text-[11.5px] font-bold px-2 py-1 ${PILL[o.status].cls}`}>{PILL[o.status].label}</span>
+            </header>
+
+            {/* מה הזמינו — כמות, שם, צבע/מידה, ומחיר בצד */}
+            <ul className="border-t border-[var(--line)] px-4">
+              {o.items.map((it, i) => {
+                const full = lineTotal(it.price, it.qty);
+                const paid = it.line ?? full;
+                return (
+                  <li key={i} className="flex items-start gap-3 py-2.5 border-b border-[var(--sand)] last:border-b-0">
+                    <span className="shrink-0 min-w-8 text-center text-[12.5px] font-bold bg-[var(--sub)] px-1.5 py-0.5 mt-px">
+                      {it.qty}×
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[14px] font-medium leading-snug">{it.name}</div>
+                      {(it.option || it.deal || it.mystery) && (
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[12px] text-[var(--muted)]">
+                          {it.option && <span>{it.option}</span>}
+                          {it.deal && (
+                            <span className="font-bold text-[var(--warn-ink)] bg-[var(--warn-bg)] px-1.5 py-px" data-testid="order-deal">
+                              מבצע <bdi>{it.deal}</bdi>
+                            </span>
+                          )}
+                          {/* שקית הפתעה — תזכורת להכין הפתעה, לא לשלוח את מה שבתמונה */}
+                          {it.mystery && <span data-testid="order-mystery">שקית הפתעה</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div className="shrink-0 text-left">
+                      <div className="text-[14px] font-bold">₪{formatPrice(paid)}</div>
+                      {paid < full && <s className="block text-[11.5px] text-[var(--faint)]">₪{formatPrice(full)}</s>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {o.buyer_note && (
+              <p className="mx-4 mb-3 px-3 py-2 bg-[var(--sub)] text-[12.5px] leading-relaxed">
+                <span className="text-[var(--muted)]">הקונה כתב/ה: </span>{o.buyer_note}
+              </p>
+            )}
+
+            {/* איך זה מגיע אליה ואיך משלמים — שורה לכל דבר, עם תווית */}
+            {(o.buyer_phone || o.wants_shipping != null || o.pay_method) && (
+              <dl className="border-t border-[var(--line)] px-4 py-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[13px]" data-testid="order-details">
+                {o.buyer_phone && (
                   <>
-                    {" · "}
-                    <b className="text-[13px] text-[var(--ink)]">{o.buyer_name}</b>
+                    <dt className="text-[var(--muted)]">טלפון</dt>
+                    <dd>
+                      {/* המספר שמור מנורמל (972...), בדיוק מה ש-wa.me צריך */}
+                      <a dir="ltr" className="underline" href={`https://wa.me/${o.buyer_phone}`}>{displayPhone(o.buyer_phone)}</a>
+                    </dd>
                   </>
                 )}
-                {" · "}
-                {new Date(o.created_at).toLocaleDateString("he-IL")}
-              </span>
-              <span className={`text-[11px] font-medium px-2 py-0.5 ${PILL[o.status].cls}`}>
-                {PILL[o.status].label}
-              </span>
-            </div>
-            {o.items.map((it, i) => (
-              <div key={i} className="text-[13px] py-px">
-                • {it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{formatPrice(it.line ?? lineTotal(it.price, it.qty))}
-                {it.deal && <span className="text-[var(--muted)]"> · מבצע {it.deal}</span>}
-                {/* שקית הפתעה — תזכורת להכין הפתעה, לא לשלוח את מה שבתמונה */}
-                {it.mystery && <span className="text-[11px] text-[var(--muted)]" data-testid="order-mystery"> · שקית הפתעה</span>}
-              </div>
-            ))}
-            {o.buyer_note && (
-              <div className="text-[12px] text-[var(--muted)] italic mt-1">"{o.buyer_note}"</div>
-            )}
-
-            {/* פרטי ההזמנה החדשים (2026-09): ההזמנה כבר לא מגיעה בוואטסאפ,
-                אז כל מה שהמוכרת צריכה כדי לטפל בה יושב על הכרטיס עצמו —
-                טלפון לחזרה, יעד משלוח, ואיך הקונה מתכוונת לשלם. */}
-            {(o.buyer_phone || o.wants_shipping != null || o.pay_method) && (
-              <div className="text-[12px] text-[var(--muted)] mt-3 flex flex-col gap-1.5" data-testid="order-details">
-                {o.buyer_phone && (
-                  <span className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon name="phone" size={14} tone="var(--muted)" />
-                      {/* המספר שמור מנורמל (972...), בדיוק מה ש-wa.me צריך */}
-                      <a dir="ltr" className="underline" href={`https://wa.me/${o.buyer_phone}`}>
-                        {displayPhone(o.buyer_phone)}
-                      </a>
-                    </span>
-                    {/* גם המוכרת סוגרת תשלום בוואטסאפ — שיחה שנפתחת עם
-                        ההזמנה והסכום, במקום "היי" ריק ומבוכה. */}
-                    <a
-                      href={`https://wa.me/${o.buyer_phone}?text=${encodeURIComponent(
-                        `היי${o.buyer_name ? ` ${o.buyer_name}` : ""}! קיבלתי את ההזמנה שלך (#${o.order_number} · ₪${formatPrice(o.total)}) 💜 אפשר לסגור את התשלום — איך נוח לך?`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11.5px] font-bold px-2 py-1 border border-[var(--line)] bg-white"
-                    >
-                      לסגור תשלום בוואטסאפ
-                    </a>
-                  </span>
+                {o.wants_shipping != null && (
+                  <>
+                    <dt className="text-[var(--muted)]">{o.wants_shipping ? "משלוח" : "מסירה"}</dt>
+                    <dd className="min-w-0">
+                      {o.wants_shipping ? (o.ship_address ? `${o.ship_address}, ${o.ship_city ?? ""}` : "משלוח") : "מסירה אישית"}
+                    </dd>
+                  </>
                 )}
-                {o.wants_shipping === true && (
-                  <span>משלוח{o.ship_address ? `: ${o.ship_address}, ${o.ship_city ?? ""}` : ""}</span>
-                )}
-                {o.wants_shipping === false && <span>מסירה אישית</span>}
                 {o.pay_method && (
-                  <span>תשלום: {o.pay_method === "bit" ? "ביט" : o.pay_method === "paybox" ? "פייבוקס" : "מזומן"}</span>
+                  <>
+                    <dt className="text-[var(--muted)]">תשלום</dt>
+                    <dd>{PAY_LABEL[o.pay_method] ?? o.pay_method}</dd>
+                  </>
                 )}
-              </div>
+              </dl>
             )}
 
-            {/* מי הזמינה — פתוח לעריכה תמיד, כי לפעמים הקונה כותבת כינוי
-                ולפעמים ההזמנה ישנה ואין בה שם בכלל. */}
+            <div className="px-4 [&:not(:empty)]:pb-3">
             {whoEditId === o.id ? (
               <div className="border border-[var(--line)] p-2 mt-1.5 flex flex-col gap-1.5">
                 <input
@@ -489,158 +536,119 @@ export default function OrdersPage() {
               </button>
             ) : null}
 
-            {/* הערה אישית של בעלת החנות */}
-            {noteEditId === o.id ? (
-              <div className="flex gap-1.5 mt-1.5">
-                <input
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="רק את רואה את זה. למשל: לארוז בורוד"
-                  maxLength={120}
-                  autoFocus
-                  className="flex-1 border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
-                />
-                <button
-                  onClick={() => saveOwnerNote(o)}
-                  className="bg-[var(--ink)] text-white px-3 text-[12px] font-medium"
-                >
-                  שמירה
-                </button>
-              </div>
-            ) : o.owner_note ? (
-              <button
-                onClick={() => {
-                  setNoteEditId(o.id);
-                  setNoteText(o.owner_note ?? "");
-                }}
-                className="block text-right text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full"
-              >
-                {o.owner_note}
-              </button>
-            ) : (
-              o.status !== "cancelled" && (
-                <button
-                  onClick={() => {
-                    setNoteEditId(o.id);
-                    setNoteText("");
-                  }}
-                  className="text-[12px] text-[var(--muted)] underline mt-1.5"
-                >
-                  הערה לעצמי
-                </button>
-              )
-            )}
-
-            {o.coupon_code && (
-              <div className="flex justify-between text-[12px] text-[var(--muted)] border-t border-[var(--line)] mt-3.5 pt-3" data-testid="order-coupon">
-                <span>קופון <bdi>{o.coupon_code}</bdi> · לפני הנחה ₪{formatPrice(o.subtotal)}</span>
-                <bdi dir="ltr">−₪{formatPrice(o.discount)}</bdi>
-              </div>
-            )}
-            <div className={`flex justify-between text-xs font-medium ${o.coupon_code ? "mt-1.5" : "border-t border-[var(--line)] mt-3.5 pt-3"}`}>
-              <span>סה"כ</span>
-              <span>₪{formatPrice(o.total)}</span>
             </div>
-            {o.status === "sent" && (
-              <div className="flex gap-2 mt-3">
+
+            {/* הסכום */}
+            <div className="border-t border-[var(--line)] px-4 py-3">
+              {o.coupon_code && (
+                <div className="flex justify-between text-[12px] text-[var(--muted)] mb-1.5" data-testid="order-coupon">
+                  <span>קופון <bdi>{o.coupon_code}</bdi> · לפני הנחה ₪{formatPrice(o.subtotal)}</span>
+                  <bdi dir="ltr">−₪{formatPrice(o.discount)}</bdi>
+                </div>
+              )}
+              <div className="flex justify-between items-baseline">
+                <span className="text-[13px] font-bold">סה"כ</span>
+                <span className="text-[18px] font-bold">₪{formatPrice(o.total)}</span>
+              </div>
+            </div>
+
+            {/* פעולות: אחת ראשית, וואטסאפ אחד (עם ההודעה), וביטול קטן בצד */}
+            {(o.status === "sent" || o.status === "paid") && (
+              <div className="flex gap-2 px-4 pb-3.5">
                 <button
-                  onClick={() => markPaid(o)}
-                  className="flex-1 bg-[var(--ink)] text-white py-2.5 min-h-11 text-xs font-medium"
+                  onClick={(e) => (o.status === "sent" ? markPaid(o) : markDelivered(o, e))}
+                  className="flex-1 bg-[var(--ink)] text-white py-2.5 min-h-11 text-[13px] font-bold"
                 >
-                  שולם
+                  {o.status === "sent" ? "שולם" : "נמסר"}
                 </button>
-                {/* מספר הקונה נאסף רק אם היא בחרה להשאיר אותו בטופס ההזמנה.
-                    כשאין — כפתור שעושה משהו, במקום שבב מת שכתוב עליו
-                    "אין מספר" ואי אפשר ללחוץ עליו. */}
-                {o.buyer_phone ? (
+                {wa ? (
                   <a
-                    href={`https://wa.me/${o.buyer_phone}`}
+                    href={wa}
                     target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 bg-white border border-[var(--line)] py-2.5 min-h-11 text-xs font-medium text-center"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-[var(--line)] py-2.5 min-h-11 text-[13px] font-medium text-center"
                   >
+                    <Icon name="chat" size={15} tone="none" />
                     וואטסאפ ל{o.buyer_name ?? "קונה"}
                   </a>
                 ) : (
                   <button
                     onClick={() => openWho(o)}
-                    className="flex-1 bg-white border border-dashed border-[var(--line)] text-[var(--muted)] py-2.5 min-h-11 text-xs text-center"
+                    className="flex-1 bg-white border border-dashed border-[var(--line)] text-[var(--muted)] py-2.5 min-h-11 text-[13px] text-center"
                   >
                     להוסיף מספר
                   </button>
                 )}
                 <button
                   onClick={() => cancelOrder(o)}
-                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2.5 min-h-11 px-3.5 text-xs"
-                >
-                  ביטול
-                </button>
-              </div>
-            )}
-            {o.status === "paid" && (
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={(e) => markDelivered(o, e)}
-                  className="flex-1 bg-[var(--ink)] text-white py-2.5 min-h-11 text-xs font-medium"
-                >
-                  נמסר
-                </button>
-                {o.buyer_phone && (
-                  <a
-                    href={`https://wa.me/${o.buyer_phone}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-white border border-[var(--line)] py-2.5 min-h-11 px-3.5 text-xs font-medium text-center"
-                  >
-                    וואטסאפ ל{o.buyer_name ?? "קונה"}
-                  </a>
-                )}
-                <button
-                  onClick={() => cancelOrder(o)}
-                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2.5 min-h-11 px-3.5 text-xs"
+                  className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2.5 min-h-11 px-3.5 text-[13px]"
                 >
                   ביטול
                 </button>
               </div>
             )}
 
-            {/* להוריד מהרשימה — על כל הזמנה, בכל סטטוס.
-                הקונה יכולה ללחוץ "שליחה בוואטסאפ" ואז לא לשלוח כלום, וההזמנה
-                כבר נרשמה. אין שום דרך לדעת את זה מהצד שלנו — וואטסאפ לא
-                מדווח — ולכן היחידה שיודעת שההזמנה לא אמיתית היא היא.
-                קודם הכפתור הופיע רק על מבוטלות ונמסרו, אז כדי להיפטר
-                מהזמנה שלא קרתה היא הייתה צריכה קודם "לבטל" אותה. */}
-            {/* התזכורת יושבת על ההזמנה החדשה עצמה ולא רק בראש המסך, כי
-                ההחלטה "לארוז או לא" מתקבלת מול הכרטיס הזה. */}
+            {/* הערה לעצמי + להוריד מהרשימה — קטנים, בשורה אחת בתחתית.
+                הקונה יכולה ללחוץ "הזמנה" ולא להתכוון, ורק בעלת הדוכן יודעת. */}
+            <div className="border-t border-[var(--sand)] px-4 py-2">
+              {noteEditId === o.id ? (
+                <div className="flex gap-1.5 py-1">
+                  <input
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="רק את רואה את זה. למשל: לארוז בורוד"
+                    maxLength={120}
+                    autoFocus
+                    className="flex-1 border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
+                  />
+                  <button onClick={() => saveOwnerNote(o)} className="bg-[var(--ink)] text-white px-3 text-[12px] font-medium">
+                    שמירה
+                  </button>
+                </div>
+              ) : o.owner_note ? (
+                <button
+                  onClick={() => {
+                    setNoteEditId(o.id);
+                    setNoteText(o.owner_note ?? "");
+                  }}
+                  className="block w-full text-right text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 my-1"
+                >
+                  {o.owner_note}
+                </button>
+              ) : null}
 
-            {confirmHide === o.id ? (
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="flex-1 text-[12px] text-[var(--muted)]">
-                  להוריד את ההזמנה מהרשימה?
-                </span>
-                <button
-                  onClick={() => hideOrder(o)}
-                  className="bg-[var(--ink)] text-white py-2 px-3 text-xs font-medium"
-                >
-                  כן, להוריד
-                </button>
-                <button
-                  onClick={() => setConfirmHide(null)}
-                  className="bg-white border border-[var(--line)] py-2 px-3 text-xs"
-                >
-                  לא
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirmHide(o.id)}
-                className="text-[12px] text-[var(--muted)] underline mt-2"
-              >
-                {o.status === "sent" ? "הזמנה לא אמיתית? להוריד מהרשימה" : "להוריד מהרשימה"}
-              </button>
-            )}
-          </div>
-        ))}
+              {confirmHide === o.id ? (
+                <div className="flex items-center gap-1.5 py-1">
+                  <span className="flex-1 text-[12px] text-[var(--muted)]">להוריד את ההזמנה מהרשימה?</span>
+                  <button onClick={() => hideOrder(o)} className="bg-[var(--ink)] text-white py-2 px-3 text-xs font-medium">
+                    כן, להוריד
+                  </button>
+                  <button onClick={() => setConfirmHide(null)} className="bg-white border border-[var(--line)] py-2 px-3 text-xs">
+                    לא
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3 text-[12px] text-[var(--muted)]">
+                  {!o.owner_note && noteEditId !== o.id && o.status !== "cancelled" ? (
+                    <button
+                      onClick={() => {
+                        setNoteEditId(o.id);
+                        setNoteText("");
+                      }}
+                      className="underline py-1.5"
+                    >
+                      הערה לעצמי
+                    </button>
+                  ) : <span />}
+                  <button onClick={() => setConfirmHide(o.id)} className="underline py-1.5">
+                    {o.status === "sent" ? "הזמנה לא אמיתית? להוריד" : "להוריד מהרשימה"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </article>
+          );
+        })}
       </div>
 
       {/* מה חסר בדוכן — למטה, אחרי ההזמנות: זה שיפור, לא משימה דחופה */}
