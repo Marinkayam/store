@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
     case "leave": {
       if (role === "owner") return err("ראש הדוכן לא יכול לצאת. קודם מעבירים את הראשות לשותף/ה", 400);
       const self = (await members()).find((m) => m.user_id === user.id);
-      if (!self) return err("את/ה כבר לא בצוות", 404);
+      if (!self) return err("כבר יצאת מהצוות", 404);
       await db.from("store_members").delete().eq("store_id", store.id).eq("user_id", user.id);
       await afterLeave(user.id, self.phone);
       return NextResponse.json({ ok: true });
@@ -233,7 +233,7 @@ export async function POST(req: NextRequest) {
         .select("id", { count: "exact", head: true })
         .eq("owner_id", user.id);
       if ((count ?? 0) >= QUOTAS.storesPerParentEmail) {
-        return err(`כבר יש לך ${QUOTAS.storesPerParentEmail} דוכנים שאת/ה ראש שלהם — זה המקסימום`, 409);
+        return err(`כבר יש לך ${QUOTAS.storesPerParentEmail} דוכנים בניהולך — זה המקסימום`, 409);
       }
       const oldPhone = (await phoneOf(db, store.owner_id)) ?? store.contact_phone;
       const { error } = await db.rpc("team_accept_transfer", {
@@ -249,7 +249,7 @@ export async function POST(req: NextRequest) {
       let phone: string | null = null;
       if (body.userId === store.owner_id) phone = await phoneOf(db, store.owner_id);
       else phone = (await members()).find((m) => m.user_id === body.userId)?.phone ?? null;
-      if (!phone) return err("אפשר לבחור רק טלפון של מישהו/י מהצוות", 400);
+      if (!phone) return err("אפשר לבחור רק טלפון של מישהו מהצוות", 400);
       await db.from("stores").update({ contact_phone: phone }).eq("id", store.id);
       return NextResponse.json({ ok: true });
     }

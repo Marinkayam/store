@@ -228,7 +228,7 @@ export default function Onboarding() {
           <input
             value={draft.displayName}
             onChange={(e) => set({ displayName: e.target.value })}
-            placeholder="למשל: הדברים של נועה"
+            placeholder="למשל: הדברים של טל"
             aria-label="שם הדוכן"
             maxLength={40}
             autoFocus

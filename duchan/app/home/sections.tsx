@@ -214,7 +214,7 @@ export function PriceSection() {
   return (
     <section className="px-5 py-24 bg-[var(--canvas)]" aria-labelledby="price-title" data-testid="home-price">
       <Reveal>
-        <Head kicker="להורים · כמה זה עולה?" title={<span id="price-title">לבנות — חינם.</span>} sub="בונים, מעצבים ומוסיפים מוצרים בלי לשלם. משלמים פעם אחת רק כשרוצים לקבל הזמנות." />
+        <Head kicker="להורים · כמה זה עולה?" title={<span id="price-title">הבנייה — בחינם.</span>} sub="בונים, מעצבים ומוסיפים מוצרים בלי לשלם. משלמים פעם אחת רק כשרוצים לקבל הזמנות." />
       </Reveal>
       <Reveal className="max-w-md mx-auto mt-10 text-center">
         {IS_LAUNCH && (

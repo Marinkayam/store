@@ -51,7 +51,7 @@ export default function UploadDiag() {
             : `✗ האחסון החזיר ${put.status}, לא CORS אלא הרשאה או חתימה`
         );
       } catch {
-        setBrowser("✗ הדפדפן נחסם. זו הגדרת CORS בדלי, ראי למטה בדיוק מה להדביק");
+        setBrowser("✗ הדפדפן נחסם. זו הגדרת CORS בדלי, ראו למטה בדיוק מה להדביק");
       }
     })();
   }, [key]);

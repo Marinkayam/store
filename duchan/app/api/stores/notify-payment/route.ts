@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       ref: `${store.id}:${store.payment_claimed_at}`,
       title: `💰 ${store.display_name} מחכה לאישור`,
       body:
-        `הצהירה ששילמה · ${METHOD_LABEL[store.payment_method ?? ""] ?? "לא צוין"}` +
+        `הצהירו ששילמו · ${METHOD_LABEL[store.payment_method ?? ""] ?? "לא צוין"}` +
         `${store.payment_ref ? ` · ${store.payment_ref}` : ""}. לאשר בחמ"ל`,
       url: "/admin",
     })
