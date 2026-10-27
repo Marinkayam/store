@@ -14,7 +14,7 @@ import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } f
 import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
-import { applyDeals, dealActive, dealExplain, dealLabel, dealNudge, type Deal } from "@/lib/deals";
+import { applyDeals, dealActive, dealExplain, dealLabel, dealNudge, dealSticker, type Deal } from "@/lib/deals";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 import { dropTime, dropWhen } from "@/lib/drop";
 import DropCountdown from "@/app/drop-countdown";
@@ -716,7 +716,8 @@ export default function StoreView({
                       // ולא נגזר מהערכה — "מבצע" חייב להיראות אותו דבר בכל
                       // חנות, אחרת הוא מפסיק להיות שפה משותפת בין החנויות.
                       const key = badgeFor(p, bestSellerId, sold);
-                      if (!key) return null;
+                      // מדבקת מבצע על התמונה כבר אומרת "מבצע" — בלי תגית כפולה
+                      if (!key || (key === "sale" && dealActive(p.price, p.deal))) return null;
                       const b = BADGES[key];
                       // שבב קטן בפינת התמונה, לא רצועה על כל הרוחב: ברשת של
                       // שתי עמודות רצועה צבעונית מושכת יותר תשומת לב מהמוצר
@@ -737,9 +738,20 @@ export default function StoreView({
                     })()
                   )}
                   <div
-                    className="h-40 flex items-center justify-center text-5xl overflow-hidden"
+                    className="relative h-40 flex items-center justify-center text-5xl overflow-hidden"
                     style={{ background: "var(--s-thumb)" }}
                   >
+                    {/* מדבקת מבצע — על התמונה, כמו בסופר. בפינה התחתונה, כדי
+                        לא להתנגש בתגיות שבפינה העליונה וברצועת "אזל"/דרופ */}
+                    {!out && dealActive(p.price, p.deal) && (
+                      <span
+                        className={`absolute z-10 bottom-0 left-0 px-2.5 py-1 text-[14px] font-black leading-tight text-white ${roundedLook ? "s-r bottom-2 left-2" : ""}`}
+                        style={{ background: BADGES.sale.bg }}
+                        data-testid="deal-tag"
+                      >
+                        <bdi>{dealSticker(p.price, p.deal!)}</bdi>
+                      </span>
+                    )}
                     {vid ? (
                       <video src={vid} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
                     ) : img ? (
@@ -763,16 +775,6 @@ export default function StoreView({
                         </>
                       ) : (
                         <span className="text-[17px] font-bold" style={{ color: "var(--s-primary-text)" }}>₪{formatPrice(p.price)}</span>
-                      )}
-                      {/* מבצע — אותו צבע כמו תגית "מבצע", בכל הדוכנים */}
-                      {dealActive(p.price, p.deal) && p.deal!.type !== "sale" && (
-                        <span
-                          className="border bg-white text-[11.5px] font-bold px-1.5 py-px"
-                          style={{ color: BADGES.sale.text, borderColor: BADGES.sale.bg }}
-                          data-testid="deal-tag"
-                        >
-                          {dealLabel(p.deal!)}
-                        </span>
                       )}
                     </div>
                   </div>

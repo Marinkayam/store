@@ -57,6 +57,12 @@ export function dealLabel(deal: Deal): string {
   return `${deal.qty} ב-₪${fmt(cents(deal.price))}`;
 }
 
+/** המדבקה על תמונת המוצר: "1+1" · "2 ב-₪15" · "₪5 הנחה" */
+export function dealSticker(price: number | string, deal: Deal): string {
+  if (deal.type === "sale") return `₪${fmt(cents(price) - cents(deal.price))} הנחה`;
+  return dealLabel(deal);
+}
+
 /** משפט אחד שמסביר לקונה מה מקבלים */
 export function dealExplain(price: number | string, deal: Deal): string {
   if (deal.type === "sale") return `במקום ₪${fmt(cents(price))}`;
