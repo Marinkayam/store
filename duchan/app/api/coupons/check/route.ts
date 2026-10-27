@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { lineTotal, sumPrices } from "@/lib/money";
+import { sumPrices } from "@/lib/money";
+import { applyDeals, parseDeal } from "@/lib/deals";
 import { couponLabel, couponProblem, discountFor, normalizeCode } from "@/lib/coupons";
 import { findCoupon } from "@/lib/coupons-server";
 
@@ -31,18 +32,26 @@ export async function POST(req: NextRequest) {
   }
 
   const ids = body.items.map((i) => i.productId);
-  const { data: products } = await db
-    .from("products")
-    .select("id, price")
-    .eq("store_id", store.id)
-    .in("id", ids)
-    .is("deleted_at", null);
-  const price = new Map((products ?? []).map((p) => [p.id, Number(p.price)]));
+  const read = (cols: string) =>
+    db.from("products").select(cols).eq("store_id", store.id).in("id", ids).is("deleted_at", null);
+  // מבצעים (0064) — הקופון חל על הסכום *אחרי* המבצע, כמו בהזמנה עצמה
+  let { data: products, error } = await read("id, price, deal");
+  if (error) ({ data: products } = await read("id, price"));
+  const byId = new Map(
+    ((products ?? []) as unknown as { id: string; price: number; deal?: unknown }[]).map((p) => [p.id, p])
+  );
+  const known = body.items
+    .map((i) => ({ i, p: byId.get(i.productId) }))
+    .filter((x): x is { i: { productId: string; qty: number }; p: { id: string; price: number; deal?: unknown } } => !!x.p);
   const subtotal = sumPrices(
-    body.items.map((i) => {
-      const qty = Math.max(0, Math.min(99, Math.floor(Number(i.qty)) || 0));
-      return price.has(i.productId) ? lineTotal(price.get(i.productId)!, qty) : 0;
-    })
+    applyDeals(
+      known.map(({ i, p }) => ({
+        productId: p.id,
+        price: Number(p.price),
+        qty: Math.max(0, Math.min(99, Math.floor(Number(i.qty)) || 0)),
+        deal: parseDeal(p.deal),
+      }))
+    ).map((l) => l.line)
   );
 
   const c = await findCoupon(db, store.id, code);

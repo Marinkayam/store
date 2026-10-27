@@ -23,6 +23,7 @@ import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { KupaStall } from "@/app/kupa-art";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
+import { dealActive, dealExplain, dealLabel, parseDeal, type Deal } from "@/lib/deals";
 import CategoryDesigner from "./category-designer";
 import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
 import { kupaCheck } from "../kupa/use-kupa";
@@ -52,6 +53,12 @@ interface EditState {
   /** 🔥 דרופ (0056): נפתח בזמן קבוע. dropInput בפורמט של datetime-local */
   dropOn: boolean;
   dropInput: string;
+  /** מבצע (0064): בלי · מחיר מבצע · 1+1 · כמות במחיר. ראה lib/deals.ts */
+  dealKind: "none" | Deal["type"];
+  dealSalePrice: string;
+  dealFreeBuy: number;
+  dealBundleQty: number;
+  dealBundlePrice: string;
   imageKey: string | null;
   videoKey: string | null;
   posterKey: string | null;
@@ -83,6 +90,11 @@ const EMPTY_EDIT: EditState = {
   isMystery: false,
   dropOn: false,
   dropInput: "",
+  dealKind: "none",
+  dealSalePrice: "",
+  dealFreeBuy: 1,
+  dealBundleQty: 2,
+  dealBundlePrice: "",
   imageKey: null,
   videoKey: null,
   posterKey: null,
@@ -94,6 +106,45 @@ const EMPTY_EDIT: EditState = {
   pendingImageRaw: null,
   imagePos: { x: 50, y: 50 },
 };
+
+/** מבצע שמור → שדות הטופס */
+function dealFields(d: Deal | null): Pick<EditState, "dealKind" | "dealSalePrice" | "dealFreeBuy" | "dealBundleQty" | "dealBundlePrice"> {
+  return {
+    dealKind: d?.type ?? "none",
+    dealSalePrice: d?.type === "sale" ? String(d.price) : "",
+    dealFreeBuy: d?.type === "free" ? d.buy : 1,
+    dealBundleQty: d?.type === "bundle" ? d.qty : 2,
+    dealBundlePrice: d?.type === "bundle" ? String(d.price) : "",
+  };
+}
+
+/** הטופס → מבצע לשמירה. null = בלי מבצע (או שעוד לא מילאו מחיר). */
+function dealFromEdit(e: EditState): Deal | null {
+  if (e.dealKind === "sale") {
+    const price = parsePrice(e.dealSalePrice);
+    return price && price > 0 ? { type: "sale", price } : null;
+  }
+  if (e.dealKind === "free") return { type: "free", buy: e.dealFreeBuy };
+  if (e.dealKind === "bundle") {
+    const price = parsePrice(e.dealBundlePrice);
+    return price && price > 0 ? { type: "bundle", qty: e.dealBundleQty, price } : null;
+  }
+  return null;
+}
+
+/** מה לא בסדר במבצע, במשפט שילדה מבינה. null = בסדר. */
+function dealProblem(e: EditState): string | null {
+  if (e.dealKind === "none" || e.dealKind === "free") return null;
+  const price = parsePrice(e.price) ?? 0;
+  const deal = dealFromEdit(e);
+  if (!deal) return e.dealKind === "sale" ? "כמה עולה במבצע? צריך לכתוב מחיר" : `כמה עולים ${e.dealBundleQty} ביחד? צריך לכתוב מחיר`;
+  if (!dealActive(price, deal)) {
+    return e.dealKind === "sale"
+      ? `מחיר המבצע צריך להיות פחות מ-₪${formatPrice(price)}`
+      : `${e.dealBundleQty} ביחד צריכים לעלות פחות מ-₪${formatPrice(price * e.dealBundleQty)}`;
+  }
+  return null;
+}
 
 /** הקטגוריות של מוצר — המערך החדש, או הקטגוריה הישנה היחידה (0045) */
 const productCats = (p: Product) => (p.categories?.length ? p.categories : p.category ? [p.category] : []);
@@ -322,6 +373,7 @@ export default function ProductsPage() {
         // דרופ שכבר נפתח הוא מוצר רגיל — לא מציגים זמן שעבר
         dropOn: isUpcoming(p.drop_at, Date.now()),
         dropInput: isUpcoming(p.drop_at, Date.now()) ? toLocalInput(p.drop_at) : "",
+        ...dealFields(parseDeal(p.deal)),
         stock: p.stock,
         isVisible: p.is_visible !== false,
         imageKey: p.image_key,
@@ -526,6 +578,12 @@ export default function ProductsPage() {
         return;
       }
     }
+    const badDeal = dealProblem(edit);
+    if (badDeal) {
+      showToast(badDeal);
+      document.getElementById("editor-deal")?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
     setBusy(true);
     try {
       const supa = supabaseBrowser();
@@ -570,6 +628,7 @@ export default function ProductsPage() {
         featured: edit.featured,
         is_mystery: edit.isMystery,
         drop_at: edit.dropOn ? israelInputToIso(edit.dropInput) : null,
+        deal: dealFromEdit(edit),
         stock: Math.max(0, edit.stock),
         is_visible: edit.isVisible,
         image_key: imageKey,
@@ -583,6 +642,15 @@ export default function ProductsPage() {
           : supa.from("products").insert({ ...r, store_id: store.id });
 
       let { error } = await write(row);
+      if (error) {
+        // 0064 עוד לא בדאטהבייס. מבצע שנבחר לא נעלם בשקט — אומרים.
+        if (row.deal) {
+          showToast("מבצעים לא זמינים כרגע. אפשר לבחור \"בלי מבצע\" ולשמור");
+          return;
+        }
+        delete row.deal;
+        ({ error } = await write(row));
+      }
       if (error) {
         // 0056 עוד לא בדאטהבייס. דרופ אסור לאבד בשקט — מוצר שאמור להיות
         // נעול היה נפתח מיד. אז עוצרים ואומרים.
@@ -661,6 +729,7 @@ export default function ProductsPage() {
       ...(src.is_mystery ? { is_mystery: true } : {}),
       // דרופ שעוד לא נפתח עובר לעותק; דרופ שעבר — לא (העותק פשוט פתוח)
       ...(isUpcoming(src.drop_at, Date.now()) ? { drop_at: src.drop_at } : {}),
+      ...(src.deal ? { deal: src.deal } : {}),
       stock: src.stock,
       is_visible: src.is_visible,
       image_key: src.image_key,
@@ -921,7 +990,7 @@ export default function ProductsPage() {
                 {/* שתי שורות נפרדות, כדי שיהיה ברור מה זה מה (מרינה: "מה מציגים
                     מה רואים"): קודם מצב המוצר בתגיות באותו גודל בדיוק, ואז
                     הקטגוריות כטקסט — לא עוד תגית שנראית כמו מצב. */}
-                {(out || hidden || low || upcoming || !!p.is_mystery) && (
+                {(out || hidden || low || upcoming || !!p.is_mystery || dealActive(p.price, p.deal)) && (
                   <div className="flex gap-1.5 items-center mt-2 flex-wrap" data-testid="row-status">
                     {out && <span className={`${CHIP} bg-[var(--danger-bg)] text-[var(--danger)] font-bold`}>אזל</span>}
                     {upcoming && (
@@ -932,6 +1001,11 @@ export default function ProductsPage() {
                         <span>
                           נפתח ב-<bdi>{dropShort(p.drop_at!).date}</bdi> · <bdi>{dropShort(p.drop_at!).time}</bdi>
                         </span>
+                      </span>
+                    )}
+                    {dealActive(p.price, p.deal) && (
+                      <span className={`${CHIP} bg-[var(--warn-bg)] text-[var(--warn-ink)] font-bold`} data-testid="row-deal">
+                        מבצע {dealLabel(p.deal!)}
                       </span>
                     )}
                     {p.is_mystery && (
@@ -1324,6 +1398,122 @@ export default function ProductsPage() {
                 </div>
               </>
             )}
+
+            {/* מבצע (0064). שלוש אפשרויות שילדה מכירה מהסופר, ואחת "בלי".
+                מה שייראה בדוכן מופיע מתחת, במילים, לפני ששומרים. */}
+            <div id="editor-deal" className="mb-3" data-testid="editor-deal">
+              <label className="block text-[12px] text-[var(--muted)] mb-1">מבצע (לא חובה)</label>
+              <div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="סוג מבצע">
+                {([
+                  ["none", "בלי"],
+                  ["sale", "מחיר מבצע"],
+                  ["free", "1+1"],
+                  ["bundle", "2 במחיר"],
+                ] as const).map(([k, label]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    role="radio"
+                    aria-checked={edit.dealKind === k}
+                    data-testid={`deal-${k}`}
+                    onClick={() => setEdit((s) => s && { ...s, dealKind: k })}
+                    className={`border py-2 text-[12.5px] transition ${
+                      edit.dealKind === k ? "border-[var(--ink)] bg-[var(--ink)] text-white font-bold" : "border-[var(--line)] bg-white"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {edit.dealKind === "sale" && (
+                <div className="flex items-center gap-2 mt-2 text-[13px]">
+                  <span>במבצע ב-</span>
+                  <span className="flex items-center border border-[var(--line)] bg-white px-2">
+                    <span className="text-[var(--muted)]">₪</span>
+                    <input
+                      value={edit.dealSalePrice}
+                      onChange={(e) => setEdit((s) => s && { ...s, dealSalePrice: typedPrice(e.target.value) })}
+                      inputMode="decimal"
+                      aria-label="מחיר המבצע"
+                      data-testid="deal-sale-price"
+                      className="w-16 py-2 px-1 text-[14px] font-bold outline-none"
+                    />
+                  </span>
+                  <span className="text-[var(--muted)]">במקום ₪{formatPrice(parsePrice(edit.price) ?? 0)}</span>
+                </div>
+              )}
+
+              {edit.dealKind === "free" && (
+                <div className="flex gap-1.5 mt-2" role="radiogroup" aria-label="כמה קונים כדי לקבל מתנה">
+                  {[1, 2, 3].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      role="radio"
+                      aria-checked={edit.dealFreeBuy === n}
+                      data-testid={`deal-free-${n}`}
+                      onClick={() => setEdit((s) => s && { ...s, dealFreeBuy: n })}
+                      className={`flex-1 border py-2 text-[13px] ${
+                        edit.dealFreeBuy === n ? "border-[var(--ink)] bg-[var(--canvas)] font-bold" : "border-[var(--line)] bg-white"
+                      }`}
+                    >
+                      {n}+1
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {edit.dealKind === "bundle" && (
+                <div className="flex items-center gap-2 mt-2 text-[13px] flex-wrap">
+                  <span className="flex items-center border border-[var(--line)] bg-white">
+                    <button
+                      type="button"
+                      aria-label="פחות"
+                      onClick={() => setEdit((s) => s && { ...s, dealBundleQty: Math.max(2, s.dealBundleQty - 1) })}
+                      className="w-8 h-9"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center font-bold" data-testid="deal-bundle-qty">{edit.dealBundleQty}</span>
+                    <button
+                      type="button"
+                      aria-label="עוד"
+                      onClick={() => setEdit((s) => s && { ...s, dealBundleQty: Math.min(10, s.dealBundleQty + 1) })}
+                      className="w-8 h-9"
+                    >
+                      +
+                    </button>
+                  </span>
+                  <span>ביחד ב-</span>
+                  <span className="flex items-center border border-[var(--line)] bg-white px-2">
+                    <span className="text-[var(--muted)]">₪</span>
+                    <input
+                      value={edit.dealBundlePrice}
+                      onChange={(e) => setEdit((s) => s && { ...s, dealBundlePrice: typedPrice(e.target.value) })}
+                      inputMode="decimal"
+                      aria-label={`מחיר של ${edit.dealBundleQty} ביחד`}
+                      data-testid="deal-bundle-price"
+                      className="w-16 py-2 px-1 text-[14px] font-bold outline-none"
+                    />
+                  </span>
+                </div>
+              )}
+
+              {/* ככה זה ייראה בדוכן — או מה עוד חסר */}
+              {edit.dealKind !== "none" && (() => {
+                const price = parsePrice(edit.price) ?? 0;
+                const deal = dealFromEdit(edit);
+                const problem = dealProblem(edit);
+                if (problem && deal) return <p className="text-[12px] text-[var(--danger)] mt-1.5" data-testid="deal-problem">{problem}</p>;
+                if (!deal || price <= 0) return null;
+                return (
+                  <p className="text-[12px] text-[var(--muted)] mt-1.5" data-testid="deal-preview">
+                    בדוכן יופיע: <b className="text-[var(--ink)]">{dealLabel(deal)}</b> · {dealExplain(price, deal)}
+                  </p>
+                );
+              })()}
+            </div>
 
             {/* תגיות. רק שתיים לבחירה — השאר מחושבות מהמכירות ומהמלאי, וזה
                 בכוונה: "הכי נמכר" שאפשר להדביק הוא מדבקה, לא הישג. */}

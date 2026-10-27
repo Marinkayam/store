@@ -14,6 +14,7 @@ import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } f
 import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
+import { applyDeals, dealActive, dealExplain, dealLabel, dealNudge, type Deal } from "@/lib/deals";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 import { dropTime, dropWhen } from "@/lib/drop";
 import DropCountdown from "@/app/drop-countdown";
@@ -328,7 +329,11 @@ export default function StoreView({
   }, [clock, products]);
 
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
-  const cartTotal = sumPrices(cart.map((l) => lineTotal(l.price, l.qty)));
+  // מבצעים: אותו חישוב כמו בשרת (lib/deals.ts). השרת קובע; כאן רק מציגים.
+  const dealOf = (id: string): Deal | null => products.find((p) => p.id === id)?.deal ?? null;
+  const cartDeals = applyDeals(cart.map((l) => ({ productId: l.id, price: l.price, qty: l.qty, deal: dealOf(l.id) })));
+  const cartTotal = sumPrices(cartDeals.map((d) => d.line));
+  const dealSaved = sumPrices(cartDeals.map((d) => d.saved));
 
   /* ── קופון ── השרת מחשב (לפי המחירים בדאטהבייס), כאן רק מציגים.
      כל שינוי בסל בודק את הקוד מחדש — מינימום שכבר לא מתקיים מוריד אותו. */
@@ -550,10 +555,10 @@ export default function StoreView({
       }
 
       // בונים את הלינק רק אחרי שהשרת ענה — המספר לא יושב ב-HTML
-      const lines = (data.items as { name: string; qty: number; price: number; option?: string; mystery?: boolean }[])
+      const lines = (data.items as { name: string; qty: number; price: number; option?: string; mystery?: boolean; deal?: string; line?: number }[])
         .map(
           (i) =>
-            `• ${i.mystery ? "🎁 " : ""}${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${formatPrice(lineTotal(i.price, i.qty))}`
+            `• ${i.mystery ? "🎁 " : ""}${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${formatPrice(i.line ?? lineTotal(i.price, i.qty))}${i.deal ? ` (מבצע ${i.deal})` : ""}`
         )
         .join("\n");
       // שתי השורות האלה מתארות את מה ש*הקונה בחרה*, ולא את מה שהדוכן
@@ -750,8 +755,25 @@ export default function StoreView({
                     {p.description && (
                       <div className="text-[12px] opacity-75 truncate">{p.description}</div>
                     )}
-                    <div className="text-[17px] font-bold mt-1.5" style={{ color: "var(--s-primary-text)" }}>
-                      ₪{formatPrice(p.price)}
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                      {p.deal?.type === "sale" && dealActive(p.price, p.deal) ? (
+                        <>
+                          <span className="text-[17px] font-bold" style={{ color: "var(--s-primary-text)" }}>₪{formatPrice(p.deal.price)}</span>
+                          <s className="text-[12.5px] opacity-60">₪{formatPrice(p.price)}</s>
+                        </>
+                      ) : (
+                        <span className="text-[17px] font-bold" style={{ color: "var(--s-primary-text)" }}>₪{formatPrice(p.price)}</span>
+                      )}
+                      {/* מבצע — אותו צבע כמו תגית "מבצע", בכל הדוכנים */}
+                      {dealActive(p.price, p.deal) && p.deal!.type !== "sale" && (
+                        <span
+                          className="border bg-white text-[11.5px] font-bold px-1.5 py-px"
+                          style={{ color: BADGES.sale.text, borderColor: BADGES.sale.bg }}
+                          data-testid="deal-tag"
+                        >
+                          {dealLabel(p.deal!)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </button>
@@ -1110,9 +1132,26 @@ export default function StoreView({
             {current.description && (
               <p className="text-[13px] opacity-70 text-center mt-1 leading-relaxed">{current.description}</p>
             )}
-            <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary-text)" }}>
-              ₪{formatPrice(current.price)}
-            </p>
+            {current.deal?.type === "sale" && dealActive(current.price, current.deal) ? (
+              <p className="text-center mt-2 flex items-baseline justify-center gap-2" data-testid="deal-box">
+                <span className="text-xl font-bold" style={{ color: "var(--s-primary-text)" }}>₪{formatPrice(current.deal.price)}</span>
+                <s className="text-[14px] opacity-60">₪{formatPrice(current.price)}</s>
+              </p>
+            ) : (
+              <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary-text)" }}>
+                ₪{formatPrice(current.price)}
+              </p>
+            )}
+            {dealActive(current.price, current.deal) && current.deal!.type !== "sale" && (
+              <div
+                className="s-r mx-auto mt-2 w-fit border-[1.5px] bg-white px-3 py-1.5 text-center"
+                style={{ borderColor: BADGES.sale.bg, color: BADGES.sale.text }}
+                data-testid="deal-box"
+              >
+                <div className="text-[15px] font-black">מבצע {dealLabel(current.deal!)}</div>
+                <div className="text-[12px] font-medium">{dealExplain(current.price, current.deal!)}</div>
+              </div>
+            )}
             {current.track_stock && current.stock <= 3 && (
               <p className="text-[12px] opacity-75 text-center mt-1">{current.stock === 1 ? "נשאר אחד במלאי" : `נשארו ${current.stock} במלאי`}</p>
             )}
@@ -1284,8 +1323,12 @@ export default function StoreView({
           {/* כל שורה ניתנת לעריכה כאן. קונה שרוצה שניים במקום אחד לא אמורה
               לצאת, לנקות את הסל ולהתחיל מחדש — היא פשוט תוותר. */}
           <div className="flex flex-col">
-          {cart.map((l) => {
+          {cart.map((l, li) => {
             const max = lineMax(l);
+            const d = cartDeals[li];
+            // ההצעה "עוד אחד וזה 2 ב-₪15" — פעם אחת למוצר, בשורה האחרונה שלו
+            const lastOfProduct = !cart.slice(li + 1).some((x) => x.id === l.id);
+            const nudge = lastOfProduct ? dealNudge(l.price, inCart(l.id), dealOf(l.id)) : null;
             return (
               <div
                 key={lineKey(l.id, l.option)}
@@ -1298,6 +1341,16 @@ export default function StoreView({
                     {l.option ? ` (${l.option})` : ""}
                   </div>
                   <div className="opacity-75 text-[12px] mt-0.5">₪{formatPrice(l.price)} ליחידה</div>
+                  {d.saved > 0 && (
+                    <div className="text-[12px] font-bold mt-0.5" style={{ color: BADGES.sale.text }} data-testid="line-deal">
+                      {d.label} · <span className="whitespace-nowrap">חסכת ₪{formatPrice(d.saved)}</span>
+                    </div>
+                  )}
+                  {nudge && (
+                    <div className="text-[12px] font-semibold mt-0.5" style={{ color: BADGES.sale.text }} data-testid="deal-nudge">
+                      {nudge}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center border-[1.5px] border-black/10">
@@ -1319,7 +1372,10 @@ export default function StoreView({
                   </button>
                 </div>
 
-                <span className="w-12 text-left font-bold text-[13.5px]">₪{formatPrice(lineTotal(l.price, l.qty))}</span>
+                <span className="w-12 text-left font-bold text-[13.5px]">
+                  {d.saved > 0 && <s className="block text-[11px] font-normal opacity-55">₪{formatPrice(lineTotal(l.price, l.qty))}</s>}
+                  ₪{formatPrice(d.line)}
+                </span>
                 <button
                   onClick={() => setLineQty(l.id, l.option, 0)}
                   aria-label={`הסרה, ${l.name}`}
@@ -1632,6 +1688,12 @@ export default function StoreView({
                   <span>קופון <bdi>{coupon.code}</bdi></span>
                   <bdi dir="ltr">−₪{formatPrice(coupon.discount)}</bdi>
                 </div>
+              </div>
+            )}
+            {dealSaved > 0 && (
+              <div className="flex justify-between text-[12.5px] font-semibold mb-1" style={{ color: BADGES.sale.text }} data-testid="deal-saved">
+                <span>חסכת במבצעים</span>
+                <bdi dir="ltr">₪{formatPrice(dealSaved)}</bdi>
               </div>
             )}
             <div className="flex justify-between items-baseline mb-2.5">

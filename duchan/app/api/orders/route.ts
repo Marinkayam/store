@@ -4,7 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
 import { safeOptionLabel } from "@/lib/product-options";
 import type { OrderItem } from "@/lib/types";
-import { lineTotal, sumPrices } from "@/lib/money";
+import { sumPrices } from "@/lib/money";
+import { applyDeals, parseDeal } from "@/lib/deals";
 import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
 import { findCoupon } from "@/lib/coupons-server";
 import { countdown, dropTime } from "@/lib/drop";
@@ -74,15 +75,22 @@ export async function POST(req: NextRequest) {
   type Row = {
     id: string; name: string; price: number; track_stock: boolean; stock: number;
     option_label: string | null; options: string[] | null;
-    drop_at?: string | null; is_mystery?: boolean | null;
+    drop_at?: string | null; is_mystery?: boolean | null; deal?: unknown;
   };
   const readProducts = (cols: string) =>
     db.from("products").select(cols).eq("store_id", store.id).in("id", ids).is("deleted_at", null);
   // דרופ ושקית הפתעה (0056). אם הקוד עלה לפני המיגרציה — בלי השדות האלה,
   // ולא הזמנה שנופלת (ראה ההסבר על p_buyer_phone למטה)
+  // מבצעים (0064) בשכבה משלהם — עמודה חסרה מורידה רק את המבצע
   let { data: productRows, error: prodErr } = await readProducts(
-    "id, name, price, track_stock, stock, option_label, options, drop_at, is_mystery"
+    "id, name, price, track_stock, stock, option_label, options, drop_at, is_mystery, deal"
   );
+  if (prodErr) {
+    console.error("[orders] product select (deal) failed, falling back:", prodErr.message);
+    ({ data: productRows, error: prodErr } = await readProducts(
+      "id, name, price, track_stock, stock, option_label, options, drop_at, is_mystery"
+    ));
+  }
   if (prodErr) {
     console.error("[orders] product select failed, falling back:", prodErr.message);
     ({ data: productRows } = await readProducts("id, name, price, track_stock, stock, option_label, options"));
@@ -92,7 +100,7 @@ export async function POST(req: NextRequest) {
 
   const byId = new Map((products ?? []).map((p) => [p.id, p]));
   const snapshot: OrderItem[] = [];
-  const lines: number[] = [];
+  const dealIn: Parameters<typeof applyDeals>[0] = [];
 
   for (const item of items) {
     const qty = Math.floor(Number(item.qty));
@@ -137,10 +145,17 @@ export async function POST(req: NextRequest) {
       ...(option ? { option } : {}),
       ...(p.is_mystery ? { mystery: true as const } : {}),
     });
-    lines.push(lineTotal(price, qty));
+    dealIn.push({ productId: p.id, price, qty, deal: parseDeal(p.deal) });
   }
+  // מבצעים: מחושבים כאן מה-DB, לכל מוצר על הכמות הכוללת שלו בסל (ורוד
+  // אחד וכחול אחד = 2). השורה שומרת את הסכום ואת שם המבצע, כדי שההזמנה
+  // תיראה אותו דבר גם אם המבצע ישתנה מחר — כמו המחיר (CLAUDE.md §3).
+  const dealOut = applyDeals(dealIn);
+  dealOut.forEach((d, i) => {
+    if (d.saved > 0) snapshot[i] = { ...snapshot[i], deal: d.label!, line: d.line };
+  });
   // באגורות שלמות: 10.90 × 3 בנקודה צפה זה 32.699999…
-  const subtotal = sumPrices(lines);
+  const subtotal = sumPrices(dealOut.map((d) => d.line));
 
   // קופון: נבדק מחדש בשרת (קיים, פעיל, בתוקף, לא נוצל, מעל המינימום).
   // השימוש עצמו "נתפס" בתוך place_order, אטומית עם ההזמנה.

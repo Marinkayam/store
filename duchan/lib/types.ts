@@ -1,3 +1,4 @@
+import type { Deal } from "@/lib/deals";
 import type { ThemeKey } from "./themes";
 
 export type StoreStatus = "active" | "paused" | "blocked";
@@ -97,6 +98,7 @@ export interface Product {
   featured?: boolean | null; // מופיע בחלק "המומלצים" בראש הדוכן (0053)
   drop_at?: string | null; // דרופ: נפתח להזמנה בזמן הזה (0056). null = פתוח
   is_mystery?: boolean | null; // שקית הפתעה (0056)
+  deal?: Deal | null; // מבצע: מחיר מבצע · 1+1 · כמות במחיר (0064). ראה lib/deals.ts
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
   created_at: string;
@@ -109,6 +111,8 @@ export interface OrderItem {
   price: number;
   option?: string; // הבחירה של הקונה: "ורוד". נשמר ב-snapshot ההזמנה.
   mystery?: true; // שקית הפתעה (0056) — כדי שהמוכר/ת יזכרו להכין הפתעה
+  deal?: string; // "2 ב-₪15" — המבצע שחל על השורה (0064)
+  line?: number; // סכום השורה אחרי המבצע. חסר = price × qty (הזמנות ותיקות)
 }
 
 export interface Order {
@@ -204,5 +208,6 @@ export interface PublicProduct {
   featured?: boolean | null;
   drop_at?: string | null; // דרופ — נפתח להזמנה בזמן הזה (0056)
   is_mystery?: boolean | null; // שקית הפתעה (0056)
+  deal?: Deal | null; // מבצע (0064). ראה lib/deals.ts
   created_at: string; // דרוש לתגית "חדש"
 }

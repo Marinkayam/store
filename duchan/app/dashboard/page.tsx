@@ -395,7 +395,8 @@ export default function OrdersPage() {
             </div>
             {o.items.map((it, i) => (
               <div key={i} className="text-[13px] py-px">
-                • {it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{formatPrice(lineTotal(it.price, it.qty))}
+                • {it.name}{it.option ? ` (${it.option})` : ""} × {it.qty} · ₪{formatPrice(it.line ?? lineTotal(it.price, it.qty))}
+                {it.deal && <span className="text-[var(--muted)]"> · מבצע {it.deal}</span>}
                 {/* שקית הפתעה — תזכורת להכין הפתעה, לא לשלוח את מה שבתמונה */}
                 {it.mystery && <span className="text-[11px] text-[var(--muted)]" data-testid="order-mystery"> · שקית הפתעה</span>}
               </div>
