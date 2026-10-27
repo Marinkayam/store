@@ -113,7 +113,8 @@ await girl.waitForSelector("h1:has-text('הזמנות')", { timeout: 15000 });
 await girl.waitForTimeout(1200);
 const dash = (await girl.textContent("body")) ?? "";
 check("בכרטיס ההזמנה: ₪32.70", dash.includes("₪32.70"));
-check("ובשורת המוצר: × 3 · ₪32.70", dash.includes("× 3 · ₪32.70"));
+const row = (await girl.locator("[data-testid=order-card] li", { hasText: "₪32.70" }).first().textContent().catch(() => "")) ?? "";
+check("ובשורת המוצר: 3× ו-₪32.70", row.includes("3×") && row.includes("₪32.70"), row);
 
 /* ── 3. בסל של הקונה ── */
 await buyer.click(`button[aria-label='הוספה מהירה, מחזיק מפתחות מנצנץ']`);
