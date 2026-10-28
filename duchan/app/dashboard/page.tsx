@@ -239,7 +239,7 @@ export default function OrdersPage() {
         !store.tagline?.trim() && {
           key: "about",
           title: "משפט על הדוכן",
-          why: "מי מוכר/ת ומה מיוחד בדוכן. קונים אוהבים לדעת ממי הם קונים.",
+          why: "מי עומדים מאחורי הדוכן ומה מיוחד בו. קונים אוהבים לדעת ממי הם קונים.",
           cta: "לכתוב משפט",
           href: "/dashboard/settings#design",
         },
@@ -458,7 +458,7 @@ export default function OrdersPage() {
 
             {o.buyer_note && (
               <p className="mx-4 mb-3 px-3 py-2 bg-[var(--sub)] text-[12.5px] leading-relaxed">
-                <span className="text-[var(--muted)]">הקונה כתב/ה: </span>{o.buyer_note}
+                <span className="text-[var(--muted)]">הערה מהקונה: </span>{o.buyer_note}
               </p>
             )}
 
@@ -532,7 +532,7 @@ export default function OrdersPage() {
                 onClick={() => openWho(o)}
                 className="text-[12px] text-[var(--warn-ink)] bg-[var(--warn-bg)] border border-[var(--warn-line)] px-2.5 py-1.5 mt-1.5 w-full text-right"
               >
-                מי הזמין/ה? להוסיף שם
+                להוסיף את שם הקונה
               </button>
             ) : null}
 

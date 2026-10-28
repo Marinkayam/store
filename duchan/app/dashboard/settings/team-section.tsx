@@ -102,12 +102,12 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
         <div className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3.5" data-testid="transfer-ask">
           <div className="text-[14px] font-bold">👑 מבקשים שתהיו ראש הדוכן</div>
           <p className="text-[12.5px] text-[var(--warn-ink)] leading-relaxed mt-1">
-            ראש הדוכן מחליט/ה מי בצוות, לאן מגיעות ההזמנות ואיך משלמים. ראש הדוכן הנוכחי/ת יישאר/תישאר בצוות כשותף/ה.
+            ראש הדוכן מחליטים מי בצוות, לאן מגיעות ההזמנות ואיך משלמים. מי שהיו ראש הדוכן עד עכשיו נשארים בצוות.
           </p>
           <div className="grid grid-cols-2 gap-2 mt-2.5">
             <button
               disabled={busy}
-              onClick={async () => (await act("accept_transfer", {}, "עכשיו את/ה ראש הדוכן 👑")) && reloadDashboard()}
+              onClick={async () => (await act("accept_transfer", {}, "הראשות עברה אליכם 👑")) && reloadDashboard()}
               data-testid="transfer-accept"
               className="fx-press bg-[var(--ink)] text-white py-2.5 text-[13px] font-bold"
             >
@@ -134,7 +134,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
               <span className="text-[20px]" aria-hidden>{p.role === "owner" ? "👑" : "🤝"}</span>
               <span className="flex-1 min-w-0">
                 <span className="block text-[13.5px] font-bold">
-                  {p.role === "owner" ? "ראש הדוכן" : "שותף/ה"}
+                  {p.role === "owner" ? "ראש הדוכן" : "בצוות"}
                   {p.me && <span className="font-normal text-[var(--muted)]"> · זה אני</span>}
                 </span>
                 <span className="block text-[12px] text-[var(--muted)]" dir="ltr" style={{ textAlign: "right" }}>{p.phone}</span>
@@ -161,8 +161,8 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
                   <button
                     disabled={busy}
                     onClick={() =>
-                      window.confirm("להעביר את הראשות? השותף/ה יצטרכו לאשר, ואת/ה נשאר/ת בצוות כשותף/ה.") &&
-                      act("transfer", { userId: p.userId }, "שלחנו בקשה. הראשות תעבור כשהשותף/ה יאשרו")
+                      window.confirm("להעביר את הראשות? בצד השני יצטרכו לאשר, ואתם נשארים בצוות.") &&
+                      act("transfer", { userId: p.userId }, "שלחנו בקשה. הראשות תעבור אחרי שיאשרו")
                     }
                     data-testid="transfer-start"
                     className="border border-[var(--line)] px-2.5 py-1.5 text-[12px]"
@@ -175,7 +175,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
                     disabled={busy}
                     onClick={() =>
                       window.confirm("להוציא מהצוות? הגישה לדוכן נסגרת מיד. המוצרים וההזמנות נשארים.") &&
-                      act("remove", { userId: p.userId }, "השותף/ה יצאו מהצוות")
+                      act("remove", { userId: p.userId }, "יצאו מהצוות")
                     }
                     data-testid="team-remove"
                     className="border border-[var(--danger)] text-[var(--danger)] px-2.5 py-1.5 text-[12px]"
@@ -202,9 +202,9 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
       {/* הזמנה לשותף/ה — רק ראש הדוכן */}
       {isOwner && (
         <div className="bg-white border border-[var(--line)] p-3.5">
-          <div className="text-[13.5px] font-bold">🤝 להוסיף שותף/ה</div>
+          <div className="text-[13.5px] font-bold">🤝 להוסיף שותפים</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-            חבר/ה, אח או אחות. כל אחד נכנס עם הטלפון שלו, ורק המספר שהזמנתם יכול להצטרף.
+            חברים, אח או אחות. כל אחד נכנס עם הטלפון שלו, ורק המספר שהזמנתם יכול להצטרף.
           </p>
           {room > 0 ? (
             <div className="flex gap-2 mt-2.5">
@@ -214,7 +214,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
                 onKeyDown={(e) => e.key === "Enter" && invite()}
                 inputMode="tel"
                 placeholder="050-0000000"
-                aria-label="הטלפון של השותף/ה"
+                aria-label="טלפון של מי שמצטרפים"
                 className="flex-1 min-w-0 border border-[var(--line)] px-3 py-2.5 text-[14px]"
                 dir="ltr"
               />
@@ -229,7 +229,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
             </div>
           ) : (
             <p className="text-[12.5px] text-[var(--warn-ink)] mt-2" data-testid="team-full">
-              הצוות מלא: ראש הדוכן ושותף/ה אחד/ת{team.invites.length ? " (יש הזמנה שמחכה — אפשר לבטל אותה למטה)" : ""}.
+              הצוות מלא: כבר יש שני אנשים בדוכן{team.invites.length ? " (יש הזמנה שמחכה — אפשר לבטל אותה למטה)" : ""}.
             </p>
           )}
         </div>

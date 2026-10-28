@@ -28,8 +28,8 @@ export const HEAD_ONLY = [
 type Who = "owner" | "partner" | "invitee";
 
 const TITLES: Record<Who, { can: string; cant: string; cantIcon: string }> = {
-  owner: { can: "✅ מה כל הצוות יכול לעשות", cant: "רק את/ה, ראש הדוכן", cantIcon: "👑" },
-  partner: { can: "✅ מה אני יכול/ה לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
+  owner: { can: "✅ מה כל הצוות יכול לעשות", cant: "רק ראש הדוכן", cantIcon: "👑" },
+  partner: { can: "✅ מה אפשר לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
   invitee: { can: "✅ מה תוכלו לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
 };
 

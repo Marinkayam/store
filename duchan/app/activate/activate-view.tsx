@@ -167,7 +167,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <h1 className="text-xl font-bold">את הפרסום עושה ראש הדוכן</h1>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed">
             {store.payment_claimed_at
-              ? "ראש הדוכן כבר סימן/ה ששילמו. עכשיו אנחנו בודקים שהכסף הגיע, ואז הדוכן נפתח להזמנות."
+              ? "כבר סומן ששילמו. עכשיו אנחנו בודקים שהכסף הגיע, ואז הדוכן נפתח להזמנות."
               : "התשלום ואישור ההורים נעשים מהטלפון של ראש הדוכן. בינתיים אפשר להוסיף מוצרים ולעצב."}
           </p>
           <a href="/dashboard/products" className="bg-[var(--ink)] text-white py-3 text-sm font-bold">
@@ -397,7 +397,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
                 className="mt-0.5 w-5 h-5 shrink-0 accent-[var(--ink)]"
               />
               <span className="text-[13.5px] leading-relaxed">
-                אני מאשר/ת שההורים שלי יודעים ומאשרים לי לנהל את הדוכן.
+                ההורים שלי יודעים ומאשרים לי לנהל את הדוכן.
               </span>
             </label>
           </div>

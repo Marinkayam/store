@@ -28,6 +28,6 @@ export const WHATSNEW: { version: string; releasedAt: string; title: string; ite
     { key: "drop", icon: "hourglass", title: "דרופ", text: "מוצר שנפתח בשעה שבוחרים", href: "/dashboard/products" },
     { key: "mystery", icon: "gift", title: "מוצר בהפתעה", text: "בלי לגלות מה בפנים", href: "/dashboard/products" },
     { key: "coupons", icon: "receipt", title: "קופונים", text: "קוד הנחה לחברים", href: "/dashboard/settings#coupons" },
-    { key: "team", icon: "heart", title: "דוכן משותף", text: "מנהלים את הדוכן עם חבר/ה", href: "/dashboard/settings#team" },
+    { key: "team", icon: "heart", title: "דוכן משותף", text: "מנהלים את הדוכן עם חברים", href: "/dashboard/settings#team" },
   ],
 };

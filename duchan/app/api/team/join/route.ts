@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     notifyAdmins({
       kind: "partner_joined",
       ref: `${inv.store_id}:${user.id}`,
-      title: "🤝 שותף/ה הצטרפו לדוכן",
+      title: "🤝 הצטרפו שותפים לדוכן",
       body: name,
       url: "/admin",
     }).catch(() => {})

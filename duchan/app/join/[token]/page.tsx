@@ -128,7 +128,7 @@ export default function JoinPage({ params }: { params: Promise<{ token: string }
                     data-testid="join-consent"
                     className="mt-1 w-5 h-5 shrink-0"
                   />
-                  <span>ההורים שלי יודעים שאני מצטרף/ת לדוכן, ומאשרים</span>
+                  <span>ההורים שלי יודעים על ההצטרפות לדוכן, ומאשרים</span>
                 </label>
                 <button
                   onClick={join}

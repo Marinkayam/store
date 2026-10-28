@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       if (deny) return deny;
       const phone = normalizePhone(body.phone ?? "");
       if (!phone) return err("המספר לא נראה תקין. בודקים ומנסים שוב", 400);
-      if (phone === (await phoneOf(db, store.owner_id))) return err("זה המספר שלך 🙂 מזמינים את המספר של השותף/ה", 400);
+      if (phone === (await phoneOf(db, store.owner_id))) return err("זה המספר שלך 🙂 כאן מזמינים מספר של מי שמצטרפים לדוכן", 400);
       const team = await members();
       if (team.some((m) => m.phone === phone)) return err("המספר הזה כבר בצוות", 409);
 
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, token: same.token, renewed: true });
       }
       if (team.length + live.length >= MAX_PARTNERS) {
-        return err(`בדוכן יכולים להיות עד ${MAX_PARTNERS + 1} אנשים: ראש הדוכן ושותף/ה אחד/ת`, 409);
+        return err(`בדוכן יכולים להיות עד ${MAX_PARTNERS + 1} אנשים בצוות, כולל ראש הדוכן`, 409);
       }
       const token = randomToken(24);
       const { error } = await db.from("store_invites").insert({
@@ -186,14 +186,14 @@ export async function POST(req: NextRequest) {
       const deny = ownerOnly();
       if (deny) return deny;
       const target = (await members()).find((m) => m.user_id === body.userId);
-      if (!target) return err("השותף/ה כבר לא בצוות", 404);
+      if (!target) return err("המספר הזה כבר לא בצוות", 404);
       await db.from("store_members").delete().eq("store_id", store.id).eq("user_id", target.user_id);
       await afterLeave(target.user_id, target.phone);
       return NextResponse.json({ ok: true });
     }
 
     case "leave": {
-      if (role === "owner") return err("ראש הדוכן לא יכול לצאת. קודם מעבירים את הראשות לשותף/ה", 400);
+      if (role === "owner") return err("ראש הדוכן לא יכול לצאת. קודם מעבירים את הראשות למישהו אחר בצוות", 400);
       const self = (await members()).find((m) => m.user_id === user.id);
       if (!self) return err("כבר יצאת מהצוות", 404);
       await db.from("store_members").delete().eq("store_id", store.id).eq("user_id", user.id);
@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
     case "transfer": {
       const deny = ownerOnly();
       if (deny) return deny;
-      if (!(await members()).some((m) => m.user_id === body.userId)) return err("אפשר להעביר ראשות רק לשותף/ה בצוות", 400);
+      if (!(await members()).some((m) => m.user_id === body.userId)) return err("אפשר להעביר ראשות רק למי שכבר בצוות", 400);
       await db
         .from("stores")
         .update({ transfer_to: body.userId, transfer_requested_at: new Date().toISOString() })

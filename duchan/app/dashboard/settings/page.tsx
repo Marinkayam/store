@@ -47,7 +47,7 @@ const SECTIONS = {
   order: { icon: "chat", title: "איך מגיעה הזמנה", intro: "איך הזמנה מגיעה אליך, ואיך נראית הודעת וואטסאפ מקונים. אין כאן מה למלא." },
   app: { icon: "bell", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית. זיהינו את הטלפון ואת הדפדפן — אלה הצעדים בדיוק בשבילו." },
   details: { icon: "phone", title: "הפרטים שלי", intro: "הטלפון שקונים כותבים אליו, וקצת עליכם. בלי כתובת מגורים." },
-  team: { icon: "heart", title: "לנהל ביחד", intro: "לא חובה. אפשר לנהל את הדוכן לבד, ואפשר עם עוד אחד/ת — חבר/ה, אח או אחות. כל אחד נכנס עם הטלפון שלו." },
+  team: { icon: "heart", title: "לנהל ביחד", intro: "לא חובה. אפשר לנהל את הדוכן לבד, ואפשר יחד עם חברים, אח או אחות. כל אחד נכנס עם הטלפון שלו." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
 /* העוגנים של הגרסה הקודמת (גלילה אחת) — קישורים ישנים ממשיכים לעבוד */
@@ -702,8 +702,8 @@ export default function SettingsPage() {
                 </span>
                 <span className="block text-[12px] text-[var(--muted)] mt-0.5 leading-snug">
                   {isPartner
-                    ? "את/ה שותף/ה בדוכן הזה · מה אני יכול/ה לעשות, ומי בצוות"
-                    : "אם רוצים, אפשר להזמין חבר/ה, אח או אחות לנהל איתך את הדוכן"}
+                    ? "אתם שותפים בדוכן הזה · מה אפשר לעשות, ומי בצוות"
+                    : "אם רוצים, אפשר להזמין חברים, אח או אחות לנהל איתכם את הדוכן"}
                 </span>
               </span>
               <Chevron className="text-[var(--faint)]" />
@@ -1317,7 +1317,7 @@ export default function SettingsPage() {
               <div className="bg-white border border-[var(--line)] p-4 text-center">
                 <div className="text-3xl" aria-hidden>🔒</div>
                 <div className="text-[15px] font-bold mt-1">את זה משנה רק ראש הדוכן</div>
-                <p className="text-[12.5px] text-[var(--muted)] mt-1">כאן אפשר לראות בדיוק מה את/ה יכול/ה לעשות בדוכן:</p>
+                <p className="text-[12.5px] text-[var(--muted)] mt-1">כאן אפשר לראות בדיוק מה אתם יכולים לעשות בדוכן:</p>
               </div>
               <RoleGuide who="partner" />
             </div>

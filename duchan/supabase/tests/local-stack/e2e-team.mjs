@@ -88,11 +88,11 @@ const owner = await session(OWNER);
 await openTeam(owner.page);
 check("צוות הדוכן: ראש הדוכן לבד, עם 👑 וטלפון ההזמנות", (await owner.page.locator("[data-testid=team-person-owner]").count()) === 1 &&
   (await owner.page.locator("[data-testid=orders-phone-badge]").count()) === 1);
-await owner.page.fill("input[aria-label='הטלפון של השותף/ה']", OWNER);
+await owner.page.fill("input[aria-label='טלפון של מי שמצטרפים']", OWNER);
 await owner.page.click("[data-testid=team-invite]");
 await owner.page.waitForTimeout(600);
 check("להזמין את המספר של עצמי — נחסם", ((await owner.page.textContent("body")) ?? "").includes("זה המספר שלך"));
-await owner.page.fill("input[aria-label='הטלפון של השותף/ה']", "052-111-0010");
+await owner.page.fill("input[aria-label='טלפון של מי שמצטרפים']", "052-111-0010");
 await owner.page.click("[data-testid=team-invite]");
 await owner.page.waitForSelector("[data-testid=team-invite-row]");
 const { rows: [inv1] } = await db.query("select * from store_invites where store_id=$1 and phone=$2", [store.id, e164(P1)]);
@@ -103,7 +103,7 @@ await owner.page.waitForTimeout(300);
 const joinUrl = await owner.page.evaluate(() => navigator.clipboard.readText());
 check("הלינק להצטרפות הוא /join/<טוקן>", joinUrl.endsWith(`/join/${inv1.token}`), joinUrl);
 const guideOwner = (await owner.page.textContent("[data-testid=role-guide][data-who=owner]")) ?? "";
-check("ראש הדוכן רואה מסודר: 'מה כל הצוות יכול' ו'רק את/ה, ראש הדוכן'", guideOwner.includes("מה כל הצוות יכול") && guideOwner.includes("רק את/ה, ראש הדוכן") && guideOwner.includes("לאיזה טלפון מגיעות ההזמנות"));
+check("ראש הדוכן רואה מסודר: 'מה כל הצוות יכול' ו'רק את/ה, ראש הדוכן'", guideOwner.includes("מה כל הצוות יכול") && guideOwner.includes("רק ראש הדוכן") && guideOwner.includes("לאיזה טלפון מגיעות ההזמנות"));
 await owner.page.screenshot({ path: `${SHOTS}/team-owner.png`, fullPage: true });
 const again = await api(owner.page, { action: "invite", storeId: store.id, phone: P1 });
 check("הזמנה שנייה לאותו מספר — אותה הזמנה, מחודשת", again.status === 200 && again.body.token === inv1.token && again.body.renewed === true);
@@ -175,7 +175,7 @@ check("ב'הדוכן שלי': 'איך משלמים לי' נעול עם הסבר"
 await p1.page.goto(`${BASE}/dashboard/settings#payment`);
 await p1.page.reload({ waitUntil: "networkidle" });
 check("וגם בכניסה ישירה — נעול, עם 'מה אני יכול/ה לעשות'", (await p1.page.locator("[data-testid=owner-only]").count()) === 1 &&
-  ((await p1.page.textContent("[data-testid=role-guide][data-who=partner]")) ?? "").includes("מה אני יכול/ה לעשות"));
+  ((await p1.page.textContent("[data-testid=role-guide][data-who=partner]")) ?? "").includes("מה אפשר לעשות"));
 await p1.page.screenshot({ path: `${SHOTS}/partner-guide.png`, fullPage: true });
 await p1.page.goto(`${BASE}/dashboard/settings#design`);
 await p1.page.reload({ waitUntil: "networkidle" });
