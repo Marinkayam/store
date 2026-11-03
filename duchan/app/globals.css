@@ -532,10 +532,11 @@ html.a11y-font p, html.a11y-font li { line-height: 1.8 !important; }
 
 /* אייפון מגדיל את העמוד לבד כשנכנסים לשדה עם טקסט קטן מ-16px. במקום
    לחסום הגדלה (הפרת נגישות) — שדות של 16px במסכי מגע. גם קריא יותר.
-   חוץ מהעריכה במקום בכרטיס הדוכן, ששם הגודל הוא חלק מהתצוגה. */
+   כולל העריכה במקום בכרטיס הדוכן: קודם היא הוחרגה (12–15px), וכל נגיעה
+   בשם הדוכן או בתיאור הגדילה את המסך והזיזה אותו הצידה. */
 @media (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(.editable),
-  textarea:not(.editable),
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+  textarea,
   select {
     font-size: 16px !important;
   }

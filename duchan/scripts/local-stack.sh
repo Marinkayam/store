@@ -91,6 +91,23 @@ psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0055_adm
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0057_store_members.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
+# קונטיינר חדש מגיע בלי הבינארי ובלי הקונפיג. מורידים גרסה קבועה,
+# והקונפיג נגזר מהסוד של supashim — ערכים מקומיים בלבד.
+if [ ! -x "$PGREST" ]; then
+  say "מתקין PostgREST"
+  mkdir -p "$(dirname "$PGREST")"
+  curl -sSL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz \
+    | tar -xJ -C "$(dirname "$PGREST")" || { echo "✗ הורדת PostgREST נכשלה"; exit 1; }
+fi
+[ -f "$PGREST_CONF" ] || cat >"$PGREST_CONF" <<'CONF'
+db-uri = "postgres://authenticator@127.0.0.1:5433/duchan"
+db-schemas = "public"
+db-anon-role = "anon"
+jwt-secret = "local-test-secret-with-at-least-32-chars!!"
+server-port = 3001
+server-host = "127.0.0.1"
+CONF
+mkdir -p /var/lib/pgtest/s3data
 up 3001 || { say "מפעיל PostgREST"; ("$PGREST" "$PGREST_CONF" >"$LOGS/postgrest.log" 2>&1 &); sleep 5; }
 for s in supashim:8000 s3shim:9000 smsshim:9100; do
   name="${s%%:*}"; port="${s##*:}"
@@ -101,6 +118,9 @@ done
 # .env.local אינו בגיט, ולכן דגל שנשכח בו לא מפיל את השרת אלא גורם
 # למסלול להחזיר 404 — כשל שנראה כמו באג במוצר. scripts/e2e.mjs בודק
 # את זה גם הוא, אבל עדיף לתקן מכאן מראש.
+# קונטיינר חדש מתחיל בלי .env.local — בלי כתובת Supabase כל דף מחזיר 500.
+# הסקריפט מוסיף רק ערכים מקומיים שחסרים (השימים), ולא דורס כלום.
+node scripts/local-env.mjs
 grep -q '^NEXT_PUBLIC_SQUISH_PARENT_APPROVAL=1' .env.local 2>/dev/null || {
   say "מוסיף NEXT_PUBLIC_SQUISH_PARENT_APPROVAL ל-.env.local"
   printf '\nNEXT_PUBLIC_SQUISH_PARENT_APPROVAL=1\n' >> .env.local

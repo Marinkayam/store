@@ -873,7 +873,7 @@ export default function SettingsPage() {
                   aria-label="עיר"
                   placeholder="עיר (לא חובה)"
                   onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                  className="editable editable-quiet text-center w-28"
+                  className="editable editable-quiet text-center w-32"
                   style={{ color: t.ink }}
                 />
                 {info.ships && (
