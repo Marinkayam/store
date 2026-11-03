@@ -1094,7 +1094,12 @@ export default function ProductsPage() {
       {edit && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setEdit(null)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white max-h-[90%] flex flex-col">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={edit.id ? "עריכת מוצר" : "מוצר חדש"}
+            className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white max-h-[90%] flex flex-col"
+          >
           <div className="px-4 pt-3 overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <div className="flex items-center justify-between gap-2 mb-3">

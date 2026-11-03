@@ -75,7 +75,9 @@ async function sweep(page, screen) {
           mode: (e.getAttribute("inputmode") || "").toLowerCase(),
           max: e.maxLength > 0 ? e.maxLength : null,
           // תוכן של <details> סגור לא נראה לאף אחד — לא שדה "תקוע"
-          visible: r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none" && !e.closest("[hidden]") && !e.closest("details:not([open])"),
+          visible: r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none" && !e.closest("[hidden]") && !e.closest("details:not([open])")
+            // מאחורי חלון פתוח (aria-modal) — גם אדם לא רואה את השדה הזה עכשיו
+            && !(document.querySelector("[aria-modal=true]") && !e.closest("[aria-modal=true]")),
           disabled: e.disabled || e.readOnly,
           label: e.getAttribute("aria-label") || e.getAttribute("placeholder") || e.name || e.id || e.tagName,
           value: e.value,
@@ -156,6 +158,44 @@ if (prod) {
 const guest = await phone();
 await guest.goto(`${BASE}/login`, { waitUntil: "networkidle" });
 await sweep(guest, "כניסה");
+
+/* ── מסך הכניסה: מה שילדות נתקעו בו (יומן הכניסות, 10.2026) ── */
+{
+  const field = guest.locator("input[aria-label='מספר טלפון']");
+  const send = guest.locator("button:has-text('שלחו לי קוד')");
+  await field.tap();
+  await guest.keyboard.type("052538164", { delay: 30 }); // ספרה אחת חסרה
+  check("טלפון עם 9 ספרות: 'חסרה עוד ספרה אחת'", ((await guest.textContent("[data-testid=phone-hint]").catch(() => "")) ?? "").includes("חסרה עוד ספרה אחת"));
+  check("והכפתור עוד כבוי (לא שגיאה אחרי שגיאה)", await send.isDisabled());
+  await guest.keyboard.type("4", { delay: 30 });
+  check("עם הספרה העשירית — הרמז נעלם והכפתור נדלק", (await guest.locator("[data-testid=phone-hint]").count()) === 0 && !(await send.isDisabled()));
+
+  // קוד שגוי: השדה לא מתרוקן (מקלדות אנדרואיד מחזירות את הספרות ושולחות לבד שוב)
+  const P = "0521114433", E = "972521114433";
+  await db.query("delete from phone_otps where phone=$1", [E]);
+  await db.query("delete from login_events where phone=$1", [E]).catch(() => {});
+  await field.fill(P);
+  await send.click();
+  const codeField = guest.locator("input[aria-label='קוד אימות']");
+  await codeField.waitFor({ timeout: 15000 });
+  await codeField.tap();
+  await guest.keyboard.type("000000", { delay: 40 });
+  await guest.waitForSelector("text=/הקוד לא נכון/", { timeout: 10000 });
+  await guest.waitForTimeout(600);
+  const sel = await codeField.evaluate((e) => ({ v: e.value, all: e.selectionStart === 0 && e.selectionEnd === e.value.length }));
+  check("קוד שגוי: הספרות נשארות ומסומנות, לא נמחקות מתחת לאצבע", sel.v === "000000" && sel.all, JSON.stringify(sel));
+  await guest.waitForTimeout(1500);
+  const { rows: [{ n: wrong1 }] } = await db.query("select count(*)::int n from login_events where phone=$1 and kind in ('verify_wrong','verify_locked')", [E]);
+  check("ואותו קוד שגוי לא נשלח שוב לבד", wrong1 === 1, String(wrong1));
+  const { lastCode } = await import("../../../e2e/helpers/sms.mjs").catch(() => ({}));
+  const good = lastCode ? await lastCode(P) : null;
+  if (good) {
+    await guest.keyboard.type(good, { delay: 40 }); // מחליף את המסומן
+    await guest.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 20000 }).catch(() => {});
+    check("הקלדת הקוד הנכון מעל המסומן — נכנסים", !new URL(guest.url()).pathname.startsWith("/login"), guest.url());
+  }
+  await guest.context().clearCookies();
+}
 
 /* ── אונבורדינג → דוכן חדש → הפעלה ── */
 const NEW = "0521119876";

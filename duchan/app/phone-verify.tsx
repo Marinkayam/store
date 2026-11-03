@@ -14,6 +14,24 @@ import VSteps from "./v-steps";
 /** אחרי כמה שניות בלי קוד מופיע כפתור "לא קיבלתי קוד" */
 const HELP_AFTER = 120;
 
+/** מספר נייד ישראלי: 05XXXXXXXX (10 ספרות), או עם קידומת 972 */
+function phoneDigits(raw: string) {
+  const d = raw.replace(/\D/g, "");
+  return d.startsWith("972") ? "0" + d.slice(3) : d;
+}
+function phoneReady(raw: string) {
+  const d = phoneDigits(raw);
+  return d.startsWith("05") ? d.length === 10 : d.length >= 9;
+}
+/** תוך כדי הקלדה: "חסרה עוד ספרה אחת" / "יש ספרה אחת יותר מדי" */
+function phoneHint(raw: string): string | null {
+  const d = phoneDigits(raw);
+  if (!d.startsWith("05") || d.length < 7) return null;
+  if (d.length < 10) return d.length === 9 ? "חסרה עוד ספרה אחת" : `חסרות עוד ${10 - d.length} ספרות`;
+  if (d.length > 10) return d.length === 11 ? "יש ספרה אחת יותר מדי" : `יש ${d.length - 10} ספרות יותר מדי`;
+  return null;
+}
+
 export default function PhoneVerify({
   title,
   subtitle,
@@ -40,6 +58,9 @@ export default function PhoneVerify({
   const waited = sentAt ? (now - sentAt) / 1000 : 0;
   const [help, setHelp] = useState<"idle" | "busy" | "sent" | "error">("idle");
   const codeRef = useRef<HTMLInputElement>(null);
+  /** הקוד האחרון שנשלח לבדיקה — כדי לא לשלוח את אותו קוד שגוי שוב ושוב */
+  const triedRef = useRef("");
+  const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* המספר האחרון שאומת *במכשיר הזה*, כדי שלא יצטרכו להקליד אותו שוב
      בכל כניסה. הוא נשמר מקומית בלבד ולעולם לא נשלח לשום מקום — אנחנו
@@ -102,6 +123,7 @@ export default function PhoneVerify({
       }
       setStep("code");
       setCode("");
+      triedRef.current = "";
       setCooldown(60);
       setSentAt(Date.now());
       setNow(Date.now());
@@ -125,7 +147,12 @@ export default function PhoneVerify({
       const data = await res.json();
       if (!res.ok) {
         setErr(data.error ?? "הקוד לא נכון. אפשר להקליד אותו שוב.");
-        setCode("");
+        /* לא מרוקנים את השדה מהקוד. במקלדות של אנדרואיד (סמסונג במיוחד)
+           המקלדת זוכרת את הספרות שהקלידה ומחזירה אותן בהקשה הבאה — השדה
+           התמלא שוב לשש ספרות, נשלח לבד, ושוב "לא נכון", עד חסימה (ביומן:
+           חמישה ניסיונות ב-17 שניות). במקום: מסמנים את הקוד, וההקלדה הבאה
+           מחליפה אותו. */
+        requestAnimationFrame(() => codeRef.current?.select());
         return;
       }
       /* נשמר רק אחרי אימות מוצלח: מספר שהוקלד בטעות לא נדבק למכשיר */
@@ -155,12 +182,18 @@ export default function PhoneVerify({
           placeholder="050-123-4567"
           aria-label="מספר טלפון"
           className="field w-full px-4 py-4 text-center t-body tracking-wide"
-          onKeyDown={(e) => e.key === "Enter" && phone.trim() && sendCode()}
+          onKeyDown={(e) => e.key === "Enter" && phoneReady(phone) && sendCode()}
         />
+        {/* מספר נייד בישראל הוא 10 ספרות. קודם הכפתור נדלק כבר ב-9, ומי שחסרה
+            לה ספרה לחצה שוב ושוב וקיבלה שגיאה (ביומן: שבע פעמים בדקה) בלי
+            לדעת מה לא בסדר. עכשיו כתוב, תוך כדי הקלדה, כמה ספרות חסרות. */}
+        {!err && phoneHint(phone) && (
+          <p className="t-small text-[var(--muted)] text-center" data-testid="phone-hint">{phoneHint(phone)}</p>
+        )}
         {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
         <button
           onClick={sendCode}
-          disabled={busy || phone.replace(/\D/g, "").length < 9}
+          disabled={busy || !phoneReady(phone)}
           className="btn btn-primary disabled:opacity-30"
         >
           {busy ? "שולחים…" : cta}
@@ -241,8 +274,17 @@ export default function PhoneVerify({
         onChange={(e) => {
           const v = e.target.value.replace(/\D/g, "").slice(0, 6);
           setCode(v);
-          // שש ספרות זה סוף הקלט — אין מה לחכות ללחיצה על כפתור
-          if (v.length === 6) verify(v);
+          if (err) setErr("");
+          // שש ספרות זה סוף הקלט — שולחים לבד, אבל אחרי רגע קצר ולא באמצע
+          // הקלדה של המקלדת (composition), ולא את אותו קוד שכבר נדחה
+          if (autoRef.current) clearTimeout(autoRef.current);
+          const composing = (e.nativeEvent as InputEvent).isComposing;
+          if (v.length === 6 && !composing && v !== triedRef.current) {
+            autoRef.current = setTimeout(() => {
+              triedRef.current = v;
+              verify(v);
+            }, 350);
+          }
         }}
         type="tel"
         inputMode="numeric"
@@ -254,6 +296,18 @@ export default function PhoneVerify({
       />
       {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
       {busy && <p className="t-small text-[var(--muted)] text-center">רגע…</p>}
+      {/* כפתור למי שהשליחה האוטומטית לא קרתה אצלה (מקלדת שלא מדווחת על
+          סוף ההקלדה, או קוד שתוקן אחרי שגיאה) */}
+      {!busy && code.length === 6 && (
+        <button
+          type="button"
+          onClick={() => { triedRef.current = code; verify(code); }}
+          className="btn btn-primary"
+          data-testid="code-submit"
+        >
+          כניסה
+        </button>
+      )}
 
       {/* אחרי 2 דקות בלי קוד: כפתור עזרה שמגיע ישר אלינו */}
       {waited < HELP_AFTER ? (
