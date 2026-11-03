@@ -27,6 +27,12 @@ export const viewport: Viewport = {
      שיושבים בתחתית המסך נדחסים מתחת לפס הבית ("הכפתור לא נראה טוב").
      שורת הסטטוס למעלה לא מושפעת — status-bar-style הוא default. */
   viewportFit: "cover",
+  /* "רק בהיר": הדוכן לא בנוי למצב כהה. כרום ודפדפן סמסונג באנדרואיד
+     מכהים אתרים בכוח כשהטלפון במצב כהה, ובדפדפן סמסונג זה השאיר את
+     הטקסט שמקלידים כהה על רקע שהוכהה — רואים סמן ומקלדת, מקלידים,
+     ולא מופיע כלום ("אי אפשר להקליד"). color-scheme: only light אומר
+     לדפדפן לא לגעת בצבעים. */
+  colorScheme: "only light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

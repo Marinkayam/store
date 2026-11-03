@@ -12,6 +12,8 @@
  * הריווח והקו יהיו מדויקים, כי אין עיגול שיסתיר רשלנות.
  */
 :root {
+  /* ראה viewport.colorScheme ב-layout.tsx: לא לתת לדפדפן להכהות את הדוכן בכוח */
+  color-scheme: only light;
   /* מותג */
   --olive: #a8a46d;
   --lavender: #b89ac8;
@@ -233,6 +235,7 @@ input, textarea, select, button { border-radius: 0; }
 
 .field {
   background: var(--white);
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--r);
   outline: none;
