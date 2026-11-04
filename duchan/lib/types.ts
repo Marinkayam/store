@@ -99,6 +99,7 @@ export interface Product {
   drop_at?: string | null; // דרופ: נפתח להזמנה בזמן הזה (0056). null = פתוח
   is_mystery?: boolean | null; // שקית הפתעה (0056)
   deal?: Deal | null; // מבצע: מחיר מבצע · 1+1 · כמות במחיר (0064). ראה lib/deals.ts
+  option_stock?: Record<string, number> | null; // מלאי לכל אפשרות (0065). ראה lib/option-stock.ts
   is_visible: boolean | null; // null = מוצג
   deleted_at: string | null;
   created_at: string;
@@ -209,5 +210,6 @@ export interface PublicProduct {
   drop_at?: string | null; // דרופ — נפתח להזמנה בזמן הזה (0056)
   is_mystery?: boolean | null; // שקית הפתעה (0056)
   deal?: Deal | null; // מבצע (0064). ראה lib/deals.ts
+  option_stock?: Record<string, number> | null; // מלאי לכל אפשרות (0065)
   created_at: string; // דרוש לתגית "חדש"
 }

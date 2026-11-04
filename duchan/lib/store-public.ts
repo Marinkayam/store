@@ -54,7 +54,8 @@ const PRODUCT_BASE =
 const PRODUCT_PREV = `${PRODUCT_BASE}, option_label, options, badge, category, categories`;
 const PRODUCT_FEAT = `${PRODUCT_PREV}, featured`;
 const PRODUCT_DROPS = `${PRODUCT_FEAT}, drop_at, is_mystery`; // דרופ ושקית הפתעה (0056)
-const PRODUCT_FULL = `${PRODUCT_DROPS}, deal`; // מבצעים (0064)
+const PRODUCT_DEALS = `${PRODUCT_DROPS}, deal`; // מבצעים (0064)
+const PRODUCT_FULL = `${PRODUCT_DEALS}, option_stock`; // מלאי לכל אפשרות (0065)
 
 export const getPublicStore = cache(async (slug: string): Promise<PublicStoreResult> => {
   const db = supabaseAdmin();
@@ -97,7 +98,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
 
   // כמו החנות: שכבה-שכבה, כדי שעמודה חדשה שחסרה לא תמחק אפשרויות וקטגוריות
   let products: unknown[] | null = null;
-  for (const cols of [PRODUCT_FULL, PRODUCT_DROPS, PRODUCT_FEAT, PRODUCT_PREV, PRODUCT_BASE]) {
+  for (const cols of [PRODUCT_FULL, PRODUCT_DEALS, PRODUCT_DROPS, PRODUCT_FEAT, PRODUCT_PREV, PRODUCT_BASE]) {
     const { data, error: prodErr } = await readProducts(cols);
     if (!prodErr) {
       products = data;

@@ -24,6 +24,9 @@ import Icon from "@/app/icons";
 import { KupaStall } from "@/app/kupa-art";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import { dealActive, dealExplain, dealLabel, parseDeal, type Deal } from "@/lib/deals";
+import { buildOptionStock, parseOptionStock } from "@/lib/option-stock";
+import SortList from "./sort-list";
+import BulkAdd from "./bulk-add";
 import CategoryDesigner from "./category-designer";
 import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
 import { kupaCheck } from "../kupa/use-kupa";
@@ -44,6 +47,9 @@ interface EditState {
   // כזה. המוצר תומך בציר בחירה אחד, ולכן הם מוציאים זה את זה.
   optionKind: "none" | "color" | "size";
   optionList: string[]; // ["ורוד", "כחול"], שדה נפרד לכל ערך, לא פסיקים
+  /** מלאי לכל אפשרות (0065): כמה יש מכל צבע. optionCounts מקביל ל-optionList */
+  perOption: boolean;
+  optionCounts: number[];
   categories: string[]; // מוצר יכול לשבת בכמה קטגוריות (0046)
   badge: "rare" | "sale" | null;
   /** ⭐ מומלץ — בחלק המומלצים בראש הדוכן (0053) */
@@ -84,6 +90,8 @@ const EMPTY_EDIT: EditState = {
   isVisible: true,
   optionKind: "none",
   optionList: [""],
+  perOption: true,
+  optionCounts: [1],
   categories: [],
   badge: null,
   featured: false,
@@ -178,6 +186,9 @@ export default function ProductsPage() {
   // "+ קטגוריה" בשורת מוצר: פותחים את העורך וגוללים ישר לבחירת הקטגוריה
   const [focusCats, setFocusCats] = useState(false);
   const [sorting, setSorting] = useState(false);
+  /** כמה מוצרים בבת אחת — התמונות שנבחרו מהגלריה (bulk-add.tsx) */
+  const [bulkFiles, setBulkFiles] = useState<File[] | null>(null);
+  const bulkRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!edit || !focusCats) return;
     const t = setTimeout(() => {
@@ -365,6 +376,10 @@ export default function ProductsPage() {
         // כ"צבע" — היא יכולה פשוט לעבור למידה אם זה מה שהתכוונו אליו
         optionKind: !p.options?.length ? "none" : p.option_label === "מידה" ? "size" : "color",
         optionList: p.options?.length ? p.options : [""],
+        // מוצר ותיק עם צבעים ובלי מלאי לכל צבע נשאר כמו שהיה (מלאי אחד),
+        // עד שבוחרים "לכל צבע בנפרד" — אחרת הוא היה נפתח עם אפסים ו"אזל"
+        perOption: p.options?.length ? !!parseOptionStock(p.option_stock) : true,
+        optionCounts: (p.options?.length ? p.options : [""]).map((o) => parseOptionStock(p.option_stock)?.[o] ?? (p.options?.length ? 0 : 1)),
         // המערך החדש גובר; מוצר ישן עם קטגוריה יחידה נטען כרשימה של אחת
         categories: p.categories?.length ? p.categories : p.category ? [p.category] : [],
         badge: p.badge ?? null,
@@ -397,6 +412,11 @@ export default function ProductsPage() {
           price: d.price ?? base.price,
           optionKind: d.optionKind ?? base.optionKind,
           optionList: d.optionList ?? base.optionList,
+          perOption: d.perOption ?? base.perOption,
+          optionCounts:
+            Array.isArray(d.optionCounts) && d.optionCounts.length === (d.optionList ?? base.optionList).length
+              ? d.optionCounts
+              : (d.optionList ?? base.optionList).map((_: string, i: number) => base.optionCounts[i] ?? 0),
         };
       }
     } catch {}
@@ -413,6 +433,8 @@ export default function ProductsPage() {
         price: edit.price,
         optionKind: edit.optionKind,
         optionList: edit.optionList,
+        perOption: edit.perOption,
+        optionCounts: edit.optionCounts,
       })
     );
   }, [edit]);
@@ -614,6 +636,17 @@ export default function ProductsPage() {
         }
       }
 
+      // מלאי לכל צבע: לפי הרשימה הסופית (מנוקה, בלי כפולים), הספירה של
+      // השדה הראשון בכל שם. הסכום נשמר גם ב-stock — הדוכן והחמ"ל קוראים אותו.
+      const stockByOption =
+        edit.trackStock && edit.perOption && optionValues.length
+          ? buildOptionStock(
+              optionValues,
+              Object.fromEntries(
+                optionValues.map((o) => [o, edit.optionCounts[edit.optionList.findIndex((v) => v.trim() === o)] ?? 0])
+              )
+            )
+          : null;
       const row: Record<string, unknown> = {
         name: edit.name.trim() || "מוצר",
         description: edit.description.trim() || null,
@@ -629,7 +662,8 @@ export default function ProductsPage() {
         is_mystery: edit.isMystery,
         drop_at: edit.dropOn ? israelInputToIso(edit.dropInput) : null,
         deal: dealFromEdit(edit),
-        stock: Math.max(0, edit.stock),
+        option_stock: stockByOption ? stockByOption.map : null,
+        stock: stockByOption ? stockByOption.total : Math.max(0, edit.stock),
         is_visible: edit.isVisible,
         image_key: imageKey,
         video_key: videoKey,
@@ -642,6 +676,15 @@ export default function ProductsPage() {
           : supa.from("products").insert({ ...r, store_id: store.id });
 
       let { error } = await write(row);
+      if (error && "option_stock" in row) {
+        // 0065 עוד לא בדאטהבייס: מלאי לכל צבע לא נשמר בשקט כאחד
+        if (row.option_stock) {
+          showToast("מלאי לכל צבע לא זמין כרגע. אפשר לבחור \"אחד לכולם\" ולשמור");
+          return;
+        }
+        delete row.option_stock;
+        ({ error } = await write(row));
+      }
       if (error) {
         // 0064 עוד לא בדאטהבייס. מבצע שנבחר לא נעלם בשקט — אומרים.
         if (row.deal) {
@@ -730,6 +773,7 @@ export default function ProductsPage() {
       // דרופ שעוד לא נפתח עובר לעותק; דרופ שעבר — לא (העותק פשוט פתוח)
       ...(isUpcoming(src.drop_at, Date.now()) ? { drop_at: src.drop_at } : {}),
       ...(src.deal ? { deal: src.deal } : {}),
+      ...(src.option_stock ? { option_stock: src.option_stock } : {}),
       stock: src.stock,
       is_visible: src.is_visible,
       image_key: src.image_key,
@@ -747,26 +791,25 @@ export default function ProductsPage() {
     refreshStorePage();
   }
 
-  /* ---------- סידור ---------- */
-  async function move(p: Product, dir: -1 | 1) {
-    const idx = products.findIndex((x) => x.id === p.id);
-    const target = idx + dir;
-    if (target < 0 || target >= products.length) return;
-    const next = [...products];
-    [next[idx], next[target]] = [next[target], next[idx]];
-    setProducts(next); // אופטימי
+  /* ---------- סידור ----------
+     הסדר החדש נשמר פעם אחת, ב"שמירה" של מצב הסידור (sort-list.tsx) —
+     רק השורות שהמקום שלהן השתנה. */
+  async function saveOrder(ids: string[]) {
     const supa = supabaseBrowser();
-    await Promise.all(
+    const byId = new Map(products.map((p) => [p.id, p]));
+    const next = ids.map((id) => byId.get(id)!).filter(Boolean);
+    setProducts(next); // אופטימי
+    const results = await Promise.all(
       next.map((prod, i) =>
-        prod.sort_order !== i
-          ? supa.from("products").update({ sort_order: i }).eq("id", prod.id)
-          : null
+        prod.sort_order !== i ? supa.from("products").update({ sort_order: i }).eq("id", prod.id) : null
       )
     );
+    setSorting(false);
+    if (results.some((r) => r?.error)) showToast("חלק מהסדר לא נשמר. אפשר לנסות שוב");
+    else if (next.some((p, i) => p.sort_order !== i)) showToast("הסדר נשמר — ככה זה מופיע בדוכן");
     refresh();
     refreshStorePage();
   }
-
 
   /* ---------- שחזור ---------- */
   const [deleted, setDeleted] = useState<Product[]>([]);
@@ -825,7 +868,8 @@ export default function ProductsPage() {
             מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות.
             רק כשיש מה לסנן: עם מוצר אחד או שניים זה עוד דבר להבין (מרינה,
             10.2026: "עמוס"). מי שכבר הגדירה קטגוריות רואה אותן תמיד. */}
-        {(products.length >= 4 || (store?.categories?.length ?? 0) > 0) && (
+        {/* במצב סידור — רק הרשימה, בלי הקטגוריות מעליה */}
+        {!sorting && (products.length >= 4 || (store?.categories?.length ?? 0) > 0) && (
           <div className="bg-white border border-[var(--line)] p-5 mb-2" data-testid="categories-box">
             <div className="text-[14px] font-bold mb-1">קטגוריות בדוכן</div>
             <p className="text-[12px] text-[var(--faint)] leading-relaxed mb-4">
@@ -918,6 +962,13 @@ export default function ProductsPage() {
               <Icon name="camera" size={20} tone="var(--lavender)" />
               לצלם מוצר ראשון
             </button>
+            <button
+              onClick={() => bulkRef.current?.click()}
+              data-testid="bulk-open-empty"
+              className="w-full mt-2 border-[1.5px] border-[var(--ink)] py-3 text-[14px] font-bold flex items-center justify-center gap-2"
+            >
+              <Icon name="gallery" size={18} /> יש לי כמה תמונות — להעלות בבת אחת
+            </button>
             <div className="w-full mt-3">
               <div className="text-[13px] font-bold text-right mb-2">או מתחילים מרעיון:</div>
               <div className="grid grid-cols-3 gap-x-2 gap-y-3">
@@ -948,7 +999,7 @@ export default function ProductsPage() {
         )}
         {/* מעל הרשימה: כותרת קטנה ו"לשנות סדר". החצים ▲▼ מופיעים רק במצב
             סידור — בשאר הזמן השורה נקייה: תמונה, שם, מחיר, ומה שחשוב לדעת. */}
-        {products.length > 1 && (
+        {products.length > 1 && !sorting && (
           <div className="flex items-center justify-between -mb-1 px-0.5">
             <span className="text-[13px] font-bold text-[var(--ink)]">המוצרים בדוכן</span>
             <button
@@ -957,11 +1008,14 @@ export default function ProductsPage() {
               aria-pressed={sorting}
               className="min-h-11 px-1 text-[13px] font-medium text-[var(--muted)]"
             >
-              {sorting ? "✓ סיימתי לסדר" : "↕ לשנות סדר"}
+              ↕ לשנות סדר
             </button>
           </div>
         )}
-        {products.map((p, idx) => {
+        {sorting && (
+          <SortList products={products} onDone={saveOrder} onCancel={() => setSorting(false)} />
+        )}
+        {!sorting && products.map((p) => {
           const out = p.track_stock && p.stock === 0;
           const hidden = p.is_visible === false;
           const img = mediaUrl(p.poster_key) ?? mediaUrl(p.image_key);
@@ -971,9 +1025,9 @@ export default function ProductsPage() {
           return (
             <div
               key={p.id}
-              onClick={() => !sorting && openEditor(p)}
+              onClick={() => openEditor(p)}
               data-testid="product-row"
-              className={`bg-white border border-[var(--line)] p-4 flex gap-4 items-center text-right max-[340px]:p-3 max-[340px]:gap-2.5 ${sorting ? "" : "cursor-pointer"} ${out || hidden ? "opacity-60" : ""}`}
+              className={`bg-white border border-[var(--line)] p-4 flex gap-4 items-center text-right max-[340px]:p-3 max-[340px]:gap-2.5 cursor-pointer ${out || hidden ? "opacity-60" : ""}`}
             >
               <div className="w-[72px] h-[72px] max-[340px]:w-12 max-[340px]:h-12 shrink-0 bg-[var(--canvas)] flex items-center justify-center text-3xl overflow-hidden relative">
                 {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Icon name="bag" size={20} />}
@@ -1042,26 +1096,7 @@ export default function ProductsPage() {
                     </button>
                   ))}
               </div>
-              {sorting ? (
-                <div className="flex flex-col gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => move(p, -1)}
-                    disabled={idx === 0}
-                    className="w-10 h-10 border border-[var(--line)] bg-[var(--canvas)] text-[12px] disabled:opacity-25"
-                    aria-label="להזיז למעלה"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    onClick={() => move(p, 1)}
-                    disabled={idx === products.length - 1}
-                    className="w-10 h-10 border border-[var(--line)] bg-[var(--canvas)] text-[12px] disabled:opacity-25"
-                    aria-label="להזיז למטה"
-                  >
-                    ▼
-                  </button>
-                </div>
-              ) : (
+              {(
                 /* כמו בשורות של "הדוכן שלי": החץ אומר שלוחצים ונכנסים */
                 <Chevron className="text-[var(--faint)]" size={18} />
               )}
@@ -1081,14 +1116,52 @@ export default function ProductsPage() {
 
       {/* היה עיגול "+" בלי מילה, וקל היה לפספס אותו לגמרי.
           כשהדוכן ריק יש כבר כפתור גדול באמצע המסך — אין צורך בשניים */}
-      {products.length > 0 && <button
-        onClick={() => openEditor(null)}
-        aria-label="מוצר חדש"
-        data-bottom-bar
-        className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] h-12 bg-[var(--ink)] text-white text-[15px] font-bold  z-30 flex items-center justify-center gap-2"
-      >
-        <Icon name="plus" size={18} /> מוצר חדש
-      </button>}
+      {products.length > 0 && !sorting && (
+        <div data-bottom-bar className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] z-30 flex gap-2">
+          <button
+            onClick={() => openEditor(null)}
+            aria-label="מוצר חדש"
+            className="flex-1 h-12 bg-[var(--ink)] text-white text-[15px] font-bold flex items-center justify-center gap-2"
+          >
+            <Icon name="plus" size={18} /> מוצר חדש
+          </button>
+          {/* כמה תמונות מהגלריה = כמה מוצרים, כל אחד עם שם ומחיר */}
+          <button
+            onClick={() => bulkRef.current?.click()}
+            data-testid="bulk-open"
+            className="h-12 px-3.5 bg-white border-[1.5px] border-[var(--ink)] text-[13.5px] font-bold flex items-center justify-center gap-1.5"
+          >
+            <Icon name="gallery" size={17} /> כמה בבת אחת
+          </button>
+        </div>
+      )}
+      <input
+        ref={bulkRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        data-testid="bulk-input"
+        onChange={(e) => {
+          const fs = Array.from(e.target.files ?? []);
+          e.target.value = "";
+          if (fs.length) setBulkFiles(fs);
+        }}
+      />
+      {bulkFiles && store && (
+        <BulkAdd
+          storeId={store.id}
+          startOrder={products.length}
+          files={bulkFiles}
+          onClose={() => setBulkFiles(null)}
+          onSaved={(n) => {
+            showToast(n === 1 ? "המוצר נוסף לדוכן" : `${n} מוצרים נוספו לדוכן`);
+            refresh();
+            refreshStorePage();
+            kupaCheck();
+          }}
+        />
+      )}
 
       {/* editor sheet */}
       {edit && (
@@ -1194,7 +1267,15 @@ export default function ProductsPage() {
               </div>
               <div className="shrink-0">
                 <div className="block text-[13px] font-medium mb-1.5">כמה יש לך?</div>
-                {edit.trackStock ? (
+                {edit.trackStock && edit.perOption && optionValues.length > 0 ? (
+                  // מלאי לכל צבע: הסך הכל נספר לבד מהצבעים (למטה, ב"עוד אפשרויות")
+                  <div className="h-[50px] flex flex-col items-center justify-center border border-dashed border-[var(--line)] px-3" data-testid="editor-stock-sum">
+                    <span className="text-[16px] font-bold tabular-nums" data-testid="editor-stock">
+                      {buildOptionStock(optionValues, Object.fromEntries(optionValues.map((o) => [o, edit.optionCounts[edit.optionList.findIndex((v) => v.trim() === o)] ?? 0]))).total}
+                    </span>
+                    <span className="text-[10.5px] text-[var(--muted)] -mt-0.5">{edit.optionKind === "color" ? "מכל הצבעים" : "מכל המידות"}</span>
+                  </div>
+                ) : edit.trackStock ? (
                   <div className="flex items-center border border-[var(--line)] h-[50px]">
                     <button onClick={() => setEdit((s) => s && { ...s, stock: Math.max(0, s.stock - 1) })}
                       aria-label="הורדה מהמלאי"
@@ -1263,7 +1344,7 @@ export default function ProductsPage() {
                         // אחרת נשארים "צבעים" שמורים בתור מידות ולהפך
                         return nextKind === s.optionKind
                           ? s
-                          : { ...s, optionKind: nextKind, optionList: [""] };
+                          : { ...s, optionKind: nextKind, optionList: [""], optionCounts: [1] };
                       })
                     }
                     aria-pressed={on}
@@ -1294,24 +1375,51 @@ export default function ProductsPage() {
                           setEdit((s) => {
                             if (!s) return s;
                             const list = [...s.optionList];
+                            const counts = [...s.optionCounts];
                             // הדבקה של רשימה שלמה ("ורוד, כחול, צהוב" או
                             // שורות) מתפצלת לשדות — ככה מזינים 30 וריאציות
                             // בהדבקה אחת במקום שלושים הקלדות.
                             const parts = e.target.value.split(/[,\n]/).map((p) => p.trim().slice(0, 20));
                             if (parts.length > 1) {
-                              list.splice(i, 1, ...parts.filter(Boolean).slice(0, 30));
+                              const add = parts.filter(Boolean).slice(0, 30);
+                              list.splice(i, 1, ...add);
+                              counts.splice(i, 1, ...add.map((_, j) => (j === 0 ? counts[i] ?? 1 : 1)));
                             } else {
                               list[i] = e.target.value.slice(0, 20);
                             }
-                            return { ...s, optionList: list.slice(0, 30) };
+                            return { ...s, optionList: list.slice(0, 30), optionCounts: counts.slice(0, 30) };
                           })
                         }
-                        className="flex-1 border border-[var(--line)] px-3 py-2.5 text-sm"
+                        className="flex-1 min-w-0 border border-[var(--line)] px-3 py-2.5 text-sm"
                       />
+                      {/* כמה יש מהצבע הזה — ליד השם, באותה שורה */}
+                      {edit.trackStock && edit.perOption && (
+                        <div className="flex items-center border border-[var(--line)] shrink-0" data-testid="option-count">
+                          <button
+                            type="button"
+                            onClick={() => setEdit((s) => s && { ...s, optionCounts: s.optionList.map((_, j) => (j === i ? Math.max(0, (s.optionCounts[j] ?? 0) - 1) : s.optionCounts[j] ?? 0)) })}
+                            aria-label={`פחות ${v || `אפשרות ${i + 1}`}`}
+                            className="w-9 h-full min-h-10 text-[16px]"
+                          >
+                            −
+                          </button>
+                          <span className={`min-w-6 text-center text-[14px] font-bold tabular-nums ${(edit.optionCounts[i] ?? 0) === 0 ? "text-[var(--danger)]" : ""}`}>
+                            {edit.optionCounts[i] ?? 0}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setEdit((s) => s && { ...s, optionCounts: s.optionList.map((_, j) => (j === i ? (s.optionCounts[j] ?? 0) + 1 : s.optionCounts[j] ?? 0)) })}
+                            aria-label={`עוד ${v || `אפשרות ${i + 1}`}`}
+                            className="w-9 h-full min-h-10 text-[16px]"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
                       {edit.optionList.length > 1 && (
                         <button
                           onClick={() =>
-                            setEdit((s) => s && { ...s, optionList: s.optionList.filter((_, j) => j !== i) })
+                            setEdit((s) => s && { ...s, optionList: s.optionList.filter((_, j) => j !== i), optionCounts: s.optionCounts.filter((_, j) => j !== i) })
                           }
                           aria-label={`הסרת ${edit.optionKind === "color" ? "צבע" : "מידה"} ${i + 1}`}
                           className="w-11 border border-[var(--line)] text-[var(--muted)] text-[15px]"
@@ -1324,11 +1432,23 @@ export default function ProductsPage() {
                 </div>
                 {edit.optionList.length < 30 && (
                   <button
-                    onClick={() => setEdit((s) => s && { ...s, optionList: [...s.optionList, ""] })}
+                    onClick={() => setEdit((s) => s && { ...s, optionList: [...s.optionList, ""], optionCounts: [...s.optionCounts, 1] })}
                     className="w-full border border-dashed border-[#D3D5DC] py-2.5 text-[12.5px] text-[var(--muted)] mb-3"
                   >
                     + עוד {edit.optionKind === "color" ? "צבע" : "מידה"}
                   </button>
+                )}
+                {edit.trackStock && (
+                  <div className="mb-3">
+                    <Choice
+                      value={edit.perOption}
+                      onChange={(v) => setEdit((s) => s && { ...s, perOption: v, optionCounts: s.optionList.map((_, j) => s.optionCounts[j] ?? 0) })}
+                      on={edit.optionKind === "color" ? "לכל צבע בנפרד" : "לכל מידה בנפרד"}
+                      off="אחד לכולם"
+                      label="כמה יש במלאי?"
+                      testid="option-stock-choice"
+                    />
+                  </div>
                 )}
               </>
             )}

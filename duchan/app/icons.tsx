@@ -17,7 +17,7 @@ export type IconName =
   | "camera" | "video" | "gallery" | "plus" | "check" | "pencil" | "trash"
   | "hourglass" | "gift" | "gem" | "leaf" | "sparkle" | "coins" | "link"
   | "palette" | "box" | "eye" | "party" | "moon" | "search" | "cloud"
-  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun" | "flame" | "pin" | "cookie" | "chart" | "bell";
+  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun" | "flame" | "pin" | "cookie" | "chart" | "bell" | "drag";
 
 interface Props {
   name: IconName;
@@ -37,6 +37,12 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
       <path d="M3 8h4.5v3a2.25 2 0 0 1-4.5 0zM7.5 8H12v3a2.25 2 0 0 1-4.5 0zM12 8h4.5v3a2.25 2 0 0 1-4.5 0zM16.5 8H21v3a2.25 2 0 0 1-4.5 0z" fill="none" />
       <path d="M5 11v8M19 11v8M3 18h18" />
       <path d="M8 18v-4h8v4z" fill={t} />
+    </>
+  ),
+  // ידית גרירה: שש נקודות
+  drag: () => (
+    <>
+      {[9, 15].flatMap((x) => [6, 12, 18].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" fill="currentColor" stroke="none" />))}
     </>
   ),
   bag: (t) => (

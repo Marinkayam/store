@@ -15,6 +15,7 @@ import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { applyDeals, dealActive, dealExplain, dealLabel, dealNudge, dealSticker, type Deal } from "@/lib/deals";
+import { stockOfOption } from "@/lib/option-stock";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 import { dropTime, dropWhen } from "@/lib/drop";
 import DropCountdown from "@/app/drop-countdown";
@@ -392,6 +393,17 @@ export default function StoreView({
   const inCart = (id: string) =>
     cart.filter((l) => l.id === id).reduce((s, l) => s + l.qty, 0);
   const maxQty = (p: PublicProduct) => (p.track_stock ? Math.max(0, p.stock - inCart(p.id)) : 99);
+  /** כמה עוד אפשר מהאפשרות הזו: המלאי שלה (0065), ובכל מקרה לא יותר מהסך הכל */
+  const inCartOpt = (id: string, option: string) =>
+    cart.filter((l) => l.id === id && l.option === option).reduce((s, l) => s + l.qty, 0);
+  const optionLeft = (p: PublicProduct, option: string): number | null => {
+    const own = p.track_stock ? stockOfOption(p.option_stock, option) : null;
+    return own === null ? null : Math.max(0, own - inCartOpt(p.id, option));
+  };
+  const maxQtyFor = (p: PublicProduct, option: string | null) => {
+    const left = option ? optionLeft(p, option) : null;
+    return left === null ? maxQty(p) : Math.min(maxQty(p), left);
+  };
 
   function openProduct(p: PublicProduct) {
     const t = stat.current;
@@ -447,7 +459,9 @@ export default function StoreView({
     const otherLines = cart
       .filter((x) => x.id === l.id && lineKey(x.id, x.option) !== lineKey(l.id, l.option))
       .reduce((s, x) => s + x.qty, 0);
-    return Math.max(0, p.stock - otherLines);
+    const total = Math.max(0, p.stock - otherLines);
+    const own = l.option ? stockOfOption(p.option_stock, l.option) : null;
+    return own === null ? total : Math.min(total, own);
   }
 
   /**
@@ -1094,7 +1108,7 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-0 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
           style={{
             background: "var(--s-surface)",
             color: "var(--s-ink)",
@@ -1154,7 +1168,8 @@ export default function StoreView({
                 <div className="text-[12px] font-medium">{dealExplain(current.price, current.deal!)}</div>
               </div>
             )}
-            {current.track_stock && current.stock <= 3 && (
+            {/* כשלכל צבע יש מלאי משלו, הכמות כתובה על הצבע עצמו */}
+            {current.track_stock && current.stock <= 3 && !(current.options?.length && current.option_stock) && (
               <p className="text-[12px] opacity-75 text-center mt-1">{current.stock === 1 ? "נשאר אחד במלאי" : `נשארו ${current.stock} במלאי`}</p>
             )}
             {current.is_mystery && (
@@ -1179,78 +1194,57 @@ export default function StoreView({
             )}
           </div>
 
-          {/* בחירה — חייבים לבחור לפני הוספה לסל.
-              רשימה פשוטה עם עיגול סימון, לא כפתור מלא-צבע: בלוק צבעוני גדול
-              נראה כמו מדבקה או פרסומת, במיוחד כששם האפשרות מוזן לא נכון
-              (למשל "לבן" בתור שם השדה במקום כאחת הבחירות) — עדיף שורה
-              רגועה וברורה מאשר עיצוב שמנסה "לתקן" ניסוח עם צבע חזק. */}
+          {/* בחירה — חייבים לבחור לפני הוספה לסל. צ'יפים בשורה, זה ליד זה
+              (מרינה, 11.2026: "שורה אחד ליד השני" — ארבע קופסאות ענק אחת
+              מתחת לשנייה דחפו את הכפתור מחוץ למסך). אפשרות שאזלה מסומנת
+              ולא נבחרת; כשנשארו מעט — כתוב כמה. */}
           {current.options && current.options.length > 0 && (
-            <div className="border-t border-current/10 pt-3.5">
+            <div className="border-t border-current/10 pt-3.5" data-testid="option-picker">
               <div className="text-[13px] font-bold text-center mb-2.5 opacity-80">
                 {safeOptionLabel(current.option_label)}
               </div>
-              {/* עד שש בחירות — שורות מלאות ונוחות. מעל זה (יש מוכרות עם
-                  30 וריאציות) — רשת צ'יפים, אחרת הגיליון הופך למגילה. */}
-              <div className={current.options.length > 6 ? "grid grid-cols-3 gap-1.5" : "flex flex-col gap-2"}>
+              <div className="flex flex-wrap justify-center gap-2">
                 {current.options.map((o) => {
                   const on = choice === o;
-                  const compact = current.options!.length > 6;
-                  if (compact)
-                    return (
-                      <button
-                        key={o}
-                        onClick={() => setChoice(o)}
-                        aria-pressed={on}
-                        aria-label={`${safeOptionLabel(current.option_label)}: ${o}`}
-                        className="min-h-11 px-2 py-2 border-2 text-[13px] font-semibold truncate"
-                        style={{
-                          background: "var(--s-surface)",
-                          borderColor: on ? "var(--s-primary)" : "currentColor",
-                          color: "var(--s-ink)",
-                          opacity: on ? 1 : 0.75,
-                          fontWeight: on ? 700 : 500,
-                        }}
-                      >
-                        {o}
-                      </button>
-                    );
+                  const left = optionLeft(current, o);
+                  const out = left === 0 || (current.track_stock && maxQty(current) === 0);
                   return (
                     <button
                       key={o}
-                      onClick={() => setChoice(o)}
+                      onClick={() => {
+                        if (out) return;
+                        setChoice(o);
+                        setQty((q) => Math.max(1, Math.min(q, maxQtyFor(current, o))));
+                      }}
                       aria-pressed={on}
-                      aria-label={`${safeOptionLabel(current.option_label)}: ${o}`}
-                      className="w-full text-[15px] px-4 py-3.5 border-2 transition flex items-center justify-between gap-2"
+                      aria-disabled={out}
+                      aria-label={`${safeOptionLabel(current.option_label)}: ${o}${out ? " (אזל)" : ""}`}
+                      data-testid="option-chip"
+                      data-out={out ? "1" : "0"}
+                      className="s-r min-h-11 px-3.5 py-2 border-2 text-[14px] leading-tight transition flex flex-col items-center justify-center"
                       style={{
-                        background: "var(--s-surface)",
-                        borderColor: on ? "var(--s-primary)" : "currentColor",
+                        background: on ? "color-mix(in srgb, var(--s-primary) 12%, var(--s-surface))" : "var(--s-surface)",
+                        borderColor: on ? "var(--s-primary)" : "color-mix(in srgb, currentColor 35%, transparent)",
                         color: "var(--s-ink)",
-                        opacity: on ? 1 : 0.75,
                         fontWeight: on ? 700 : 500,
+                        opacity: out ? 0.45 : 1,
                       }}
                     >
-                      {o}
-                      <span
-                        className="w-5 h-5 flex items-center justify-center shrink-0"
-                        style={{
-                          border: `2px solid ${on ? "var(--s-primary)" : "currentColor"}`,
-                        }}
-                        aria-hidden
-                      >
-                        {on && (
-                          <span
-                            className="w-2.5 h-2.5"
-                            style={{ background: "var(--s-primary)" }}
-                          />
-                        )}
-                      </span>
+                      <span className={out ? "line-through" : ""}>{o}</span>
+                      {out ? (
+                        <span className="text-[11px] font-semibold">אזל</span>
+                      ) : left !== null && left <= 3 ? (
+                        <span className="text-[11px] opacity-75" data-testid="option-left">
+                          {left === 1 ? "נשאר אחד" : `נשארו ${left}`}
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
               </div>
               {!choice && (
                 <p className="text-[12px] text-center mt-2.5 opacity-75">
-                  צריך לבחור {safeOptionLabel(current.option_label)} לפני שמוסיפים לסל
+                  בוחרים {safeOptionLabel(current.option_label)}, ואז מוסיפים לסל
                 </p>
               )}
             </div>
@@ -1269,8 +1263,8 @@ export default function StoreView({
               </button>
               <span className="text-xl font-bold min-w-8 text-center">{qty}</span>
               <button
-                onClick={() => setQty((q) => Math.min(maxQty(current), q + 1))}
-                disabled={qty >= maxQty(current)}
+                onClick={() => setQty((q) => Math.min(maxQtyFor(current, choice), q + 1))}
+                disabled={qty >= maxQtyFor(current, choice)}
                 aria-label="עוד"
                 className="w-11 h-11 border-2 border-current opacity-75 disabled:opacity-20 text-xl"
               >
@@ -1279,12 +1273,15 @@ export default function StoreView({
             </div>
           </div>
 
+          {/* הכפתור דבוק לתחתית — על רצועה אטומה. קודם הוא עצמו היה דבוק,
+              וכשהיה כבוי (שקוף 40%) הכמות שמתחתיו נראתה דרכו ועליו */}
+          <div className="sticky bottom-0 -mx-5 px-5 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]" style={{ background: "var(--s-surface)" }}>
           <button
             onClick={addToCart}
             aria-label="הוספה לסל"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
-            disabled={preview || locked(current) || maxQty(current) === 0 || (!!current.options?.length && !choice)}
-            className="w-full py-4 text-[16px] font-bold disabled:opacity-40 sticky bottom-0"
+            disabled={preview || locked(current) || maxQty(current) === 0 || (!!current.options?.length && !choice) || (!!choice && maxQtyFor(current, choice) === 0)}
+            className="w-full py-4 text-[16px] font-bold disabled:opacity-40"
           >
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
                 לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
@@ -1296,8 +1293,11 @@ export default function StoreView({
                 ? "אין יותר במלאי"
                 : current.options?.length && !choice
                   ? `קודם בוחרים ${safeOptionLabel(current.option_label)}`
-                  : "הוספה לסל"}
+                  : choice && maxQtyFor(current, choice) === 0
+                    ? "כבר בסל כל מה שיש"
+                    : "הוספה לסל"}
           </button>
+          </div>
         </div>
       )}
 

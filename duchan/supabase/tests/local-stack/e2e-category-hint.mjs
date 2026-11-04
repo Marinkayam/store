@@ -74,19 +74,12 @@ check("בדוכן: א-קט מופיעה, ב-קט (ריקה) לא", bar.includes(
 /* ── שורת מוצר נקייה: בלי + / − בצד; ▲▼ רק במצב "לשנות סדר" ── */
 const row = girl.locator(`[data-testid=product-row]:has-text('${prod.name}')`).first();
 check("בשורת המוצר אין יותר + / − של מלאי", (await row.locator("button[aria-label='הוספה למלאי'], button[aria-label='הורדה מהמלאי']").count()) === 0);
-check("וגם אין חצי סידור כל הזמן", (await girl.locator("button[aria-label='להזיז למטה']").count()) === 0);
+check("וגם אין ידיות סידור כל הזמן", (await girl.locator("[data-testid=sort-handle]").count()) === 0);
 await girl.click("[data-testid=sort-toggle]");
-check("'לשנות סדר' מראה את החצים", (await girl.locator("button[aria-label='להזיז למטה']").count()) > 0);
+check("'לשנות סדר' פותח מצב סידור עם ידית לכל מוצר", (await girl.locator("[data-testid=sort-handle]").count()) > 1);
 await girl.screenshot({ path: `${process.env.SHOTS ?? "/tmp"}/rows-sorting.png` });
-const order0 = await girl.locator("[data-testid=product-row]").allTextContents();
-await girl.locator("button[aria-label='להזיז למטה']").first().click();
-await girl.waitForTimeout(900);
-const order1 = await girl.locator("[data-testid=product-row]").allTextContents();
-check("והסידור עובד", order1[0] === order0[1] && order1[1] === order0[0]);
-await girl.locator("button[aria-label='להזיז למעלה']").nth(1).click(); // מחזירים
-await girl.waitForTimeout(900);
-await girl.click("[data-testid=sort-toggle]");
-check("'סיימתי לסדר' מחביא אותם שוב", (await girl.locator("button[aria-label='להזיז למטה']").count()) === 0);
+await girl.click("[data-testid=sort-cancel]");
+check("'ביטול' חוזר לרשימה הנקייה", (await girl.locator("[data-testid=sort-handle]").count()) === 0);
 await girl.screenshot({ path: `${process.env.SHOTS ?? "/tmp"}/rows-clean.png` });
 await row.click();
 await girl.waitForSelector("[data-testid=editor-close]");

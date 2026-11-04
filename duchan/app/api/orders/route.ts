@@ -6,6 +6,7 @@ import { safeOptionLabel } from "@/lib/product-options";
 import type { OrderItem } from "@/lib/types";
 import { sumPrices } from "@/lib/money";
 import { applyDeals, parseDeal } from "@/lib/deals";
+import { stockOfOption } from "@/lib/option-stock";
 import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
 import { findCoupon } from "@/lib/coupons-server";
 import { countdown, dropTime } from "@/lib/drop";
@@ -75,16 +76,23 @@ export async function POST(req: NextRequest) {
   type Row = {
     id: string; name: string; price: number; track_stock: boolean; stock: number;
     option_label: string | null; options: string[] | null;
-    drop_at?: string | null; is_mystery?: boolean | null; deal?: unknown;
+    drop_at?: string | null; is_mystery?: boolean | null; deal?: unknown; option_stock?: unknown;
   };
   const readProducts = (cols: string) =>
     db.from("products").select(cols).eq("store_id", store.id).in("id", ids).is("deleted_at", null);
   // דרופ ושקית הפתעה (0056). אם הקוד עלה לפני המיגרציה — בלי השדות האלה,
   // ולא הזמנה שנופלת (ראה ההסבר על p_buyer_phone למטה)
   // מבצעים (0064) בשכבה משלהם — עמודה חסרה מורידה רק את המבצע
+  // מלאי לכל אפשרות (0065) בשכבה משלו, כמו המבצעים
   let { data: productRows, error: prodErr } = await readProducts(
-    "id, name, price, track_stock, stock, option_label, options, drop_at, is_mystery, deal"
+    "id, name, price, track_stock, stock, option_label, options, drop_at, is_mystery, deal, option_stock"
   );
+  if (prodErr) {
+    console.error("[orders] product select (option_stock) failed, falling back:", prodErr.message);
+    ({ data: productRows, error: prodErr } = await readProducts(
+      "id, name, price, track_stock, stock, option_label, options, drop_at, is_mystery, deal"
+    ));
+  }
   if (prodErr) {
     console.error("[orders] product select (deal) failed, falling back:", prodErr.message);
     ({ data: productRows, error: prodErr } = await readProducts(
@@ -147,6 +155,32 @@ export async function POST(req: NextRequest) {
     });
     dealIn.push({ productId: p.id, price, qty, deal: parseDeal(p.deal) });
   }
+  // מלאי על הסל כולו, לא שורה-שורה: ורוד ×2 וכחול ×2 מאותו מוצר הם 4
+  // מהמלאי הכולל, וכל צבע מול המלאי שלו (0065)
+  const byProduct = new Map<string, number>();
+  const byOption = new Map<string, number>();
+  for (const it of snapshot) {
+    byProduct.set(it.id!, (byProduct.get(it.id!) ?? 0) + it.qty);
+    if (it.option) byOption.set(`${it.id}\u0000${it.option}`, (byOption.get(`${it.id}\u0000${it.option}`) ?? 0) + it.qty);
+  }
+  for (const [id, want] of byProduct) {
+    const p = byId.get(id)!;
+    if (p.track_stock && p.stock < want) {
+      return NextResponse.json({ error: `נשארו רק ${p.stock} מ"${p.name}"` }, { status: 409 });
+    }
+  }
+  for (const [key, want] of byOption) {
+    const [id, option] = key.split("\u0000");
+    const p = byId.get(id)!;
+    const left = p.track_stock ? stockOfOption(p.option_stock, option) : null;
+    if (left !== null && left < want) {
+      return NextResponse.json(
+        { error: left === 0 ? `"${p.name}" ב${option} אזל` : `נשארו רק ${left} מ"${p.name}" ב${option}`, productId: id },
+        { status: 409 }
+      );
+    }
+  }
+
   // מבצעים: מחושבים כאן מה-DB, לכל מוצר על הכמות הכוללת שלו בסל (ורוד
   // אחד וכחול אחד = 2). השורה שומרת את הסכום ואת שם המבצע, כדי שההזמנה
   // תיראה אותו דבר גם אם המבצע ישתנה מחר — כמו המחיר (CLAUDE.md §3).

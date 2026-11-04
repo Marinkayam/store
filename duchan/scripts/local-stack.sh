@@ -89,6 +89,9 @@ psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0054_cou
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0055_admin_push.sql >/dev/null 2>&1
 # ו-0057: השותפים — store_members לקריאה בלבד, store_invites של השרת בלבד
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0057_store_members.sql >/dev/null 2>&1
+# ו-0065: מחליפה את mark_order_paid / cancel_order של 0057 (מלאי לכל צבע) —
+# חייבת לרוץ אחריה, אחרת ההרצה החוזרת של 0057 מחזירה את הגרסה הישנה
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0065_option_stock.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
 # קונטיינר חדש מגיע בלי הבינארי ובלי הקונפיג. מורידים גרסה קבועה,
