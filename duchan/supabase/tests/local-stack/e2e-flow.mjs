@@ -152,7 +152,7 @@ await girl.click("button[aria-label='מוצר חדש']");
 await girl.waitForSelector("text=מוצר חדש");
 const png = `${shots}/prod.png`;
 await girl.screenshot({ path: png });
-await girl.setInputFiles("input[type=file][accept='image/*']", png);
+await girl.setInputFiles("input[type=file][accept='image/*']:not([multiple])", png);
 await girl.waitForTimeout(1500);
 await girl.waitForSelector("[data-testid=ai-describe]", { timeout: 15000 }).catch(() => {});
 check("AI button appears once AI on + photo",

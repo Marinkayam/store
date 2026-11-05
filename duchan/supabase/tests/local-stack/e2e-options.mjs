@@ -80,7 +80,9 @@ check("option label saved", bracelet?.option_label === "צבע", bracelet?.optio
 check("choices saved deduped, in order", JSON.stringify(bracelet?.options) === '["ורוד","כחול"]', JSON.stringify(bracelet?.options));
 
 // המלאי בעורך הוא 1 כברירת מחדל, וכאן צריך שני צבעים בסל
-await db.query("update products set stock=9 where id=$1", [bracelet.id]);
+// ומלאי אחד לכל הצבעים (לא לכל צבע בנפרד) — הבדיקה הזו על הבחירה עצמה;
+// מלאי לכל צבע נבדק ב-e2e-products-easy
+await db.query("update products set stock=9, option_stock=null where id=$1", [bracelet.id]);
 await fetch(`${BASE}/api/revalidate`, { method: "POST" }).catch(() => {});
 
 /* ── 2. הקונה חייבת לבחור לפני שהיא מוסיפה לסל ── */
@@ -94,7 +96,7 @@ const beforePick = buyer.locator("button:has-text('קודם בוחרים')");
 check("add-to-cart is blocked until she picks", (await beforePick.count()) === 1 && !(await beforePick.isEnabled()));
 await buyer.screenshot({ path: `${shots}/62-must-pick.png` });
 
-await buyer.locator("button:text-is('כחול')").click();
+await buyer.locator("[data-testid=option-chip]", { hasText: "כחול" }).click();
 await buyer.locator("button[aria-label='הוספה לסל']").click();
 await sheetGone();
 check("cart accepts the product once a choice is made", (await buyer.textContent("body")).includes("פריט אחד"));
@@ -102,7 +104,7 @@ check("cart accepts the product once a choice is made", (await buyer.textContent
 /* ── 3. אותו מוצר בשני צבעים = שתי שורות בסל ── */
 await card().click();
 await buyer.waitForSelector("text=צבע");
-await buyer.locator("button:text-is('ורוד')").click();
+await buyer.locator("[data-testid=option-chip]", { hasText: "ורוד" }).click();
 await buyer.locator("button[aria-label='הוספה לסל']").click();
 await sheetGone();
 await buyer.click("text=פריטים");

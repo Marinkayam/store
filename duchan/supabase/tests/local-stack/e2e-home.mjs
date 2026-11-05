@@ -4,6 +4,7 @@
 //   • "אם כבר פתחתי דוכן אז אתה יודע — אל תכתוב 'כבר פתחת דוכן?'"
 import { chromium } from "playwright";
 import { verifyPhone, closeHelper } from "./sms-helper.mjs";
+import pg from "pg";
 
 const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
 const results = [];
@@ -11,6 +12,11 @@ const check = (n, ok, d = "") => {
   results.push({ n, ok });
   console.log(`${ok ? "PASS" : "FAIL"}: ${n}${d ? " — " + d : ""}`);
 };
+// הדוכן הפעיל של הזרע — לא סלאג קשיח (בסביבה חדשה הסלאג אחר)
+const db = new pg.Pool({ host: "/tmp", port: 5433, user: "postgres", database: "duchan" });
+const { rows: [live] } = await db.query("select slug from stores where contact_phone='972501234567' and activated_at is not null order by created_at limit 1");
+await db.end();
+const LIVE = live?.slug ?? "qkubk";
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 try {
   /* אורחת */
@@ -33,7 +39,7 @@ try {
   const cn2 = await guest.locator("[data-testid=cookie-note]").boundingBox();
   check("ונשארת במקום כשגוללים", Math.abs(cn2.y - cn.y) <= 1);
   // בדוכן: כשנפתח גיליון מוצר, הבאנר מתחבא ולא מכסה את "הוספה לסל"
-  await guest.goto(BASE + "/s/qkubk", { waitUntil: "networkidle" });
+  await guest.goto(BASE + `/s/${LIVE}`, { waitUntil: "networkidle" });
   await guest.locator(".grid button[aria-label]").first().click();
   await guest.waitForSelector("button[aria-label='הוספה לסל']", { timeout: 15000 });
   await guest.waitForTimeout(500);

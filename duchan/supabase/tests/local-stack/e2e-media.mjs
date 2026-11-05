@@ -33,7 +33,7 @@ await girl.goto(`${BASE}/dashboard/products`);
 await girl.waitForSelector("text=המוצרים שלי", { timeout: 15000 });
 await girl.click("button[aria-label='מוצר חדש']");
 
-const photoInput = girl.locator("input[type=file][accept='image/*']");
+const photoInput = girl.locator("input[type=file][accept='image/*']:not([multiple])");
 check("the photo input does not force the camera", (await photoInput.getAttribute("capture")) === null);
 
 await photoInput.setInputFiles(brokenJpg);
@@ -53,7 +53,7 @@ await girl.screenshot({ path: `${shots}/71-dashboard-photo-error.png` });
 await girl.route("**/duchan-media/**", (r) => r.abort("failed"));
 const realPng = `${shots}/real2.png`;
 await girl.screenshot({ path: realPng });
-await girl.locator("input[type=file][accept='image/*']").setInputFiles(realPng);
+await girl.locator("input[type=file][accept='image/*']:not([multiple])").setInputFiles(realPng);
 await girl.waitForTimeout(1500);
 await girl.fill("input[aria-label='שם המוצר']", "מוצר בדיקה");
 await girl.fill("input[aria-label='מחיר']", "10");

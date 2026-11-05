@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { KupaStall } from "./kupa-art";
+import HomeStall from "./home-stall";
 import Icon from "./icons";
 
 /**
@@ -25,13 +26,8 @@ export default function StallHero({ name = "הדוכן שלך", className = "", 
   if (still) {
     return (
       <div data-testid="stall-hero" data-night="0" className={`w-full ${className}`}>
-        <KupaStall
-          level={5}
-          name={name}
-          bare
-          deco={{ awning: "lavender", flowers: true, openSign: true, cat: true }}
-          className="w-full max-w-md mx-auto block pt-2"
-        />
+        {/* מסך הפתיחה: איור משלו, שקט ונקי (home-stall.tsx) */}
+        <HomeStall name={name} className="w-full max-w-md mx-auto block pt-2 px-3" />
       </div>
     );
   }

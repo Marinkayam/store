@@ -53,6 +53,9 @@ const want = {
   ADMIN_PHONES: "0509990000",
   CRON_SECRET: "test-cron-secret",
   PUSH_TEST_ENDPOINTS: "1",
+  // רק כדי שהחמ"ל יראה "כתיבה בעזרת AI מוגדרת" (כפתור "הדלקה מחדש"). לא מפתח
+  // אמיתי — קריאה אמיתית ל-AI נכשלת בשקט, והבדיקות לא נשענות עליה.
+  ANTHROPIC_API_KEY: "local-test-not-a-real-key",
   NEXT_PUBLIC_SQUISH_PARENT_APPROVAL: "1",
 };
 
