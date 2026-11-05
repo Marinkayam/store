@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../dashboard/use-store";
 import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../price/sections";
@@ -60,6 +60,18 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
 
   // מסומן = מה שבמסך אם נגעו בו, אחרת מה שכבר שמור בחנות
   const consentOn = consent ?? !!store?.parent_consent_at;
+
+  /* הלינק האישי להורה (/parent/…): הסבר, תשלום בביט צעד אחר צעד, וכפתור
+     "שילמנו" שההורה לוחץ בעצמו. מרינה, 11.2026: "הבעיה שילדים נתקעים עליה
+     זה העברה של הכסף בביט". בלי הלינק (שגיאה) — נשאר הלינק לדף המחיר. */
+  const [parentUrl, setParentUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!store?.id || store.activated_at) return;
+    fetch(`/api/stores/parent-link?storeId=${store.id}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.path && setParentUrl(`${window.location.origin}${d.path}`))
+      .catch(() => {});
+  }, [store?.id, store?.activated_at]);
 
   /**
    * ההצהרה נשמרת בשרת ברגע הסימון, ולא רק כשמצהירים על תשלום.
@@ -293,11 +305,12 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
      והצהרה — הכל לילדה בת עשר. עכשיו: שלב אחד לילדה (מה המחיר ומה עושים,
      כפתור אחד), ושלב להורה (אישור ותשלום) שנפתח בלחיצה. */
   const parentShareText =
-    `בניתי דוכן אמיתי באינטרנט!\n` +
-    (isLaunch
-      ? `יש עכשיו ${dealLabel}: רק ₪${price} במקום ₪${fullPrice}.\n`
-      : `כדי לפרסם אותו צריך תשלום אחד של ₪${price} (בלי מנוי, בלי עמלות).\n`) +
-    `כל ההסבר כאן: ${priceUrl}`;
+    `היי! בניתי דוכן באינטרנט: "${store.display_name}" 🙂\n` +
+    `אני רוצה לפתוח אותו כדי למכור דברים לחברים ולמשפחה.\n\n` +
+    `כדי לפתוח אותו צריך תשלום אחד של ₪${price}` +
+    (isLaunch ? ` (${dealLabel}, במקום ₪${fullPrice})` : "") +
+    `. בלי מנוי ובלי עמלות, והכסף מהמכירות נשאר אצלי.\n\n` +
+    `כל ההסבר, ואיך משלמים בביט בשלושה צעדים:\n${parentUrl ?? priceUrl}`;
 
   return (
     <Shell>
@@ -350,7 +363,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
       <div className="mt-7 bg-white border-[1.5px] border-[var(--ink)] p-4">
         <div className="text-[16px] font-bold">צריך את ההורים</div>
         <p className="text-[13.5px] text-[var(--muted)] leading-relaxed mt-1">
-          הם צריכים לדעת על הדוכן, ולשלם את ה-₪{price}.
+          שולחים להם לינק אחד: מה זה הדוכן, על מה התשלום, ואיך משלמים בביט. כשהם משלמים, הם לוחצים שם &quot;שילמנו&quot;, וזהו.
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(parentShareText)}`}

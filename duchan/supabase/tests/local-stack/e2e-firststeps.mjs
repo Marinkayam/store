@@ -66,7 +66,7 @@ try {
   check("שם בלי מחיר — עדיין לא", await p.locator("[data-testid=ob-next]").isDisabled());
   await p.fill("input[aria-label='מחיר המוצר']", "8");
   await p.click("[data-testid=ob-next]");
-  check("שלב 3: רק צבע — שש ערכות", (await p.textContent("h1")) === "באיזה צבע הדוכן?" && (await p.locator("button[aria-label^='ערכת']").count()) === 6);
+  check("שלב 3: רק צבע — 12 ערכות (11.2026: עוד צבעים עם שמות כיפיים)", (await p.textContent("h1")) === "באיזה צבע הדוכן?" && (await p.locator("button[aria-label^='ערכת']").count()) === 12);
   await p.click("button[aria-label='ערכת לבנדר']");
   check("הדוכן משתנה מיד, עם המוצר שהוסיפו",
     (await p.getAttribute("button[aria-label='ערכת לבנדר']", "aria-checked")) === "true" && ((await p.textContent("[data-testid=ob-preview]")) ?? "").includes("צמיד"));
