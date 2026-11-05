@@ -129,7 +129,7 @@ export function HeroScene() {
               );
             })}
 
-            <div className="absolute inset-x-0 top-[27%] text-center px-5 pointer-events-none">
+            <div className="absolute inset-x-0 top-[27%] text-center px-gutter pointer-events-none">
               <p className="sr-only">הסיפור של נועה. לנועה יש מגירה מלאה בסקווישים, צמידים וציורים, שהיא כבר לא משחקת בהם. מה עושים עם זה? עסק!</p>
               <div aria-hidden className="mb-3" style={{ opacity: 1 - seg(p, 0.12, 0.2) }}>
                 <Kicker>הסיפור של נועה · פרק 1: המגירה</Kicker>
@@ -166,7 +166,7 @@ export function HeroScene() {
               <KupaStall level={0} bare className="w-full block" />
             </div>
 
-            <div className="absolute inset-x-0 bottom-[96px] md:bottom-8 px-5" style={{ opacity: note, transform: `translateY(${(1 - note) * 16}px)` }}>
+            <div className="absolute inset-x-0 bottom-[96px] md:bottom-8 px-gutter" style={{ opacity: note, transform: `translateY(${(1 - note) * 16}px)` }}>
               <ParentNote label={false}>
                 בכל בית יש מגירה / ארון / חדר מפוצץ עם הרבה אוצרות. דוכן הופך אותה לשיעור הראשון בעסקים, עם כסף אמיתי, לקוחות אמיתיים ואחריות אמיתית.
               </ParentNote>
@@ -206,7 +206,7 @@ export function BuildScene() {
         const L = LEVELS[level];
         return (
           <div
-            className="h-full flex flex-col items-center justify-center px-5 pt-16 pb-[88px] md:pb-8 transition-colors duration-700"
+            className="h-full flex flex-col items-center justify-center px-gutter pt-16 pb-[88px] md:pb-8 transition-colors duration-700"
             style={{ background: night ? NIGHT : "var(--canvas)", color: night ? "#FBF8F3" : "var(--ink)" }}
             data-level={level}
           >
@@ -287,7 +287,7 @@ export function HowScene() {
         const sent = p > 0.86;
         const S = STEPS[step];
         return (
-          <div className="h-full bg-[var(--sand)] flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-5 pt-16 pb-[88px] md:pb-6">
+          <div className="h-full bg-[var(--sand)] flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-gutter pt-16 pb-[88px] md:pb-6">
             <div className="text-center md:text-right max-w-[22rem]" aria-live="polite">
               <Kicker>פרק 2 · יום ראשון, 16:30</Kicker>
               <div key={step} className="home-word">
@@ -352,7 +352,7 @@ export function HowScene() {
                   <div className="mt-1.5 bg-[#DCF8C6] border border-[var(--whatsapp)] p-2 text-[12.5px] leading-snug">
                     פתחתי דוכן! בואו לראות:
                     <br />
-                    <b dir="ltr" className="text-[var(--whatsapp)]">duchan.app/noa12</b>
+                    <b dir="ltr" className="text-[var(--whatsapp)]">duchan.app/k3m9p</b>
                   </div>
                   <div className="text-[11px] text-[var(--whatsapp)] text-left mt-1" style={{ opacity: sent ? 1 : 0 }}>
                     נשלח ✓✓
@@ -381,7 +381,7 @@ export function DingScene() {
         const orders = p >= 0.5;
         const paid = p >= 0.74;
         return (
-          <div className="h-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-5 pt-16 pb-[88px] md:pb-6" style={{ background: NIGHT, color: "#FBF8F3" }}>
+          <div className="h-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-gutter pt-16 pb-[88px] md:pb-6" style={{ background: NIGHT, color: "#FBF8F3" }}>
             <div className="text-center md:text-right min-h-[96px] md:min-w-[22rem]" aria-live="polite">
               <div className="mb-1">
                 <Kicker light>פרק 4 · ערב, 19:42</Kicker>

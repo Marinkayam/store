@@ -57,7 +57,16 @@ try {
   await story.locator("[data-testid=home-riddle]").scrollIntoViewIfNeeded();
   await story.click("[data-testid=home-riddle] button:has-text('₪30')");
   check("חידה: תשובה נכונה מקבלת כוכב", ((await story.textContent("[data-testid=home-riddle-answer]")) ?? "").includes("נכון"));
-  for (const id of ["home-month", "home-price-game", "home-safety", "home-price"]) check(`קטע ${id} קיים`, (await story.locator(`[data-testid=${id}]`).count()) === 1);
+  for (const id of ["home-month", "home-price-game", "home-safety", "home-price", "home-tools"]) check(`קטע ${id} קיים`, (await story.locator(`[data-testid=${id}]`).count()) === 1);
+  // 11.2026: מה שנוסף לדוכן, ואיך ההורים משלמים
+  const tools = (await story.textContent("[data-testid=home-tools]")) ?? "";
+  check("פרק 'הדוכן מתמלא': מבצעים, 12 צבעים, הרבה מוצרים, מלאי לכל צבע",
+    ["מבצעים", "12 צבעים", "הרבה מוצרים בבת אחת", "מלאי לכל צבע"].every((w) => tools.includes(w)));
+  check("בפרק המחיר: שלושה צעדים להורים, עם ביט", (await story.locator("[data-testid=home-parent-steps] li").count()) === 3 &&
+    ((await story.textContent("[data-testid=home-parent-steps]")) ?? "").includes("ביט"));
+  const storyText = (await story.textContent("main")) ?? "";
+  check("בלי 'להדליק את האורות' (11.2026: עמוס מדי)", !storyText.includes("להדליק") && (await story.locator("[data-testid=stall-light]").count()) === 0);
+  check("הלינק לדוגמה בפורמט אמיתי (5 תווים)", !storyText.includes("noa12"));
   await story.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await story.waitForTimeout(500);
   check("בסוף: הכפתור הדביק נעלם (יש כפתור גדול בעמוד)", (await story.getAttribute("[data-testid=home-sticky-start]", "tabindex")) === "-1");

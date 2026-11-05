@@ -7,6 +7,8 @@ import Art from "./art";
 import { useInView } from "./use-scene";
 import { Kicker, ParentNote } from "./scenes";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
+import { BADGES } from "@/lib/badges";
+import { THEMES } from "@/lib/themes";
 
 /** כותרת פרק: מספר קטן, כותרת דקה וגדולה, ומשפט אחד */
 function Head({ kicker, title, sub, light = false }: { kicker: string; title: ReactNode; sub?: ReactNode; light?: boolean }) {
@@ -53,7 +55,7 @@ export function LearnSection() {
   const [pick, setPick] = useState<number | null>(null);
   const right = pick === RIDDLE.a;
   return (
-    <section className="px-5 py-24 bg-[var(--canvas)]" aria-labelledby="learn-title" data-testid="home-learn">
+    <section className="px-gutter py-24 bg-[var(--canvas)]" aria-labelledby="learn-title" data-testid="home-learn">
       <Reveal>
         <Head
           kicker="ומה לומדים?"
@@ -141,7 +143,7 @@ const COIN_WAYS = [
 export function KupaSection() {
   const { ref, seen } = useInView<HTMLDivElement>(0.3);
   return (
-    <section className="px-5 py-24 bg-[var(--cream)]" aria-labelledby="kupa-title" data-testid="home-kupa">
+    <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="kupa-title" data-testid="home-kupa">
       <Reveal>
         <Head
           kicker="קופת הדוכן"
@@ -188,7 +190,7 @@ const SAFE: { icon: IconName; title: string; line: string }[] = [
 
 export function SafetySection() {
   return (
-    <section className="px-5 py-24" style={{ background: "var(--ink)", color: "#FBF8F3" }} aria-labelledby="safe-title" data-testid="home-safety">
+    <section className="px-gutter py-24" style={{ background: "var(--ink)", color: "#FBF8F3" }} aria-labelledby="safe-title" data-testid="home-safety">
       <Reveal>
         <Head light kicker="להורים · מה שקורה מאחורי הקלעים" title={<span id="safe-title">בטוח. באמת.</span>} sub="נועה רק רצתה למכור סקווישים. כל השאר בנוי מראש, כי הדוכן נועד לילדים." />
       </Reveal>
@@ -212,7 +214,7 @@ export function SafetySection() {
 export function PriceSection() {
   const units = Math.max(1, Math.ceil(ACTIVATION_PRICE / 15));
   return (
-    <section className="px-5 py-24 bg-[var(--canvas)]" aria-labelledby="price-title" data-testid="home-price">
+    <section className="px-gutter py-24 bg-[var(--canvas)]" aria-labelledby="price-title" data-testid="home-price">
       <Reveal>
         <Head kicker="להורים · כמה זה עולה?" title={<span id="price-title">הבנייה — בחינם.</span>} sub="בונים, מעצבים ומוסיפים מוצרים בלי לשלם. משלמים פעם אחת רק כשרוצים לקבל הזמנות." />
       </Reveal>
@@ -230,6 +232,23 @@ export function PriceSection() {
           {IS_LAUNCH && <bdi className="text-[28px] text-[var(--muted)] line-through mb-3">₪{FULL_PRICE}</bdi>}
         </div>
         <div className="text-[17px] font-medium mt-2">פעם אחת. הדוכן שלך לתמיד.</div>
+        <p className="text-[14px] text-[var(--muted)] mt-1">בלי מנוי, בלי חיוב חודשי ובלי עמלה על מכירות.</p>
+        {/* איך משלמים — הדף האישי להורה (/parent) */}
+        <ol className="mt-8 text-right bg-white border border-[var(--line)]" data-testid="home-parent-steps">
+          {[
+            ["הילדים שולחים לכם לינק", "בוואטסאפ, מתוך הדוכן שבנו."],
+            ["קוראים מה זה ועל מה התשלום", "דף אחד: מה נבנה, מה לומדים, ומה בטוח."],
+            ["משלמים בביט ולוחצים \"שילמנו\"", "שלושה צעדים. אנחנו בודקים ופותחים את הדוכן."],
+          ].map(([t, d], k) => (
+            <li key={t} className={`flex gap-3 p-4 ${k < 2 ? "border-b border-[var(--line)]" : ""}`}>
+              <span className="w-7 h-7 shrink-0 grid place-items-center bg-[var(--ink)] text-white text-[14px] font-bold" aria-hidden>{k + 1}</span>
+              <div className="min-w-0">
+                <div className="text-[15px] font-medium">{t}</div>
+                <div className="text-[13px] text-[var(--muted)] mt-0.5">{d}</div>
+              </div>
+            </li>
+          ))}
+        </ol>
         <div className="flex items-center justify-center gap-3 mt-8">
           {Array.from({ length: units }, (_, i) => (
             <span key={i} className="w-16">
@@ -275,7 +294,7 @@ export function PriceGame() {
           ? "יקר מדי: כמעט אף אחד לא קונה."
           : "לא רע! נסו לזוז עוד קצת.";
   return (
-    <section className="px-5 py-24 bg-[var(--cream)]" aria-labelledby="game-title" data-testid="home-price-game">
+    <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="game-title" data-testid="home-price-game">
       <Reveal>
         <div className="text-center max-w-[34rem] mx-auto">
           <Kicker>פרק 3 · ההחלטה הראשונה</Kicker>
@@ -364,15 +383,129 @@ const LEDGER: { label: string; value: number; money?: boolean; sign?: string }[]
   { label: "רווח", value: 182, money: true },
 ];
 
+/* ───────────────────────── פרק 6: הדוכן מתמלא ───────────────────────── */
+
+/**
+ * מה נוסף לדוכן ב-11.2026, בתוך הסיפור: מבצעים, 12 צבעים, הרבה מוצרים
+ * בבת אחת, ומלאי לכל צבע. כל כרטיס מראה את הדבר עצמו בקטן — מדבקה, צבעים,
+ * צ'יפים — ולא צילום מסך.
+ */
+const THEME_LIST = Object.values(THEMES);
+
+function ThemeNames() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setInterval(() => setI((n) => (n + 1) % THEME_LIST.length), 1100);
+    return () => clearInterval(t);
+  }, []);
+  const th = THEME_LIST[i];
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="grid grid-cols-6 gap-1" aria-hidden>
+        {THEME_LIST.map((t, k) => (
+          <span
+            key={t.label}
+            className="w-5 h-5 transition-transform"
+            style={{ background: t.primary, outline: k === i ? "2px solid var(--ink)" : "none", outlineOffset: 2, transform: k === i ? "scale(1.1)" : "none" }}
+          />
+        ))}
+      </div>
+      <span className="text-[13px] font-medium px-2 py-0.5" style={{ background: th.bg, color: th.ink, border: th.border }} aria-live="off">
+        {th.label}
+      </span>
+    </div>
+  );
+}
+
+const TOOLS: { title: string; line: string; art: ReactNode }[] = [
+  {
+    title: "מבצעים",
+    line: "הנחה, 1+1 או \"2 ב-₪15\". המדבקה יושבת על התמונה, והסל מחשב לבד.",
+    art: (
+      <div className="relative w-24 h-24 bg-[var(--cream)] border border-[var(--line)] mx-auto">
+        <span className="absolute inset-3"><Art name="squishy" /></span>
+        <span className="absolute bottom-0 left-0 text-[11px] font-bold px-1.5 py-0.5" style={{ background: BADGES.sale.bg, color: BADGES.sale.fg }}>
+          2 ב-₪15
+        </span>
+      </div>
+    ),
+  },
+  {
+    title: "12 צבעים",
+    line: "מוניל ועד גלקסיה. מחליפים מתי שרוצים, והדוכן משתנה מיד.",
+    art: <ThemeNames />,
+  },
+  {
+    title: "הרבה מוצרים בבת אחת",
+    line: "בוחרים עד 20 תמונות מהגלריה, נותנים לכולן מחיר אחד, וזהו.",
+    art: (
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex" aria-hidden>
+          {(["bracelets", "slime", "mug"] as const).map((a, k) => (
+            <span key={a} className="w-14 h-14 bg-white border border-[var(--line)] p-2" style={{ transform: `rotate(${(k - 1) * 6}deg)`, marginInlineStart: k ? -12 : 0 }}>
+              <Art name={a} />
+            </span>
+          ))}
+        </div>
+        <span className="text-[12px] border border-[var(--ink)] bg-white px-2 py-0.5">מחיר לכולם: ₪15</span>
+      </div>
+    ),
+  },
+  {
+    title: "מלאי לכל צבע",
+    line: "כמה יש מכל צבע. מה שנגמר מסומן \"אזל\", ואי אפשר להזמין יותר ממה שיש.",
+    art: (
+      <div className="flex flex-wrap justify-center gap-1.5" aria-hidden>
+        <span className="border-2 border-[var(--ink)] bg-white px-2.5 py-1 text-[12px] font-bold leading-tight text-center">ורוד<br /><span className="font-normal text-[10.5px]">נשארו 2</span></span>
+        <span className="border-2 border-[var(--line)] bg-white px-2.5 py-1 text-[12px] leading-tight text-center opacity-50"><s>כחול</s><br /><span className="text-[10.5px] font-semibold">אזל</span></span>
+        <span className="border-2 border-[var(--line)] bg-white px-2.5 py-1 text-[12px] leading-tight text-center">סגול<br /><span className="text-[10.5px]">&nbsp;</span></span>
+      </div>
+    ),
+  },
+];
+
+export function ToolsSection() {
+  return (
+    <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="tools-title" data-testid="home-tools">
+      <Reveal>
+        <div className="text-center max-w-[34rem] mx-auto">
+          <Kicker>פרק 6 · הדוכן מתמלא</Kicker>
+          <h2 id="tools-title" className="home-display mt-1">
+            עוד מוצרים, <span className="text-[var(--lavender-deep)]">עוד רעיונות.</span>
+          </h2>
+          <p className="text-[15.5px] leading-relaxed mt-3 opacity-90">כמה דברים שנועה גילתה בדרך.</p>
+        </div>
+      </Reveal>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto mt-10">
+        {TOOLS.map((t, i) => (
+          <Reveal key={t.title} i={i} className="bg-white border border-[var(--line)] p-5 flex flex-col items-center text-center gap-3">
+            <div className="min-h-24 flex items-center justify-center">{t.art}</div>
+            <div>
+              <div className="text-[17px] font-medium">{t.title}</div>
+              <p className="text-[14px] leading-relaxed text-[var(--muted)] mt-1">{t.line}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+      <Reveal className="max-w-md mx-auto">
+        <ParentNote className="mt-8">
+          הכל כלול בתשלום האחד. אין חבילות, אין שדרוגים בתשלום ואין עמלה על מכירות.
+        </ParentNote>
+      </Reveal>
+    </section>
+  );
+}
+
 export function MonthSection() {
   const { ref, seen } = useInView<HTMLDivElement>(0.3);
   const [pick, setPick] = useState<number | null>(null);
   const right = pick === RIDDLE.a;
   return (
-    <section className="px-5 py-24 bg-[var(--canvas)]" aria-labelledby="month-title" data-testid="home-month">
+    <section className="px-gutter py-24 bg-[var(--canvas)]" aria-labelledby="month-title" data-testid="home-month">
       <Reveal>
         <div className="text-center max-w-[34rem] mx-auto">
-          <Kicker>פרק 6 · חודש אחרי</Kicker>
+          <Kicker>פרק 7 · חודש אחרי</Kicker>
           <h2 id="month-title" className="home-display mt-1">
             מה נשאר בקופה?
           </h2>

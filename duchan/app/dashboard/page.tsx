@@ -406,7 +406,9 @@ export default function OrdersPage() {
               o.status === "paid"
                 ? "bg-[var(--ok-bg)] border-[var(--ok-line)]"
                 : done
-                  ? "bg-white border-[var(--line)] opacity-50"
+                  ? /* נמסר/בוטל: רקע שקט במקום שקיפות — שקיפות הורידה את הטקסט
+                       מתחת לניגודיות קריאה (axe: 2.3:1) */
+                    "bg-[var(--sub)] border-[var(--line)]"
                   : "bg-white border-[var(--line)]"
             }`}
             data-testid="order-card"

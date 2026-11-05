@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import StallHero from "../stall-hero";
+import HomeStall from "../home-stall";
+import { useInView } from "../home/use-scene";
 import HelpButton from "../help-button";
 import Icon from "../icons";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { BuildScene, DingScene, HeroScene, HowScene } from "../home/scenes";
-import { MonthSection, PriceGame, PriceSection, SafetySection } from "../home/sections";
+import { MonthSection, PriceGame, PriceSection, SafetySection, ToolsSection } from "../home/sections";
 
 /**
  * אתר השיווק (/story): הסיפור של "מה זה דוכן", בגלילה. דף הבית (/) נשאר
@@ -18,8 +19,13 @@ import { MonthSection, PriceGame, PriceSection, SafetySection } from "../home/se
  * בשפה הגרפית של האפליקציה, עם אפשרות לפתוח דוכן, והכל מותאם מובייל".
  *
  * הסדר: הוק ("לכל אחד יש טונות של צעצועים… עסק!!!") → מעגלה לדוכן → איך זה
- * עובד → דינג, הזמנה ראשונה → מה לומדים (עם חידה אמיתית) → הקופה → בטוח
- * (להורים) → כמה זה עולה → להדליק את האורות ולפתוח דוכן.
+ * עובד → דינג, הזמנה ראשונה → הדוכן גדל → הדוכן מתמלא (מבצעים, צבעים, הרבה
+ * מוצרים, מלאי לכל צבע) → מה לומדים (עם חידה אמיתית) → בטוח (להורים) → כמה
+ * זה עולה ואיך משלמים → לפתוח דוכן.
+ *
+ * 11.2026 (מרינה: "תעדכן אותו"): פרק 6 חדש עם מה שנוסף לדוכן; בפרק המחיר —
+ * הדף להורה ותשלום בביט בשלושה צעדים; והסוף בלי "להדליק את האורות" (כמו בדף
+ * המחיר, "עמוס מדי") — הדוכן עם קונפטי כשמגיעים אליו.
  *
  * מה שנשאר מדף הנחיתה הקודם, כמו שהיה:
  *   • ?ref=<slug> — הגיעו מדוכן של חבר/ה. נספר ב-/api/track/ref ועובר ליצירת הדוכן.
@@ -140,7 +146,7 @@ export default function StoryPage() {
 
       {/* מי שכבר יש לו/ה דוכן, ומי שהגיע/ה מדוכן של חבר/ה — לפני הסיפור */}
       {(mine || from) && (
-        <div className="px-4 pt-3 flex flex-col items-center gap-2">
+        <div className="px-gutter pt-3 flex flex-col items-center gap-2">
           {mine && (
             <a
               href="/dashboard"
@@ -170,25 +176,24 @@ export default function StoryPage() {
       <PriceGame />
       <DingScene />
       <BuildScene />
+      <ToolsSection />
       <MonthSection />
       <SafetySection />
       <PriceSection />
 
-      {/* ── הסוף: להדליק את האורות ולפתוח דוכן ── */}
+      {/* ── הסוף: הדוכן שלך, וקונפטי כשמגיעים אליו ── */}
       <section ref={endRef} className="pt-20 pb-28 flex flex-col items-center gap-6 bg-[var(--canvas)]" aria-labelledby="end-title" data-testid="home-end">
-        <div className="text-center px-5">
+        <div className="text-center px-gutter">
           <div className="text-[12.5px] font-medium tracking-wide text-[var(--lavender-deep)]">והפרק הבא?</div>
           <h2 id="end-title" className="home-display mt-1">
             שלך.
           </h2>
           <p className="text-[15.5px] leading-relaxed mt-3 max-w-[22rem] mx-auto">
-            למגירה שלך יש סיפור משלה. מדליקים את האורות ופותחים דוכן.
+            למגירה שלך יש סיפור משלה. הגיע הזמן לפתוח דוכן.
           </p>
         </div>
-        <div className="self-stretch">
-          <StallHero name="הדוכן שלך" />
-        </div>
-        <form onSubmit={start} className="w-full max-w-sm px-5 flex flex-col gap-2.5">
+        <EndStall />
+        <form onSubmit={start} className="w-full max-w-sm px-gutter flex flex-col gap-2.5">
           <button className="btn btn-primary text-[16px]" data-testid="home-start">
             קדימה, בואו נקים את הדוכן ←
           </button>
@@ -202,13 +207,13 @@ export default function StoryPage() {
             לשלוח את הסיפור להורים
           </a>
           <p className="text-[13px] text-center leading-relaxed text-[var(--muted)]">
-            הורים? פותחים ביחד, ואתם מאשרים לפני שהדוכן נפתח להזמנות. לבנות זה חינם; משלמים פעם אחת, <bdi>₪{ACTIVATION_PRICE}</bdi>.
+            הורים? פותחים ביחד, ואתם מאשרים לפני שהדוכן נפתח להזמנות. הבנייה בחינם, ומשלמים פעם אחת, <bdi>₪{ACTIVATION_PRICE}</bdi>.
           </p>
         </form>
         {checked && !mine && (
           <a
             href="/login"
-            className="w-[calc(100%-2.5rem)] max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
+            className="w-[calc(100%-2*var(--spacing-gutter))] max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
           >
             <span>כבר פתחת דוכן?</span>
             <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
@@ -227,7 +232,7 @@ export default function StoryPage() {
       <div
         data-bottom-bar={showBar ? "" : undefined}
         aria-hidden={!showBar}
-        className={`md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--canvas)] border-t border-[var(--line)] px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] transition-transform duration-300 ${
+        className={`md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--canvas)] border-t border-[var(--line)] px-gutter pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] transition-transform duration-300 ${
           showBar ? "translate-y-0" : "translate-y-full"
         }`}
       >
@@ -236,5 +241,15 @@ export default function StoryPage() {
         </button>
       </div>
     </main>
+  );
+}
+
+/** הדוכן בסוף הסיפור — הקונפטי נופל כשמגיעים אליו, לא כשהדף נטען */
+function EndStall() {
+  const { ref, seen } = useInView<HTMLDivElement>(0.4);
+  return (
+    <div ref={ref} className="w-full max-w-md px-gutter">
+      <HomeStall key={seen ? "on" : "off"} name="הדוכן שלך" celebrate={seen} className="w-full block" />
+    </div>
   );
 }
