@@ -8,6 +8,7 @@ import { uploadBlob } from "@/lib/upload-client";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import PhoneVerify from "../phone-verify";
 import Icon from "../icons";
+import HomeStall from "../home-stall";
 import HelpButton from "../help-button";
 import LegalLinks from "../legal-links";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
@@ -349,18 +350,19 @@ export default function Onboarding() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="צבע הדוכן">
+          {/* 12 ערכות בארבעה טורים — כולן נכנסות למסך אחד עם הכפתור */}
+          <div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="צבע הדוכן">
             {(Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]).map(([k, tv]) => {
               const on = draft.theme === k;
               return (
                 <button key={k} onClick={() => set({ theme: k })}
                   role="radio" aria-checked={on} aria-label={`ערכת ${tv.label}`}
-                  className={`min-h-[64px] flex flex-col items-center justify-center gap-1.5 ${on ? "border-2 border-[var(--ink)]" : "border-[1.5px] border-[var(--line)]"}`}
+                  className={`min-h-[62px] px-1 flex flex-col items-center justify-center gap-1.5 ${on ? "border-2 border-[var(--ink)]" : "border-[1.5px] border-[var(--line)]"}`}
                   style={{ background: tv.bg }}>
                   <span className="w-7 h-7 flex items-center justify-center" style={{ background: tv.primary }}>
                     {on && <Icon name="check" size={16} tone={tv.onPrimary} />}
                   </span>
-                  <span className="text-[12.5px] font-medium" style={{ color: tv.ink }}>{tv.label}</span>
+                  <span className="text-[12px] font-medium leading-tight text-center" style={{ color: tv.ink }}>{tv.label}</span>
                 </button>
               );
             })}
@@ -435,51 +437,34 @@ export default function Onboarding() {
           כרטיס של הדוכן עם מקום ריק למוצר גורם להרגשה שזה כבר שלו/שלה. */}
       {result && draft && (
         <div className="w-full flex flex-col gap-4">
+          {/* הרגע הגדול: הדוכן עצמו, עם השם על השלט וקונפטי (מרינה סימנה את
+              המסך הזה לעיצוב). קודם: כרטיס חנות קטן עם מוצר חתוך באמצע. */}
           <div className="text-center">
-            <p className="t-label">נפתח דוכן</p>
-            <h1 className="text-xl font-bold mt-0.5">{draft.displayName}</h1>
-            <p className="t-sub mt-2">
+            <HomeStall name={draft.displayName} celebrate className="w-full max-w-[340px] mx-auto block -mt-2" />
+            <h1 className="text-[26px] font-black leading-tight mt-1">נפתח דוכן!</h1>
+            <p className="t-sub mt-1.5">
               {draft.products.length
                 ? "הוא עדיין פרטי. אפשר להוסיף עוד מוצרים, ואז לפרסם."
                 : "הוא עדיין פרטי. מעלים מוצר אחד, ואז אפשר לפרסם."}
             </p>
           </div>
 
-          <div className="w-full overflow-hidden card">
-            <div className="h-20" style={{ background: coverCss(draft.cover) }} />
-            <div className="text-center -mt-8 pb-3">
-              <div
-                className="w-20 h-20 mx-auto inline-flex items-center justify-center overflow-hidden bg-white text-2xl"
-                style={{ border: "1px solid var(--line)" }}
-              >
-                {draft.avatarData ? (
-                  <img src={draft.avatarData} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <Icon name="bag" size={30} />
-                )}
-              </div>
-              <div className="t-heading mt-3">{draft.displayName}</div>
-              <div className="t-small text-[var(--muted)] mt-1">
-                {draft.products.length === 1 ? "מוצר אחד" : `${draft.products.length} מוצרים`}
-              </div>
-            </div>
-            {draft.products.length ? (
-              <div className="grid grid-cols-2 gap-2 mx-4 mb-4">
-                {draft.products.map((pr, i) => (
-                  <div key={i} className="border border-[var(--line)]">
-                    <div className="h-16 flex items-center justify-center text-xl overflow-hidden bg-[var(--canvas)]">
-                      {pr.imageData ? <img src={pr.imageData} alt="" className="w-full h-full object-cover" /> : <Icon name="bag" size={22} />}
-                    </div>
-                    <div className="px-2 py-1.5 text-[12.5px] truncate">{pr.name}</div>
+          {draft.products.length ? (
+            <div className="flex justify-center gap-2 flex-wrap" aria-label="המוצרים בדוכן">
+              {draft.products.map((pr, i) => (
+                <div key={i} className="w-[84px] border border-[var(--line)] bg-white">
+                  <div className="aspect-square flex items-center justify-center overflow-hidden bg-[var(--canvas)]">
+                    {pr.imageData ? <img src={pr.imageData} alt="" className="w-full h-full object-cover" /> : <Icon name="bag" size={22} />}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mx-4 mb-4 border-[1.5px] border-dashed border-[#D3D5DC] py-6 text-center t-small text-[var(--muted)]">
-                כאן יופיע המוצר הראשון
-              </div>
-            )}
-          </div>
+                  <div className="px-1.5 py-1 text-[11.5px] truncate text-center">{pr.name}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="border-[1.5px] border-dashed border-[#D3D5DC] py-5 text-center t-small text-[var(--muted)]">
+              כאן יופיע המוצר הראשון
+            </div>
+          )}
 
           <a
             href={draft.products.length ? "/dashboard/products" : "/dashboard/products?new=1"}

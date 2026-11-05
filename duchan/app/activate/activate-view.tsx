@@ -7,6 +7,7 @@ import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../
 import HelpButton from "../help-button";
 import LegalLinks from "../legal-links";
 import Icon from "../icons";
+import HomeStall from "../home-stall";
 import { displayPhone } from "@/lib/phone";
 
 // הפלואו: בונים בחינם → רוצים לשתף → כאן מסבירים כמה ולמה → משלמים בביט/פייבוקס
@@ -127,8 +128,10 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
     return (
       <Shell>
         <div className="text-center flex flex-col gap-4">
-          <div className="flex justify-center text-[var(--ink)]"><Icon name="party" size={56} /></div>
-          <h1 data-testid="store-live" className="text-xl font-bold">הדוכן שלך באוויר</h1>
+          {/* הדוכן עצמו, עם השם על השלט, וקונפטי פעם אחת (מרינה, 11.2026:
+              "עיצוב מגניב יותר לאייקון של הדוכן שלך באוויר") */}
+          <HomeStall name={store.display_name} celebrate className="w-full max-w-[340px] mx-auto block -mt-4" />
+          <h1 data-testid="store-live" className="text-[24px] font-black -mt-1">הדוכן שלך באוויר!</h1>
           <p className="text-[13px] text-[var(--muted)] leading-relaxed">
             הלינק פעיל. כל מי שמקבל אותו ממך יכול להיכנס ולהזמין.
           </p>
@@ -190,6 +193,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
     return (
       <Shell>
         <div className="text-center">
+          <HomeStall name={store.display_name} className="w-full max-w-[280px] mx-auto block -mt-4 mb-1" />
           <h1 data-testid="payment-pending" className="text-[21px] font-bold leading-snug">
             התשלום בבדיקה
           </h1>
@@ -298,6 +302,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
   return (
     <Shell>
       <div className="text-center">
+        <HomeStall name={store.display_name} className="w-full max-w-[300px] mx-auto block -mt-4 mb-1" />
         <h1 className="text-[22px] font-bold leading-tight">
           {store.display_name} מוכן
           <br />

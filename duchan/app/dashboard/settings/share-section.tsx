@@ -7,6 +7,7 @@ import type { Store } from "@/lib/types";
 import TikTokCard from "./tiktok-card";
 import { storePath } from "@/lib/short-link";
 import GiftBagsArt from "@/app/gift-bags-art";
+import Icon from "@/app/icons";
 
 /**
  * "לשתף את הדוכן" — מקטע ב"החנות שלי". בא במקום הלשונית "להפיץ".
@@ -24,6 +25,8 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
   const [products, setProducts] = useState<number | null>(null);
   const [topProduct, setTopProduct] = useState<string | null>(null);
   const [pick, setPick] = useState("launch");
+  /** הכפתור עצמו אומר "הועתק" לשתי שניות — לא רק הודעה שקופצת בצד */
+  const [copied, setCopied] = useState(false);
   const [edited, setEdited] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -85,17 +88,34 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
         </p>
       </div>
 
-      {/* הלינק — שורה אחת, נלחצת להעתקה */}
-      <button
-        onClick={() => copy(link, "הלינק הועתק 🔗")}
-        className="flex items-center gap-2 border-b-[1.5px] border-[var(--ink)] pb-2 text-right"
-        aria-label="העתקת הלינק לדוכן"
-      >
-        <span className="flex-1 min-w-0 text-[15px] font-bold truncate text-left" dir="ltr" data-testid="share-link">
+      {/* הלינק בקופסה, וכפתור העתקה אמיתי לידו (מרינה, 11.2026: "העתקה
+          שיהיה כפתור ברור" — קודם זו הייתה מילה אפורה קטנה בקצה הקו) */}
+      <div className="flex items-stretch border-[1.5px] border-[var(--ink)] bg-white">
+        <span
+          className="flex-1 min-w-0 px-3 py-3 text-[15px] font-bold truncate text-left self-center"
+          dir="ltr"
+          data-testid="share-link"
+        >
           {link.replace(/^https?:\/\//, "")}
         </span>
-        <span className="shrink-0 text-[12.5px] font-bold text-[var(--muted)]">העתקה</span>
-      </button>
+        <button
+          onClick={() =>
+            navigator.clipboard?.writeText(link).then(
+              () => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              },
+              () => onToast("לא הצלחנו להעתיק")
+            )
+          }
+          className={`fx-press shrink-0 flex items-center gap-1.5 px-4 text-[14px] font-bold ${copied ? "bg-[var(--ok-bg)] text-[var(--ok-ink)]" : "bg-[var(--ink)] text-white"}`}
+          aria-label="העתקת הלינק לדוכן"
+          data-testid="share-copy"
+        >
+          <Icon name={copied ? "check" : "copy"} size={17} tone="none" />
+          {copied ? "הועתק!" : "העתקה"}
+        </button>
+      </div>
 
       <button
         data-testid="share-send"

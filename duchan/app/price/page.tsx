@@ -25,7 +25,8 @@ export default function PricePage() {
       <BackBar />
       {/* ── Hero: האיור של הדוכן במקום האייקון (מרינה לא אהבה את האייקון) ── */}
       <section className="border-b border-[var(--line)] bg-white">
-        <StallHero />
+        {/* בלי "להדליק את האורות" — מרינה, 11.2026: "עמוס מדי" */}
+        <StallHero name="הדוכן שלך" still />
         <div className="max-w-lg mx-auto px-6 pt-6 pb-10 text-center">
           <h1 className="t-title text-[1.75rem]">
             דוכן אמיתי משלך.

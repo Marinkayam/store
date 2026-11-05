@@ -14,7 +14,7 @@ import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } f
 import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
-import { applyDeals, dealActive, dealExplain, dealLabel, dealNudge, dealSticker, type Deal } from "@/lib/deals";
+import { applyDeals, dealActive, dealExplain, dealLabel, dealNudge, dealSticker, dealTotal, type Deal } from "@/lib/deals";
 import { stockOfOption } from "@/lib/option-stock";
 import type { PublicProduct, PublicStore } from "@/lib/types";
 import { dropTime, dropWhen } from "@/lib/drop";
@@ -413,6 +413,8 @@ export default function StoreView({
     }
     setCurrent(p);
     setQty(1);
+    // "נוסף לסל" מהמוצר הקודם לא נשאר לרחף מעל הכמות של המוצר הזה
+    setToast("");
     // בחירה יחידה נבחרת מראש — אין מה להחליט
     setChoice(p.options?.length === 1 ? p.options[0] : null);
   }
@@ -1250,42 +1252,60 @@ export default function StoreView({
             </div>
           )}
 
-          <div className="border-t border-current/10 pt-3.5">
-            <div className="text-[12px] opacity-75 text-center mb-2">כמות</div>
-            <div className="flex items-center justify-center gap-6">
+          {/* הכמות והכפתור בשורה אחת, דבוקים לתחתית על רצועה אטומה — כמו
+              בכל חנות בטלפון: [− 1 +] [הוספה לסל · ₪28]. הסטפר הוא יחידה
+              אחת באותו גובה של הכפתור, והמינוס הכבוי נשאר באותה מסגרת
+              (מרינה, 11.2026: "למה הכפתורים פה לא באותו גובה"). המחיר על
+              הכפתור הוא הסכום אחרי המבצע — רואים מה מוסיפים לפני שמוסיפים. */}
+          {(() => {
+            const canAdd = !(preview || locked(current) || maxQty(current) === 0 || (!!current.options?.length && !choice) || (!!choice && maxQtyFor(current, choice) === 0));
+            // מה זה מוסיף לסכום בפועל: אם יש כבר אחד בסל ומבצע "2 ב-", השני זול יותר
+            const had = inCart(current.id);
+            const lineTotal = dealTotal(current.price, had + qty, current.deal) - dealTotal(current.price, had, current.deal);
+            return (
+          <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-stretch gap-2.5 border-t border-current/10" style={{ background: "var(--s-surface)" }}>
+          {canAdd && maxQtyFor(current, choice) > 1 && (
+            <div
+              role="group"
+              aria-label="כמות"
+              className="s-r shrink-0 flex items-stretch border-[1.5px] overflow-hidden"
+              style={{ borderColor: "color-mix(in srgb, currentColor 30%, transparent)" }}
+              data-testid="qty-stepper"
+            >
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
                 disabled={qty <= 1}
                 aria-label="פחות"
-                className="w-11 h-11 border-2 border-current opacity-75 disabled:opacity-20 text-xl"
+                className="w-11 grid place-items-center text-[20px] leading-none disabled:opacity-25"
               >
                 −
               </button>
-              <span className="text-xl font-bold min-w-8 text-center">{qty}</span>
+              <span className="w-8 grid place-items-center text-[17px] font-bold tabular-nums" aria-live="polite" data-testid="qty-value">
+                {qty}
+              </span>
               <button
                 onClick={() => setQty((q) => Math.min(maxQtyFor(current, choice), q + 1))}
                 disabled={qty >= maxQtyFor(current, choice)}
                 aria-label="עוד"
-                className="w-11 h-11 border-2 border-current opacity-75 disabled:opacity-20 text-xl"
+                className="w-11 grid place-items-center text-[20px] leading-none disabled:opacity-25"
               >
                 +
               </button>
             </div>
-          </div>
-
-          {/* הכפתור דבוק לתחתית — על רצועה אטומה. קודם הוא עצמו היה דבוק,
-              וכשהיה כבוי (שקוף 40%) הכמות שמתחתיו נראתה דרכו ועליו */}
-          <div className="sticky bottom-0 -mx-5 px-5 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]" style={{ background: "var(--s-surface)" }}>
+          )}
           <button
             onClick={addToCart}
             aria-label="הוספה לסל"
             style={{ background: "var(--s-primary)", color: "var(--s-onprimary)" }}
-            disabled={preview || locked(current) || maxQty(current) === 0 || (!!current.options?.length && !choice) || (!!choice && maxQtyFor(current, choice) === 0)}
-            className="w-full py-4 text-[16px] font-bold disabled:opacity-40"
+            disabled={!canAdd}
+            className="flex-1 min-w-0 py-4 text-[16px] font-bold disabled:opacity-40"
           >
+            {canAdd && (
+              <>הוספה לסל<span className="font-semibold opacity-90"> · ₪{formatPrice(lineTotal)}</span></>
+            )}
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
                 לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
-            {preview
+            {!canAdd && (preview
               ? "הדוכן עוד לא נפתח להזמנות"
               : locked(current)
                 ? <><Icon name="lock" size={16} tone="none" className="inline-block align-[-3px] me-1" />עוד לא נפתח</>
@@ -1295,9 +1315,11 @@ export default function StoreView({
                   ? `קודם בוחרים ${safeOptionLabel(current.option_label)}`
                   : choice && maxQtyFor(current, choice) === 0
                     ? "כבר בסל כל מה שיש"
-                    : "הוספה לסל"}
+                    : "הוספה לסל")}
           </button>
           </div>
+            );
+          })()}
         </div>
       )}
 

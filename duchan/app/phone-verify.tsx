@@ -58,6 +58,9 @@ export default function PhoneVerify({
   const waited = sentAt ? (now - sentAt) / 1000 : 0;
   const [help, setHelp] = useState<"idle" | "busy" | "sent" | "error">("idle");
   const codeRef = useRef<HTMLInputElement>(null);
+  const [codeFocus, setCodeFocus] = useState(false);
+  /** כל הקוד מסומן (אחרי קוד שגוי) — הקופסאות נצבעות, וספרה חדשה מחליפה הכל */
+  const [codeAll, setCodeAll] = useState(false);
   /** הקוד האחרון שנשלח לבדיקה — כדי לא לשלוח את אותו קוד שגוי שוב ושוב */
   const triedRef = useRef("");
   const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -268,6 +271,35 @@ export default function PhoneVerify({
         <br />
         כשההודעה מגיעה, מקלידים את הקוד כאן:
       </p>
+      {/* שש קופסאות לקוד (מרינה, 11.2026: "משהו עם קוד מגניב"). השדה האמיתי
+          הוא עדיין שדה אחד, שקוף, שיושב מעל הקופסאות — כך הדבקה, מילוי
+          אוטומטי מהסמס וכל מקלדת עובדים בדיוק כמו קודם, והקופסאות רק מציגות */}
+      <div className={`relative ${err ? "code-shake" : ""}`} dir="ltr" data-testid="code-boxes">
+        <div className="flex justify-center gap-2" aria-hidden>
+          {Array.from({ length: 6 }, (_, i) => {
+            const d = code[i] ?? "";
+            const active = codeFocus && !codeAll && i === Math.min(code.length, 5) && code.length < 6;
+            const sel = codeFocus && codeAll && code.length > 0;
+            return (
+              <span
+                key={i}
+                className={`w-12 h-[60px] grid place-items-center text-[28px] font-bold tabular-nums border-[1.5px] transition-colors ${sel && !err ? "bg-[#EFE8F5]" : "bg-white"} ${
+                  err
+                    ? "border-[var(--danger)] text-[var(--danger)]"
+                    : sel
+                      ? "border-[var(--ink)]"
+                      : active
+                        ? "border-[var(--ink)] border-2"
+                        : d
+                          ? "border-[var(--ink)]"
+                          : "border-[var(--line)]"
+                }`}
+              >
+                {d || (active ? <span className="code-caret" /> : "")}
+              </span>
+            );
+          })}
+        </div>
       <input
         ref={codeRef}
         value={code}
@@ -290,10 +322,16 @@ export default function PhoneVerify({
         inputMode="numeric"
         autoComplete="one-time-code"
         maxLength={6}
-        placeholder="______"
         aria-label="קוד אימות"
-        className="field w-full px-4 py-4 text-center text-[1.75rem] font-medium tracking-[0.4em]"
+        onFocus={() => setCodeFocus(true)}
+        onBlur={() => setCodeFocus(false)}
+        onSelect={(e) => {
+          const t = e.currentTarget;
+          setCodeAll(t.value.length > 0 && t.selectionStart === 0 && t.selectionEnd === t.value.length);
+        }}
+        className="code-ghost absolute inset-0 w-full h-full text-center text-[16px]"
       />
+      </div>
       {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}
       {busy && <p className="t-small text-[var(--muted)] text-center">רגע…</p>}
       {/* כפתור למי שהשליחה האוטומטית לא קרתה אצלה (מקלדת שלא מדווחת על

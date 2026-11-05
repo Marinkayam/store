@@ -17,7 +17,7 @@ export type IconName =
   | "camera" | "video" | "gallery" | "plus" | "check" | "pencil" | "trash"
   | "hourglass" | "gift" | "gem" | "leaf" | "sparkle" | "coins" | "link"
   | "palette" | "box" | "eye" | "party" | "moon" | "search" | "cloud"
-  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun" | "flame" | "pin" | "cookie" | "chart" | "bell" | "drag";
+  | "shop" | "phone" | "lock" | "share" | "infinity" | "jar" | "plant" | "chat" | "coin" | "sun" | "flame" | "pin" | "cookie" | "chart" | "bell" | "drag" | "copy";
 
 interface Props {
   name: IconName;
@@ -96,6 +96,12 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
   ),
   plus: () => <path d="M12 5v14M5 12h14" fill="none" />,
   check: () => <path d="m4 12.5 5.2 5L20 6.5" fill="none" />,
+  copy: (t) => (
+    <>
+      <rect x="8" y="8" width="12" height="12" rx="1.5" fill={t} />
+      <path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" fill="none" />
+    </>
+  ),
   pencil: (t) => (
     <>
       <path d="M4 20v-3.5L16 4.7 19.3 8 7.3 20z" fill={t} />
