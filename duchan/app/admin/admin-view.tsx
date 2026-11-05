@@ -24,6 +24,7 @@ import NoSmsLogin from "./no-sms-login";
 import LoginFlow from "./login-flow";
 import AdminPush from "./admin-push";
 import AdminStats from "./admin-stats";
+import Icon from "@/app/icons";
 
 /* ---------- types ---------- */
 
@@ -173,6 +174,9 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
   const [storesView, setStoresView] = useState<"list" | "products">("list");
   // מי שלא מצליחה להיכנס — למעלה ב"מחכה לך", מאותו מקור כמו לשונית הכניסות
   const [loginNeed, setLoginNeed] = useState<{ count: number; outage: string | null } | null>(null);
+  /** כמה מכשירים מקבלים התראות. 0 = הודעות על תשלומים נשלחות לשום מקום
+   *  (11.2026: מכשיר יחיד שהדפדפן ביטל, ו-11 התראות תשלום שלא הגיעו לאף אחד) */
+  const [pushDevices, setPushDevices] = useState<number | null>(null);
   const [totals, setTotals] = useState<Totals | null>(null);
   const [stores, setStores] = useState<AdminStore[]>([]);
   const [search, setSearch] = useState("");
@@ -200,6 +204,13 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    fetch("/api/admin/push", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && Array.isArray(d.devices) && setPushDevices(d.devices.length))
+      .catch(() => {});
+  }, [tab]);
 
   useEffect(() => {
     fetch("/api/admin/login-flow", { cache: "no-store" })
@@ -407,6 +418,24 @@ function SchemaWarning() {
         {/* ── מחכה לך ──
             רק מה שמישהי מחכה לו עכשיו. קודם התשלומים לאישור הופיעו פעמיים
             (לשונית "לאישור" וגם ב"סקירה"), והכניסות בשלושה כרטיסים נפרדים. */}
+        {/* אף מכשיר לא מקבל התראות — בראש הכל, עד שמדליקים */}
+        {pushDevices === 0 && tab !== "news" && (
+          <button
+            onClick={() => {
+              setTab("news");
+              setTimeout(() => document.querySelector("[data-testid=admin-push]")?.scrollIntoView({ block: "start", behavior: "smooth" }), 300);
+            }}
+            data-testid="push-off-banner"
+            className="w-full bg-[var(--danger)] text-white p-3 text-right flex items-center gap-3"
+          >
+            <Icon name="bell" size={20} tone="none" />
+            <span className="flex-1 min-w-0">
+              <span className="block text-[14px] font-bold">ההתראות כבויות</span>
+              <span className="block text-[12.5px] opacity-90">אף טלפון לא מקבל הודעה כשמישהו משלם או פותח דוכן. להדליק ←</span>
+            </span>
+          </button>
+        )}
+
         {!(tab === "logins" && waitingPayment.length === 0) && (
         <section className="flex flex-col gap-2" data-testid="admin-inbox">
           <h2 className="text-[13px] font-bold text-[var(--muted)]">מחכה לך</h2>
@@ -415,7 +444,21 @@ function SchemaWarning() {
               <div className="flex items-center gap-2.5">
                 <Avatar s={s} size={10} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11.5px] font-bold text-[var(--warn-ink)]">שילמו, מחכים לאישור</div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11.5px] font-bold text-[var(--warn-ink)]">שילמו, מחכים לאישור</span>
+                    {/* כמה זמן מחכים — ילדה שמחכה חודשיים לא אמורה להיראות כמו מאתמול */}
+                    {(() => {
+                      const days = Math.floor((Date.now() - new Date(s.payment_claimed_at!).getTime()) / 86400_000);
+                      return (
+                        <span
+                          className={`text-[11px] font-bold px-1.5 py-px ${days >= 1 ? "bg-[var(--danger)] text-white" : "bg-[var(--warn-bg)] text-[var(--warn-ink)]"}`}
+                          data-testid="waiting-days"
+                        >
+                          {days === 0 ? "מהיום" : days === 1 ? "מחכה יום" : `מחכה ${days} ימים`}
+                        </span>
+                      );
+                    })()}
+                  </div>
                   <button
                     onClick={() => { setTab("stores"); openDetail(s.id); }}
                     className="text-[14px] font-bold truncate block text-right"
@@ -450,6 +493,25 @@ function SchemaWarning() {
                   וואטסאפ
                 </a>
               </div>
+              {/* הכסף לא הגיע: ההצהרה מתבטלת (הילדה חוזרת למסך התשלום) ונפתחת
+                  הודעה מוכנה — במקום שהדוכן יחכה כאן חודשים בלי תשובה */}
+              <button
+                data-testid="reject-payment"
+                onClick={() => {
+                  if (!window.confirm(`הכסף מ"${s.display_name}" לא הגיע? ההצהרה תתבטל והם יחזרו למסך התשלום, ותיפתח הודעה מוכנה בוואטסאפ.`)) return;
+                  window.open(
+                    `https://wa.me/${s.contact_phone}?text=${encodeURIComponent(
+                      `היי! ראינו שסימנתם ששילמתם על הדוכן "${s.display_name}", אבל התשלום (₪${ACTIVATION_PRICE}${s.payment_method ? ` ב${METHOD_LABEL[s.payment_method] ?? s.payment_method}` : ""}) עוד לא הגיע אלינו. אפשר לבדוק ולשלוח שוב? ברגע שזה מגיע — הדוכן נפתח 💜`
+                    )}`,
+                    "_blank",
+                    "noopener"
+                  );
+                  setActivation(s.id, false);
+                }}
+                className="w-full mt-1.5 py-2 text-[12px] text-[var(--danger)] underline"
+              >
+                הכסף לא הגיע — לכתוב להם ולבטל את ההצהרה
+              </button>
             </div>
           ))}
           {/* בטאב הכניסות הרשימה עצמה כבר פתוחה — בלי כרטיס שמפנה אליה */}

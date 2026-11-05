@@ -247,6 +247,55 @@ check("ומראה אם ההורים אישרו",
   queue.includes("ההורים מאשרים") || queue.includes("בלי אישור הורים"));
 await admin.screenshot({ path: `${shots}/44-admin-queue.png` });
 
+/* ── 5א: דוכן שמחכה לא נשכח (11.2026: שישה דוכנים חיכו עד 86 יום) ── */
+check("תג ההמתנה: הצהרה מהיום מסומנת 'מהיום'",
+  ((await admin.textContent("[data-testid=waiting-days]")) ?? "").includes("מהיום"));
+const { rows: [{ n: pushDevs }] } = await db.query("select count(*)::int n from admin_push_subscriptions where disabled_at is null").catch(() => db.query("select count(*)::int n from admin_push_subscriptions"));
+check("כשאף טלפון לא מקבל התראות — באנר אדום למעלה (ורק אז)",
+  (await admin.locator("[data-testid=push-off-banner]").count()) === (pushDevs === 0 ? 1 : 0), `devices=${pushDevs}`);
+
+await db.query("update stores set payment_claimed_at = now() - interval '3 days 2 hours' where id=$1", [seed.id]);
+await admin.reload();
+await admin.waitForSelector("[data-testid=waiting-days]", { timeout: 20000 });
+check("ואחרי שלושה ימים: 'מחכה 3 ימים'",
+  ((await admin.textContent("[data-testid=waiting-days]")) ?? "").includes("מחכה 3 ימים"));
+
+await girl.goto(`${BASE}/activate`);
+await girl.waitForSelector("[data-testid=ask-marina]", { timeout: 15000 });
+check("והילדה רואה כפתור ברור: 'זה עלינו — לכתוב לנו'",
+  ((await girl.textContent("[data-testid=ask-marina]")) ?? "").includes("זה עלינו"));
+
+// התזכורת היומית: אחת ביום, עם הוותיק ביותר
+await db.query("delete from admin_alerts where kind='payment_reminder'");
+const cronRes = await fetch(`${BASE}/api/cron`, { headers: { Authorization: "Bearer test-cron-secret" } });
+const { rows: reminders } = await db.query("select title, body, ref from admin_alerts where kind='payment_reminder'");
+check("הקרון היומי שולח תזכורת על דוכנים שמחכים",
+  cronRes.ok && reminders.length === 1 && reminders[0].title.includes("מחכ") && reminders[0].body.includes("ימים"),
+  JSON.stringify(reminders[0] ?? {}));
+await fetch(`${BASE}/api/cron`, { headers: { Authorization: "Bearer test-cron-secret" } });
+const { rows: [{ n: remindersAfter }] } = await db.query("select count(*)::int n from admin_alerts where kind='payment_reminder'");
+check("וריצה שנייה באותו יום לא שולחת שוב", remindersAfter === 1, `n=${remindersAfter}`);
+
+// "הכסף לא הגיע": ההצהרה מתבטלת ונפתחת הודעה מוכנה
+await admin.evaluate(() => { window.__opened = []; window.open = (u) => { window.__opened.push(String(u)); return null; }; });
+admin.once("dialog", (d) => d.accept());
+await admin.click("[data-testid=reject-payment]");
+await admin.waitForTimeout(1500);
+const opened = await admin.evaluate(() => window.__opened);
+const { rows: [rejected] } = await db.query("select payment_claimed_at, activated_at from stores where id=$1", [seed.id]);
+check("'הכסף לא הגיע' מבטל את ההצהרה ולא מפעיל", rejected.payment_claimed_at === null && rejected.activated_at === null);
+check("ופותח וואטסאפ אליהם עם הודעה מוכנה",
+  opened.length === 1 && opened[0].startsWith("https://wa.me/") && decodeURIComponent(opened[0]).includes("עוד לא הגיע"), opened[0] ?? "");
+
+// חוזרים למסלול: מצהירים שוב ומאשרים
+await fetch("http://localhost:3001/rpc/claim_store_payment", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${girlToken}`, apikey: girlToken, "Content-Type": "application/json" },
+  body: JSON.stringify({ p_store: seed.id, p_method: "paybox", p_ref: "אמא של תמר" }),
+});
+await admin.reload();
+await admin.waitForSelector("[data-testid=approve-store]", { timeout: 25000 });
+
 /* המתנה לתוצאה של האפליקציה, לא לשעון.
    קודם עמדו כאן 1500ms קבועים, וזה החזיק כל עוד המסלול היה מהודר.
    בריצה על שרת קר האישור לוקח יותר, הבדיקה קראה את הדאטהבייס באמצע

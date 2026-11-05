@@ -259,13 +259,25 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <a href="/dashboard/products" className="bg-[var(--ink)] text-white py-3 text-center text-sm font-bold">
             בינתיים אפשר להוסיף עוד מוצרים
           </a>
-          <a
-            href={waOwner(`היי! שילמנו על הדוכן "${store.display_name}" (${store.slug}). אפשר לבדוק?`)}
-            className="text-center text-[13px] text-[var(--muted)] underline py-2"
-            data-testid="ask-marina"
-          >
-            עברו יותר מכמה שעות? לכתוב לנו בוואטסאפ
-          </a>
+          {/* אחרי יום שלם בלי אישור — כפתור ברור ולא קישור קטן. ההמתנה היא
+              עלינו, וצריך להגיד את זה (11.2026: היו כאן דוכנים שחיכו חודשיים) */}
+          {store.payment_claimed_at && Date.now() - new Date(store.payment_claimed_at).getTime() > 24 * 3600_000 ? (
+            <a
+              href={waOwner(`היי! שילמנו על הדוכן "${store.display_name}" (${store.slug}) ועדיין מחכים לאישור. אפשר לבדוק?`)}
+              className="border-[1.5px] border-[var(--ink)] py-3 px-4 text-center text-[13.5px] font-bold"
+              data-testid="ask-marina"
+            >
+              עבר יותר מיום ועוד לא אישרנו? זה עלינו — לכתוב לנו בוואטסאפ
+            </a>
+          ) : (
+            <a
+              href={waOwner(`היי! שילמנו על הדוכן "${store.display_name}" (${store.slug}). אפשר לבדוק?`)}
+              className="text-center text-[13px] text-[var(--muted)] underline py-2"
+              data-testid="ask-marina"
+            >
+              עברו יותר מכמה שעות? לכתוב לנו בוואטסאפ
+            </a>
+          )}
         </div>
       </Shell>
     );

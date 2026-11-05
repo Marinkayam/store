@@ -3,6 +3,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { r2Client } from "@/lib/r2";
 import { notifyTelegram } from "@/lib/telegram";
+import { notifyAdmins } from "@/lib/admin-notify";
 
 // קרון יומי — GET עם Authorization: Bearer CRON_SECRET.
 // ב-Vercel זה מוגדר ב-vercel.json; היא שולחת את הכותרת הזו לבד כשקיים
@@ -101,6 +102,30 @@ export async function GET(req: NextRequest) {
         console.error("[cron] login_events purge:", error.message);
       }
     });
+
+  /* תזכורת יומית: מי שסימנו ששילמו ומחכים לאישור יותר מיום. אחת ביום
+     (ref = התאריך), עם הוותיק ביותר בכותרת — ב-11.2026 היו כאן שישה דוכנים
+     שחיכו עד 86 יום, כי ההתראה הבודדת על כל אחד הלכה לאיבוד. */
+  {
+    const { data: waiting } = await db
+      .from("stores")
+      .select("display_name, payment_claimed_at")
+      .is("activated_at", null)
+      .not("payment_claimed_at", "is", null)
+      .lt("payment_claimed_at", new Date(Date.now() - 20 * 3600_000).toISOString())
+      .order("payment_claimed_at", { ascending: true });
+    if (waiting?.length) {
+      const oldest = waiting[0];
+      const days = Math.max(1, Math.floor((Date.now() - new Date(oldest.payment_claimed_at!).getTime()) / 86400_000));
+      await notifyAdmins({
+        kind: "payment_reminder",
+        ref: new Date().toISOString().slice(0, 10),
+        title: waiting.length === 1 ? "⏰ דוכן אחד מחכה לאישור תשלום" : `⏰ ${waiting.length} דוכנים מחכים לאישור תשלום`,
+        body: `הכי ותיק: ${oldest.display_name} — ${days === 1 ? "יום" : `${days} ימים`}. לבדוק בביט / בפייבוקס ולאשר בחמ"ל`,
+        url: "/admin",
+      }).catch(() => {});
+    }
+  }
 
   const dumps = await Promise.all(TABLES.map((t) => dumpTable(db, t).then((d) => [t, d] as const)));
   const users = await dumpUsers(db);
