@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "מדיניות פרטיות · דו�
 export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
+      <div className="max-w-md mx-auto px-gutter py-10 text-[15px] leading-7 text-[var(--ink)]">
         <a href="/" className="text-xs text-[var(--muted)] underline">← לדף הבית</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">מדיניות פרטיות</h1>
         <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.7 · עודכן ב-11 באוקטובר 2026</p>

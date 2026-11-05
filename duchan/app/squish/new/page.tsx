@@ -528,7 +528,7 @@ export default function NewCollection() {
     }
 
     return (
-      <main className="px-5 py-6 flex flex-col gap-3 max-w-md mx-auto">
+      <main className="px-gutter py-6 flex flex-col gap-3 max-w-md mx-auto">
         {/* קלט אחד, בלי capture: לחיצה פותחת את חלון המכשיר עצמו —
             מצלמה או גלריה — בדיוק כמו העלאת סטטוס. אנחנו לא בונים
             מסך בחירה משלנו, רק מזהים אחר כך אם חזר סרטון או תמונה. */}
@@ -865,7 +865,7 @@ export default function NewCollection() {
   /* ── 4: פרטים אחרונים והרשמה ── */
   if (draft.step === 4) {
     return (
-      <main className="px-4 py-5 flex flex-col gap-4">
+      <main className="px-gutter py-5 flex flex-col gap-4">
         <Progress step={3} />
         <h1 className="t-title">עוד שני פרטים</h1>
         <label className="t-small">
@@ -965,7 +965,7 @@ export default function NewCollection() {
   /* ── 2/3: הגלריה נבנית ── */
   const ready = count >= MIN_ITEMS;
   return (
-    <main className="px-5 py-6 flex flex-col gap-4 max-w-md mx-auto">
+    <main className="px-gutter py-6 flex flex-col gap-4 max-w-md mx-auto">
       <Progress step={ready ? 2 : 1} />
       <div className="text-center">
         {ready && <div className="text-4xl squish-breathe mb-1">🎉</div>}

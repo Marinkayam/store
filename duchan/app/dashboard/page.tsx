@@ -261,7 +261,7 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <header className="bg-[var(--canvas)] px-4 pt-5 pb-3 border-b border-[var(--line)] flex items-start justify-between">
+      <header className="bg-[var(--canvas)] px-gutter pt-5 pb-3 border-b border-[var(--line)] flex items-start justify-between">
         <div>
           <h1 className="text-[20px] font-bold">הזמנות</h1>
           <p className="text-[13px] text-[var(--muted)] mt-0.5" data-testid="orders-subtitle">
@@ -287,7 +287,7 @@ export default function OrdersPage() {
       {!store.activated_at && orders.length > 0 && (
         <a
           href="/activate"
-          className="block mx-3 mt-3 bg-[var(--ink)] text-white p-3.5"
+          className="block mx-gutter mt-3 bg-[var(--ink)] text-white p-3.5"
         >
           <div className="flex items-center gap-3">
             <div className="flex-1">
@@ -306,7 +306,7 @@ export default function OrdersPage() {
 
       {/* הקופה שלי — שני מספרים גדולים, ומה הכי נמכר מתחתם */}
       {revenue > 0 && (
-        <section className="mx-4 mt-4 bg-white border border-[var(--line)]" data-testid="orders-summary">
+        <section className="mx-gutter mt-4 bg-white border border-[var(--line)]" data-testid="orders-summary">
           <div className="grid grid-cols-2">
             <div className="px-4 py-3">
               <div className="text-[22px] font-bold leading-tight">{money(revenue)}</div>
@@ -328,7 +328,7 @@ export default function OrdersPage() {
 
       {/* חיפוש — מופיע רק כשיש מספיק הזמנות בשביל שיהיה בו טעם */}
       {orders.length >= 5 && (
-        <div className="px-4 pt-3">
+        <div className="px-gutter pt-3">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -341,7 +341,7 @@ export default function OrdersPage() {
 
       {/* סינון */}
       {orders.length > 0 && (
-        <div className="flex gap-2 px-4 pt-4 overflow-x-auto">
+        <div className="flex gap-2 px-gutter pt-4 overflow-x-auto">
           {FILTERS.map((f) => {
             const count =
               f.key === "all" ? orders.length : orders.filter((o) => o.status === f.key).length;
@@ -363,7 +363,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+      <div className="px-gutter pt-4 pb-6 flex flex-col gap-4">
         {/* "להוסיף למסך הבית" יושב כאן ולא בהגדרות: זה המסך שהיא פותחת
             הכי הרבה, וזה הרגע שבו כדאי לה שיהיה לזה קיצור. הכרטיס נעלם
             לבד כשהאפליקציה כבר במסך הבית, או כשסוגרים אותו. */}
@@ -668,7 +668,7 @@ type MissingItem = { key: string; title: string; why: string; cta: string; href:
 /** מה חסר כדי שהדוכן ייראה מוכן. כשאין הזמנות הוא מתחת למסלול, ומסומן "לא חובה" */
 function Missing({ missing, optional = false }: { missing: MissingItem[]; optional?: boolean }) {
   return (
-    <section className={optional ? "border-t border-[var(--line)] pt-2" : "mx-4 mt-4 bg-white border border-[var(--line)]"} data-testid="store-missing" aria-labelledby="missing-title">
+    <section className={optional ? "border-t border-[var(--line)] pt-2" : "mx-gutter mt-4 bg-white border border-[var(--line)]"} data-testid="store-missing" aria-labelledby="missing-title">
       <h2 id="missing-title" className={`${optional ? "" : "px-4"} pt-3.5 pb-1 text-[14px] font-bold`}>
         {optional
           ? "ואם יש זמן: לשפר את הדוכן (לא חובה)"

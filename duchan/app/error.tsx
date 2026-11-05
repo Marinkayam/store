@@ -40,7 +40,7 @@ export default function ErrorScreen({
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-4 px-8 text-center bg-[var(--canvas)]">
+    <main className="min-h-screen flex flex-col items-center justify-center gap-4 px-gutter text-center bg-[var(--canvas)]">
       <OopsStall fixing={fixing} />
       <h1 className="text-xl font-bold">אופס! משהו השתבש אצלנו</h1>
       <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">

@@ -85,7 +85,7 @@ function NewTrade() {
 
   if (step === 2)
     return (
-      <main className="px-4 py-5 flex flex-col gap-4">
+      <main className="px-gutter py-5 flex flex-col gap-4">
         <h1 className="t-title">זה הטרייד שאת מציעה</h1>
 
         <TwoSides
@@ -117,7 +117,7 @@ function NewTrade() {
     );
 
   return (
-    <main className="px-4 py-5 flex flex-col gap-4 pb-28">
+    <main className="px-gutter py-5 flex flex-col gap-4 pb-28">
       <h1 className="t-title">מה תרצי להציע?</h1>
 
       <section>
@@ -183,7 +183,7 @@ function NewTrade() {
       </section>
 
       {/* סיכום קבוע בתחתית — תמיד רואים מה נבחר */}
-      <div className="fixed bottom-16 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] px-4 py-3 z-30">
+      <div className="fixed bottom-16 inset-x-0 max-w-md mx-auto bg-white border-t border-[var(--line)] px-gutter py-3 z-30">
         <div className="flex items-center justify-between gap-3">
           <span className="t-small">
             {picked.length ? `נבחרו ${picked.length} מתוך 3` : "עוד לא בחרת"}

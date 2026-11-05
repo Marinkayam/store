@@ -52,8 +52,8 @@ export default function CategoryBar({
         gap,
         // 16px מהצדדים כמו שאר הדף; רווח ברור מתחת עד הרשת; ולמעלה מקום
         // לטבעת של העיגול הנבחר ולצל של הכרטיסים, שלא ייחתכו
-        padding: `${vertical || layout === "card" ? 6 : 2}px 16px ${after}px`,
-        scrollPaddingInline: 16,
+        padding: `${vertical || layout === "card" ? 6 : 2}px var(--spacing-gutter) ${after}px`,
+        scrollPaddingInline: "var(--spacing-gutter)",
         scrollbarWidth: "none",
       }}
     >

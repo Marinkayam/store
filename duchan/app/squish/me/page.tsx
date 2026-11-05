@@ -142,7 +142,7 @@ export default function MyArea() {
   const inviteUrl = invite ? `${origin}/squish/join/${invite.code}` : null;
 
   return (
-    <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
+    <div className="px-gutter pt-4 pb-8 flex flex-col gap-4">
       <header className="px-1 pt-2">
         <h1 className="t-heading">שלי</h1>
       </header>
@@ -271,7 +271,7 @@ export default function MyArea() {
       {showInstall && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setShowInstall(false)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-6 max-h-[85%] overflow-y-auto rounded-t-2xl">
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-gutter pt-3 pb-6 max-h-[85%] overflow-y-auto rounded-t-2xl">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" style={{ borderRadius: "999px" }} />
             <div className="flex items-start justify-between mb-1">
               <h2 className="t-heading">הוספה למסך הבית</h2>
@@ -364,7 +364,7 @@ export default function MyArea() {
 
       {/* מחיקה יושבת אחרונה, שקטה, ולא בתוך כרטיס עם כותרת גדולה.
           היא צריכה להיות אפשרית, לא מזמינה. */}
-      <section className="px-4 pb-2 flex flex-col">
+      <section className="px-gutter pb-2 flex flex-col">
         <DeleteCollection />
       </section>
 

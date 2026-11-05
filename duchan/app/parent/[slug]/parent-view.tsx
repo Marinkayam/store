@@ -272,7 +272,7 @@ export default function ParentView(p: {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-[var(--canvas)]">
-      <div className="w-full max-w-md mx-auto px-5 pt-6 pb-10">{children}</div>
+      <div className="w-full max-w-md mx-auto px-gutter pt-6 pb-10">{children}</div>
     </main>
   );
 }

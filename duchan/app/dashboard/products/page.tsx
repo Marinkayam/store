@@ -855,14 +855,14 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <header className="bg-[var(--canvas)] px-4 pt-6 pb-3 border-b border-[var(--line)]">
+      <header className="bg-[var(--canvas)] px-gutter pt-6 pb-3 border-b border-[var(--line)]">
         <h1 className="text-lg font-bold">המוצרים שלי</h1>
         <p className="text-xs text-[var(--muted)] font-light">
           {products.length === 1 ? "מוצר אחד" : `${products.length} מוצרים`}
         </p>
       </header>
 
-      <div className="px-4 pt-5 pb-8 flex flex-col gap-4">
+      <div className="px-gutter pt-5 pb-8 flex flex-col gap-4">
         {/* ── קטגוריות של החנות ──
             המוכרת מגדירה כאן רשימה משלה (נידו, מים, קרח...), מתייגת
             מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות.
@@ -1173,7 +1173,7 @@ export default function ProductsPage() {
             aria-label={edit.id ? "עריכת מוצר" : "מוצר חדש"}
             className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white max-h-[90%] flex flex-col"
           >
-          <div className="px-4 pt-3 overflow-y-auto">
+          <div className="px-gutter pt-3 overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-base font-bold">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
@@ -1795,7 +1795,7 @@ export default function ProductsPage() {
           {/* קבועה בתחתית ולא בתוך הגלילה — כדי שהצעד הבא לא ייעלם מתחת למסך.
               "לא מובן מה צריך לעשות" התברר להיות שהיא לא הגיעה לכפתור בכלל,
               לא שהיא לא ידעה שצריך ללחוץ עליו. */}
-          <div className="px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] border-t border-[var(--line)] shrink-0 bg-white">
+          <div className="px-gutter py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] border-t border-[var(--line)] shrink-0 bg-white">
             <button onClick={save} disabled={busy}
               className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold disabled:opacity-50">
               {busy ? "שומרים…" : "שמירה"}
@@ -1821,7 +1821,7 @@ export default function ProductsPage() {
       {deletedOpen && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setDeletedOpen(false)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[70%] overflow-y-auto">
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-gutter pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[70%] overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-base font-bold">מוצרים שנמחקו</h2>

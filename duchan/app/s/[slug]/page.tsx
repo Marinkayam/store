@@ -68,7 +68,7 @@ export default async function StorePage({ params }: Props) {
 
   if (data.state === "closed") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--canvas)] text-center px-8">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--canvas)] text-center px-gutter">
         <Icon name="moon" size={58} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
         <h1 className="text-xl font-bold">הדוכן סגור כרגע</h1>
         <p className="text-sm text-[var(--muted)]">אולי הלינק השתנה, ואולי בעלי הדוכן לוקחים הפסקה.</p>
@@ -123,7 +123,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
   // שלנו, והיא צריכה להיקרא על כל רקע — גם על תמונה (מרינה: "לא רואים את
   // הפרטים... זה חשוב מאוד ומביא לקוחות"). pb גדול בשביל פס הסל הקבוע.
   return (
-    <div className="px-4 pt-2 pb-28">
+    <div className="px-gutter pt-2 pb-28">
       <section
         data-testid="open-own"
         aria-labelledby="open-own-title"

@@ -53,7 +53,7 @@ export default function WhatsNew() {
       <button onClick={openSheet} className="relative text-xl leading-none p-1" aria-label="מה חדש">
         ✨
         {unread > 0 && (
-          <span className="absolute -top-1 -left-1 bg-[var(--danger)] text-white text-[9px] font-bold min-w-4 h-4 px-1 flex items-center justify-center">
+          <span data-gutter-ignore className="absolute -top-1 -left-1 bg-[var(--danger)] text-white text-[9px] font-bold min-w-4 h-4 px-1 flex items-center justify-center">
             {unread}
           </span>
         )}
@@ -62,7 +62,7 @@ export default function WhatsNew() {
       {open && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-[calc(2rem+env(safe-area-inset-bottom))] max-h-[80%] overflow-y-auto">
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-gutter pt-3 pb-[calc(2rem+env(safe-area-inset-bottom))] max-h-[80%] overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <h2 className="text-base font-bold mb-3">מה חדש בדוכן ✨</h2>
             <div className="flex flex-col gap-2.5">

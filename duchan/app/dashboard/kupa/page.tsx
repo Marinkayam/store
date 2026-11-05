@@ -132,7 +132,7 @@ export default function KupaPage() {
   const rank = rankOf(stars);
 
   return (
-    <div className="px-4 pt-4 pb-8 flex flex-col gap-5" data-testid="kupa-page">
+    <div className="px-gutter pt-4 pb-8 flex flex-col gap-5" data-testid="kupa-page">
       <header>
         <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">קופת הדוכן</h1>
         {/* מטבעות וכוכבים — באותו גודל, קטנים, בלי קופסאות. לחיצה מסבירה מה זה (מרינה) */}
@@ -188,7 +188,7 @@ export default function KupaPage() {
       <section aria-labelledby="kupa-level">
         {/* בלי ריבוע שמיים ובלי פס קרקע: הדוכן על רקע הדף. בלילה השמיים
             מחשיכים מאחוריו, מקצה לקצה */}
-        <div className="relative -mx-4 transition-colors duration-700" style={{ background: night ? "#2E3150" : "transparent" }}>
+        <div className="relative -mx-gutter px-gutter transition-colors duration-700" style={{ background: night ? "#2E3150" : "transparent" }}>
           <KupaStall level={kupa.level} name={kupa.name} night={night} bare deco={deco ?? kupa.deco} className="w-full block" />
           {/* יום / לילה */}
           <button
@@ -444,7 +444,7 @@ function BadgeSheet({
         aria-modal="true"
         aria-labelledby="badge-title"
         data-testid="kupa-badge-sheet"
-        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-5 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[90vh] overflow-y-auto flex flex-col gap-3"
+        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-gutter pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[90vh] overflow-y-auto flex flex-col gap-3"
       >
         <div className="flex justify-end">
           <CloseX onClick={onClose} testid="badge-close" />
@@ -649,7 +649,7 @@ function RiddleSheet({
         aria-modal="true"
         aria-label="חידה"
         data-testid="riddle-sheet"
-        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-5 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[90vh] overflow-y-auto flex flex-col gap-3"
+        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-gutter pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-h-[90vh] overflow-y-auto flex flex-col gap-3"
       >
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-[15px] font-black tabular-nums" data-testid="riddle-sheet-stars">
@@ -1059,7 +1059,7 @@ function ExplainSheet({
         aria-labelledby="explain-title"
         data-testid="kupa-explain"
         data-kind={kind}
-        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[61] bg-white px-5 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col gap-3"
+        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[61] bg-white px-gutter pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col gap-3"
       >
         <button onClick={onClose} aria-label="סגירה" className="absolute top-2 left-2 w-11 h-11 flex items-center justify-center">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>

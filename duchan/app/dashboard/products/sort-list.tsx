@@ -83,7 +83,7 @@ export default function SortList({
 
   return (
     <section className="flex flex-col gap-3" data-testid="sort-list">
-      <div className="sticky top-0 z-20 -mx-4 px-4 py-2.5 bg-[var(--canvas)] border-b border-[var(--line)] flex items-center gap-2">
+      <div className="sticky top-0 z-20 -mx-gutter px-gutter py-2.5 bg-[var(--canvas)] border-b border-[var(--line)] flex items-center gap-2">
         <p className="flex-1 text-[13px] leading-snug">
           <b>תופסים את</b> <Icon name="drag" size={14} tone="none" className="inline-block align-[-2px]" /> <b>וגוררים</b>
           <span className="text-[var(--muted)]"> · מה שלמעלה מופיע ראשון בדוכן</span>

@@ -50,7 +50,7 @@ export default function SquishLanding() {
     return (
       <main
         data-testid="squish-hero"
-        className="min-h-[calc(100svh-5rem)] flex flex-col items-center justify-center px-6 py-10 gap-6 text-center"
+        className="min-h-[calc(100svh-5rem)] flex flex-col items-center justify-center px-gutter py-10 gap-6 text-center"
       >
         {mine && (
           <a

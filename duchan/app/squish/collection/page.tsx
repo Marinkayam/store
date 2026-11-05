@@ -221,7 +221,7 @@ export default function MyCollection() {
         </span>
       </button>
 
-      <div className="px-4 -mt-9 text-center">
+      <div className="px-gutter -mt-9 text-center">
         <button
           onClick={() => avatarRef.current?.click()}
           aria-label="החלפת תמונת הפרופיל"

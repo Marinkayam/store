@@ -72,7 +72,7 @@ export default function JoinPage({ params }: { params: Promise<{ token: string }
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-[var(--canvas)]">
+    <main className="min-h-screen flex flex-col items-center justify-center px-gutter py-10 bg-[var(--canvas)]">
       <div className="w-full max-w-sm flex flex-col gap-4 text-center" data-testid="join-page">
         {missing ? (
           <>

@@ -96,7 +96,7 @@ export default function StoreSwitcher() {
             aria-modal="true"
             aria-labelledby="switcher-title"
             data-testid="store-switcher-sheet"
-            className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-gutter pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]"
           >
             <div className="flex items-center justify-between mb-2">
               <h2 id="switcher-title" className="text-[16px] font-bold">לאיזה דוכן לעבור?</h2>

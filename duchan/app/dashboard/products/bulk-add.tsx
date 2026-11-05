@@ -134,7 +134,7 @@ export default function BulkAdd({
         className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white max-h-[92%] flex flex-col"
         data-testid="bulk-add"
       >
-        <div className="px-4 pt-3 pb-2 border-b border-[var(--line)]">
+        <div className="px-gutter pt-3 pb-2 border-b border-[var(--line)]">
           <div className="w-9 h-1 bg-black/15 mx-auto mb-3" />
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-bold">
@@ -169,7 +169,7 @@ export default function BulkAdd({
           )}
         </div>
 
-        <div className="overflow-y-auto px-4 py-3 flex flex-col gap-3">
+        <div className="overflow-y-auto px-gutter py-3 flex flex-col gap-3">
           {loading && <p className="text-center text-[13px] text-[var(--muted)] py-8">רגע, מסדרים את התמונות לריבועים…</p>}
           {skipped > 0 && !loading && (
             <p className="text-[12.5px] text-[var(--warn-ink)] bg-[var(--warn-bg)] px-3 py-2">
@@ -221,7 +221,7 @@ export default function BulkAdd({
           ))}
         </div>
 
-        <div className="px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-[var(--line)]">
+        <div className="px-gutter pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-[var(--line)]">
           {err && <p role="alert" className="text-[12.5px] text-[var(--danger)] mb-2">{err}</p>}
           <button
             onClick={saveAll}

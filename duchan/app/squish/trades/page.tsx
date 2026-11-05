@@ -94,7 +94,7 @@ function Trades() {
   ];
 
   return (
-    <div className="p-4 flex flex-col gap-4">
+    <div className="px-gutter py-4 flex flex-col gap-4">
       <h1 className="t-heading">טריידים</h1>
 
       <div className="flex gap-3 border-b border-[var(--line)]">

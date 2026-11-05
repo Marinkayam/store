@@ -746,12 +746,13 @@ export default function SettingsPage() {
       ) : (
         <>
           {/* כותרת המקטע: חזרה, אייקון ושם. דביקה, כדי שהדרך חזרה תמיד על המסך */}
-          <div className="sticky top-[env(safe-area-inset-top)] z-30 h-[54px] flex items-center gap-2 px-1.5 bg-[var(--canvas)] border-b border-[var(--line)]">
+          <div className="sticky top-[env(safe-area-inset-top)] z-30 h-[54px] flex items-center gap-2 px-gutter bg-[var(--canvas)] border-b border-[var(--line)]">
+            {/* -ms-3: אזור הלחיצה נשאר 44px, והחץ עצמו יושב על קו השוליים */}
             <button
               onClick={closeSection}
               aria-label="חזרה לדוכן שלי"
               data-testid="section-back"
-              className="w-11 h-11 flex items-center justify-center text-[20px] text-[var(--ink)]"
+              className="w-11 h-11 -ms-3 flex items-center justify-center text-[20px] text-[var(--ink)]"
             >
               →
             </button>
@@ -759,8 +760,8 @@ export default function SettingsPage() {
             <h1 className="text-[16px] font-bold text-[var(--ink)]">{SECTIONS[section].title}</h1>
           </div>
 
-          <div key={section} className="fx-slide p-3 flex flex-col gap-3" data-testid={`section-${section}`}>
-            {SECTIONS[section].intro && <p className="text-[12.5px] text-[var(--muted)] leading-relaxed px-1">{SECTIONS[section].intro}</p>}
+          <div key={section} className="fx-slide px-gutter py-3 flex flex-col gap-3" data-testid={`section-${section}`}>
+            {SECTIONS[section].intro && <p className="text-[12.5px] text-[var(--muted)] leading-relaxed">{SECTIONS[section].intro}</p>}
           {section === "design" && (
             <>
         {/* הדוכן עצמו, ניתן לעריכה במקום.
@@ -1643,7 +1644,7 @@ export default function SettingsPage() {
           מעל שורת הניווט ברגע שיש שינוי, תמיד על המסך. */}
       {dirty && <div className="h-12" aria-hidden />}
       {dirty && (
-        <div data-bottom-bar className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] inset-x-0 max-w-md mx-auto px-3 z-40">
+        <div data-bottom-bar className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] inset-x-0 max-w-md mx-auto px-gutter z-40">
           <button
             data-testid="save-settings"
             onClick={save}

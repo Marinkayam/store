@@ -122,7 +122,7 @@ export default function Discover() {
   const video = mediaUrl(current.item.video_key);
 
   return (
-    <div className="px-4 py-4">
+    <div className="px-gutter py-4">
       <div className="flex items-center justify-between mb-3">
         <h1 className="t-heading">לגלות</h1>
         <span className="t-small text-[var(--muted)]">

@@ -217,7 +217,7 @@ export default function PhoneVerify({
       {showFindHelp && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setShowFindHelp(false)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-4 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[85%] overflow-y-auto">
+          <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white px-gutter pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[85%] overflow-y-auto">
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <div className="flex items-start justify-between mb-1">
               <h2 className="t-heading">איך מוצאים את המספר</h2>

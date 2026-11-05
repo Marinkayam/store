@@ -939,7 +939,7 @@ export default function StoreView({
 
       <div
         data-testid="store-header"
-        className={customBg ? "s-r text-center pt-10 px-4 pb-5 mx-4 mt-2 mb-5" : "text-center pt-10 px-5 pb-4"}
+        className={customBg ? "s-r text-center pt-10 px-4 pb-5 mx-gutter mt-2 mb-5" : "text-center pt-10 px-gutter pb-4"}
         // הלוח לובש את הקו והצל של הסגנון, כמו כרטיסי המוצרים שמתחתיו
         style={plate && { ...plate, border: "var(--s-border)", boxShadow: "var(--s-shadow)" }}
       >
@@ -990,7 +990,7 @@ export default function StoreView({
            אין ריפוד עליון משלה. כל ערך אחר כאן יוצר באנר שנצמד למוצרים
            ומרחף מתחת לכותרת — נראה כאילו הוא שייך לרשת ולא הודעה בפני
            עצמה. שני הצדדים נמדדים בבדיקה, כדי שלא ייפרד בשקט. */
-        <div className="px-4 pb-4">
+        <div className="px-gutter pb-4">
           <div
             data-testid="store-promo"
             className="s-r mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"
@@ -1021,7 +1021,7 @@ export default function StoreView({
 
       {/* באנר הדרופ הקרוב — לוחצים ופותחים את המוצר */}
       {nextDrop && clock && !category && (
-        <div className="px-4 mb-3.5">
+        <div className="px-gutter mb-3.5">
           <button
             onClick={() => openProduct(nextDrop)}
             data-testid="drop-banner"
@@ -1040,7 +1040,7 @@ export default function StoreView({
       )}
 
       {/* grid */}
-      <div className={`flex-1 px-4 ${footer ? "pb-6" : "pb-24"}`} ref={gridRef}>
+      <div className={`flex-1 px-gutter ${footer ? "pb-6" : "pb-24"}`} ref={gridRef}>
         {sorted.length === 0 ? (
           <div className="text-center pt-14">
             <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-75"} style={plate}>
@@ -1110,7 +1110,7 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-3 pb-0 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-gutter pt-3 pb-0 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
           style={{
             background: "var(--s-surface)",
             color: "var(--s-ink)",
@@ -1263,7 +1263,7 @@ export default function StoreView({
             const had = inCart(current.id);
             const lineTotal = dealTotal(current.price, had + qty, current.deal) - dealTotal(current.price, had, current.deal);
             return (
-          <div className="sticky bottom-0 -mx-5 px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-stretch gap-2.5 border-t border-current/10" style={{ background: "var(--s-surface)" }}>
+          <div className="sticky bottom-0 -mx-gutter px-gutter pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-stretch gap-2.5 border-t border-current/10" style={{ background: "var(--s-surface)" }}>
           {canAdd && maxQtyFor(current, choice) > 1 && (
             <div
               role="group"
@@ -1756,7 +1756,7 @@ export default function StoreView({
       {confirmed?.payFirst && (payTarget || confirmed.waPayUrl) && (
         <div
           data-testid="order-pay-first"
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-gutter pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <OrderBadge pending />
@@ -1854,7 +1854,7 @@ export default function StoreView({
       {confirmed && !confirmed.payFirst && (
         <div
           data-testid="order-confirmed"
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-5 pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-gutter pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <OrderBadge />

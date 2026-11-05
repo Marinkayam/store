@@ -71,7 +71,7 @@ export default function Landing() {
     // המסך עמודה בגובה מסך: התוכן ממורכז באמצע, וקישורי החובה דבוקים למטה.
     <main className="min-h-screen flex flex-col bg-[var(--canvas)]">
       <HelpButton context="פתיחת דוכן" />
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-8 gap-7">
+      <div className="flex-1 flex flex-col items-center justify-center px-gutter pt-6 pb-8 gap-7">
       {mine && (
         // כרטיס בתוך זרימת הדף, לא רצועה שחורה שנתלשת ממנה. הרצועה השחורה
         // המקורית התנגשה עם האיור הרך שמתחתיה ונראתה כמו שני אתרים שונים.
@@ -96,7 +96,7 @@ export default function Landing() {
         </div>
       )}
 
-      <div className="self-stretch -mx-6">
+      <div className="self-stretch -mx-gutter">
         <StallHero name="דוכן" still />
       </div>
       <div className="text-center -mt-2">

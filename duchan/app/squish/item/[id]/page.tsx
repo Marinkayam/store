@@ -203,7 +203,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const video = mediaUrl(item.video_key);
 
   return (
-    <main className="px-4 py-5 flex flex-col gap-3">
+    <main className="px-gutter py-5 flex flex-col gap-3">
       <input ref={imgRef} type="file" accept="image/*" hidden
         onChange={(e) => e.target.files?.[0] && newImage(e.target.files[0])} />
       <input ref={vidRef} type="file" accept="video/*" hidden

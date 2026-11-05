@@ -89,7 +89,7 @@ export default function StatsPage() {
 
   return (
     <div data-testid="stats-page">
-      <header className="bg-[var(--canvas)] px-4 pt-4 pb-3 border-b border-[var(--line)]">
+      <header className="bg-[var(--canvas)] px-gutter pt-4 pb-3 border-b border-[var(--line)]">
         <a href="/dashboard" className="inline-flex items-center gap-1 text-[12.5px] text-[var(--muted)] mb-2" data-testid="stats-back">
           <span aria-hidden>→</span> להזמנות
         </a>
@@ -97,11 +97,11 @@ export default function StatsPage() {
         <p className="text-xs text-[var(--muted)] font-light">כמה נכנסו, מאיפה, ועל מה הכי מסתכלים</p>
       </header>
 
-      <div className="px-4 pt-4 pb-10 flex flex-col gap-6">
+      <div className="px-gutter pt-4 pb-10 flex flex-col gap-6">
         {/* ── עכשיו ── */}
         <section className="flex items-center gap-3" data-testid="stats-live" aria-live="polite">
           <span className="relative flex w-3.5 h-3.5 shrink-0" aria-hidden>
-            {!!data?.live && <span className="absolute inset-0 bg-[var(--olive)] opacity-60 animate-ping" />}
+            {!!data?.live && <span data-gutter-ignore className="absolute inset-0 bg-[var(--olive)] opacity-60 animate-ping" />}
             <span className={`relative w-3.5 h-3.5 ${data?.live ? "bg-[var(--olive)]" : "bg-[var(--stone)]"}`} />
           </span>
           <div className="flex-1">

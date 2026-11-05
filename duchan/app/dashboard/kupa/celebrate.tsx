@@ -146,7 +146,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
         aria-labelledby="kupa-cele-title"
         data-testid="kupa-celebrate"
         data-kind={kind}
-        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[91] bg-white px-5 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center flex flex-col gap-3 max-h-[92vh] overflow-y-auto"
+        className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[91] bg-white px-gutter pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center flex flex-col gap-3 max-h-[92vh] overflow-y-auto"
       >
         <button
           onClick={onClose}
@@ -158,7 +158,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
-        <div className={kind === "badge" && top ? "relative mx-auto" : "-mx-5 -mt-5"}>
+        <div className={kind === "badge" && top ? "relative mx-auto" : "-mx-gutter -mt-5"}>
           {kind === "badge" && top ? (
             <div className="relative w-[96px] h-[96px] mx-auto">
               <Medal icon={top.icon} reached size={96} className="kp-flip" />

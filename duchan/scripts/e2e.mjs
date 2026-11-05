@@ -104,6 +104,7 @@ const DUCHAN = [
   "e2e-typing.mjs",
   "e2e-products-easy.mjs",
   "e2e-parent.mjs",
+  "e2e-gutter.mjs",
   "e2e-square.mjs",
   "e2e-home.mjs",
   "e2e-media.mjs",

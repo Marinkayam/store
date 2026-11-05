@@ -73,7 +73,7 @@ function loadDraft(): Draft {
 function StepHeader({ step, onBack }: { step: 1 | 2 | 3 | 4; onBack: () => void }) {
   return (
     <header className="sticky top-0 z-20 bg-[var(--canvas)] border-b border-[var(--line)]">
-      <div className="max-w-md mx-auto px-6 py-3 flex items-center gap-3">
+      <div className="max-w-md mx-auto px-gutter py-3 flex items-center gap-3">
         <button
           onClick={onBack}
           aria-label="חזרה"
@@ -218,7 +218,7 @@ export default function Onboarding() {
       <HelpButton context="פתיחת הדוכן" />
       {barStep && <StepHeader step={barStep} onBack={goBack} />}
 
-      <main className="flex-1 w-full max-w-md mx-auto px-6 pt-8 pb-0 flex flex-col gap-5">
+      <main className="flex-1 w-full max-w-md mx-auto px-gutter pt-8 pb-0 flex flex-col gap-5">
       {/* 1 — שם הדוכן */}
       {draft.step === 1 && !result && (
         <div className="w-full flex flex-col gap-5">

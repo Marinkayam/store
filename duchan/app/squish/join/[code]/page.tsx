@@ -161,7 +161,7 @@ export default function JoinCircle({ params }: { params: Promise<{ code: string 
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[var(--canvas)] max-w-md mx-auto px-5 py-10 flex flex-col justify-center">
+    <main className="min-h-screen bg-[var(--canvas)] max-w-md mx-auto px-gutter py-10 flex flex-col justify-center">
       {children}
       <p className="text-center text-[11px] text-[var(--muted)] pt-10">
         <a href="/squish" className="underline">{BRAND}</a>

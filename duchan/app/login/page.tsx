@@ -50,7 +50,7 @@ function Login() {
 export default function LoginPage() {
   return (
     <main className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 py-6">
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-gutter py-6">
       {/* אותו דוכן מונפש כמו בדף הבית (מרינה, 11.2026) */}
       <HomeStall className="w-full max-w-[300px] block" />
       <div className="w-full max-w-sm">

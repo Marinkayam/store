@@ -64,7 +64,7 @@ export default function SettingsHub({
   const delay = (): CSSProperties => ({ animationDelay: `${Math.min(i++, 12) * 45}ms` });
 
   return (
-    <div className="px-4 pt-4 pb-6 flex flex-col gap-5" data-testid="settings-hub">
+    <div className="px-gutter pt-4 pb-6 flex flex-col gap-5" data-testid="settings-hub">
       {/* מה המסך הזה — במשפט אחד, לפני הכל */}
       <header className="fx-rise" style={delay()}>
         <h1 className="text-[20px] font-bold text-[var(--ink)]">הדוכן שלי</h1>

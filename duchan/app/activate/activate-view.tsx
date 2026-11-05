@@ -562,7 +562,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen flex flex-col bg-[var(--canvas)]">
       <HelpButton context="הפעלת הדוכן" />
-      <div className="w-full max-w-md mx-auto px-5 pt-10 pb-4">{children}</div>
+      <div className="w-full max-w-md mx-auto px-gutter pt-10 pb-4">{children}</div>
       <LegalLinks />
     </main>
   );

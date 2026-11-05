@@ -82,7 +82,7 @@ export default function ParentApproval({ params }: { params: Promise<{ token: st
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[var(--canvas)] max-w-md mx-auto px-5 py-10">
+    <main className="min-h-screen bg-[var(--canvas)] max-w-md mx-auto px-gutter py-10">
       {children}
       <p className="text-center text-[11px] text-[var(--muted)] pt-10">
         <a href="/privacy" className="underline">מדיניות פרטיות</a>

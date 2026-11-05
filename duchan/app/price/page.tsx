@@ -27,7 +27,7 @@ export default function PricePage() {
       <section className="border-b border-[var(--line)] bg-white">
         {/* בלי "להדליק את האורות" — מרינה, 11.2026: "עמוס מדי" */}
         <StallHero name="הדוכן שלך" still />
-        <div className="max-w-lg mx-auto px-6 pt-6 pb-10 text-center">
+        <div className="max-w-lg mx-auto px-gutter pt-6 pb-10 text-center">
           <h1 className="t-title text-[1.75rem]">
             דוכן אמיתי משלך.
             <br />
@@ -68,7 +68,7 @@ export default function PricePage() {
         </div>
       </section>
 
-      <div className="max-w-lg mx-auto px-5 pb-16">
+      <div className="max-w-lg mx-auto px-gutter pb-16">
         {/* ── מה מקבלים ── */}
         <h2 className="t-heading mt-12 mb-1.5">מה מקבלים</h2>
         <p className="t-sub mb-6">הכל כלול, והכל נפתח ברגע שהדוכן מתפרסם.</p>

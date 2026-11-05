@@ -35,7 +35,7 @@ export default function WhatsNewBanner({ createdAt }: { createdAt: string }) {
 
   return (
     <section className="bg-[#efe7f4] border-b border-[var(--line)]" data-testid="whatsnew-banner" aria-labelledby="whatsnew-title">
-      <div className="px-4 flex items-center gap-1">
+      <div className="px-gutter flex items-center gap-1">
         <button
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
@@ -50,7 +50,7 @@ export default function WhatsNewBanner({ createdAt }: { createdAt: string }) {
           ×
         </button>
       </div>
-      <ul hidden={!open} className="pb-3.5 flex gap-2.5 overflow-x-auto px-4 snap-x snap-mandatory [scrollbar-width:none]">
+      <ul hidden={!open} className="pb-3.5 flex gap-2.5 overflow-x-auto px-gutter scroll-px-gutter snap-x snap-mandatory [scrollbar-width:none]">
         {WHATSNEW.items.map((it) => (
           <li key={it.key} className="snap-start shrink-0 w-[9.5rem]">
             <a href={it.href} data-testid={`whatsnew-${it.key}`} className="fx-press flex flex-col h-full bg-white border border-[var(--line)] p-3">

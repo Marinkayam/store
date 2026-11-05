@@ -8,7 +8,7 @@ import HomeStall from "./home-stall";
  */
 export default function NotFound() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-4 px-8 text-center bg-[var(--canvas)]">
+    <main className="min-h-screen flex flex-col items-center justify-center gap-4 px-gutter text-center bg-[var(--canvas)]">
       <HomeStall name="אופס" empty className="w-full max-w-[320px] block" />
       <h1 className="text-[22px] font-black">הדוכן הזה ריק</h1>
       <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">

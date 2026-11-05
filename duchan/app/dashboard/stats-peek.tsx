@@ -22,7 +22,7 @@ export default function StatsPeek({ storeId }: { storeId: string }) {
   }, [storeId]);
 
   return (
-    <a href="/dashboard/stats" data-testid="stats-peek" className="flex items-center gap-3 px-4 py-3 border-b border-[var(--line)] bg-[var(--canvas)]">
+    <a href="/dashboard/stats" data-testid="stats-peek" className="flex items-center gap-3 px-gutter py-3 border-b border-[var(--line)] bg-[var(--canvas)]">
       <span className="text-[var(--ink)]">
         <Icon name="chart" size={22} />
       </span>

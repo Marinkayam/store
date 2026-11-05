@@ -106,7 +106,7 @@ export default function StoryPage() {
 
       {/* ── כותרת קבועה + פס התקדמות ── */}
       <header className="fixed top-0 inset-x-0 z-40 bg-[var(--canvas)] border-b border-[var(--line)] pt-[env(safe-area-inset-top)]">
-        <div className="max-w-5xl mx-auto px-4 h-12 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-gutter h-12 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-1.5 text-[17px] font-medium" aria-label="דוכן, לתחילת הדף">
             <span className="text-[var(--ink)]">
               <Icon name="stall" size={22} />

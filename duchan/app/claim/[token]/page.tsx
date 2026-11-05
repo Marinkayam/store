@@ -38,7 +38,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6">
+    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-gutter">
       <div className="text-center">
         <div className="text-4xl mb-2">🎁</div>
         <h1 className="text-xl font-bold">הדוכן מחכה לך</h1>

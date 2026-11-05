@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "הצהרת נגישות · דוכן"
 export default function AccessibilityPage() {
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-md mx-auto px-5 py-10 text-[15px] leading-7 text-[var(--ink)]">
+      <div className="max-w-md mx-auto px-gutter py-10 text-[15px] leading-7 text-[var(--ink)]">
         <a href="/" className="text-xs text-[var(--muted)] underline">← לדף הבית</a>
         <h1 className="text-2xl font-bold mt-4 mb-1">הצהרת נגישות</h1>
         <p className="text-xs text-[var(--muted)] mb-8">גרסה 1.2 · עודכן ב-4 באוקטובר 2026</p>

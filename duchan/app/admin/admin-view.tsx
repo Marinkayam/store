@@ -404,7 +404,7 @@ function SchemaWarning() {
 
   return (
     <main className="min-h-screen bg-[var(--canvas)]">
-      <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4 pb-16">
+      <div className="max-w-2xl mx-auto px-gutter pt-4 flex flex-col gap-4 pb-16">
         <SchemaWarning />
         <header className="flex items-center justify-between gap-2">
           <h1 className="text-lg font-bold">דוכן · חמ&quot;ל</h1>
@@ -762,7 +762,7 @@ function SchemaWarning() {
       {detail && (
         <>
           <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setDetail(null)} />
-          <div className="fixed bottom-0 inset-x-0 max-w-2xl mx-auto z-50 bg-white px-4 pt-3 pb-[calc(2rem+env(safe-area-inset-bottom))] max-h-[92%] overflow-y-auto">
+          <div className="fixed bottom-0 inset-x-0 max-w-2xl mx-auto z-50 bg-white px-gutter pt-3 pb-[calc(2rem+env(safe-area-inset-bottom))] max-h-[92%] overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
               <div className="w-9 h-1 bg-black/15 mx-auto" />
               <button
