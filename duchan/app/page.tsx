@@ -109,10 +109,16 @@ export default function Landing() {
         </p>
       </div>
 
-      <form onSubmit={start} className="w-full max-w-sm">
+      <form onSubmit={start} className="w-full max-w-sm flex flex-col gap-2.5">
         <button className="btn btn-primary w-full" data-testid="home-start">
           לפתוח דוכן ←
         </button>
+        {/* מרינה, 11.2026: "חשוב להוסיף מה זה דוכן? ואז כפתור לדף הבית
+            המרקטינגי". הסיפור המלא (/story) — להורים ולמי שעוד מתלבט/ת. משם
+            יש דרך חזרה לכאן, בכותרת ובסוף הסיפור. */}
+        <a href="/story" className="btn btn-secondary w-full text-center" data-testid="home-what-is">
+          מה זה דוכן?
+        </a>
       </form>
 
       {checked && !mine && (

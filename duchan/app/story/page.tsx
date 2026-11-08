@@ -113,7 +113,10 @@ export default function StoryPage() {
       {/* ── כותרת קבועה + פס התקדמות ── */}
       <header className="fixed top-0 inset-x-0 z-40 bg-[var(--canvas)] border-b border-[var(--line)] pt-[env(safe-area-inset-top)]">
         <div className="max-w-5xl mx-auto px-gutter h-12 flex items-center justify-between">
-          <a href="#top" className="flex items-center gap-1.5 text-[17px] font-medium" aria-label="דוכן, לתחילת הדף">
+          {/* הלוגו מחזיר לדף הבית של דוכן (/), עם חץ כדי שיהיה ברור שזו
+              דרך חזרה. מגיעים לכאן מ"מה זה דוכן?" בדף הבית. */}
+          <a href="/" className="flex items-center gap-1.5 text-[17px] font-medium" aria-label="חזרה לדף הבית של דוכן" data-testid="story-back-home">
+            <span aria-hidden className="text-[15px] text-[var(--muted)]">→</span>
             <span className="text-[var(--ink)]">
               <Icon name="stall" size={22} />
             </span>
@@ -219,7 +222,10 @@ export default function StoryPage() {
             <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
           </a>
         )}
-        <p className="t-small text-[var(--muted)] mt-4">
+        <a href="/" className="t-small font-medium text-[var(--ink)] py-2" data-testid="story-end-home">
+          → חזרה לדוכן בדף הבית
+        </a>
+        <p className="t-small text-[var(--muted)] mt-2">
           <a href="/terms" className="underline">תנאי שימוש</a>
           {" · "}
           <a href="/privacy" className="underline">מדיניות פרטיות</a>
