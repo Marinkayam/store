@@ -1083,7 +1083,7 @@ function SaveStep({
       <PhoneVerify
         title="המספר שלך"
         subtitle="ככה נשמור את האוסף, וככה נכנסים בחזרה. אותו חשבון כמו בדוכן."
-        cta="שלחו לי קוד"
+        cta="לשלוח לי קוד"
         onVerified={onVerified}
       />
       {err && <p className="t-small text-[var(--danger)] text-center">{err}</p>}

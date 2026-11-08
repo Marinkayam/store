@@ -34,7 +34,7 @@ function Login() {
     <PhoneVerify
       title="כניסה לדוכן"
       subtitle="מקלידים מספר, מקבלים קוד. זהו."
-      cta="שלחו לי קוד"
+      cta="לשלוח לי קוד"
       onVerified={({ hasStore, invite }) => {
         // ניווט מלא ולא router.replace: הסשן נוצר בשרת ונשלח כעוגייה בתשובה
         // של ה-fetch. ניווט צד-לקוח לא טוען מחדש את הקליינט של Supabase,

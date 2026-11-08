@@ -130,7 +130,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         <p className="text-sm text-[var(--muted)] leading-relaxed text-center">
           עוד אין לך דוכן.
           <br />
-          <a href="/onboarding" className="underline text-[var(--ink)]">בואו נפתח אחד ←</a>
+          <a href="/onboarding" className="underline text-[var(--ink)]">לפתוח דוכן ←</a>
         </p>
       </Shell>
     );
@@ -145,7 +145,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <HomeStall name={store.display_name} celebrate className="w-full max-w-[340px] mx-auto block -mt-4" />
           <h1 data-testid="store-live" className="text-[24px] font-black -mt-1">הדוכן שלך באוויר!</h1>
           <p className="text-[13px] text-[var(--muted)] leading-relaxed">
-            הלינק פעיל. כל מי שמקבל אותו ממך יכול להיכנס ולהזמין.
+            הלינק פעיל. כל מי שמקבל אותו יכול להזמין.
           </p>
           <div className="bg-white border border-[var(--line)] px-4 py-3 text-[13px] font-mono" dir="ltr">
             {storeUrl}
@@ -210,7 +210,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
             התשלום בבדיקה
           </h1>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed mt-1.5">
-            סימנתם ששילמתם. עכשיו אנחנו בודקים שהכסף הגיע, ואז הדוכן נפתח להזמנות.
+            סימנת שהתשלום נשלח. אנחנו בודקים שהכסף הגיע, ואז הדוכן נפתח להזמנות.
           </p>
         </div>
 
@@ -218,7 +218,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           <li className="flex gap-3 p-4 border-b border-[var(--line)]">
             <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-[var(--ok-bg)] text-[var(--ok-ink)] font-bold" aria-hidden>✓</span>
             <div className="min-w-0">
-              <div className="text-[14px] font-bold">סימנתם ששילמתם</div>
+              <div className="text-[14px] font-bold">סימנת שהתשלום נשלח</div>
               <div className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-0.5" data-testid="payment-claim-details">
                 ₪{amount} ב{methodLabel} · {when}
                 {store.payment_ref ? <> · שם המשלם: {store.payment_ref}</> : null}
@@ -248,7 +248,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         {/* מי שסימן בטעות, או לא בטוח שההורה באמת שלח — הדרכים לשלם נמצאות כאן */}
         <details className="mt-4 bg-white border border-[var(--line)]" data-testid="not-paid-yet">
           <summary className="min-h-12 px-4 flex items-center text-[13.5px] font-bold cursor-pointer">
-            עוד לא שילמתם בפועל?
+            התשלום עוד לא נשלח?
           </summary>
           <div className="px-4 pb-4 text-[12.5px] text-[var(--muted)] leading-relaxed">
             <p>
@@ -500,7 +500,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
 
           {/* הצהרה */}
           <div className="mt-6 bg-white border border-[var(--line)] p-4">
-            <div className="text-[15px] font-bold">שילמתם? עדכנו אותנו</div>
+            <div className="text-[15px] font-bold">התשלום נשלח? ספרי לנו</div>
             <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1">
               אנחנו בודקים שהתשלום הגיע, ואז הדוכן נפתח.
             </p>

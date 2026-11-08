@@ -240,7 +240,7 @@ export async function POST(req: NextRequest) {
   const phone = normalizePhone(buyerPhone ?? "");
   if (!phone) {
     return NextResponse.json(
-      { error: "צריך מספר טלפון תקין, כדי שבעלי הדוכן יוכלו לחזור אליכם" },
+      { error: "צריך מספר טלפון תקין, כדי שבעלי הדוכן יוכלו לחזור אלייך" },
       { status: 400 }
     );
   }

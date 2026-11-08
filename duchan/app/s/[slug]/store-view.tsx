@@ -575,7 +575,7 @@ export default function StoreView({
     // טלפון חובה: ההזמנה כבר לא עוברת בוואטסאפ, ובלי מספר אין למוכרת
     // דרך לחזור לקונה. אותה בדיקה רצה גם בשרת.
     if (!buyerPhone.trim()) {
-      showToast("צריך מספר טלפון, כדי שבעלי הדוכן יוכלו לחזור אליכם");
+      showToast("צריך מספר טלפון, כדי שבעלי הדוכן יוכלו לחזור אלייך");
       return;
     }
     const shipping = store.ships && wantsShipping;
@@ -1991,7 +1991,7 @@ export default function StoreView({
             הזמנה #{confirmed.orderNumber} · ₪{formatPrice(confirmed.total)}
           </p>
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
-            בעלי הדוכן קיבלו את כל הפרטים, ויחזרו אליכם לטלפון שהשארתם.
+            בעלי הדוכן קיבלו את הפרטים ויחזרו אלייך לטלפון שהשארת.
           </p>
           {payTarget?.kind === "link" && (
             <a
