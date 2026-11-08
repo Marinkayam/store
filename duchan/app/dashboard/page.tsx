@@ -258,7 +258,7 @@ export default function OrdersPage() {
         !store.tagline?.trim() && {
           key: "about",
           title: "משפט על הדוכן",
-          why: "מי עומדים מאחורי הדוכן ומה מיוחד בו. קונים אוהבים לדעת ממי הם קונים.",
+          why: "מי את ומה מיוחד בדוכן. קונים אוהבים לדעת ממי הם קונים.",
           cta: "לכתוב משפט",
           href: "/dashboard/settings#design",
         },
@@ -271,7 +271,7 @@ export default function OrdersPage() {
       <div className="p-8 text-center text-sm text-[var(--muted)] leading-relaxed">
         עוד אין לך דוכן.
         <br />
-        <a href="/onboarding" className="underline text-[var(--ink)]">בואו נפתח אחד ←</a>
+        <a href="/onboarding" className="underline text-[var(--ink)]">לפתוח דוכן ←</a>
       </div>
     );
 
@@ -617,7 +617,7 @@ export default function OrdersPage() {
                   <input
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="רק אתם רואים את זה. למשל: לארוז בורוד"
+                    placeholder="רק את רואה את זה. למשל: לארוז בוורוד"
                     maxLength={120}
                     autoFocus
                     className="flex-1 border border-[var(--line)] px-2.5 py-1.5 text-[12px]"

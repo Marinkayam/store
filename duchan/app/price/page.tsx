@@ -59,7 +59,7 @@ export default function PricePage() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-2 mt-5">
-            {["בלי מנוי חודשי", "בלי עמלה על מכירות", "הרווחים שלכם"].map((t) => (
+            {["בלי מנוי חודשי", "בלי עמלה על מכירות", "כל הרווח נשאר בדוכן"].map((t) => (
               <span key={t} className="bg-[var(--cream)] text-[var(--muted)] t-small px-3 py-1.5">
                 {t}
               </span>
@@ -111,7 +111,7 @@ export default function PricePage() {
         {/* ── CTA ── */}
         <div className="mt-10 text-center">
           <a href="/onboarding" className="btn btn-primary block py-4 text-[15px]">
-            קדימה, בואו נקים את הדוכן ←
+            קדימה, להקים את הדוכן ←
           </a>
           <p className="text-[12.5px] text-[var(--muted)] mt-3 leading-relaxed">
             בונים קודם, ומשלמים רק כשרוצים לפרסם.

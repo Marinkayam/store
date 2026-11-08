@@ -78,7 +78,7 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
       const p = await Notification.requestPermission();
       setPerm(p);
       if (p !== "granted") {
-        setMsg("לא אישרתם התראות. אפשר לשנות בהגדרות הטלפון ← התראות.");
+        setMsg("ההתראות לא אושרו. אפשר לשנות בהגדרות הטלפון ← התראות.");
         return;
       }
       const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
@@ -97,7 +97,7 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
         return;
       }
       setMine(sub.endpoint);
-      setMsg("מעולה! מעכשיו כל הזמנה חדשה תקפוץ לכם בטלפון.");
+      setMsg("מעולה! מעכשיו כל הזמנה חדשה תקפוץ לך בטלפון.");
     } catch {
       setMsg("לא הצלחנו להדליק התראות. לנסות שוב בעוד רגע");
     } finally {
@@ -144,7 +144,7 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
   if (on && installedOrNotNeeded && cta) {
     return (
       <div className="text-[13px] text-[var(--ok-ink)] font-semibold" data-testid="alerts-on">
-        ✓ הדוכן במסך הבית וההתראות פועלות. כשתגיע הזמנה, זה יקפוץ לכם.
+        ✓ הדוכן במסך הבית וההתראות פועלות.
       </div>
     );
   }
@@ -159,11 +159,11 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
 
   const enableBody = !available ? (
     <p className="text-[12.5px] text-[var(--muted)]" data-testid="alerts-unavailable">
-      ההתראות עוד לא זמינות. נסו שוב מאוחר יותר.
+      ההתראות עוד לא זמינות. אפשר לנסות שוב מאוחר יותר.
     </p>
   ) : support === "ios-browser" ? (
     <p className="text-[12.5px] leading-relaxed" data-testid="alerts-ios-howto">
-      באייפון התראות עובדות רק מהאייקון: אחרי ששמרתם, פותחים את הדוכן <b>מהאייקון החדש במסך הבית</b>, ולוחצים כאן
+      באייפון התראות עובדות רק מהאייקון: אחרי השמירה פותחים את הדוכן <b>מהאייקון החדש במסך הבית</b>, ולוחצים כאן
       &quot;להפעיל התראות&quot;.
     </p>
   ) : support === "none" ? (
@@ -212,7 +212,7 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
             testid: "alerts-step-push",
             state: on ? "done" : installedOrNotNeeded || support === "ok" ? "current" : "later",
             title: on ? "ההתראות פועלות בטלפון הזה" : "להפעיל התראות",
-            sub: on ? "כל הזמנה חדשה תקפוץ לכם, גם כשהדוכן סגור." : "כשמישהו מזמין, הטלפון מצלצל. בלי לבדוק כל הזמן.",
+            sub: on ? "כל הזמנה חדשה תקפוץ לך, גם כשהדוכן סגור." : "כשמישהו מזמין, הטלפון מצלצל.",
             body: enableBody,
           },
         ]}

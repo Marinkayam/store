@@ -44,7 +44,7 @@ export default function ErrorScreen({
       <OopsStall fixing={fixing} />
       <h1 className="text-xl font-bold">אופס! משהו השתבש אצלנו</h1>
       <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">
-        זו לא אשמתכם, זו תקלה שלנו, והיא כבר נרשמה.
+        זו לא אשמתך, זו תקלה שלנו, והיא כבר נרשמה.
         <br />
         רוב הפעמים רענון אחד מסדר את זה.
       </p>

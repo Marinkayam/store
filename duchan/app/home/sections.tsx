@@ -177,7 +177,7 @@ export function KupaSection() {
 const SAFE: { icon: IconName; title: string; line: string }[] = [
   { icon: "lock", title: "בלי כתובת. אף פעם.", line: "לא מבקשים איפה גרים. מסירה מסכמים בוואטסאפ." },
   { icon: "phone", title: "הטלפון לא בדוכן", line: "המספר לא מופיע בדף ולא בקוד שלו." },
-  { icon: "eye", title: "לא מופיע בגוגל", line: "מגיעים לדוכן רק מהלינק ששלחתם." },
+  { icon: "eye", title: "לא מופיע בגוגל", line: "אפשר להגיע לדוכן רק מהלינק." },
   { icon: "heart", title: "ההורים מאשרים", line: "לפני שהדוכן נפתח להזמנות, צריך אישור של הורה." },
   { icon: "camera", title: "תמונות נקיות", line: "התמונות מנוקות מהמיקום, והסרטונים בלי קול." },
   { icon: "coins", title: "הכסף לא עובר דרכנו", line: "משלמים ישר לדוכן: ביט, פייבוקס או מזומן." },
@@ -287,7 +287,7 @@ export function PriceGame() {
         ? "זול מדי: הרבה קונים, אבל כמעט לא נשאר רווח."
         : price > 28
           ? "יקר מדי: כמעט אף אחד לא קונה."
-          : "לא רע! נסו לזוז עוד קצת.";
+          : "לא רע! אפשר לזוז עוד קצת.";
   return (
     <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="game-title" data-testid="home-price-game">
       <Reveal>
@@ -296,8 +296,7 @@ export function PriceGame() {
             כמה זה עולה?
           </h2>
           <p className="text-[15.5px] leading-relaxed mt-3">
-            נועה הכינה צמידים. החומרים לכל צמיד עלו <bdi>₪{COST}</bdi>. יותר מדי — אף אחד לא קונה. פחות מדי — לא נשאר כלום. נסו למצוא את
-            המחיר הכי טוב:
+            נועה הכינה צמידים. החומרים לכל צמיד עלו <bdi>₪{COST}</bdi>. יותר מדי — אף אחד לא קונה. פחות מדי — לא נשאר כלום. מה המחיר הכי טוב?
           </p>
         </div>
       </Reveal>

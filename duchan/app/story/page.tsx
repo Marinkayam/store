@@ -199,7 +199,7 @@ export default function StoryPage() {
         <EndStall />
         <form onSubmit={start} className="w-full max-w-sm px-gutter flex flex-col gap-2.5">
           <button className="btn btn-primary text-[16px]" data-testid="home-start">
-            קדימה, בואו נקים את הדוכן ←
+            קדימה, להקים את הדוכן ←
           </button>
           <a
             href={`https://wa.me/?text=${encodeURIComponent("תראו מה מצאתי: אפשר לפתוח דוכן משלי ולמכור לחברים! " + "https://duchan.app/story")}`}

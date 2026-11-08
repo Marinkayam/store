@@ -70,10 +70,10 @@ export default function SquishLanding() {
         <Logo />
 
         <p className="text-[17px] leading-relaxed font-semibold max-w-[19rem]">
-          אנחנו יודעים שיש לכם אוסף סקווישים מטורף
+          אנחנו יודעים שיש לך אוסף סקווישים מטורף
         </p>
         <p className="text-[15px] leading-relaxed max-w-[19rem] text-[var(--ink)] -mt-3">
-          תעלו את האוסף שלכם, תעשו טריידים ובעיקר תשוויצו
+          תעלי את האוסף, תעשי טריידים ובעיקר תשוויצי
         </p>
 
         <div className="w-full max-w-sm flex flex-col gap-2.5">
@@ -113,7 +113,7 @@ export default function SquishLanding() {
           </svg>
         </button>
         <h1 className="flex-1 text-[1.3rem] leading-tight font-semibold tracking-[-0.02em] text-center pe-5">
-          ככה זה ייראה אצלכם
+          ככה זה ייראה אצלך
         </h1>
       </div>
 

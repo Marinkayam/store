@@ -29,7 +29,7 @@ export default function GlobalError({ reset }: { error: Error; reset: () => void
         <div style={{ fontSize: 44 }}>🌧️</div>
         <h1 style={{ fontSize: 20, margin: 0 }}>משהו השתבש אצלנו</h1>
         <p style={{ fontSize: 14, color: "#857e73", maxWidth: 300, lineHeight: 1.6 }}>
-          זו לא אשמתכם, זו תקלה שלנו. אפשר לרענן ולנסות שוב.
+          זו לא אשמתך, זו תקלה שלנו. אפשר לרענן ולנסות שוב.
         </p>
         <button
           onClick={reset}

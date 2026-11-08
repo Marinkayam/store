@@ -145,7 +145,7 @@ export default function JoinCircle({ params }: { params: Promise<{ code: string 
             <PhoneVerify
               title="קודם ניכנס"
               subtitle={`אותו חשבון כמו בדוכן. אם עוד אין לך, ניצור אחד עכשיו.`}
-              cta="שלחו לי קוד"
+              cta="לשלוח לי קוד"
               onVerified={join}
             />
           </div>

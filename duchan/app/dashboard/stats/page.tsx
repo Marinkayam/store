@@ -253,7 +253,7 @@ export default function StatsPage() {
                 </ul>
                 {data.sources[0]?.source === "whatsapp_or_direct" && (
                   <p className="text-[11.5px] text-[var(--muted)] mt-2 leading-relaxed">
-                    וואטסאפ לא מספר מאיפה הגיעו, אז מי שנכנס מוואטסאפ ומי שהקליד את הלינק נספרים יחד.
+                    כניסות מוואטסאפ ומלינק שהוקלד נספרות יחד.
                   </p>
                 )}
               </section>
@@ -338,9 +338,8 @@ export default function StatsPage() {
         <details className="border-t border-[var(--line)] pt-3" data-testid="stats-privacy">
           <summary className="text-[12.5px] font-semibold cursor-pointer">איך אנחנו יודעים את זה? (ולמה אין כאן שמות)</summary>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2">
-            אנחנו רק סופרים: כל כניסה לדוכן מוסיפה 1. לא שומרים מי נכנס, לא שמות, לא מספרי טלפון ולא מיקום, ולכן גם אנחנו לא
-            יודעים מי זה. &quot;אנשים שונים&quot; ו&quot;בפעם הראשונה&quot; מגיעים מהטלפון של מי שנכנס, שזוכר לבד אם הוא כבר היה כאן.
-            כשאתם או השותפים שלכם נכנסים לדוכן שלכם, זה לא נספר.
+            אנחנו רק סופרים כניסות. לא שומרים שמות, טלפונים או מיקום, אז גם אנחנו לא יודעים מי נכנס.
+            כשאת או השותפים שלך נכנסים לדוכן, זה לא נספר.
           </p>
         </details>
       </div>

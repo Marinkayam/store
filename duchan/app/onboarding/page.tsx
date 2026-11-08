@@ -455,7 +455,7 @@ export default function Onboarding() {
             <PhoneVerify
               title="המספר שלך"
               subtitle="לכאן יגיעו ההזמנות בוואטסאפ. נשלח אליו קוד ב-SMS."
-              cta="שלחו לי קוד"
+              cta="לשלוח לי קוד"
               onVerified={save}
             />
           )}

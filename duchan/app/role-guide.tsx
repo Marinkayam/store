@@ -30,7 +30,7 @@ type Who = "owner" | "partner" | "invitee";
 const TITLES: Record<Who, { can: string; cant: string; cantIcon: string }> = {
   owner: { can: "✅ מה כל הצוות יכול לעשות", cant: "רק ראש הדוכן", cantIcon: "👑" },
   partner: { can: "✅ מה אפשר לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
-  invitee: { can: "✅ מה תוכלו לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
+  invitee: { can: "✅ מה אפשר לעשות", cant: "את זה עושה ראש הדוכן", cantIcon: "🔒" },
 };
 
 export default function RoleGuide({ who, compact = false }: { who: Who; compact?: boolean }) {
