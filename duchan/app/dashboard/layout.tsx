@@ -7,6 +7,7 @@ import Icon, { type IconName } from "../icons";
 import StoreSwitcher from "./store-switcher";
 import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 import KupaCelebrate from "./kupa/celebrate";
+import LiveCelebration from "./live-celebration";
 
 // אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
 // הניווט — הדבר שהילדה רואה בכל מסך — לא בשליטתנו.
@@ -29,6 +30,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-[var(--canvas)] flex flex-col max-w-md mx-auto pt-[env(safe-area-inset-top)]">
       <div aria-hidden className="fixed top-0 inset-x-0 h-[env(safe-area-inset-top)] bg-[var(--canvas)] z-[45]" />
       {/* חגיגות של קופת הדוכן: אות חדש, עלייה ברמה */}
+      {/* "התשלום התקבל, הדוכן באוויר!" — פעם אחת אחרי ההפעלה */}
+      <LiveCelebration />
       <KupaCelebrate />
       <StoreSwitcher />
       <div className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">{children}</div>
