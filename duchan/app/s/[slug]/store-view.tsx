@@ -169,7 +169,15 @@ export default function StoreView({
   const chosenPay = payWith ?? methods[0]?.key ?? null;
   // היעד של האמצעי שנבחר: לינק (פותח את האפליקציה) או מספר להעתקה —
   // ביט ופייבוקס יכולים להוביל לשני אנשים שונים
-  const payTarget = payoutTarget(store, chosenPay);
+  // המספרים לתשלום מגיעים רק בתשובת ההזמנה (לא יושבים ב-HTML)
+  const [payPhones, setPayPhones] = useState<{ bit: string | null; paybox: string | null } | null>(null);
+  const payTarget = payoutTarget(
+    { ...store, payout_bit_phone: payPhones?.bit ?? null, payout_paybox_phone: payPhones?.paybox ?? null },
+    chosenPay
+  );
+  // לפני ההזמנה: רק האם יהיה מספר להעברה (בשביל ההסבר "מה יקרה אחרי השליחה")
+  const willHavePayPhone =
+    chosenPay === "bit" ? !!store.has_bit_phone : chosenPay === "paybox" ? !!store.has_paybox_phone : false;
 
   /** העתקת מספר התשלום — הפעולה של מי שאין לה לינק */
   function copyPayPhone(phone: string) {
@@ -392,7 +400,8 @@ export default function StoreView({
 
   const inCart = (id: string) =>
     cart.filter((l) => l.id === id).reduce((s, l) => s + l.qty, 0);
-  const maxQty = (p: PublicProduct) => (p.track_stock ? Math.max(0, p.stock - inCart(p.id)) : 99);
+  // גם בלי מעקב מלאי יש תקרה של 99 לשורה (השרת אוכף) — כולל מה שכבר בסל
+  const maxQty = (p: PublicProduct) => Math.max(0, (p.track_stock ? p.stock : 99) - inCart(p.id));
   /** כמה עוד אפשר מהאפשרות הזו: המלאי שלה (0065), ובכל מקרה לא יותר מהסך הכל */
   const inCartOpt = (id: string, option: string) =>
     cart.filter((l) => l.id === id && l.option === option).reduce((s, l) => s + l.qty, 0);
@@ -580,10 +589,17 @@ export default function StoreView({
       // שתי השורות האלה מתארות את מה ש*הקונה בחרה*, ולא את מה שהדוכן
       // מציע. בעלת הדוכן כבר יודעת מה היא מקבלת ואיך היא מוסרת; מה שהיא
       // צריכה מההודעה זה מה נבחר בפועל בהזמנה הזו.
+      const phones = {
+        bit: (data.payPhones?.bit as string | null | undefined) ?? null,
+        paybox: (data.payPhones?.paybox as string | null | undefined) ?? null,
+      };
+      setPayPhones(phones);
+      const payStore = { ...store, payout_bit_phone: phones.bit, payout_paybox_phone: phones.paybox };
+      const orderPayTarget = payoutTarget(payStore, chosenPay);
       const pay = payoutLine(store, chosenPay);
       // הקישור של הילדה נשלח מיד עם ההזמנה — הקונה משלמת בלי לחכות
       // שהילדה תשלח אותו בחזרה. רק כשהוא תואם את אמצעי התשלום שנבחר.
-      const payLinkMsg = paymentLinkLine(store, chosenPay);
+      const payLinkMsg = paymentLinkLine(payStore, chosenPay);
       const ship = deliveryLine({
         ships: store.ships,
         wantsShipping,
@@ -647,7 +663,7 @@ export default function StoreView({
         waPayUrl,
         // יש מה לסגור עכשיו: יעד דיגיטלי, או שיחת תשלום שהמוכרת הדליקה.
         // מזומן = אין מה לשלם מרחוק.
-        payFirst: (!!payTarget || !!waPayUrl) && chosenPay !== "cash",
+        payFirst: (!!orderPayTarget || !!waPayUrl) && chosenPay !== "cash",
       });
       if (buyerConfetti) {
         for (let i = 0; i < 3; i++) setTimeout(() => confettiBurst(window.innerWidth / 2, window.innerHeight * 0.45, 18), i * 220);
@@ -1655,7 +1671,7 @@ export default function StoreView({
               </label>
             </div>
           </section>
-          {(paySummary || payTarget) && (
+          {(paySummary || payTarget || willHavePayPhone) && (
             <section className="mt-8">
               {/* הקונה בוחרת איך היא משלמת, והמוכרת רואה את הבחירה על
                   ההזמנה. בלי זה כל הזמנה נגמרת ב"ואיך משלמים לך?". */}
@@ -1686,7 +1702,7 @@ export default function StoreView({
                     ? "💵 משלמים במזומן כשמקבלים את ההזמנה."
                     : payTarget?.kind === "link"
                       ? `👉 אחרי שליחת ההזמנה יופיע כפתור לתשלום ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
-                      : payTarget?.kind === "phone"
+                      : payTarget?.kind === "phone" || willHavePayPhone
                         ? `👉 אחרי שליחת ההזמנה יופיע המספר להעברה ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
                         : store.payout_whatsapp
                           ? `👉 אחרי שליחת ההזמנה כותבים לבעלי הדוכן בוואטסאפ, והם שולחים לאן להעביר ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`

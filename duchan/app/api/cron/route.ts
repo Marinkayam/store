@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { r2Client } from "@/lib/r2";
 import { notifyTelegram } from "@/lib/telegram";
@@ -103,6 +103,29 @@ export async function GET(req: NextRequest) {
       }
     });
 
+  /* שמירה מוגבלת בזמן (מדיניות הפרטיות, סעיף 14): התראות לצוות, קודי SMS
+     וקישורי כניסה — 90 יום; תקלות שמירה בסקוויש — 30 יום. כל אחד לבד,
+     כדי שטבלה אחת שנכשלת לא תעצור את השאר ואת הגיבוי. */
+  const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 3600_000).toISOString();
+  await Promise.all(
+    ([
+      ["admin_alerts", 90],
+      ["phone_otps", 90],
+      ["login_links", 90],
+      ["squish_write_failures", 30],
+    ] as const).map(([table, days]) =>
+      db
+        .from(table)
+        .delete()
+        .lt("created_at", daysAgo(days))
+        .then(({ error }) => {
+          if (error && !/does not exist|schema cache|could not find the table/i.test(error.message)) {
+            console.error(`[cron] ${table} purge:`, error.message);
+          }
+        })
+    )
+  );
+
   /* תזכורת יומית: מי שסימנו ששילמו ומחכים לאישור יותר מיום. אחת ביום
      (ref = התאריך), עם הוותיק ביותר בכותרת — ב-11.2026 היו כאן שישה דוכנים
      שחיכו עד 86 יום, כי ההתראה הבודדת על כל אחד הלכה לאיבוד. */
@@ -160,6 +183,32 @@ export async function GET(req: NextRequest) {
     console.error("[cron] backup upload failed:", msg);
     await notifyTelegram(`⚠️ הגיבוי היומי של דוכן נכשל (${day}):\n${msg}`);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
+
+  /* גיבויים נשמרים 30 יום. יש בהם טלפונים וכתובות משלוח — לא שומרים אותם
+     לנצח. רק אחרי שהגיבוי של היום נכתב בהצלחה. */
+  try {
+    const cutoff = new Date(Date.now() - 30 * 24 * 3600_000).toISOString().slice(0, 10);
+    const r2 = r2Client();
+    const old: { Key: string }[] = [];
+    let token: string | undefined;
+    do {
+      const page = await r2.send(
+        new ListObjectsV2Command({ Bucket: process.env.R2_BUCKET!, Prefix: "_backups/", ContinuationToken: token })
+      );
+      for (const o of page.Contents ?? []) {
+        const d = /^_backups\/(\d{4}-\d{2}-\d{2})\.json$/.exec(o.Key ?? "")?.[1];
+        if (d && d < cutoff) old.push({ Key: o.Key! });
+      }
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
+    for (let i = 0; i < old.length; i += 1000) {
+      await r2.send(
+        new DeleteObjectsCommand({ Bucket: process.env.R2_BUCKET!, Delete: { Objects: old.slice(i, i + 1000) } })
+      );
+    }
+  } catch (e) {
+    console.error("[cron] backup prune failed:", e instanceof Error ? e.message : String(e));
   }
 
   if (failed.length) {

@@ -245,11 +245,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // אמצעי תשלום — רק מהרשימה המוכרת; ערך זר לא נכנס להזמנה.
-  const pay = ["bit", "paybox", "cash"].includes(payMethod ?? "") ? payMethod! : null;
+  /* מה הדוכן באמת מציע. בקשה שנבנתה ביד לא שומרת כתובת מגורים בהזמנה
+     לדוכן שלא שולח משלוחים, ולא אמצעי תשלום שהדוכן לא מקבל. קריאה נפרדת:
+     אם העמודות חסרות — ההתנהגות הקודמת, לא הזמנה שנופלת. */
+  const { data: prefs } = await db
+    .from("stores")
+    .select("ships, payout_bit, payout_paybox, payout_cash")
+    .eq("id", store.id)
+    .maybeSingle();
+  const accepts = (m: string) =>
+    !prefs || (m === "bit" ? !!prefs.payout_bit : m === "paybox" ? !!prefs.payout_paybox : !!prefs.payout_cash);
+
+  // אמצעי תשלום — רק מהרשימה המוכרת ורק מה שהדוכן מקבל; ערך זר לא נכנס.
+  const pay = ["bit", "paybox", "cash"].includes(payMethod ?? "") && accepts(payMethod!) ? payMethod! : null;
 
   // משלוח דורש כתובת מובנית. הכל של הקונה, נראה רק למוכרת.
-  const ships = wantsShipping === true;
+  const ships = wantsShipping === true && (!prefs || !!prefs.ships);
   const address = shipAddress?.trim().replace(/\s+/g, " ").slice(0, 200) ?? "";
   const city = shipCity?.trim().replace(/\s+/g, " ").slice(0, 40) ?? "";
   const clean = (v: unknown, max: number) =>
@@ -299,7 +310,7 @@ export async function POST(req: NextRequest) {
   const v8 = {
     ...base, p_buyer_phone: phone, p_buyer_name: name,
     p_ship_address: ships ? address : null, p_ship_city: ships ? city : null,
-    p_pay_method: pay, p_wants_shipping: wantsShipping ?? null,
+    p_pay_method: pay, p_wants_shipping: ships ? true : wantsShipping === undefined ? null : false,
   };
   const v9 = { ...v8, p_ship_details: ships ? details : null };
   // עם קופון אין ירידה לחתימות ישנות: הזמנה מוזלת בלי שהשימוש נספר היא
@@ -345,9 +356,23 @@ export async function POST(req: NextRequest) {
     })
   );
 
+  /* מספרי ביט/פייבוקס שהדוכן בחר — רק עכשיו, אחרי שההזמנה נקלטה. בדף
+     הפומבי הם לא מופיעים (lib/store-public.ts). קריאה נפרדת, כדי שדוכן
+     בלי העמודות האלה לא יפיל את ההזמנה. */
+  const { data: payRow } = await db
+    .from("stores")
+    .select("payout_bit_phone, payout_paybox_phone")
+    .eq("id", store.id)
+    .maybeSingle();
+  const payPhone = (v: unknown) => {
+    const d = typeof v === "string" ? v.replace(/\D/g, "") : "";
+    return /^05\d{8}$/.test(d) ? d : null;
+  };
+
   return NextResponse.json({
     orderNumber,
     phone: store.contact_phone,
+    payPhones: { bit: payPhone(payRow?.payout_bit_phone), paybox: payPhone(payRow?.payout_paybox_phone) },
     storeName: store.display_name,
     buyerName: name,
     items: snapshot,

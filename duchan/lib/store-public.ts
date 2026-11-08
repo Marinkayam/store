@@ -139,7 +139,20 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
   const bestSellerId = bestSellerOf(sold ?? [], list);
   const soldIds = soldProductIds(sold ?? [], list);
 
-  const { id: _id, status: _status, activated_at: activatedAt, ...rest } = row;
+  /* מספרי ביט/פייבוקס לא יוצאים בדף הפומבי (גם לא בקוד שלו) — רק האם
+     קיים מספר תקין. המספר עצמו חוזר מהשרת אחרי שליחת הזמנה
+     (/api/orders → payPhones), כמו מספר הוואטסאפ של הדוכן. */
+  const validPayPhone = (v: unknown) => typeof v === "string" && /^05\d{8}$/.test(v.replace(/\D/g, ""));
+  const hasBitPhone = validPayPhone(row.payout_bit_phone);
+  const hasPayboxPhone = validPayPhone(row.payout_paybox_phone);
+  const {
+    id: _id,
+    status: _status,
+    activated_at: activatedAt,
+    payout_bit_phone: _bitPhone,
+    payout_paybox_phone: _payboxPhone,
+    ...rest
+  } = row;
   // ברירות מחדל לשדות שאולי לא חזרו: הדף חייב לעבוד גם בלעדיהם
   const pub = {
     cover_preset: null,
@@ -150,8 +163,6 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     payout_link: null,
     payout_bit_link: null,
     payout_paybox_link: null,
-    payout_bit_phone: null,
-    payout_paybox_phone: null,
     payout_whatsapp: false,
     about: null,
     city: null,
@@ -173,6 +184,10 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     featured_title: null,
     show_sold_out: null,
     ...rest,
+    payout_bit_phone: null,
+    payout_paybox_phone: null,
+    has_bit_phone: hasBitPhone,
+    has_paybox_phone: hasPayboxPhone,
   } as unknown as PublicStore;
 
   return {

@@ -164,8 +164,11 @@ export interface PublicStore {
   payout_link: string | null;
   payout_bit_link?: string | null;
   payout_paybox_link?: string | null;
+  /** בדף הפומבי תמיד null — המספר מגיע רק אחרי הזמנה (has_* אומרים אם קיים) */
   payout_bit_phone?: string | null;
   payout_paybox_phone?: string | null;
+  has_bit_phone?: boolean;
+  has_paybox_phone?: boolean;
   payout_whatsapp?: boolean | null;
   look?: string | null;
   bg_pattern?: string | null;

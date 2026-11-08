@@ -28,6 +28,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "הלינק הזה כבר לא בתוקף" }, { status: 404 });
   }
 
+  /* כתובת של מנהלת לא נפתחת דרך לינק תביעה: requireAdmin מכיר גם את
+     ADMIN_EMAILS, ומי שמחזיק לינק תביעה היה יכול להפוך למנהלת. */
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (adminEmails.includes(email.toLowerCase())) {
+    return NextResponse.json({ error: "לא הצלחנו ליצור חשבון, אולי האימייל כבר רשום" }, { status: 409 });
+  }
+
   const { data: created, error: userErr } = await db.auth.admin.createUser({
     email: email.toLowerCase(),
     password,

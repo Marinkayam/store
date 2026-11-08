@@ -49,6 +49,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "זה המספר שלך. צריך מספר של הורה." }, { status: 400 });
   }
 
+  /* תקרה: 3 הודעות להורה ביממה לכל משתמשת. בלי זה המסלול שולח סמס
+     לכל מספר שמקלידים, בלי הגבלה. */
+  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count: sentToday } = await db
+    .from("squish_parent_approvals")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", dayAgo);
+  if ((sentToday ?? 0) >= 3) {
+    return NextResponse.json({ error: "כבר שלחנו היום. אפשר לנסות שוב מחר" }, { status: 429 });
+  }
+
   const token = squishCode(24);
   const { error } = await db.from("squish_parent_approvals").insert({
     user_id: user.id,
