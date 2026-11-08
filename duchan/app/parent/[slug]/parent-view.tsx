@@ -178,9 +178,9 @@ export default function ParentView(p: {
           <p className="text-[13.5px] text-[var(--muted)] mt-1">שלושה צעדים, פחות מדקה.</p>
           <ol className="mt-3 bg-white border border-[var(--line)]">
             {p.bitUrl ? (
-              <Step n={1} title={`לוחצים על הכפתור, וביט נפתח עם ₪${p.price}`}>
+              <Step n={1} title={`לוחצים על הכפתור, ביט נפתח, ומקלידים ₪${p.price}`}>
                 <a href={p.bitUrl} target="_blank" rel="noreferrer" className="mt-2 block bg-[var(--ink)] text-white py-3 text-center text-[14px] font-bold">
-                  לתשלום ₪{p.price} בביט ←
+                  לתשלום בביט ←
                 </a>
               </Step>
             ) : (

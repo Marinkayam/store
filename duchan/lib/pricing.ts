@@ -67,8 +67,14 @@ export const IS_LAUNCH = ACTIVATION_PRICE < FULL_PRICE;
  */
 export const DEAL_LABEL = PROMO_ACTIVE ? "מבצע חד-פעמי" : `מחיר השקה · עד ${LAUNCH_UNTIL_LABEL}`;
 
-/** לינק תשלום אישי. ריק = מציגים את המספר לביט ידני. */
-export const PAY_BIT_URL = process.env.NEXT_PUBLIC_PAY_BIT_URL ?? "";
+/**
+ * לינק התשלום האישי של מרינה בביט ("ביט מי"). חולץ מקוד ה-QR שביט נותן,
+ * כי QR אי אפשר לסרוק מתוך אותו טלפון (מרינה, 11.2026). הלינק לא קובע
+ * סכום: ביט נפתח על העברה למרינה, ומקלידים את הסכום. אם המשתנה ריק — מציגים
+ * את המספר לביט ידני.
+ */
+export const PAY_BIT_URL =
+  process.env.NEXT_PUBLIC_PAY_BIT_URL || "https://www.bitpay.co.il/app/me/DBBB417F-9257-B2BF-4E31-4F9C93FDF7ECAB91";
 /**
  * קבוצת התשלום בפייבוקס. השימוש בפייבוקס חינם, ולכן זו הדרך המומלצת —
  * נכנסים לקבוצה "הקמת דוכן" ומשלמים שם.

@@ -458,7 +458,9 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
             <div className="bg-white border border-[var(--line)] p-3.5">
               <div className="text-[15px] font-bold">או בביט</div>
               <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5">
-                שולחים ₪{price} למספר הזה, וכותבים בהערה את שם הדוכן.
+                {bitUrl
+                  ? <>לוחצים, ביט נפתח, מקלידים ₪{price} וכותבים בהערה את שם הדוכן.</>
+                  : <>שולחים ₪{price} למספר הזה, וכותבים בהערה את שם הדוכן.</>}
               </p>
               {bitUrl ? (
                 <a href={bitUrl} target="_blank" rel="noreferrer" className={`${payBtn} mt-2.5`}>
