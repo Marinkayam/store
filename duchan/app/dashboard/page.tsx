@@ -176,7 +176,7 @@ export default function OrdersPage() {
    * שיש לה עכשיו — לא.
    */
   async function saveWho(o: Order) {
-    const name = whoName.trim().replace(/\s+/g, " ").slice(0, 24);
+    const name = whoName.trim().replace(/\s+/g, " ").slice(0, 40);
     const phone = whoPhone.trim() ? normalizePhone(whoPhone.trim()) : null;
     // מספר שהוקלד ולא תקין לא נשמר כ"בלי מספר": זה היה מוחק את המספר הקיים בשקט
     if (whoPhone.trim() && !phone) {
@@ -499,7 +499,7 @@ export default function OrdersPage() {
                   <>
                     <dt className="text-[var(--muted)]">{o.wants_shipping ? "משלוח" : "מסירה"}</dt>
                     <dd className="min-w-0">
-                      {o.wants_shipping ? (o.ship_address ? `${o.ship_address}, ${o.ship_city ?? ""}` : "משלוח") : "מסירה אישית"}
+                      {o.wants_shipping ? (o.ship_address ? `${o.ship_address}, ${o.ship_city ?? ""}` : "משלוח") : "איסוף מהדוכן"}
                     </dd>
                   </>
                 )}

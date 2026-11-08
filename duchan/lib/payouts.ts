@@ -181,7 +181,7 @@ export function deliveryLine(
   opts: { ships: boolean; wantsShipping: boolean; note?: string | null; price?: number | null }
 ): string {
   if (!opts.ships) return "";
-  if (!opts.wantsShipping) return "בחרתי לקבל במסירה אישית";
+  if (!opts.wantsShipping) return "בחרתי איסוף מהדוכן";
   const extra = [opts.note?.trim() || "בתיאום", opts.price ? `₪${formatPrice(opts.price)}` : ""]
     .filter(Boolean)
     .join(" · ");

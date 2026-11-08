@@ -60,9 +60,45 @@ export default function StoreView({
   footer?: ReactNode;
 }) {
   const [cart, setCart] = useState<CartLine[]>([]);
+  /* הסל נשמר בטלפון, לכל דוכן בנפרד. לקוחה, 11.2026: "למה אני מכניסה לסל
+     דברים, יוצאת, וזה לא שומר לי". נשמר שבוע; מוצר שכבר לא בדוכן נופל,
+     וכמות שעברה את המלאי נחתכת. */
+  const cartKey = `duchan-cart-${store.slug}`;
+  const cartLoaded = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(cartKey) ?? "null") as { at: number; lines: CartLine[] } | null;
+      if (raw && Date.now() - raw.at < 7 * 24 * 3600_000 && Array.isArray(raw.lines)) {
+        const lines = raw.lines
+          .map((l) => {
+            const p = products.find((x) => x.id === l.id);
+            if (!p) return null;
+            if (l.option && !(p.options ?? []).includes(l.option)) return null;
+            const cap = p.track_stock ? Math.max(0, p.stock) : 99;
+            const qty = Math.min(Math.max(1, Math.floor(Number(l.qty) || 1)), cap);
+            return qty > 0 ? { ...l, name: p.name, price: Number(p.price), qty } : null;
+          })
+          .filter(Boolean) as CartLine[];
+        if (lines.length) setCart(lines);
+      }
+    } catch {}
+    cartLoaded.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey]);
+  useEffect(() => {
+    if (!cartLoaded.current) return;
+    try {
+      if (cart.length) localStorage.setItem(cartKey, JSON.stringify({ at: Date.now(), lines: cart }));
+      else localStorage.removeItem(cartKey);
+    } catch {}
+  }, [cart, cartKey]);
   const [current, setCurrent] = useState<PublicProduct | null>(null);
   const [qty, setQty] = useState(1);
   const [choice, setChoice] = useState<string | null>(null);
+  /* כמות מעל 1 במוצר עם כמה אפשרויות: בחירה לכל יחידה. לקוחה: "שתלחץ
+     שלוש בכמות ואז תוכל לבחור שלושה צבעים שונים, במקום להיכנס כל פעם
+     מחדש". picks[i] = האפשרות של היחידה ה-i. */
+  const [picks, setPicks] = useState<(string | null)[]>([]);
   const [orderOpen, setOrderOpen] = useState(false);
   const [note, setNote] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
@@ -75,6 +111,7 @@ export default function StoreView({
   const [shipFloor, setShipFloor] = useState("");
   const [shipApartment, setShipApartment] = useState("");
   const [shipEntryCode, setShipEntryCode] = useState("");
+  const [privateHouse, setPrivateHouse] = useState(false);
   /* ההזמנה כבר לא קופצת לוואטסאפ — היא נקלטת כאן. כשנבחר ביט/פייבוקס
      ויש לינק תואם, קודם מופיע מסך התשלום ("נשאר רק לשלם") ורק אחרי
      "שילמתי" מגיע האישור — מרינה: אישור לפני תשלום מרגיש כאילו סיימנו. */
@@ -413,6 +450,26 @@ export default function StoreView({
     const left = option ? optionLeft(p, option) : null;
     return left === null ? maxQty(p) : Math.min(maxQty(p), left);
   };
+  /** מוצר עם כמה אפשרויות, וכמות מעל 1 — בוחרים אפשרות לכל יחידה */
+  const multiOpt = (p: PublicProduct) => (p.options?.length ?? 0) > 1;
+  const perUnit = (p: PublicProduct) => multiOpt(p) && qty > 1;
+  /** התקרה של הסטפר: במוצר עם כמה אפשרויות — סך הכל, כי כל יחידה יכולה להיות אחרת */
+  const stepMax = (p: PublicProduct) => (multiOpt(p) ? maxQty(p) : maxQtyFor(p, choice));
+  /** שינוי כמות: במוצר עם כמה אפשרויות, היחידות החדשות מקבלות את הבחירה האחרונה */
+  function changeQty(p: PublicProduct, next: number) {
+    const n = Math.max(1, Math.min(stepMax(p), next));
+    setQty(n);
+    if (!multiOpt(p)) return;
+    setPicks((prev) => {
+      const base = prev.length ? prev : [choice];
+      const out = base.slice(0, n);
+      while (out.length < n) out.push(out[out.length - 1] ?? choice);
+      if (n === 1) setChoice(out[0] ?? null);
+      return out;
+    });
+  }
+  /** כמה יחידות אחרות כבר בחרו את האפשרות הזו (לבדיקת המלאי שלה) */
+  const pickedElsewhere = (o: string, i: number) => picks.filter((x, j) => j !== i && x === o).length;
 
   function openProduct(p: PublicProduct) {
     const t = stat.current;
@@ -422,6 +479,7 @@ export default function StoreView({
     }
     setCurrent(p);
     setQty(1);
+    setPicks([]);
     // "נוסף לסל" מהמוצר הקודם לא נשאר לרחף מעל הכמות של המוצר הזה
     setToast("");
     // בחירה יחידה נבחרת מראש — אין מה להחליט
@@ -448,6 +506,15 @@ export default function StoreView({
 
   function addToCart() {
     if (!current || locked(current)) return;
+    if (perUnit(current)) {
+      const counts = new Map<string, number>();
+      for (const o of picks) if (o) counts.set(o, (counts.get(o) ?? 0) + 1);
+      for (const [o, n] of counts) addLine(current, n, o);
+      setCurrent(null);
+      setChoice(null);
+      setPicks([]);
+      return;
+    }
     addLine(current, qty, choice ?? undefined);
     setCurrent(null);
     setChoice(null);
@@ -512,16 +579,18 @@ export default function StoreView({
       return;
     }
     const shipping = store.ships && wantsShipping;
-    if (shipping && (shipStreet.trim().length < 2 || shipCity.trim().length < 2)) {
-      showToast("למשלוח צריך עיר ורחוב");
+    if (shipping && buyerName.trim().split(/\s+/).length < 2) {
+      showToast("למשלוח צריך שם ושם משפחה");
       return;
     }
-    // סוג הבית נגזר ממה שמילאו: קומה או דירה = בניין (ואז צריך את שתיהן)
-    const homeType: "building" | "private" | null = shipping
-      ? shipFloor.trim() || shipApartment.trim() ? "building" : "private"
-      : null;
+    if (shipping && (shipStreet.trim().length < 2 || shipCity.trim().length < 2)) {
+      showToast("למשלוח צריך עיר וכתובת");
+      return;
+    }
+    // בבניין: דירה וקומה חובה. בבית פרטי מסמנים "בית פרטי".
+    const homeType: "building" | "private" | null = shipping ? (privateHouse ? "private" : "building") : null;
     if (shipping && homeType === "building" && (!shipFloor.trim() || !shipApartment.trim())) {
-      showToast("בבניין צריך גם קומה וגם מספר דירה");
+      showToast("צריך מספר דירה וקומה (או לסמן \"בית פרטי\")");
       return;
     }
     // הנוסח המלא לתצוגה אצל המוכרת + הפירוק המובנה
@@ -645,6 +714,7 @@ export default function StoreView({
       setShipFloor("");
       setShipApartment("");
       setShipEntryCode("");
+      setPrivateHouse(false);
       setWantsShipping(true);
       setOrderOpen(false);
       /* שיחת תשלום: הודעה קצרה וממוקדת — לא ההזמנה כולה, רק "בואי
@@ -1216,7 +1286,49 @@ export default function StoreView({
               (מרינה, 11.2026: "שורה אחד ליד השני" — ארבע קופסאות ענק אחת
               מתחת לשנייה דחפו את הכפתור מחוץ למסך). אפשרות שאזלה מסומנת
               ולא נבחרת; כשנשארו מעט — כתוב כמה. */}
-          {current.options && current.options.length > 0 && (
+          {current.options && current.options.length > 0 && perUnit(current) && (
+            <div className="border-t border-current/10 pt-3.5 flex flex-col gap-2.5" data-testid="option-rows">
+              <div className="text-[13px] font-bold text-center opacity-80">
+                {safeOptionLabel(current.option_label)} לכל אחד
+              </div>
+              {picks.map((pk, i) => (
+                <div key={i} className="flex items-center gap-2.5" role="group" aria-label={`${safeOptionLabel(current.option_label)} ליחידה ${i + 1}`}>
+                  <span className="w-5 shrink-0 text-center text-[13px] font-bold tabular-nums opacity-60">{i + 1}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {current.options!.map((o) => {
+                      const on = pk === o;
+                      const left = optionLeft(current, o);
+                      const out = left !== null && pickedElsewhere(o, i) >= left;
+                      return (
+                        <button
+                          key={o}
+                          onClick={() => {
+                            if (out) return;
+                            setPicks((prev) => prev.map((x, j) => (j === i ? o : x)));
+                          }}
+                          aria-pressed={on}
+                          aria-disabled={out}
+                          aria-label={`יחידה ${i + 1}: ${o}${out ? " (אזל)" : ""}`}
+                          data-testid="unit-option-chip"
+                          className="s-r min-h-10 px-3 py-1.5 border-2 text-[13.5px] leading-tight transition"
+                          style={{
+                            background: on ? "color-mix(in srgb, var(--s-primary) 12%, var(--s-surface))" : "var(--s-surface)",
+                            borderColor: on ? "var(--s-primary)" : "color-mix(in srgb, currentColor 30%, transparent)",
+                            color: "var(--s-ink)",
+                            fontWeight: on ? 700 : 500,
+                            opacity: out ? 0.4 : 1,
+                          }}
+                        >
+                          <span className={out ? "line-through" : ""}>{o}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {current.options && current.options.length > 0 && !perUnit(current) && (
             <div className="border-t border-current/10 pt-3.5" data-testid="option-picker">
               <div className="text-[13px] font-bold text-center mb-2.5 opacity-80">
                 {safeOptionLabel(current.option_label)}
@@ -1274,13 +1386,16 @@ export default function StoreView({
               (מרינה, 11.2026: "למה הכפתורים פה לא באותו גובה"). המחיר על
               הכפתור הוא הסכום אחרי המבצע — רואים מה מוסיפים לפני שמוסיפים. */}
           {(() => {
-            const canAdd = !(preview || locked(current) || maxQty(current) === 0 || (!!current.options?.length && !choice) || (!!choice && maxQtyFor(current, choice) === 0));
+            const unitsOk = perUnit(current) && picks.length === qty && picks.every(Boolean);
+            const canAdd = !(preview || locked(current) || maxQty(current) === 0) && (
+              perUnit(current) ? unitsOk : !((!!current.options?.length && !choice) || (!!choice && maxQtyFor(current, choice) === 0))
+            );
             // מה זה מוסיף לסכום בפועל: אם יש כבר אחד בסל ומבצע "2 ב-", השני זול יותר
             const had = inCart(current.id);
             const lineTotal = dealTotal(current.price, had + qty, current.deal) - dealTotal(current.price, had, current.deal);
             return (
           <div className="sticky bottom-0 -mx-gutter px-gutter pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-stretch gap-2.5 border-t border-current/10" style={{ background: "var(--s-surface)" }}>
-          {canAdd && maxQtyFor(current, choice) > 1 && (
+          {(canAdd || perUnit(current)) && stepMax(current) > 1 && (
             <div
               role="group"
               aria-label="כמות"
@@ -1289,7 +1404,7 @@ export default function StoreView({
               data-testid="qty-stepper"
             >
               <button
-                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                onClick={() => changeQty(current, qty - 1)}
                 disabled={qty <= 1}
                 aria-label="פחות"
                 className="w-11 grid place-items-center text-[20px] leading-none disabled:opacity-25"
@@ -1300,8 +1415,8 @@ export default function StoreView({
                 {qty}
               </span>
               <button
-                onClick={() => setQty((q) => Math.min(maxQtyFor(current, choice), q + 1))}
-                disabled={qty >= maxQtyFor(current, choice)}
+                onClick={() => changeQty(current, qty + 1)}
+                disabled={qty >= stepMax(current)}
                 aria-label="עוד"
                 className="w-11 grid place-items-center text-[20px] leading-none disabled:opacity-25"
               >
@@ -1327,6 +1442,8 @@ export default function StoreView({
                 ? <><Icon name="lock" size={16} tone="none" className="inline-block align-[-3px] me-1" />עוד לא נפתח</>
                 : maxQty(current) === 0
                 ? "אין יותר במלאי"
+                : perUnit(current)
+                  ? `בוחרים ${safeOptionLabel(current.option_label)} לכל אחד`
                 : current.options?.length && !choice
                   ? `קודם בוחרים ${safeOptionLabel(current.option_label)}`
                   : choice && maxQtyFor(current, choice) === 0
@@ -1551,81 +1668,9 @@ export default function StoreView({
                     sub: [store.shipping_note || "עד הבית", typeof store.shipping_price === "number" ? `₪${formatPrice(store.shipping_price)}` : ""]
                       .filter(Boolean).join(" · "),
                   },
-                  { key: "pickup", title: "מסירה אישית", sub: "קובעים עם בעלי הדוכן איפה ומתי" },
+                  { key: "pickup", title: "איסוף מהדוכן", sub: "הכתובת תינתן בהזמנה" },
                 ]}
               />
-              {/* כתובת — טופס רגיל: עיר, רחוב, ואם גרים בבניין גם קומה ודירה.
-                  קודם היו כאן כפתורי "בניין / בית פרטי" בלי כותרת, ומרינה:
-                  "זה לא התנהגות נורמלית ומבלבלת". עכשיו סוג הבית נגזר ממה שמילאו. */}
-              {wantsShipping && (
-                <div className="mt-5 flex flex-col gap-4" data-testid="ship-address">
-                  <h3 className="text-[13.5px] font-bold">לאן לשלוח?</h3>
-                  <label className="block">
-                    <span className="block text-[12px] opacity-75 mb-1.5">עיר *</span>
-                    <input
-                      value={shipCity}
-                      onChange={(e) => setShipCity(e.target.value)}
-                      placeholder="למשל: רמת גן"
-                      aria-label="עיר למשלוח"
-                      autoComplete="address-level2"
-                      maxLength={40}
-                      className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="block text-[12px] opacity-75 mb-1.5">רחוב ומספר בית *</span>
-                    <input
-                      value={shipStreet}
-                      onChange={(e) => setShipStreet(e.target.value)}
-                      placeholder="למשל: הרצל 12"
-                      aria-label="רחוב למשלוח"
-                      autoComplete="address-line1"
-                      maxLength={80}
-                      className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
-                    />
-                  </label>
-                  <div>
-                    <span className="block text-[12px] opacity-75 mb-1.5">גרים בבניין? ממלאים גם קומה ודירה (בבית פרטי — משאירים ריק)</span>
-                    <div className="flex gap-3">
-                      <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-75 mb-1">קומה</span>
-                        <input
-                          value={shipFloor}
-                          onChange={(e) => setShipFloor(e.target.value)}
-                          placeholder="3"
-                          aria-label="קומה"
-                          inputMode="numeric"
-                          maxLength={6}
-                          className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
-                        />
-                      </label>
-                      <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-75 mb-1">דירה</span>
-                        <input
-                          value={shipApartment}
-                          onChange={(e) => setShipApartment(e.target.value)}
-                          placeholder="8"
-                          aria-label="מספר דירה"
-                          inputMode="numeric"
-                          maxLength={6}
-                          className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
-                        />
-                      </label>
-                      <label className="flex-1 min-w-0 block">
-                        <span className="block text-[11.5px] opacity-75 mb-1">קוד כניסה</span>
-                        <input
-                          value={shipEntryCode}
-                          onChange={(e) => setShipEntryCode(e.target.value)}
-                          placeholder="אם יש"
-                          aria-label="קוד כניסה"
-                          maxLength={12}
-                          className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
             </section>
           )}
 
@@ -1636,13 +1681,14 @@ export default function StoreView({
             <div className="flex flex-col gap-4">
               <div className="flex gap-3">
                 <label className="flex-1 min-w-0 block">
-                  <span className="block text-[11.5px] opacity-75 mb-1.5">איך קוראים לך? *</span>
+                  <span className="block text-[11.5px] opacity-75 mb-1.5">{store.ships && wantsShipping ? "שם ושם משפחה *" : "איך קוראים לך? *"}</span>
                   <input
                     value={buyerName}
                     onChange={(e) => setBuyerName(e.target.value)}
-                    placeholder="שם פרטי"
-                    aria-label="השם שלך"
-                    maxLength={24}
+                    placeholder={store.ships && wantsShipping ? "שם ושם משפחה" : "שם פרטי"}
+                    aria-label={store.ships && wantsShipping ? "שם ושם משפחה" : "השם שלך"}
+                    autoComplete={store.ships && wantsShipping ? "name" : "given-name"}
+                    maxLength={40}
                     className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
                   />
                 </label>
@@ -1659,8 +1705,74 @@ export default function StoreView({
                   />
                 </label>
               </div>
+              {/* לקוחה, 11.2026: במשלוח ממלאים — שם ושם משפחה, טלפון, עיר,
+                  כתובת, מספר דירה + קומה, הערות (לא חובה). בבית פרטי מסמנים
+                  "בית פרטי" ואין צורך בדירה וקומה. */}
+              {store.ships && wantsShipping && (
+                <div className="flex flex-col gap-4" data-testid="ship-address">
+                  <label className="block">
+                    <span className="block text-[11.5px] opacity-75 mb-1.5">עיר *</span>
+                    <input
+                      value={shipCity}
+                      onChange={(e) => setShipCity(e.target.value)}
+                      placeholder="למשל: רמת גן"
+                      aria-label="עיר למשלוח"
+                      autoComplete="address-level2"
+                      maxLength={40}
+                      className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="block text-[11.5px] opacity-75 mb-1.5">כתובת (רחוב ומספר בית) *</span>
+                    <input
+                      value={shipStreet}
+                      onChange={(e) => setShipStreet(e.target.value)}
+                      placeholder="למשל: הרצל 12"
+                      aria-label="כתובת למשלוח"
+                      autoComplete="address-line1"
+                      maxLength={80}
+                      className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                    />
+                  </label>
+                  <div>
+                    <span className="block text-[11.5px] opacity-75 mb-1.5">מספר דירה + קומה {privateHouse ? "" : "*"}</span>
+                    <div className="flex gap-3">
+                      <input
+                        value={shipApartment}
+                        onChange={(e) => setShipApartment(e.target.value)}
+                        placeholder="דירה"
+                        aria-label="מספר דירה"
+                        inputMode="numeric"
+                        maxLength={6}
+                        disabled={privateHouse}
+                        className="flex-1 min-w-0 border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px] disabled:opacity-40"
+                      />
+                      <input
+                        value={shipFloor}
+                        onChange={(e) => setShipFloor(e.target.value)}
+                        placeholder="קומה"
+                        aria-label="קומה"
+                        inputMode="numeric"
+                        maxLength={6}
+                        disabled={privateHouse}
+                        className="flex-1 min-w-0 border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px] disabled:opacity-40"
+                      />
+                    </div>
+                    <label className="mt-2 inline-flex items-center gap-2 text-[12.5px] min-h-11">
+                      <input
+                        type="checkbox"
+                        checked={privateHouse}
+                        onChange={(e) => setPrivateHouse(e.target.checked)}
+                        className="w-5 h-5"
+                        data-testid="private-house"
+                      />
+                      בית פרטי (אין דירה וקומה)
+                    </label>
+                  </div>
+                </div>
+              )}
               <label className="block">
-                <span className="block text-[11.5px] opacity-75 mb-1.5">הערה לבעלי הדוכן (לא חובה)</span>
+                <span className="block text-[11.5px] opacity-75 mb-1.5">{store.ships && wantsShipping ? "הערות נוספות (לא חובה)" : "הערה לבעלי הדוכן (לא חובה)"}</span>
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}

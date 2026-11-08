@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
-  const name = buyerName?.trim().replace(/\s+/g, " ").slice(0, 24) ?? "";
+  const name = buyerName?.trim().replace(/\s+/g, " ").slice(0, 40) ?? "";
 
   const db = supabaseAdmin();
 
