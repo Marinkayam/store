@@ -250,14 +250,19 @@ export default function NewCollection() {
       return;
     }
     /* קליל כמו גיף: ריבוע, בלי פסקול, ~1MB במקום 20. לוקח כאורך
-       הסרטון, ולכן אומרים מה קורה. אם הדפדפן לא מסוגל — המקור עולה. */
+       הסרטון, ולכן אומרים מה קורה. אם הדפדפן לא מסוגל — לא מעלים את
+       המקור (יש בו קול ונתוני מיקום), אלא אומרים לנסות סרטון אחר. */
     setPrepNote("מכינים את הסרטון… כמה שניות");
     const light = await gifVideo(file).catch(() => null);
     setPrepNote("");
+    if (!light) {
+      setPhotoErr("הדפדפן הזה לא מצליח להכין את הסרטון. אפשר לנסות סרטון אחר");
+      return;
+    }
     const id = `v${++videoSeq}`;
-    draftVideos.set(id, light ?? file);
+    draftVideos.set(id, light);
     // פוסטר מיידי, כדי שהכרטיס לא יהיה ריבוע שחור בזמן הבנייה
-    const poster = await posterFrom(URL.createObjectURL(light ?? file));
+    const poster = await posterFrom(URL.createObjectURL(light));
     const reader = new FileReader();
     reader.onload = () => {
       setEditing((e) => (e ? { ...e, videoId: id, imageData: reader.result as string } : e));

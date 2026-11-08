@@ -26,13 +26,19 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
   const [justInvited, setJustInvited] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const r = await fetch(`/api/team?storeId=${store.id}`, { cache: "no-store" });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      setError(d.error ?? "לא הצלחנו לטעון את הצוות. אפשר לרענן ולנסות שוב");
-      return;
+    // בלי catch, בלי אינטרנט המקטע נתקע על "רגע…" לתמיד
+    try {
+      const r = await fetch(`/api/team?storeId=${store.id}`, { cache: "no-store" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setError(d.error ?? "לא הצלחנו לטעון את הצוות. אפשר לרענן ולנסות שוב");
+        return;
+      }
+      setError("");
+      setTeam(d);
+    } catch {
+      setError("אין חיבור לאינטרנט. אפשר לרענן ולנסות שוב");
     }
-    setTeam(d);
   }, [store.id]);
 
   useEffect(() => {
@@ -56,6 +62,9 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
       if (ok) onToast(ok);
       await load();
       return d;
+    } catch {
+      onToast("אין חיבור לאינטרנט. אפשר לנסות שוב");
+      return null;
     } finally {
       setBusy(false);
     }

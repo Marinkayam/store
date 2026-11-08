@@ -126,9 +126,11 @@ export async function POST(req: NextRequest) {
      שבודקת את המוצר שלה עשרים פעם ביום. בעלת דוכן ומספר שסומן פטור
      כבר עוקפים את המכסה היומית — הם עוקפים גם את זו, אחרת "אל תגביל
      אותי בכניסות" נשאר חצי נכון. */
-  if (!owner && !trusted && recent
-      && now - new Date(recent.created_at).getTime() < RESEND_SECONDS * 1000) {
-    const wait = Math.ceil((RESEND_SECONDS * 1000 - (now - new Date(recent.created_at).getTime())) / 1000);
+  /* 11.2026: גם מנהלת ומספר פטור מחכים — המתנה קצרה יותר, אבל לא אפס.
+     בלי שום המתנה אפשר היה לבקש קודים בלי סוף ולנחש כל אחד מהם. */
+  const resendSeconds = owner || trusted ? 20 : RESEND_SECONDS;
+  if (recent && now - new Date(recent.created_at).getTime() < resendSeconds * 1000) {
+    const wait = Math.ceil((resendSeconds * 1000 - (now - new Date(recent.created_at).getTime())) / 1000);
     await logLoginEvent(req, { phone, kind: "resend_wait", detail: `${wait} שניות` });
     return NextResponse.json({ error: `כבר שלחנו קוד. אפשר לבקש שוב בעוד ${wait} שניות` }, { status: 429 });
   }

@@ -145,7 +145,11 @@ export async function POST(
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
-    if (existingStore?.owner_id) {
+    // רק חשבון ותיק במייל שעוד לא קשור למספר (ראו אימות הסמס)
+    const { data: ownerHasPhone } = existingStore?.owner_id
+      ? await db.from("phone_accounts").select("phone").eq("user_id", existingStore.owner_id).limit(1).maybeSingle()
+      : { data: null };
+    if (existingStore?.owner_id && !ownerHasPhone) {
       userId = existingStore.owner_id;
     } else {
       const { data: created, error: createErr } = await db.auth.admin.createUser({

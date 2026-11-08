@@ -63,6 +63,17 @@ export async function POST(req: Request) {
 
   const otherId = mine ? p.receiver_user_id : p.sender_user_id;
 
+  // חשבון מושעה (משני הצדדים) לא מקבל ולא מוסר מספר טלפון
+  const { data: suspended } = await db
+    .from("squish_profiles")
+    .select("user_id")
+    .in("user_id", [user.id, otherId])
+    .not("suspended_at", "is", null)
+    .limit(1);
+  if (suspended?.length) {
+    return NextResponse.json({ error: "הטרייד הזה לא זמין" }, { status: 409 });
+  }
+
   // המספר הוא זה שאומת בסמס בחשבון דוכן — אין מספר נפרד לסקוויש
   const { data: acct } = await db
     .from("phone_accounts")

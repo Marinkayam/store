@@ -51,6 +51,16 @@ export async function POST(req: NextRequest) {
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
+  // בקשה שנבנתה ביד (שדה שאינו טקסט, פריט ריק) מקבלת 400 ולא קורסת ל-500
+  const optStr = (v: unknown) => v === undefined || v === null || typeof v === "string";
+  if (
+    typeof slug !== "string" ||
+    !items.every((i) => i && typeof i === "object" && typeof i.productId === "string") ||
+    ![note, buyerPhone, buyerName, shipAddress, shipCity, payMethod, couponCode].every(optStr) ||
+    (shipDetails !== undefined && shipDetails !== null && typeof shipDetails !== "object")
+  ) {
+    return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
+  }
   const name = buyerName?.trim().replace(/\s+/g, " ").slice(0, 24) ?? "";
 
   const db = supabaseAdmin();
@@ -79,7 +89,13 @@ export async function POST(req: NextRequest) {
     drop_at?: string | null; is_mystery?: boolean | null; deal?: unknown; option_stock?: unknown;
   };
   const readProducts = (cols: string) =>
-    db.from("products").select(cols).eq("store_id", store.id).in("id", ids).is("deleted_at", null);
+    db
+      .from("products")
+      .select(cols)
+      .eq("store_id", store.id)
+      .in("id", ids)
+      .is("deleted_at", null)
+      .or("is_visible.is.null,is_visible.eq.true"); // מוצר שהוסתר בחמ"ל לא ניתן להזמנה
   // דרופ ושקית הפתעה (0056). אם הקוד עלה לפני המיגרציה — בלי השדות האלה,
   // ולא הזמנה שנופלת (ראה ההסבר על p_buyer_phone למטה)
   // מבצעים (0064) בשכבה משלהם — עמודה חסרה מורידה רק את המבצע

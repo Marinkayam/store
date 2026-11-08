@@ -121,14 +121,19 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
   async function disable() {
     if (!mine) return;
     setBusy("off");
-    await fetch("/api/push", {
+    const res = await fetch("/api/push", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ storeId, endpoint: mine }),
-    }).catch(() => {});
+    }).catch(() => null);
+    setBusy("");
+    // אם השרת לא אישר, ההתראות עדיין דולקות: לא אומרים "כבויות"
+    if (!res?.ok) {
+      setMsg("לא הצלחנו לכבות את ההתראות. אפשר לנסות שוב");
+      return;
+    }
     // לא מבטלים את המנוי בדפדפן: אותו מכשיר אולי מקבל התראות מדוכן אחר
     setMine(null);
-    setBusy("");
     setMsg("ההתראות כבויות בטלפון הזה");
   }
 

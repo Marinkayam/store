@@ -113,6 +113,7 @@ export async function DELETE(req: NextRequest) {
     .from("store_push_subscriptions")
     .update({ disabled_at: new Date().toISOString() })
     .eq("store_id", w.storeId)
-    .eq("endpoint", endpoint);
+    .eq("endpoint", endpoint)
+    .eq("user_id", w.user.id); // שותף/ה לא מכבה את המכשירים של ראש הדוכן
   return NextResponse.json({ ok: true });
 }

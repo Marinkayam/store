@@ -102,6 +102,11 @@ export default function Onboarding() {
   const [photoErr, setPhotoErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ slug: string } | null>(null);
+  /* הדוכן כבר נוצר אבל המוצר הראשון לא נשמר: "לנסות שוב" ממשיך מכאן,
+     בלי לפתוח דוכן שני ובלי לבקש קוד שוב. */
+  const [created, setCreated] = useState<{ storeId: string; slug: string } | null>(null);
+  /** מוצרים מהטיוטה שכבר נשמרו (לפי מקום), כדי שניסיון חוזר לא ישכפל אותם */
+  const savedProducts = useRef(new Set<number>());
   const productRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setDraft(loadDraft()), []);
@@ -139,61 +144,86 @@ export default function Onboarding() {
     setErr("");
     setBusy(true);
     try {
-      const res = await fetch("/api/stores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          displayName: draft!.displayName,
-          tagline: draft!.tagline.trim() || undefined,
-          theme: draft!.theme,
-          coverPreset: draft!.cover,
-          parentAware: draft!.parentAware,
-          ref: draft!.ref,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setErr(data.error ?? "משהו השתבש. אפשר לנסות שוב.");
-        return;
-      }
+      let data: { storeId: string; slug: string };
+      if (created) {
+        data = created;
+      } else {
+        const res = await fetch("/api/stores", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            displayName: draft!.displayName,
+            tagline: draft!.tagline.trim() || undefined,
+            theme: draft!.theme,
+            coverPreset: draft!.cover,
+            parentAware: draft!.parentAware,
+            ref: draft!.ref,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) {
+          setErr(body.error ?? "משהו השתבש. אפשר לנסות שוב.");
+          return;
+        }
+        data = body;
+        setCreated({ storeId: body.storeId, slug: body.slug });
 
-      // התמונה עולה אחרי שיש דוכן. כישלון כאן לא חוסם — אפשר להעלות שוב.
-      if (draft!.avatarData) {
-        try {
-          const blob = await (await fetch(draft!.avatarData)).blob();
-          const up = await fetch("/api/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ kind: "avatar", contentType: blob.type, bytes: blob.size, storeId: data.storeId }),
-          });
-          if (up.ok) {
-            const { url, key } = await up.json();
-            const put = await fetch(url, { method: "PUT", headers: { "Content-Type": blob.type }, body: blob });
-            if (put.ok) await supabaseBrowser().from("stores").update({ avatar_key: key }).eq("id", data.storeId);
-          }
-        } catch {}
+        // התמונה עולה אחרי שיש דוכן. כישלון כאן לא חוסם — אפשר להעלות שוב.
+        if (draft!.avatarData) {
+          try {
+            const blob = await (await fetch(draft!.avatarData)).blob();
+            const up = await fetch("/api/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ kind: "avatar", contentType: blob.type, bytes: blob.size, storeId: data.storeId }),
+            });
+            if (up.ok) {
+              const { url, key } = await up.json();
+              const put = await fetch(url, { method: "PUT", headers: { "Content-Type": blob.type }, body: blob });
+              if (put.ok) await supabaseBrowser().from("stores").update({ avatar_key: key }).eq("id", data.storeId);
+            }
+          } catch {}
+        }
       }
 
       // המוצרים שנוספו לפני שהיה חשבון. עכשיו יש storeId, אז אפשר להעלות
-      // את התמונות וליצור אותם. מוצר שנכשל לא עוצר את השאר.
-      for (const pr of draft!.products.filter((x) => x.name.trim())) {
+      // את התמונות וליצור אותם. מוצר שנכשל לא עוצר את השאר, אבל אז לא
+      // מראים "נפתח דוכן" כאילו הכל בסדר: הטיוטה נשארת ויש "לנסות שוב".
+      let productFailed = "";
+      for (const [i, pr] of draft!.products.entries()) {
+        if (!pr.name.trim() || savedProducts.current.has(i)) continue;
         try {
           let imageKey: string | null = null;
           if (pr.imageData) {
             const blob = await (await fetch(pr.imageData)).blob();
             const up = await uploadBlob("image", blob, data.storeId);
-            if (!("error" in up)) imageKey = up.key;
+            if ("error" in up) {
+              productFailed = "הדוכן נפתח, אבל התמונה של המוצר לא עלתה. אפשר לנסות שוב.";
+              continue;
+            }
+            imageKey = up.key;
           }
-          await supabaseBrowser().from("products").insert({
+          const { error } = await supabaseBrowser().from("products").insert({
             store_id: data.storeId,
             name: pr.name.trim().slice(0, 40) || "מוצר",
             price: parsePrice(pr.price) ?? 0,
             image_key: imageKey,
             stock: 1,
           });
+          if (error) {
+            console.error("[onboarding] draft product failed:", error.message);
+            productFailed = "הדוכן נפתח, אבל המוצר לא נשמר. אפשר לנסות שוב.";
+            continue;
+          }
+          savedProducts.current.add(i);
         } catch (e) {
           console.error("[onboarding] draft product failed:", e);
+          productFailed = "הדוכן נפתח, אבל המוצר לא נשמר. אפשר לנסות שוב.";
         }
+      }
+      if (productFailed) {
+        setErr(productFailed);
+        return;
       }
 
       sessionStorage.removeItem("duchan-draft");
@@ -417,6 +447,10 @@ export default function Onboarding() {
         <div className="w-full flex flex-col gap-3">
           {busy ? (
             <p className="text-sm text-center py-10">פותחים את הדוכן…</p>
+          ) : created ? (
+            <button onClick={save} data-testid="ob-retry" className="btn btn-primary">
+              לנסות שוב
+            </button>
           ) : (
             <PhoneVerify
               title="המספר שלך"

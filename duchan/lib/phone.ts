@@ -6,7 +6,8 @@ export function normalizePhone(raw: string): string | null {
   const digits = raw.replace(/\D/g, "");
   if (!digits) return null;
 
-  let d = digits;
+  // 00972 היא קידומת חיוג בינלאומית, בדיוק כמו +972
+  let d = digits.startsWith("00972") ? digits.slice(2) : digits;
   if (d.startsWith("972")) {
     d = d.slice(3);
     if (d.startsWith("0")) d = d.slice(1);

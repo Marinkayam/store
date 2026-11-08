@@ -33,7 +33,13 @@ export async function POST(req: NextRequest) {
 
   const ids = body.items.map((i) => i.productId);
   const read = (cols: string) =>
-    db.from("products").select(cols).eq("store_id", store.id).in("id", ids).is("deleted_at", null);
+    db
+      .from("products")
+      .select(cols)
+      .eq("store_id", store.id)
+      .in("id", ids)
+      .is("deleted_at", null)
+      .or("is_visible.is.null,is_visible.eq.true");
   // מבצעים (0064) — הקופון חל על הסכום *אחרי* המבצע, כמו בהזמנה עצמה
   let { data: products, error } = await read("id, price, deal");
   if (error) ({ data: products } = await read("id, price"));

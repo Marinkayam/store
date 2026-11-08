@@ -10,6 +10,7 @@ import {
   squareImage,
   posterFrom,
   validateGalleryVideo,
+  gifVideo,
   startRecording,
   openCamera,
   mediaUrl,
@@ -210,6 +211,21 @@ export default function ProductsPage() {
   const handleRef = useRef<RecorderHandle | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef(0);
+  /** עולה בכל פתיחה וסגירה של המצלמה: מצלמה שנפתחה אחרי שכבר סגרו נכבית מיד */
+  const recSession = useRef(0);
+  // יציאה מהדף בזמן שהמצלמה פתוחה: מכבים אותה, אחרת הנורית נשארת דולקת
+  useEffect(
+    () => () => {
+      recSession.current++;
+      handleRef.current?.cancel();
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      cancelAnimationFrame(rafRef.current);
+    },
+    []
+  );
+  /** סרטון מהגלריה בהכנה (בלי פסקול): השמירה מחכה לו */
+  const [videoPrep, setVideoPrep] = useState(false);
 
   const photoRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -320,7 +336,9 @@ export default function ProductsPage() {
     if (autoOpened || !store) return;
     if (new URLSearchParams(window.location.search).get("new") !== "1") return;
     setAutoOpened(true);
-    setEdit({ ...EMPTY_EDIT });
+    const fresh = { ...EMPTY_EDIT };
+    editBase.current = fresh;
+    setEdit(fresh);
     window.history.replaceState({}, "", "/dashboard/products");
   }, [store, autoOpened]);
 
@@ -358,8 +376,32 @@ export default function ProductsPage() {
     saveCategories([...(store?.categories ?? []), ...parts]);
   }
 
-  /* ---------- טיוטות ---------- */
-  const draftKey = (id: string | null) => `duchan-product-draft-${id ?? "new"}`;
+  /* ---------- טיוטות ----------
+     טיוטה נכתבת רק אחרי שינוי אמיתי, ולא שומרת מלאי: המלאי תמיד מה-DB
+     (הזמנה ששולמה בינתיים מורידה אותו, וטיוטה ישנה הייתה מחזירה אותו).
+     מוצר חדש: המפתח כולל את הדוכן, כדי שטיוטה לא תעבור מדוכן לדוכן. */
+  const draftKey = (id: string | null) => `duchan-product-draft-${id ?? `new-${store?.id ?? ""}`}`;
+  const draftJson = (e: EditState) =>
+    JSON.stringify({ name: e.name, description: e.description, price: e.price, optionKind: e.optionKind, optionList: e.optionList });
+  /** העורך כפי שנפתח מה-DB (או מהרעיון), לפני טיוטה: מולו בודקים אם השתנה משהו */
+  const editBase = useRef<EditState | null>(null);
+  const editSnap = (e: EditState) =>
+    JSON.stringify({ ...e, pendingImage: null, pendingVideo: null, pendingPoster: null, pendingImageRaw: null, previewUrl: null, previewIsVideo: null, imagePos: null });
+  const hasUnsaved = (e: EditState) =>
+    !!(e.pendingImage || e.pendingVideo) || videoPrep || !editBase.current || editSnap(e) !== editSnap(editBase.current);
+
+  /** סגירה ב-X או בלחיצה על הרקע. שינויים או תמונה שלא נשמרו: שואלים קודם. */
+  function closeEditor() {
+    if (!edit) return;
+    if (hasUnsaved(edit)) {
+      if (!window.confirm("לצאת בלי לשמור?")) return;
+    } else {
+      try {
+        localStorage.removeItem(draftKey(edit.id));
+      } catch {}
+    }
+    setEdit(null);
+  }
 
   function openEditor(p: Product | null, idea?: { name: string; price: string }) {
     setCatDraft(null);
@@ -400,23 +442,31 @@ export default function ProductsPage() {
     } else {
       base = { ...EMPTY_EDIT, ...(idea ?? {}) };
     }
-    // שחזור טיוטה אם יש
+    editBase.current = base;
+    // שחזור טיוטה אם יש. טיוטה ריקה לא דורסת כלום (גם לא שם של רעיון),
+    // ומלאי (perOption, optionCounts, stock) לא משוחזר אף פעם: הוא תמיד מה-DB.
     try {
       const raw = localStorage.getItem(draftKey(p?.id ?? null));
-      if (raw) {
-        const d = JSON.parse(raw);
+      const d = raw ? JSON.parse(raw) : null;
+      const list: string[] | null =
+        Array.isArray(d?.optionList) && d.optionList.every((o: unknown) => typeof o === "string") ? d.optionList : null;
+      const empty = !d || (!d.name && !d.description && !d.price && !list?.some((o) => o.trim()));
+      if (!empty) {
+        const from = base;
+        const optionList = list ?? from.optionList;
         base = {
-          ...base,
-          name: d.name ?? base.name,
-          description: d.description ?? base.description,
-          price: d.price ?? base.price,
-          optionKind: d.optionKind ?? base.optionKind,
-          optionList: d.optionList ?? base.optionList,
-          perOption: d.perOption ?? base.perOption,
-          optionCounts:
-            Array.isArray(d.optionCounts) && d.optionCounts.length === (d.optionList ?? base.optionList).length
-              ? d.optionCounts
-              : (d.optionList ?? base.optionList).map((_: string, i: number) => base.optionCounts[i] ?? 0),
+          ...from,
+          name: d.name || from.name,
+          description: d.description ?? from.description,
+          price: d.price || from.price,
+          optionKind: d.optionKind ?? from.optionKind,
+          optionList,
+          // הכמות לכל אפשרות לפי השם, מה-DB. אפשרות שקיימת רק בטיוטה מתחילה
+          // ב-1, כמו אפשרות שמוסיפים עכשיו בעורך.
+          optionCounts: optionList.map((o) => {
+            const j = from.optionList.indexOf(o);
+            return j >= 0 ? from.optionCounts[j] ?? 0 : 1;
+          }),
         };
       }
     } catch {}
@@ -425,18 +475,11 @@ export default function ProductsPage() {
 
   useEffect(() => {
     if (!edit) return;
-    localStorage.setItem(
-      draftKey(edit.id),
-      JSON.stringify({
-        name: edit.name,
-        description: edit.description,
-        price: edit.price,
-        optionKind: edit.optionKind,
-        optionList: edit.optionList,
-        perOption: edit.perOption,
-        optionCounts: edit.optionCounts,
-      })
-    );
+    try {
+      // רק אחרי שינוי אמיתי. חזרה בדיוק למה שהיה מוחקת את הטיוטה.
+      if (editBase.current && draftJson(edit) === draftJson(editBase.current)) localStorage.removeItem(draftKey(edit.id));
+      else localStorage.setItem(draftKey(edit.id), draftJson(edit));
+    } catch {}
   }, [edit]);
 
   /* ---------- מדיה ---------- */
@@ -504,12 +547,23 @@ export default function ProductsPage() {
       showToast(check.reason);
       return;
     }
-    const url = URL.createObjectURL(file);
+    /* מקודדים מחדש בלי פסקול ובלי מטא-דאטה (audio: false, CLAUDE.md §9).
+       המקור לא עולה אף פעם: הוא כולל את הקולות של הבית. */
+    setVideoPrep(true);
+    setToast("מכינים את הסרטון… כמה שניות");
+    const light = await gifVideo(file).catch(() => null);
+    setVideoPrep(false);
+    setToast("");
+    if (!light) {
+      showToast("הדפדפן הזה לא מצליח להכין את הסרטון. אפשר לצלם סרטון עם \"לצלם\"");
+      return;
+    }
+    const url = URL.createObjectURL(light);
     const poster = await posterFrom(url);
     setEdit((e) =>
       e && {
         ...e,
-        pendingVideo: file,
+        pendingVideo: light,
         pendingPoster: poster,
         pendingImage: null,
         imageKey: null,
@@ -521,20 +575,28 @@ export default function ProductsPage() {
 
   async function openRecorder() {
     setRecOpen(true);
+    const session = ++recSession.current;
     try {
       const stream = await openCamera();
+      // נסגר (או שיצאו מהדף) לפני שהמצלמה הספיקה להיפתח
+      if (session !== recSession.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
     } catch (e) {
+      if (session !== recSession.current) return;
       showToast(e instanceof MediaError ? e.message : "אין גישה למצלמה. אפשר לבחור 'וידאו מהגלריה'");
       setRecOpen(false);
     }
   }
 
   function closeRecorder() {
+    recSession.current++;
     handleRef.current?.cancel();
     handleRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -590,7 +652,7 @@ export default function ProductsPage() {
 
   /* ---------- שמירה ---------- */
   async function save() {
-    if (!edit || !store || busy) return;
+    if (!edit || !store || busy || videoPrep) return;
     // דרופ: בודקים את הזמן לפני שמעלים מדיה — זמן שעבר היה פותח את המוצר מיד
     if (edit.dropOn) {
       const problem = dropProblem(edit.dropInput);
@@ -741,7 +803,12 @@ export default function ProductsPage() {
   async function softDelete() {
     if (!edit?.id) return;
     const supa = supabaseBrowser();
-    await supa.from("products").update({ deleted_at: new Date().toISOString() }).eq("id", edit.id);
+    const { error } = await supa.from("products").update({ deleted_at: new Date().toISOString() }).eq("id", edit.id);
+    if (error) {
+      // הטיוטה נשארת: המוצר לא נמחק
+      showToast("המחיקה לא הצליחה. אפשר לנסות שוב");
+      return;
+    }
     localStorage.removeItem(draftKey(edit.id));
     setEdit(null);
     showToast("המוצר נמחק, אפשר לשחזר תוך 30 יום");
@@ -835,7 +902,11 @@ export default function ProductsPage() {
 
   async function restore(p: Product) {
     const supa = supabaseBrowser();
-    await supa.from("products").update({ deleted_at: null }).eq("id", p.id);
+    const { error } = await supa.from("products").update({ deleted_at: null }).eq("id", p.id);
+    if (error) {
+      showToast("השחזור לא הצליח. אפשר לנסות שוב");
+      return;
+    }
     showToast("המוצר חזר לדוכן");
     refresh();
     refreshStorePage();
@@ -1166,7 +1237,7 @@ export default function ProductsPage() {
       {/* editor sheet */}
       {edit && (
         <>
-          <div className="fixed inset-0 bg-black/45 z-40" onClick={() => setEdit(null)} />
+          <div className="fixed inset-0 bg-black/45 z-40" onClick={closeEditor} />
           <div
             role="dialog"
             aria-modal="true"
@@ -1177,7 +1248,7 @@ export default function ProductsPage() {
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-base font-bold">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
-              <CloseX onClick={() => setEdit(null)} testid="editor-close" />
+              <CloseX onClick={closeEditor} testid="editor-close" />
             </div>
 
             {/* מרינה, 10.2026: "להוסיף תמונה / להוסיף מוצר — איזה בלאגן. תחשוב
@@ -1796,9 +1867,9 @@ export default function ProductsPage() {
               "לא מובן מה צריך לעשות" התברר להיות שהיא לא הגיעה לכפתור בכלל,
               לא שהיא לא ידעה שצריך ללחוץ עליו. */}
           <div className="px-gutter py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] border-t border-[var(--line)] shrink-0 bg-white">
-            <button onClick={save} disabled={busy}
+            <button onClick={save} disabled={busy || videoPrep}
               className="w-full bg-[var(--ink)] text-white py-3 text-sm font-bold disabled:opacity-50">
-              {busy ? "שומרים…" : "שמירה"}
+              {busy ? "שומרים…" : videoPrep ? "מכינים את הסרטון…" : "שמירה"}
             </button>
             {edit.id && (
               <>

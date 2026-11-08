@@ -135,7 +135,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     }
     /* קליל כמו גיף: ריבוע, בלי פסקול, ~1MB במקום 20 */
     setMediaBusy("מכינים את הסרטון… כמה שניות");
-    const light = (await gifVideo(file).catch(() => null)) ?? file;
+    const light = await gifVideo(file).catch(() => null);
+    if (!light) {
+      // המקור לא עולה לעולם: יש בו קול ונתוני מיקום
+      setMediaBusy("");
+      showToast("הדפדפן הזה לא מצליח להכין את הסרטון. אפשר לנסות סרטון אחר");
+      return;
+    }
     setMediaBusy("מעלים סרטון…");
     try {
       const up = await uploadBlob("squish-video", light);

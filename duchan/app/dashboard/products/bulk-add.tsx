@@ -43,6 +43,9 @@ export default function BulkAdd({
   const [saving, setSaving] = useState<{ done: number; total: number } | null>(null);
   const [err, setErr] = useState("");
   const firstName = useRef<HTMLInputElement>(null);
+  /* כל ה-URL-ים שנוצרו, ומשוחררים רק כשהחלון נסגר. ניקוי לפי [items] רץ
+     בכל הקלדה ושחרר תמונות שעדיין מוצגות. */
+  const urls = useRef<string[]>([]);
 
   // התמונות עוברות בקנבס אחת-אחת (טלפון ישן לא אוהב עשרים במקביל)
   useEffect(() => {
@@ -53,7 +56,9 @@ export default function BulkAdd({
       for (const f of files.slice(0, MAX)) {
         try {
           const blob = await squareImage(f, 900, "cover", { x: 50, y: 50 });
-          out.push({ key: `${f.name}-${f.size}-${out.length}`, blob, url: URL.createObjectURL(blob), name: "", price: "", stock: 1 });
+          const url = URL.createObjectURL(blob);
+          urls.current.push(url);
+          out.push({ key: `${f.name}-${f.size}-${out.length}`, blob, url, name: "", price: "", stock: 1 });
         } catch (e) {
           bad++;
           if (!(e instanceof MediaError)) console.error("[bulk] image failed", e);
@@ -70,7 +75,7 @@ export default function BulkAdd({
     };
   }, [files]);
 
-  useEffect(() => () => items.forEach((i) => URL.revokeObjectURL(i.url)), [items]);
+  useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
 
   const set = (key: string, patch: Partial<Item>) =>
     setItems((cur) => cur.map((i) => (i.key === key ? { ...i, ...patch } : i)));

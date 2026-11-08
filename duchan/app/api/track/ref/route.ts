@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     .from("stores")
     .select("id, display_name, emoji")
     .eq("slug", body.slug)
+    .eq("status", "active") // דוכן מושהה או חסום לא נספר ולא מוצג
     .maybeSingle();
   if (!store) return NextResponse.json({ ok: true, name: null });
 

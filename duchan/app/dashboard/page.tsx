@@ -113,9 +113,14 @@ export default function OrdersPage() {
   }
 
   async function markDelivered(o: Order, e: React.MouseEvent) {
+    const { clientX, clientY } = e;
     const supa = supabaseBrowser();
-    await supa.from("orders").update({ status: "delivered" }).eq("id", o.id);
-    confettiBurst(e.clientX, e.clientY);
+    const { error } = await supa.from("orders").update({ status: "delivered" }).eq("id", o.id);
+    if (error) {
+      showToast("לא הצלחנו לסמן שנמסר. אפשר לנסות שוב");
+      return;
+    }
+    confettiBurst(clientX, clientY);
     refresh();
     kupaCheck();
   }
@@ -153,7 +158,12 @@ export default function OrdersPage() {
 
   async function saveOwnerNote(o: Order) {
     const supa = supabaseBrowser();
-    await supa.from("orders").update({ owner_note: noteText.trim() || null }).eq("id", o.id);
+    const { error } = await supa.from("orders").update({ owner_note: noteText.trim() || null }).eq("id", o.id);
+    if (error) {
+      // העורך נשאר פתוח עם מה שהוקלד, כדי שאפשר יהיה לנסות שוב
+      showToast("השמירה נכשלה, אפשר לנסות שוב");
+      return;
+    }
     setNoteEditId(null);
     refresh();
   }
@@ -168,6 +178,11 @@ export default function OrdersPage() {
   async function saveWho(o: Order) {
     const name = whoName.trim().replace(/\s+/g, " ").slice(0, 24);
     const phone = whoPhone.trim() ? normalizePhone(whoPhone.trim()) : null;
+    // מספר שהוקלד ולא תקין לא נשמר כ"בלי מספר": זה היה מוחק את המספר הקיים בשקט
+    if (whoPhone.trim() && !phone) {
+      showToast("המספר לא נראה תקין. אפשר לבדוק ולנסות שוב");
+      return;
+    }
     const supa = supabaseBrowser();
     const { error } = await supa
       .from("orders")
@@ -176,7 +191,11 @@ export default function OrdersPage() {
     if (error) {
       // דאטהבייס שעוד לא קיבל את 0029 — לפחות המספר יישמר
       console.error("[orders] buyer_name unavailable:", error.message);
-      await supa.from("orders").update({ buyer_phone: phone }).eq("id", o.id);
+      const { error: phoneError } = await supa.from("orders").update({ buyer_phone: phone }).eq("id", o.id);
+      if (phoneError) {
+        showToast("השמירה נכשלה, אפשר לנסות שוב");
+        return;
+      }
     }
     setWhoEditId(null);
     refresh();

@@ -163,8 +163,15 @@ export function validateGalleryVideo(file: File): Promise<{ ok: true } | { ok: f
   return new Promise((resolve) => {
     const v = document.createElement("video");
     const url = URL.createObjectURL(file);
+    v.preload = "metadata";
+    v.muted = true;
+    v.playsInline = true;
     v.src = url;
+    let settled = false;
     const done = (r: { ok: true } | { ok: false; reason: string }) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       URL.revokeObjectURL(url);
       resolve(r);
     };
@@ -173,7 +180,11 @@ export function validateGalleryVideo(file: File): Promise<{ ok: true } | { ok: f
       else done({ ok: true });
     };
     v.onerror = () => done({ ok: false, reason: "לא הצלחנו לקרוא את הסרטון" });
-    setTimeout(() => done({ ok: true }), 3000);
+    // אם האורך לא נקרא בזמן, לא יודעים שהסרטון עד 10 שניות, ולכן דוחים
+    const timer = setTimeout(
+      () => done({ ok: false, reason: "לא הצלחנו לבדוק כמה ארוך הסרטון. אפשר לנסות סרטון אחר" }),
+      5000
+    );
   });
 }
 
@@ -185,8 +196,9 @@ export function validateGalleryVideo(file: File): Promise<{ ok: true } | { ok: f
  *
  * זה לא ffmpeg: הסרטון מנוגן לקנבס בזמן אמת ומוקלט מחדש עם
  * MediaRecorder — כלים שכל דפדפן מביא איתו. המחיר הוא המתנה באורך
- * הסרטון (עד 10 שניות), והמסך אומר את זה. אם משהו בדרך לא נתמך —
- * מחזירים null והקובץ המקורי עולה כמו קודם; קליל זה שיפור, לא תנאי.
+ * הסרטון (עד 10 שניות), והמסך אומר את זה. אם משהו בדרך לא נתמך,
+ * מחזירים null, והקורא צריך לדחות את הסרטון: הקובץ המקורי כולל פסקול
+ * ומטא-דאטה, ואסור להעלות אותו במקום.
  */
 export async function gifVideo(file: File | Blob): Promise<Blob | null> {
   if (typeof MediaRecorder === "undefined") return null;
@@ -241,8 +253,9 @@ export async function gifVideo(file: File | Blob): Promise<Blob | null> {
       setTimeout(stop, Math.min(v.duration || MAX_VIDEO_SECONDS, MAX_VIDEO_SECONDS) * 1000 + 400);
     });
     const out = await recorded;
-    // אם היצוא לא קטן מהמקור — אין סיבה להחליף אותו
-    return out.size > 50_000 && out.size < file.size ? out : null;
+    // גם כשהיצוא לא קטן מהמקור משתמשים בו: המקור כולל פסקול ומטא-דאטה.
+    // מתחת לסף הזה ההקלטה כנראה ריקה או שבורה.
+    return out.size > 50_000 ? out : null;
   } catch {
     return null;
   } finally {

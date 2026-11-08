@@ -3,6 +3,9 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/phone";
 import { codeMatches, randomPassword, OTP_MAX_ATTEMPTS } from "@/lib/otp";
+
+/** ניסיונות שגויים למספר בשעה, על פני כל הקודים */
+const OTP_MAX_WRONG_PER_HOUR = 10;
 import { PILOT_COOKIE } from "@/lib/squish-pilot";
 import { logLoginEvent } from "@/lib/login-events";
 
@@ -75,10 +78,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "יותר מדי ניסיונות. אפשר לבקש קוד חדש" }, { status: 429 });
   }
 
+  /*
+   * תקרת ניסיונות שגויים למספר, על פני כל הקודים: בלי זה, כל קוד חדש
+   * מאפס את הספירה ואפשר לנחש בלי סוף (סקירת אבטחה, 11.2026).
+   */
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: wrongLastHour } = await db
+    .from("login_events")
+    .select("id", { count: "exact", head: true })
+    .eq("phone", phone)
+    .in("kind", ["verify_wrong", "verify_locked"])
+    .gte("at", hourAgo);
+  if ((wrongLastHour ?? 0) >= OTP_MAX_WRONG_PER_HOUR) {
+    await logLoginEvent(req, { phone, kind: "verify_locked", detail: "תקרה שעתית" });
+    return NextResponse.json({ error: "יותר מדי ניסיונות. אפשר לנסות שוב בעוד שעה" }, { status: 429 });
+  }
+
+  /*
+   * הניסיון נספר *לפני* הבדיקה, ובצורה אטומית: העדכון עובר רק אם הספירה
+   * עדיין מה שקראנו. מאות בקשות מקבילות לא יכולות כולן לראות "0 ניסיונות".
+   */
+  const { data: counted } = await db
+    .from("phone_otps")
+    .update({ attempts: newest.attempts + 1 })
+    .eq("id", newest.id)
+    .eq("attempts", newest.attempts)
+    .select("id");
+  if (!counted?.length) {
+    return NextResponse.json({ error: "רגע, אפשר לנסות שוב" }, { status: 429 });
+  }
+
   const otp = candidates.find((c) => codeMatches(phone, code, c.code_hash));
   if (!otp) {
-    // הספירה עולה לפני התשובה, אחרת אפשר לנסות בלי הגבלה במקביל
-    await db.from("phone_otps").update({ attempts: newest.attempts + 1 }).eq("id", newest.id);
     const left = OTP_MAX_ATTEMPTS - newest.attempts - 1;
     await logLoginEvent(req, left > 0
       ? { phone, kind: "verify_wrong", detail: `נשארו ${left} ניסיונות` }
@@ -128,7 +159,13 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    if (existingStore?.owner_id) {
+    /* רק לחשבון ותיק שנרשם במייל ועוד לא קשור לשום מספר. אחרת אפשר היה
+       לכתוב מספר של מישהי אחרת כטלפון ההזמנות של הדוכן שלך, ובכניסה
+       הראשונה שלה היא הייתה נכנסת לחשבון שלך. */
+    const { data: ownerHasPhone } = existingStore?.owner_id
+      ? await db.from("phone_accounts").select("phone").eq("user_id", existingStore.owner_id).limit(1).maybeSingle()
+      : { data: null };
+    if (existingStore?.owner_id && !ownerHasPhone) {
       userId = existingStore.owner_id;
     } else {
       const { data: created, error: createErr } = await db.auth.admin.createUser({

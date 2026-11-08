@@ -364,7 +364,11 @@ export default function SettingsPage() {
       return;
     }
     const supa = supabaseBrowser();
-    await supa.from("stores").update({ cover_key: r.key }).eq("id", store.id);
+    const { error } = await supa.from("stores").update({ cover_key: r.key }).eq("id", store.id);
+    if (error) {
+      showToast("השמירה נכשלה, לנסות שוב");
+      return;
+    }
     setCoverPreview(URL.createObjectURL(blob));
     setStore({ ...store, cover_key: r.key });
     refreshStorePage(store.slug);
@@ -375,7 +379,11 @@ export default function SettingsPage() {
   async function pickPreset(key: string) {
     if (!store) return;
     const supa = supabaseBrowser();
-    await supa.from("stores").update({ cover_preset: key, cover_key: null }).eq("id", store.id);
+    const { error } = await supa.from("stores").update({ cover_preset: key, cover_key: null }).eq("id", store.id);
+    if (error) {
+      showToast("השמירה נכשלה, לנסות שוב");
+      return;
+    }
     setPreset(key);
     setCoverPreview(null);
     setStore({ ...store, cover_preset: key, cover_key: null });
@@ -386,7 +394,11 @@ export default function SettingsPage() {
   async function removeCover() {
     if (!store) return;
     const supa = supabaseBrowser();
-    await supa.from("stores").update({ cover_key: null }).eq("id", store.id);
+    const { error } = await supa.from("stores").update({ cover_key: null }).eq("id", store.id);
+    if (error) {
+      showToast("השמירה נכשלה, לנסות שוב");
+      return;
+    }
     setCoverPreview(null);
     setStore({ ...store, cover_key: null });
     refreshStorePage(store.slug);
@@ -465,7 +477,11 @@ export default function SettingsPage() {
       return;
     }
     const supa = supabaseBrowser();
-    await supa.from("stores").update({ avatar_key: r.key }).eq("id", store.id);
+    const { error } = await supa.from("stores").update({ avatar_key: r.key }).eq("id", store.id);
+    if (error) {
+      showToast("השמירה נכשלה, לנסות שוב");
+      return;
+    }
     setAvatarPreview(URL.createObjectURL(blob));
     setStore({ ...store, avatar_key: r.key });
     refreshStorePage(store.slug);
@@ -475,7 +491,11 @@ export default function SettingsPage() {
   async function removeAvatar() {
     if (!store) return;
     const supa = supabaseBrowser();
-    await supa.from("stores").update({ avatar_key: null }).eq("id", store.id);
+    const { error } = await supa.from("stores").update({ avatar_key: null }).eq("id", store.id);
+    if (error) {
+      showToast("השמירה נכשלה, לנסות שוב");
+      return;
+    }
     setAvatarPreview(null);
     setStore({ ...store, avatar_key: null });
     refreshStorePage(store.slug);
