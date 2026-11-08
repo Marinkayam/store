@@ -45,15 +45,6 @@ export function Scene({
   );
 }
 
-/** "פרק 2 · יום ראשון, 16:30" — שורה קטנה מעל הכותרת */
-export function Kicker({ children, light = false }: { children: ReactNode; light?: boolean }) {
-  return (
-    <div className="text-[12.5px] font-medium tracking-wide" style={{ color: light ? "#FFF3C4" : KICK }}>
-      {children}
-    </div>
-  );
-}
-
 /**
  * הקול השני של הסיפור: הערת שוליים להורים בכל פרק. הסיפור הגדול מדבר
  * לילדים; כאן, בקטן, מה הילד/ה לומד/ת ולמה זה בטוח (מרינה: "צריך להיות
@@ -94,7 +85,7 @@ const WORDS = ["סקווישים.", "צמידים.", "ציורים."];
 
 export function HeroScene() {
   return (
-    <Scene height={2.8} label="הסיפור של נועה. פרק 1: המגירה. לנועה יש מגירה מלאה בסקווישים שהיא כבר לא משחקת בהם. מה עושים עם זה? עסק!" testid="scene-hero">
+    <Scene height={2.8} label="לנועה יש מגירה מלאה בסקווישים שהיא כבר לא משחקת בהם. מה עושים עם זה? עסק!" testid="scene-hero">
       {(p) => {
         const word = WORDS[Math.min(2, Math.floor(p / 0.08))];
         const a = 1 - seg(p, 0.22, 0.26);
@@ -130,10 +121,7 @@ export function HeroScene() {
             })}
 
             <div className="absolute inset-x-0 top-[27%] text-center px-gutter pointer-events-none">
-              <p className="sr-only">הסיפור של נועה. לנועה יש מגירה מלאה בסקווישים, צמידים וציורים, שהיא כבר לא משחקת בהם. מה עושים עם זה? עסק!</p>
-              <div aria-hidden className="mb-3" style={{ opacity: 1 - seg(p, 0.12, 0.2) }}>
-                <Kicker>הסיפור של נועה · פרק 1: המגירה</Kicker>
-              </div>
+              <p className="sr-only">לנועה יש מגירה מלאה בסקווישים, צמידים וציורים, שהיא כבר לא משחקת בהם. מה עושים עם זה? עסק!</p>
               <div aria-hidden style={{ opacity: a, transform: `translateY(${(1 - a) * -30}px)` }}>
                 <div className="home-display">לנועה יש מגירה</div>
                 <div className="home-display">מלאה ב</div>
@@ -199,7 +187,7 @@ const LEVELS: { name: string; line: string }[] = [
 
 export function BuildScene() {
   return (
-    <Scene height={3.4} label="פרק 5, שבועיים אחרי: הדוכן של נועה גדל, מעגלה קטנה עד כוכב השוק" testid="scene-build">
+    <Scene height={3.4} label="הדוכן של נועה גדל, מעגלה קטנה עד כוכב השוק" testid="scene-build">
       {(p) => {
         const level = Math.min(5, Math.floor(p * 6.2));
         const night = level >= 4;
@@ -210,8 +198,7 @@ export function BuildScene() {
             style={{ background: night ? NIGHT : "var(--canvas)", color: night ? "#FBF8F3" : "var(--ink)" }}
             data-level={level}
           >
-            <Kicker light={night}>פרק 5 · שבועיים אחרי</Kicker>
-            <h2 className="text-center mt-1">
+            <h2 className="text-center">
               <span className="home-display block">הדוכן של נועה</span>
               <span className="home-display block" style={{ color: night ? "#FFF3C4" : "var(--lavender-deep)" }}>
                 גדל.
@@ -278,7 +265,7 @@ function Phone({ children, dark = false }: { children: ReactNode; dark?: boolean
 
 export function HowScene() {
   return (
-    <Scene height={3} label="פרק 2, יום ראשון 16:30: נועה פותחת דוכן. מצלמים, כותבים שם ומחיר, שולחים לינק" testid="scene-how">
+    <Scene height={3} label="נועה פותחת דוכן. מצלמים, כותבים שם ומחיר, שולחים לינק" testid="scene-how">
       {(p) => {
         const step = p < 0.34 ? 0 : p < 0.67 ? 1 : 2;
         const flash = Math.max(0, 1 - Math.abs(p - 0.26) * 22);
@@ -289,7 +276,6 @@ export function HowScene() {
         return (
           <div className="h-full bg-[var(--sand)] flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-gutter pt-16 pb-[88px] md:pb-6">
             <div className="text-center md:text-right max-w-[22rem]" aria-live="polite">
-              <Kicker>פרק 2 · יום ראשון, 16:30</Kicker>
               <div key={step} className="home-word">
                 <div className="home-display mt-1">
                   <span className="text-[var(--lavender-deep)]">{S.n}.</span> {S.title}
@@ -374,7 +360,7 @@ export function HowScene() {
 
 export function DingScene() {
   return (
-    <Scene height={2.6} label="פרק 4, ערב 19:42: דינג! ההזמנה הראשונה של נועה" testid="scene-ding">
+    <Scene height={2.6} label="דינג! ההזמנה הראשונה של נועה" testid="scene-ding">
       {(p) => {
         const note = seg(p, 0.14, 0.24);
         const buzz = p > 0.14 && p < 0.3 ? Math.sin(p * 400) * 5 * (1 - seg(p, 0.14, 0.3)) : 0;
@@ -383,9 +369,6 @@ export function DingScene() {
         return (
           <div className="h-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-16 px-gutter pt-16 pb-[88px] md:pb-6" style={{ background: NIGHT, color: "#FBF8F3" }}>
             <div className="text-center md:text-right min-h-[96px] md:min-w-[22rem]" aria-live="polite">
-              <div className="mb-1">
-                <Kicker light>פרק 4 · ערב, 19:42</Kicker>
-              </div>
               {!orders ? (
                 <div key="ding" className="home-word">
                   <div className="home-display text-[#E3C26F]">דינג!</div>

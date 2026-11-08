@@ -173,7 +173,7 @@ export default function StoryPage() {
         </div>
       )}
 
-      {/* הסיפור של נועה: פרק לכל שלב, ובכל פרק גם הערה קטנה להורים */}
+      {/* הסיפור של נועה, שלב אחר שלב, ובכל שלב גם הערה קטנה להורים. בלי שורות "פרק N" מעל הכותרות (מרינה, 11.2026) */}
       <HeroScene />
       <HowScene />
       <PriceGame />
@@ -187,12 +187,11 @@ export default function StoryPage() {
       {/* ── הסוף: הדוכן שלך, וקונפטי כשמגיעים אליו ── */}
       <section ref={endRef} className="pt-20 pb-28 flex flex-col items-center gap-6 bg-[var(--canvas)]" aria-labelledby="end-title" data-testid="home-end">
         <div className="text-center px-gutter">
-          <div className="text-[12.5px] font-medium tracking-wide text-[var(--lavender-deep)]">והפרק הבא?</div>
-          <h2 id="end-title" className="home-display mt-1">
-            שלך.
+          <h2 id="end-title" className="home-display">
+            עכשיו תורך.
           </h2>
           <p className="text-[15.5px] leading-relaxed mt-3 max-w-[22rem] mx-auto">
-            למגירה שלך יש סיפור משלה. הגיע הזמן לפתוח דוכן.
+            גם למגירה שלך יש מה למכור.
           </p>
         </div>
         <EndStall />

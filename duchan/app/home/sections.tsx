@@ -5,19 +5,16 @@ import Icon, { type IconName } from "../icons";
 import { Coin, KupaStall } from "../kupa-art";
 import Art from "./art";
 import { useInView } from "./use-scene";
-import { Kicker, ParentNote } from "./scenes";
+import { ParentNote } from "./scenes";
 import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
 import { BADGES } from "@/lib/badges";
 import { THEMES } from "@/lib/themes";
 
-/** כותרת פרק: מספר קטן, כותרת דקה וגדולה, ומשפט אחד */
-function Head({ kicker, title, sub, light = false }: { kicker: string; title: ReactNode; sub?: ReactNode; light?: boolean }) {
+/** כותרת פרק: כותרת דקה וגדולה, ומשפט אחד. (בלי שורת "פרק N" מעליה — מרינה, 11.2026: "תוריד את כל אלו") */
+function Head({ title, sub }: { title: ReactNode; sub?: ReactNode; light?: boolean }) {
   return (
     <div className="text-center max-w-[34rem] mx-auto">
-      <div className="text-[13px] font-medium tracking-wide" style={{ color: light ? "#FFF3C4" : "var(--muted)" }}>
-        {kicker}
-      </div>
-      <h2 className="home-display mt-1">{title}</h2>
+      <h2 className="home-display">{title}</h2>
       {sub && <p className="text-[15.5px] leading-relaxed mt-3 opacity-90">{sub}</p>}
     </div>
   );
@@ -58,7 +55,6 @@ export function LearnSection() {
     <section className="px-gutter py-24 bg-[var(--canvas)]" aria-labelledby="learn-title" data-testid="home-learn">
       <Reveal>
         <Head
-          kicker="ומה לומדים?"
           title={<span id="learn-title">בכלל לא על הדרך…</span>}
           sub="דוכן הוא עסק אמיתי. כל מכירה מלמדת משהו שלא לומדים בבית ספר."
         />
@@ -146,7 +142,6 @@ export function KupaSection() {
     <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="kupa-title" data-testid="home-kupa">
       <Reveal>
         <Head
-          kicker="קופת הדוכן"
           title={<span id="kupa-title">כל צעד אמיתי — מטבעות לקופה.</span>}
           sub="מוצר ראשון, הזמנה ראשונה, חידה שנפתרה. הדוכן המצויר גדל, ובחנות הקופה קונים לו סוכך זהב או חתול."
         />
@@ -192,7 +187,7 @@ export function SafetySection() {
   return (
     <section className="px-gutter py-24" style={{ background: "var(--ink)", color: "#FBF8F3" }} aria-labelledby="safe-title" data-testid="home-safety">
       <Reveal>
-        <Head light kicker="להורים · מה שקורה מאחורי הקלעים" title={<span id="safe-title">בטוח. באמת.</span>} sub="נועה רק רצתה למכור סקווישים. כל השאר בנוי מראש, כי הדוכן נועד לילדים." />
+        <Head light title={<span id="safe-title">בטוח. באמת.</span>} sub="נועה רק רצתה למכור סקווישים. כל השאר בנוי מראש, כי הדוכן נועד לילדים." />
       </Reveal>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-px bg-white/15 max-w-4xl mx-auto mt-12 border border-white/15">
         {SAFE.map((s, i) => (
@@ -216,7 +211,7 @@ export function PriceSection() {
   return (
     <section className="px-gutter py-24 bg-[var(--canvas)]" aria-labelledby="price-title" data-testid="home-price">
       <Reveal>
-        <Head kicker="להורים · כמה זה עולה?" title={<span id="price-title">הבנייה — בחינם.</span>} sub="בונים, מעצבים ומוסיפים מוצרים בלי לשלם. משלמים פעם אחת רק כשרוצים לקבל הזמנות." />
+        <Head title={<span id="price-title">הבנייה — בחינם.</span>} sub="בונים, מעצבים ומוסיפים מוצרים בלי לשלם. משלמים פעם אחת רק כשרוצים לקבל הזמנות." />
       </Reveal>
       <Reveal className="max-w-md mx-auto mt-10 text-center">
         {IS_LAUNCH && (
@@ -297,8 +292,7 @@ export function PriceGame() {
     <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="game-title" data-testid="home-price-game">
       <Reveal>
         <div className="text-center max-w-[34rem] mx-auto">
-          <Kicker>פרק 3 · ההחלטה הראשונה</Kicker>
-          <h2 id="game-title" className="home-display mt-1">
+          <h2 id="game-title" className="home-display">
             כמה זה עולה?
           </h2>
           <p className="text-[15.5px] leading-relaxed mt-3">
@@ -470,8 +464,7 @@ export function ToolsSection() {
     <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="tools-title" data-testid="home-tools">
       <Reveal>
         <div className="text-center max-w-[34rem] mx-auto">
-          <Kicker>פרק 6 · הדוכן מתמלא</Kicker>
-          <h2 id="tools-title" className="home-display mt-1">
+          <h2 id="tools-title" className="home-display">
             עוד מוצרים, <span className="text-[var(--lavender-deep)]">עוד רעיונות.</span>
           </h2>
           <p className="text-[15.5px] leading-relaxed mt-3 opacity-90">כמה דברים שנועה גילתה בדרך.</p>
@@ -505,8 +498,7 @@ export function MonthSection() {
     <section className="px-gutter py-24 bg-[var(--canvas)]" aria-labelledby="month-title" data-testid="home-month">
       <Reveal>
         <div className="text-center max-w-[34rem] mx-auto">
-          <Kicker>פרק 7 · חודש אחרי</Kicker>
-          <h2 id="month-title" className="home-display mt-1">
+          <h2 id="month-title" className="home-display">
             מה נשאר בקופה?
           </h2>
         </div>
