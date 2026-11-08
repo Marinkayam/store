@@ -115,12 +115,14 @@ export default function StoryPage() {
         <div className="max-w-5xl mx-auto px-gutter h-12 flex items-center justify-between">
           {/* הלוגו מחזיר לדף הבית של דוכן (/), עם חץ כדי שיהיה ברור שזו
               דרך חזרה. מגיעים לכאן מ"מה זה דוכן?" בדף הבית. */}
-          <a href="/" className="flex items-center gap-1.5 text-[17px] font-medium" aria-label="חזרה לדף הבית של דוכן" data-testid="story-back-home">
-            <span aria-hidden className="text-[15px] text-[var(--muted)]">→</span>
+          {/* מרינה: "יש אפשרות גם בניווט חזרה לפתיחת דוכן?" — החץ והלוגו לבד
+              לא נקראו כדרך חזרה, אז כתוב את זה במילים. */}
+          <a href="/" className="flex items-center gap-1.5 text-[15px] font-medium" aria-label="חזרה לדף הבית של דוכן" data-testid="story-back-home">
+            <span aria-hidden>→</span>
             <span className="text-[var(--ink)]">
-              <Icon name="stall" size={22} />
+              <Icon name="stall" size={20} />
             </span>
-            דוכן
+            חזרה לדוכן
           </a>
           <nav className="flex items-center gap-3.5 text-[13.5px]" aria-label="ראשי">
             <a href="/price" className="hidden sm:inline">
