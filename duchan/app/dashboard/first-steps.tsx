@@ -130,9 +130,9 @@ export default function FirstSteps({
       ),
     },
     order: {
-      title: "ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!",
-      line: "אגב, אפשר לשמור את הדוכן כמו אפליקציה ולקבל התראה כשמגיעה הזמנה.",
-      body: <OrderAlerts storeId={store.id} cta="לחצו כאן לשמור על מסך הבית ולהפעיל התראות" />,
+      title: "עכשיו מחכים להזמנה הראשונה. היא תופיע כאן!",
+      line: "אפשר לשמור את הדוכן כאפליקציה ולקבל התראה על כל הזמנה.",
+      body: <OrderAlerts storeId={store.id} cta="לשמור במסך הבית ולהפעיל התראות" />,
     },
   };
   const now = card[current];

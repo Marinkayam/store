@@ -73,7 +73,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const joinUrl = (token: string) => `${origin}/join/${token}`;
   const inviteText = (token: string) =>
-    `היי! 👋 בואו לנהל איתי את הדוכן "${store.display_name}" 🛍️\nנכנסים עם הטלפון שלכם, כאן:\n${joinUrl(token)}`;
+    `היי! 👋 מזמינה אותך לנהל איתי את הדוכן "${store.display_name}" 🛍️\nנכנסים עם הטלפון, כאן:\n${joinUrl(token)}`;
   const sendWa = (token: string) => window.open(`https://wa.me/?text=${encodeURIComponent(inviteText(token))}`, "_blank");
 
   async function invite() {
@@ -109,14 +109,14 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
       {/* בקשת ראשות שמחכה לי */}
       {iAmAskedToLead && (
         <div className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3.5" data-testid="transfer-ask">
-          <div className="text-[14px] font-bold">👑 מבקשים שתהיו ראש הדוכן</div>
+          <div className="text-[14px] font-bold">👑 מבקשים ממך להיות ראש הדוכן</div>
           <p className="text-[12.5px] text-[var(--warn-ink)] leading-relaxed mt-1">
-            ראש הדוכן מחליטים מי בצוות, לאן מגיעות ההזמנות ואיך משלמים. מי שהיו ראש הדוכן עד עכשיו נשארים בצוות.
+            ראש הדוכן מחליט מי בצוות, לאן מגיעות ההזמנות ואיך משלמים. ראש הדוכן הנוכחי נשאר בצוות.
           </p>
           <div className="grid grid-cols-2 gap-2 mt-2.5">
             <button
               disabled={busy}
-              onClick={async () => (await act("accept_transfer", {}, "הראשות עברה אליכם 👑")) && reloadDashboard()}
+              onClick={async () => (await act("accept_transfer", {}, "עכשיו את ראש הדוכן 👑")) && reloadDashboard()}
               data-testid="transfer-accept"
               className="fx-press bg-[var(--ink)] text-white py-2.5 text-[13px] font-bold"
             >
@@ -170,7 +170,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
                   <button
                     disabled={busy}
                     onClick={() =>
-                      window.confirm("להעביר את הראשות? בצד השני יצטרכו לאשר, ואתם נשארים בצוות.") &&
+                      window.confirm("להעביר את הראשות? בצד השני צריך לאשר, ואת נשארת בצוות.") &&
                       act("transfer", { userId: p.userId }, "שלחנו בקשה. הראשות תעבור אחרי שיאשרו")
                     }
                     data-testid="transfer-start"
@@ -213,7 +213,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
         <div className="bg-white border border-[var(--line)] p-3.5">
           <div className="text-[13.5px] font-bold">🤝 להוסיף שותפים</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
-            חברים, אח או אחות. כל אחד נכנס עם הטלפון שלו, ורק המספר שהזמנתם יכול להצטרף.
+            חברים, אח או אחות. כל אחד נכנס עם הטלפון שלו, ורק המספר שהזמנת יכול להצטרף.
           </p>
           {room > 0 ? (
             <div className="flex gap-2 mt-2.5">

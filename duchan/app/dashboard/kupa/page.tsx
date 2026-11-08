@@ -225,7 +225,7 @@ export default function KupaPage() {
               </span>
             </>
           ) : (
-            <span className="text-[13px] font-bold text-[var(--ok-ink)]">הגעתם לרמה הכי גבוהה. כוכב השוק!</span>
+            <span className="text-[13px] font-bold text-[var(--ok-ink)]">הגעת לרמה הכי גבוהה. כוכב השוק!</span>
           )}
         </div>
       </section>
@@ -255,7 +255,7 @@ export default function KupaPage() {
           )}
           {nb.href && (
             <a href={nb.href} className="bg-[var(--ink)] text-white text-center py-3 text-[14px] font-bold" data-testid="kupa-next-go">
-              בואו נעשה את זה
+              בואי נעשה את זה
             </a>
           )}
         </section>
@@ -565,7 +565,7 @@ function RiddleBox({ lesson, solved, onSolved }: { lesson: Lesson; solved: boole
             <Mathy text={lesson.why} />
           </p>
         ) : picked ? (
-          <p className="text-[13px] text-[var(--danger)] font-bold" data-testid="riddle-retry">לא בדיוק. נסו שוב, אין מה להפסיד 🙂</p>
+          <p className="text-[13px] text-[var(--danger)] font-bold" data-testid="riddle-retry">לא בדיוק. נסי שוב 🙂</p>
         ) : null}
       </div>
     </section>
@@ -791,7 +791,7 @@ function WeekQuest({ kupa, storeId }: { kupa: KupaData; storeId: string }) {
           <p className="text-[13px] text-[var(--muted)] leading-relaxed">{q.how}</p>
           <div className="flex gap-2">
             <a href={q.href} className="flex-1 bg-[var(--ink)] text-white text-center py-3 text-[14px] font-bold" data-testid="week-quest-go">
-              בואו נעשה את זה
+              בואי נעשה את זה
             </a>
             <button onClick={skip} className="px-4 border-[1.5px] border-[var(--line)] text-[13px] font-bold" data-testid="week-quest-skip">
               לדלג השבוע
@@ -848,8 +848,8 @@ function PunchCard({ kupa }: { kupa: KupaData }) {
         ))}
       </div>
       <p className="text-[12.5px] text-[var(--muted)] leading-relaxed">
-        מקבלים ניקוב על כל שבוע שעשיתם בו משהו בדוכן. כרטיסייה מלאה = {CARD_COINS} מטבעות, ומתחילים חדשה. שבוע שמפספסים לא מוחק כלום.
-        {kupa.cards > 0 && <b className="text-[var(--ink)]"> כבר מילאתם {kupa.cards === 1 ? "כרטיסייה אחת" : `${kupa.cards} כרטיסיות`}!</b>}
+        מקבלים ניקוב על כל שבוע שעשית בו משהו בדוכן. כרטיסייה מלאה = {CARD_COINS} מטבעות, ומתחילים חדשה. שבוע שמפספסים לא מוחק כלום.
+        {kupa.cards > 0 && <b className="text-[var(--ink)]"> כבר מילאת {kupa.cards === 1 ? "כרטיסייה אחת" : `${kupa.cards} כרטיסיות`}!</b>}
       </p>
     </section>
   );

@@ -83,7 +83,7 @@ function Sheet({ name, slug, onClose }: { name: string; slug: string; onClose: (
           התשלום התקבל, הדוכן באוויר!
         </h2>
         <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs mx-auto">
-          הדוכן הופעל בהצלחה. מעכשיו כל מי שמקבל ממך את הלינק יכול להיכנס ולהזמין.
+          מעכשיו כל מי שמקבל את הלינק יכול להזמין.
         </p>
 
         <div className="flex flex-col gap-2 mt-1">

@@ -23,7 +23,7 @@ export async function verifyPhone(page, local) {
     await page.waitForTimeout(250);
     if ((await field.inputValue()) === local) break;
   }
-  await page.click("button:has-text('שלחו לי קוד')");
+  await page.click("button:has-text('לשלוח לי קוד')");
   await page.waitForSelector("input[aria-label='קוד אימות']", { timeout: 20000 });
   const code = await lastCode(local);
   if (!code) throw new Error(`לא נשלח קוד ל-${local}`);
