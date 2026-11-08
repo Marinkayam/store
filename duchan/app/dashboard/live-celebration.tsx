@@ -108,8 +108,17 @@ function Sheet({ name, slug, onClose }: { name: string; slug: string; onClose: (
           >
             {copied ? "הלינק הועתק ✓" : "העתקת הלינק"}
           </button>
+          {/* מרינה: "צריך כפתור של להמשיך להעלות מוצרים" — הצעד הבא אחרי הפתיחה */}
+          <a
+            href="/dashboard/products"
+            onClick={onClose}
+            className="bg-[var(--ink)] text-white py-3 text-sm font-bold"
+            data-testid="live-add-products"
+          >
+            להמשיך להעלות מוצרים ←
+          </a>
           <button onClick={onClose} className="text-sm text-[var(--muted)] underline py-2">
-            לדוכן שלי
+            סגירה
           </button>
         </div>
       </div>
