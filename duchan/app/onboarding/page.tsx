@@ -11,7 +11,7 @@ import Icon from "../icons";
 import HomeStall from "../home-stall";
 import HelpButton from "../help-button";
 import LegalLinks from "../legal-links";
-import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
+import { parsePrice, priceText, typedPrice } from "@/lib/money";
 
 // חמישה מסכים, שאלה אחת בכל אחד: שם → מוצר ראשון → צבע → הורים → טלפון.
 //
@@ -118,7 +118,8 @@ export default function Onboarding() {
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d!, ...patch }));
   /** בהקמה יש מוצר אחד בלבד — הראשון. עוד מוצרים מוסיפים בדשבורד. */
   const first: DraftProduct = draft.products[0] ?? { name: "", price: "", imageData: null };
-  const productReady = !!first.name.trim() && (parsePrice(first.price) ?? 0) > 0;
+  // 0 מותר: מוצר בחינם (מרינה, 11.2026). רק שדה ריק חוסם.
+  const productReady = !!first.name.trim() && parsePrice(first.price) !== null;
   const setFirst = (patch: Partial<DraftProduct>) =>
     setDraft((d) => {
       const cur = d!.products[0] ?? { name: "", price: "", imageData: null };
@@ -325,6 +326,15 @@ export default function Onboarding() {
             />
             <span className="absolute left-4 top-1/2 -translate-y-1/2 t-body text-[var(--muted)]" aria-hidden>₪</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setFirst({ price: first.price === "0" ? "" : "0" })}
+            aria-pressed={first.price === "0"}
+            data-testid="ob-price-free"
+            className={`self-start -mt-2 min-h-11 px-4 t-small font-medium border ${first.price === "0" ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)] bg-white"}`}
+          >
+            {first.price === "0" ? "בחינם ✓" : "בחינם"}
+          </button>
 
           <button
             disabled={!productReady}
@@ -369,7 +379,7 @@ export default function Onboarding() {
                     <div className="px-2 py-2">
                       <div className="text-[12.5px] truncate">{pr.name || "מוצר"}</div>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-[12px] font-bold">₪{formatPrice(parsePrice(pr.price) ?? 0)}</span>
+                        <span className="text-[12px] font-bold">{priceText(parsePrice(pr.price) ?? 0)}</span>
                         <span className="px-2 py-1 text-[11px] font-bold"
                           style={{ background: th.primary, color: th.onPrimary }}>לסל</span>
                       </div>

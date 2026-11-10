@@ -79,11 +79,12 @@ export default function BulkAdd({
 
   const set = (key: string, patch: Partial<Item>) =>
     setItems((cur) => cur.map((i) => (i.key === key ? { ...i, ...patch } : i)));
-  const ready = (i: Item) => !!i.name.trim() && (parsePrice(i.price) ?? 0) > 0;
+  // 0 מותר (בחינם). רק מחיר ריק חוסם.
+  const ready = (i: Item) => !!i.name.trim() && parsePrice(i.price) !== null;
   const missing = items.filter((i) => !ready(i)).length;
 
   function fillPrices() {
-    if (!parsePrice(allPrice)) return;
+    if (parsePrice(allPrice) === null) return;
     setItems((cur) => cur.map((i) => (i.price.trim() ? i : { ...i, price: allPrice })));
   }
 
@@ -164,7 +165,7 @@ export default function BulkAdd({
               </div>
               <button
                 onClick={fillPrices}
-                disabled={!parsePrice(allPrice)}
+                disabled={parsePrice(allPrice) === null}
                 className="shrink-0 border border-[var(--ink)] px-3 py-2 text-[13px] font-bold disabled:opacity-40"
                 data-testid="bulk-fill-prices"
               >

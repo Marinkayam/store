@@ -11,6 +11,15 @@ export function formatPrice(n: number | string | null | undefined): string {
   return cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
 }
 
+/**
+ * מחיר לתצוגה: 0 → "בחינם", אחרת "₪15". מרינה, 11.2026: "תן גם אופציה אם
+ * רוצים 0 שזה בחינם" — מתנה לחברה, דוגמית, שקית קטנה ליד הזמנה.
+ */
+export function priceText(n: number | string | null | undefined): string {
+  const cents = Math.round((Number(n) || 0) * 100);
+  return cents === 0 ? "בחינם" : `₪${formatPrice(n)}`;
+}
+
 /** מחיר × כמות, בלי שגיאות עיגול. */
 export function lineTotal(price: number | string, qty: number): number {
   return (Math.round((Number(price) || 0) * 100) * qty) / 100;

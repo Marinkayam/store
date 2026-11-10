@@ -13,7 +13,7 @@ import { coverCss } from "@/lib/covers";
 import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } from "@/lib/looks";
 import { themeOrDefault } from "@/lib/themes";
 import { safeOptionLabel } from "@/lib/product-options";
-import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
+import { priceText, formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { applyDeals, dealActive, dealExplain, dealLabel, dealNudge, dealSticker, dealTotal, type Deal } from "@/lib/deals";
 import { stockOfOption } from "@/lib/option-stock";
 import type { PublicProduct, PublicStore } from "@/lib/types";
@@ -652,7 +652,7 @@ export default function StoreView({
       const lines = (data.items as { name: string; qty: number; price: number; option?: string; mystery?: boolean; deal?: string; line?: number }[])
         .map(
           (i) =>
-            `• ${i.mystery ? "🎁 " : ""}${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ₪${formatPrice(i.line ?? lineTotal(i.price, i.qty))}${i.deal ? ` (מבצע ${i.deal})` : ""}`
+            `• ${i.mystery ? "🎁 " : ""}${i.name}${i.option ? ` (${i.option})` : ""} × ${i.qty} · ${priceText(i.line ?? lineTotal(i.price, i.qty))}${i.deal ? ` (מבצע ${i.deal})` : ""}`
         )
         .join("\n");
       // שתי השורות האלה מתארות את מה ש*הקונה בחרה*, ולא את מה שהדוכן
@@ -733,7 +733,7 @@ export default function StoreView({
         waPayUrl,
         // יש מה לסגור עכשיו: יעד דיגיטלי, או שיחת תשלום שהמוכרת הדליקה.
         // מזומן = אין מה לשלם מרחוק.
-        payFirst: (!!orderPayTarget || !!waPayUrl) && chosenPay !== "cash",
+        payFirst: (!!orderPayTarget || !!waPayUrl) && chosenPay !== "cash" && Number(data.total) > 0,
       });
       if (buyerConfetti) {
         for (let i = 0; i < 3; i++) setTimeout(() => confettiBurst(window.innerWidth / 2, window.innerHeight * 0.45, 18), i * 220);
@@ -876,7 +876,7 @@ export default function StoreView({
                           <s className="text-[12.5px] opacity-60">₪{formatPrice(p.price)}</s>
                         </>
                       ) : (
-                        <span className="text-[17px] font-bold" style={{ color: "var(--s-primary-text)" }}>₪{formatPrice(p.price)}</span>
+                        <span className="text-[17px] font-bold" style={{ color: "var(--s-primary-text)" }}>{priceText(p.price)}</span>
                       )}
                     </div>
                   </div>
@@ -1243,7 +1243,7 @@ export default function StoreView({
               </p>
             ) : (
               <p className="text-xl font-bold text-center mt-2" style={{ color: "var(--s-primary-text)" }}>
-                ₪{formatPrice(current.price)}
+                {priceText(current.price)}
               </p>
             )}
             {dealActive(current.price, current.deal) && current.deal!.type !== "sale" && (
@@ -1432,7 +1432,7 @@ export default function StoreView({
             className="flex-1 min-w-0 py-4 text-[16px] font-bold disabled:opacity-40"
           >
             {canAdd && (
-              <>הוספה לסל<span className="font-semibold opacity-90"> · ₪{formatPrice(lineTotal)}</span></>
+              <>הוספה לסל<span className="font-semibold opacity-90"> · {priceText(lineTotal)}</span></>
             )}
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
                 לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
@@ -1497,7 +1497,7 @@ export default function StoreView({
                     {l.name}
                     {l.option ? ` (${l.option})` : ""}
                   </div>
-                  <div className="opacity-75 text-[12px] mt-0.5">₪{formatPrice(l.price)} ליחידה</div>
+                  <div className="opacity-75 text-[12px] mt-0.5">{Number(l.price) === 0 ? "בחינם" : `₪${formatPrice(l.price)} ליחידה`}</div>
                   {d.saved > 0 && (
                     <div className="text-[12px] font-bold mt-0.5" style={{ color: BADGES.sale.text }} data-testid="line-deal">
                       {d.label} · <span className="whitespace-nowrap">חסכת ₪{formatPrice(d.saved)}</span>
@@ -1531,7 +1531,7 @@ export default function StoreView({
 
                 <span className="w-12 text-left font-bold text-[13.5px]">
                   {d.saved > 0 && <s className="block text-[11px] font-normal opacity-55">₪{formatPrice(lineTotal(l.price, l.qty))}</s>}
-                  ₪{formatPrice(d.line)}
+                  {priceText(d.line)}
                 </span>
                 <button
                   onClick={() => setLineQty(l.id, l.option, 0)}

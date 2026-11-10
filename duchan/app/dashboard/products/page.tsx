@@ -23,7 +23,7 @@ import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
 import { KupaStall } from "@/app/kupa-art";
-import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
+import { formatPrice, parsePrice, priceText, typedPrice } from "@/lib/money";
 import { dealActive, dealExplain, dealLabel, parseDeal, type Deal } from "@/lib/deals";
 import { buildOptionStock, parseOptionStock } from "@/lib/option-stock";
 import SortList from "./sort-list";
@@ -1111,7 +1111,7 @@ export default function ProductsPage() {
                   {p.featured && <span aria-label="מומלץ" title="מומלץ" className="text-[var(--warn-ink)] shrink-0">★</span>}
                   <span className="truncate">{p.name}</span>
                 </div>
-                <div className="text-[14px] text-[var(--ink)] mt-0.5">₪{formatPrice(p.price)}</div>
+                <div className="text-[14px] text-[var(--ink)] mt-0.5">{priceText(p.price)}</div>
                 {/* שתי שורות נפרדות, כדי שיהיה ברור מה זה מה (מרינה: "מה מציגים
                     מה רואים"): קודם מצב המוצר בתגיות באותו גודל בדיוק, ואז
                     הקטגוריות כטקסט — לא עוד תגית שנראית כמו מצב. */}
@@ -1335,6 +1335,16 @@ export default function ProductsPage() {
                     className="w-full border border-[var(--line)] px-3 py-3 pl-8 text-[15px]" />
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[15px] text-[var(--muted)]" aria-hidden>₪</span>
                 </div>
+                {/* בחינם = מחיר 0. בדוכן כתוב "בחינם" במקום ₪0 */}
+                <button
+                  type="button"
+                  onClick={() => setEdit((s) => s && { ...s, price: s.price === "0" ? "" : "0" })}
+                  aria-pressed={edit.price === "0"}
+                  data-testid="price-free"
+                  className={`mt-2 min-h-11 px-3 text-[13px] font-medium border ${edit.price === "0" ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line)]"}`}
+                >
+                  {edit.price === "0" ? "בחינם ✓" : "בחינם"}
+                </button>
               </div>
               <div className="shrink-0">
                 <div className="block text-[13px] font-medium mb-1.5">כמה יש לך?</div>
