@@ -79,7 +79,7 @@ try {
   await p.click("button:has-text('הלאה, למספר הטלפון')");
   check("מסך הטלפון: בלי רשימת הסברים", await p.locator("[data-testid=phone-how]").count() === 0);
   await p.fill("input[aria-label='מספר טלפון']", LOCAL);
-  await p.click("button:has-text('שלחו לי קוד')");
+  await p.click("button:has-text('לשלוח לי קוד')");
   await p.waitForSelector("input[aria-label='קוד אימות']");
   check("מסך הקוד: 'מחכים לקוד'", (await p.textContent("h1")) === "מחכים לקוד");
   check("לפני 2 דקות: אין כפתור עזרה", (await p.locator("[data-testid=code-help]").count()) === 0 && await p.locator("[data-testid=code-wait]").isVisible());
@@ -122,6 +122,9 @@ try {
     (await p.locator("[data-testid=orders-empty] a.btn, [data-testid=orders-empty] button.btn").count()) === 1);
   check("הכרטיס קצר — בלי פסקאות", ((await p.textContent("[data-testid=first-step-card]")) ?? "").length < 70,
     String(((await p.textContent("[data-testid=first-step-card]")) ?? "").length));
+  check("סרטון ההסבר על הפתיחה יושב מתחת לכרטיס, לא בתוכו",
+    (await p.locator("[data-testid=orders-empty] [data-testid=video-open]").count()) === 1 &&
+    (await p.locator("[data-testid=first-step-card] [data-testid=video-open]").count()) === 0);
   if (process.env.SHOTS) await p.locator("[data-testid=orders-empty]").screenshot({ path: `${process.env.SHOTS}/first-steps.png` });
   // בלי מוצרים — הצעד הנוכחי הוא מוצר ראשון
   await db.query("update products set deleted_at=now() where store_id=$1", [st.id]);
@@ -153,12 +156,25 @@ try {
   await db.query("update stores set activated_at=now() where id=$1", [st.id]);
   await p.evaluate((id) => localStorage.setItem(`duchan-shared-${id}`, "1"), st.id);
   await p.reload();
+  /* רגע ההפעלה: "התשלום התקבל, הדוכן באוויר!" — פעם אחת, עם הצעד הבא
+     (app/dashboard/live-celebration.tsx). הגיליון מכסה את המסך, ולכן צריך
+     לסגור אותו לפני שממשיכים. */
+  await p.waitForSelector("[data-testid=live-celebration]", { timeout: 15000 });
+  check("אחרי ההפעלה קופץ 'התשלום התקבל, הדוכן באוויר!'",
+    ((await p.textContent("[data-testid=live-celebration]")) ?? "").includes("התשלום התקבל, הדוכן באוויר!"));
+  check("עם כפתור 'להמשיך להעלות מוצרים'",
+    (await p.getAttribute("[data-testid=live-add-products]", "href")) === "/dashboard/products");
+  await p.click("[data-testid=live-celebration] button:text-is('סגירה')");
+  await p.waitForSelector("[data-testid=live-celebration]", { state: "detached", timeout: 5000 });
+  await p.reload();
   await p.waitForSelector("[data-testid=alerts-open]", { timeout: 15000 });
+  check("והוא לא חוזר בכניסה הבאה", (await p.locator("[data-testid=live-celebration]").count()) === 0);
   const s5 = (await p.textContent("[data-testid=first-step-order]")) ?? "";
-  check("צעד 5: 'ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!'", s5.includes("ועכשיו מחכים להזמנה הראשונה, שתופיע לכם פה!"));
-  check("צעד 5: 'אגב, אפשר לשמור את הדוכן כמו אפליקציה'", s5.includes("אפשר לשמור את הדוכן כמו אפליקציה ולקבל התראה"));
-  check("צעד 5: הכפתור 'לחצו כאן לשמור על מסך הבית ולהפעיל התראות'",
-    ((await p.textContent("[data-testid=alerts-open]")) ?? "").includes("לחצו כאן לשמור על מסך הבית ולהפעיל התראות"));
+  // הנוסח עודכן ב-PR #1 (פנייה אחידה, משפטים קצרים); הבדיקות עוקבות אחריו
+  check("צעד 5: 'עכשיו מחכים להזמנה הראשונה. היא תופיע כאן!'", s5.includes("עכשיו מחכים להזמנה הראשונה. היא תופיע כאן!"));
+  check("צעד 5: 'אפשר לשמור את הדוכן כאפליקציה ולקבל התראה'", s5.includes("אפשר לשמור את הדוכן כאפליקציה ולקבל התראה"));
+  check("צעד 5: הכפתור 'לשמור במסך הבית ולהפעיל התראות'",
+    ((await p.textContent("[data-testid=alerts-open]")) ?? "").includes("לשמור במסך הבית ולהפעיל התראות"));
   if (process.env.SHOTS) await p.locator("[data-testid=orders-empty]").screenshot({ path: `${process.env.SHOTS}/first-steps-5.png` });
   await p.click("[data-testid=alerts-open]");
   await p.waitForSelector("[data-testid=order-alerts]");

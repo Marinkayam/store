@@ -28,6 +28,9 @@ export default function LiveCelebration() {
     if (!store?.activated_at) return;
     if (Date.now() - new Date(store.activated_at).getTime() > FRESH_MS) return;
     try {
+      // מתג שקט לבדיקות האוטומטיות (כמו kupa-quiet): הגיליון מכסה את המסך
+      // וחוסם לחיצות. הבדיקה של הגיליון עצמו מוחקת את המתג.
+      if (localStorage.getItem("duchan-live-quiet")) return;
       if (localStorage.getItem(SEEN(store.id))) return;
       localStorage.setItem(SEEN(store.id), "1");
     } catch {

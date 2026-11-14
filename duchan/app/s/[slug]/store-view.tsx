@@ -9,6 +9,7 @@ import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import CategoryBar from "@/app/category-bar";
 import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
+import { categoryProductImages } from "@/lib/category-images";
 import { coverCss } from "@/lib/covers";
 import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } from "@/lib/looks";
 import { themeOrDefault } from "@/lib/themes";
@@ -302,6 +303,9 @@ export default function StoreView({
     return (store.categories ?? []).filter((c) => used.has(c));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.categories, visibleProducts]);
+
+  /* קטגוריה בלי תמונה ובלי אמוג'י מציגה את המוצר הראשון שבה */
+  const categoryImages = useMemo(() => categoryProductImages(visibleProducts), [visibleProducts]);
 
   const sorted = useMemo(
     () =>
@@ -1101,6 +1105,7 @@ export default function StoreView({
           onSelect={setCategory}
           layout={layoutOrDefault(store.category_layout)}
           arrange={arrangeOrDefault(store.category_layout)}
+          fallbackImages={categoryImages}
           size={sizeOrDefault(store.category_size)}
           meta={cleanMeta(store.category_meta)}
         />

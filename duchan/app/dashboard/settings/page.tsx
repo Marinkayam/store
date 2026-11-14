@@ -17,6 +17,7 @@ import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
+import { useCategoryImages } from "@/app/use-category-images";
 import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
@@ -113,6 +114,7 @@ export default function SettingsPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [preset, setPreset] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const categoryImages = useCategoryImages(store?.id);
   // המוצרים האמיתיים, כדי שהעריכה תיראה על הדוכן עצמו ולא על דוגמה
   const [products, setProducts] = useState<
     { id: string; name: string; price: number; image_key: string | null; poster_key: string | null }[]
@@ -1179,6 +1181,7 @@ export default function SettingsPage() {
                     onSelect={() => setCatDesignOpen(true)}
                     layout={layoutOrDefault(store.category_layout)}
                     arrange={arrangeOrDefault(store.category_layout)}
+                    fallbackImages={categoryImages}
                     size={sizeOrDefault(store.category_size)}
                     meta={cleanMeta(store.category_meta)}
                   />

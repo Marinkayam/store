@@ -7,12 +7,14 @@ import { uploadBlob } from "@/lib/upload-client";
 import { themeCssVars, themeOrDefault } from "@/lib/themes";
 import { lookCssVars, storeBackground } from "@/lib/looks";
 import CategoryBar from "@/app/category-bar";
+import { useCategoryImages } from "@/app/use-category-images";
 import {
   CATEGORY_ARRANGES,
   CATEGORY_EMOJIS,
   CATEGORY_IMAGE_HINT,
   CATEGORY_IMAGE_PX,
   CATEGORY_LAYOUTS,
+  CATEGORY_PRESETS,
   CATEGORY_SIZES,
   arrangeOrDefault,
   cleanMeta,
@@ -61,6 +63,7 @@ export default function CategoryDesigner({
   const theme = themeOrDefault(store.theme);
   const imageUrl = (key: string | null | undefined) => (key ? local[key] ?? mediaUrl(key) : null);
   const icons = layout !== "text";
+  const productImages = useCategoryImages(store.id);
 
   function change<T>(set: (v: T) => void, v: T) {
     set(v);
@@ -173,6 +176,7 @@ export default function CategoryDesigner({
           onSelect={setActive}
           layout={layout}
           arrange={arrange}
+          fallbackImages={productImages}
           size={size}
           meta={meta}
           imageUrl={imageUrl}
@@ -180,6 +184,38 @@ export default function CategoryDesigner({
       </div>
 
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-5 flex flex-col gap-8 pb-[calc(8rem+env(safe-area-inset-bottom))]">
+        {/* תצוגה מוכנה — הדרך הקצרה. השלבים שמתחת הם למי שרוצה לדייק. */}
+        <section>
+          <div className="text-[14px] font-bold mb-1">תצוגה מוכנה</div>
+          <p className="text-[11.5px] text-[var(--muted)] leading-snug mb-3">בלחיצה אחת. אפשר לדייק אחר כך בשלבים שלמטה.</p>
+          <div className="grid grid-cols-2 gap-3" data-testid="category-presets">
+            {CATEGORY_PRESETS.map((p) => {
+              const on = layout === p.layout && size === p.size && arrange === p.arrange;
+              return (
+                <button
+                  key={p.key}
+                  onClick={() => {
+                    setLayout(p.layout);
+                    setSize(p.size);
+                    change(setArrange, p.arrange);
+                    setActive(null);
+                  }}
+                  aria-pressed={on}
+                  aria-label={`תצוגה מוכנה: ${p.label}`}
+                  className={`bg-white border-2 p-3.5 text-right min-h-11 flex flex-col gap-1 ${on ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                >
+                  <ArrangeSketch arrange={p.arrange} />
+                  <div className="text-[13px] font-bold mt-2.5">
+                    {on && "✓ "}
+                    {p.label}
+                  </div>
+                  <div className="text-[11px] text-[var(--muted)] leading-snug">{p.hint}</div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* 1. צורה */}
         <section>
           <div className="text-[14px] font-bold mb-3">1. צורה</div>
@@ -247,7 +283,7 @@ export default function CategoryDesigner({
           </div>
           {arrange === "grid" && (
             <p className="text-[11.5px] text-[var(--muted)] mt-2.5 leading-snug">
-              הקטגוריות יופיעו בראש הדוכן, ואחריהן המומלצים ושאר המוצרים. הכי בולט עם &quot;כרטיסים&quot; בגודל &quot;גדול&quot; ותמונה לכל קטגוריה.
+              הקטגוריות יופיעו בראש הדוכן, ואחריהן המומלצים ושאר המוצרים. כשיש הרבה, הראשונות מוצגות והשאר מאחורי &quot;עוד קטגוריות&quot;.
             </p>
           )}
         </section>
@@ -257,6 +293,9 @@ export default function CategoryDesigner({
           <div className="text-[14px] font-bold mb-1">4. אייקון או תמונה לכל קטגוריה</div>
           <p className="text-[11.5px] text-[var(--muted)] mt-0.5 leading-snug" data-testid="category-image-hint">
             📐 {CATEGORY_IMAGE_HINT}
+          </p>
+          <p className="text-[11.5px] text-[var(--muted)] mt-1 leading-snug" data-testid="category-auto-image-hint">
+            קטגוריה בלי תמונה ובלי אמוג&apos;י מציגה לבד את התמונה של המוצר הראשון שבה.
           </p>
           {!icons && (
             <p className="text-[11.5px] text-[var(--warn-ink)] mt-1 leading-snug">
@@ -278,6 +317,8 @@ export default function CategoryDesigner({
                         <img src={img} alt="" className="w-full h-full object-cover" />
                       ) : m?.emoji ? (
                         m.emoji
+                      ) : productImages[c] ? (
+                        <img src={productImages[c]} alt="" className="w-full h-full object-cover opacity-80" />
                       ) : (
                         <span className="text-[18px] font-extrabold text-[var(--muted)]">{c.charAt(0)}</span>
                       )}

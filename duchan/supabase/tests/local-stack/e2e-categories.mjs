@@ -9,7 +9,12 @@
 //   3. אמוג'י ותמונה לכל קטגוריה; התמונה נחתכת לריבוע 600×600.
 //   4. גודל התמונה המומלץ כתוב במסך.
 //   5. מה שנשמר מופיע לקונות, והסינון ממשיך לעבוד.
-//   6. קטגוריה בלי אייקון מקבלת את האות הראשונה — אין משבצת ריקה.
+//   6. קטגוריה בלי אייקון מקבלת את תמונת המוצר הראשון שבה; בלי מוצר עם
+//      תמונה — את האות הראשונה. אין משבצת ריקה.
+//   7. "קטגוריות גדולות" בלחיצה אחת: כולן פרושות בראש הדוכן. בחירה מקפלת
+//      אותן לשורה, "הכל" פורש מחדש.
+//   8. הרבה קטגוריות: הראשונות מוצגות, השאר מאחורי "עוד קטגוריות".
+//   9. סדר הקטגוריות נקבע בגרירה / "לראש", וזה הסדר שהקונים רואים.
 import { chromium } from "playwright";
 import pg from "pg";
 import { verifyPhone } from "./sms-helper.mjs";
@@ -41,6 +46,14 @@ if (prods.length < 3) {
   process.exit(1);
 }
 const CATS = ["צמידים", "מחזיקים", "סקווישים"];
+/* המוצר השלישי (סקווישים) צריך תמונה, כדי שהחוזה "קטגוריה בלי אייקון מקבלת
+   את תמונת המוצר" ייבדק באמת ולא ייפול לענף של האות הראשונה. משאילים לו
+   תמונה של מוצר אחר בדוכן, ומחזירים בניקוי. */
+const { rows: [orig3] } = await db.query("select image_key from products where id=$1", [prods[2].id]);
+const { rows: [lender] } = await db.query(
+  "select image_key from products where store_id=$1 and deleted_at is null and image_key is not null limit 1", [store.id]
+);
+if (!orig3.image_key && lender) await db.query("update products set image_key=$1 where id=$2", [lender.image_key, prods[2].id]);
 await db.query(
   "update stores set categories=$1, category_layout=null, category_size=null, category_meta=null, look=null, bg_pattern=null where id=$2",
   [CATS, store.id]
@@ -109,9 +122,17 @@ await girl.waitForFunction(
 );
 check("תמונה מופיעה בתצוגה", true);
 
-// סקווישים בלי כלום — האות הראשונה
-check("קטגוריה בלי אייקון מקבלת את האות הראשונה",
-  ((await girl.textContent(`${prev} button[aria-label='סקווישים']`)) ?? "").includes("ס"));
+// סקווישים בלי כלום — תמונת המוצר הראשון שבה; בלי מוצר עם תמונה, האות הראשונה
+const { rows: [p3] } = await db.query("select image_key, poster_key from products where id=$1", [prods[2].id]);
+const autoKey = p3.poster_key ?? p3.image_key;
+if (autoKey) {
+  await girl.waitForSelector(`${prev} button[aria-label='סקווישים'] img`, { timeout: 10000 }).catch(() => {});
+  const autoSrc = await girl.locator(`${prev} button[aria-label='סקווישים'] img`).getAttribute("src").catch(() => null);
+  check("קטגוריה בלי אייקון מקבלת את תמונת המוצר הראשון שבה", (autoSrc ?? "").includes(autoKey), autoSrc ?? "—");
+} else {
+  check("קטגוריה בלי אייקון ובלי תמונת מוצר מקבלת את האות הראשונה",
+    ((await girl.textContent(`${prev} button[aria-label='סקווישים']`)) ?? "").includes("ס"));
+}
 await girl.screenshot({ path: "/tmp/cat-designer.png" });
 
 await girl.click("[data-testid=save-category-design]");
@@ -173,6 +194,71 @@ check("והתצוגה בהגדרות מתעדכנת",
   (await girl.getAttribute("[data-testid=settings-categories] [data-testid=category-chips]", "data-layout")) === "square");
 await girl.locator("[data-testid=settings-categories]").screenshot({ path: "/tmp/cat-settings-step.png" });
 
+/* ── 6. תצוגה מוכנה: קטגוריות גדולות בראש הדוכן ── */
+await db.query("update stores set category_layout=null, category_size=null, category_meta=null where id=$1", [store.id]);
+await girl.goto(`${BASE}/dashboard/products`);
+await girl.waitForSelector("[data-testid=open-category-designer]", { timeout: 20000 });
+await girl.click("[data-testid=open-category-designer]");
+await girl.waitForSelector("[data-testid=category-designer]");
+await girl.click("button[aria-label='תצוגה מוכנה: קטגוריות גדולות']");
+await girl.waitForTimeout(200);
+check("תצוגה מוכנה: כרטיסים גדולים, פרושים",
+  (await girl.getAttribute(prev, "data-layout")) === "card" &&
+  (await girl.getAttribute(prev, "data-size")) === "lg" &&
+  (await girl.getAttribute(prev, "data-arrange")) === "grid");
+check("בפריסה אין 'הכל' — כל המוצרים ממילא מתחת", (await girl.locator(`${prev} button[aria-label='הכל']`).count()) === 0);
+await girl.click("[data-testid=save-category-design]");
+await girl.waitForSelector("[data-testid=category-designer]", { state: "detached", timeout: 10000 });
+const { rows: [s3] } = await db.query("select category_layout, category_size from stores where id=$1", [store.id]);
+check("נשמר: card+grid, גדול", s3.category_layout === "card+grid" && s3.category_size === "lg", `${s3.category_layout} · ${s3.category_size}`);
+
+await buyer.goto(fresh(), { waitUntil: "networkidle" });
+check("הקונה רואה את הקטגוריות פרושות", (await buyer.getAttribute(bar, "data-arrange")) === "grid");
+if (autoKey) {
+  const src = await buyer.locator(`${bar} button[aria-label='סקווישים'] img`).getAttribute("src").catch(() => null);
+  check("קטגוריה בלי תמונה מציגה לקונה את המוצר הראשון שבה", (src ?? "").includes(autoKey), src ?? "—");
+}
+const wide = await buyer.locator(`${bar} button[aria-label='צמידים']`).boundingBox();
+check("ריבועים גדולים: שניים בשורה", !!wide && wide.width > 150 && Math.abs(wide.width - wide.height) < 2, `${wide?.width}×${wide?.height}`);
+await buyer.click(`${bar} button[aria-label='צמידים']`);
+await buyer.waitForTimeout(300);
+check("בחירה מקפלת לשורה, עם 'הכל'",
+  (await buyer.getAttribute(bar, "data-arrange")) === "row" && (await buyer.locator(`${bar} button[aria-label='הכל']`).count()) === 1);
+check("והסינון עובד גם מהפריסה", (await buyer.locator(".s-look .grid > div").count()) === 1);
+await buyer.click(`${bar} button[aria-label='הכל']`);
+await buyer.waitForTimeout(300);
+check("'הכל' פורש מחדש", (await buyer.getAttribute(bar, "data-arrange")) === "grid");
+
+/* ── 7. הרבה קטגוריות: הראשונות, והשאר מאחורי "עוד קטגוריות" ── */
+const MANY = ["חנוכה", "פורים", "קיץ", "חורף", "מתנות", "מבצעים", "חדש", "אהובים"];
+await db.query("update stores set categories=$1 where id=$2", [MANY, store.id]);
+await db.query("update products set categories=$1 where id=$2", [MANY, prods[0].id]);
+await buyer.goto(fresh(), { waitUntil: "networkidle" });
+const tiles = () => buyer.locator(`${bar} button:not([data-testid=category-more])`).count();
+check("8 קטגוריות: 6 מוצגות", (await tiles()) === 6, String(await tiles()));
+check("והכפתור אומר כמה עוד יש", ((await buyer.textContent("[data-testid=category-more]")) ?? "").includes("עוד 2 קטגוריות"));
+await buyer.click("[data-testid=category-more]");
+check("לחיצה מציגה את כולן", (await tiles()) === 8, String(await tiles()));
+
+/* ── 8. סדר הקטגוריות ── */
+await girl.goto(`${BASE}/dashboard/products`);
+await girl.waitForSelector("[data-testid=open-category-sort]", { timeout: 20000 });
+await girl.click("[data-testid=open-category-sort]");
+await girl.waitForSelector("[data-testid=category-sort-row]");
+await girl.locator("[data-testid=category-sort-row]:has-text('אהובים') [data-testid=category-sort-top]").click();
+await girl.click("[data-testid=category-sort-done]");
+await girl.waitForSelector("[data-testid=category-sort]", { state: "detached", timeout: 10000 });
+const { rows: [s4] } = await db.query("select categories from stores where id=$1", [store.id]);
+check("'לראש' ושמירה: אהובים ראשונה", s4.categories[0] === "אהובים" && s4.categories.length === 8, s4.categories.join(","));
+await buyer.goto(fresh(), { waitUntil: "networkidle" });
+check("וזה הסדר שהקונה רואה",
+  (await buyer.locator(`${bar} button`).first().getAttribute("aria-label")) === "אהובים");
+await girl.click("[data-testid=open-category-sort]");
+await girl.locator("[data-testid=category-sort-row]:has-text('חנוכה') [data-testid=category-sort-top]").click();
+await girl.click("[data-testid=category-sort-cancel]");
+const { rows: [s5] } = await db.query("select categories from stores where id=$1", [store.id]);
+check("ביטול לא שומר", s5.categories[0] === "אהובים");
+
 /* ── ניקוי ── */
 await db.query(
   "update stores set categories=$1, category_layout=null, category_size=null, category_meta=null where id=$2",
@@ -181,6 +267,7 @@ await db.query(
 for (const p of prods) {
   await db.query("update products set categories=$1, category=$2 where id=$3", [p.categories, p.category, p.id]);
 }
+await db.query("update products set image_key=$1 where id=$2", [orig3.image_key, prods[2].id]);
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} category design checks passed`);

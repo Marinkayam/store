@@ -70,6 +70,33 @@ export function packLayout(layout: CategoryLayout, arrange: CategoryArrange): st
 }
 
 /**
+ * תצוגות מוכנות, בלחיצה אחת. חמש צורות × שלושה גדלים × שני מיקומים הם
+ * שלושים צירופים — יותר מדי בשביל "אני רוצה את הקטגוריות בגדול למעלה".
+ * מי שרוצה לדייק ממשיכה לשלבים שמתחת.
+ */
+export const CATEGORY_PRESETS: {
+  key: string;
+  label: string;
+  hint: string;
+  layout: CategoryLayout;
+  size: CategorySize;
+  arrange: CategoryArrange;
+}[] = [
+  { key: "simple", label: "שורה פשוטה", hint: "שמות הקטגוריות בשורה אחת", layout: "text", size: "md", arrange: "row" },
+  { key: "big", label: "קטגוריות גדולות", hint: "בראש הדוכן, עם תמונה לכל אחת", layout: "card", size: "lg", arrange: "grid" },
+];
+
+/**
+ * כמה קטגוריות נראות בפריסה "כולן בראש הדוכן" לפני "עוד קטגוריות". 16
+ * ריבועים גדולים הם שלושה מסכים של גלילה לפני המוצר הראשון; שלוש שורות
+ * משאירות את המומלצים בהישג יד, ונותנות משמעות לסדר שבעלת הדוכן קבעה.
+ */
+export function gridLimit(layout: CategoryLayout, size: CategorySize): number {
+  if (layout === "card") return size === "sm" ? 9 : 6;
+  return size === "sm" ? 8 : 6;
+}
+
+/**
  * כרטיסים בפריסה "כולן בראש הדוכן": כמה בשורה, יחס רוחב-גובה, וגובה משוער
  * (לגודל האמוג'י). "גדול" = שני ריבועים גדולים בשורה.
  */

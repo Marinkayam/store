@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import {
   ALL_ICON,
   CARD_GRID,
   CATEGORY_DIMENSIONS,
+  gridLimit,
   type CategoryArrange,
   type CategoryLayout,
   type CategoryMeta,
@@ -31,6 +32,7 @@ export default function CategoryBar({
   size,
   meta,
   arrange = "row",
+  fallbackImages,
   imageUrl = mediaUrl,
 }: {
   categories: string[];
@@ -41,6 +43,8 @@ export default function CategoryBar({
   meta: CategoryMeta;
   /** "grid" = כל הקטגוריות פרושות בראש הדוכן, במקום שורה נגללת */
   arrange?: CategoryArrange;
+  /** קטגוריה בלי תמונה ובלי אמוג'י: תמונת המוצר הראשון שבה (lib/category-images.ts) */
+  fallbackImages?: Record<string, string>;
   /** בעורך: תמונה שרק עכשיו נבחרה עדיין לא ב-R2, אז מגיעה כ-blob */
   imageUrl?: (key: string | null | undefined) => string | null;
 }) {
@@ -54,7 +58,11 @@ export default function CategoryBar({
   const spread = arrange === "grid";
   const grid = spread && big && active === null;
   const folded = spread && big && active !== null;
-  const items: (string | null)[] = grid ? categories : [null, ...categories];
+  /* הרבה קטגוריות: מציגים את הראשונות, והשאר מאחורי "עוד קטגוריות" */
+  const [more, setMore] = useState(false);
+  const limit = gridLimit(layout, size);
+  const long = grid && categories.length > limit + 1; // לא מסתירים קטגוריה אחת בודדת
+  const items: (string | null)[] = grid ? (long && !more ? categories.slice(0, limit) : categories) : [null, ...categories];
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!folded) return;
@@ -91,7 +99,8 @@ export default function CategoryBar({
       {items.map((c) => {
         const on = active === c;
         const m = c ? meta[c] : undefined;
-        const img = c && m?.image ? imageUrl(m.image) : null;
+        // תמונה שהועלתה גוברת; אחריה אמוג'י; בלי שניהם — תמונת המוצר הראשון
+        const img = c && m?.image ? imageUrl(m.image) : c && !m?.emoji ? fallbackImages?.[c] ?? null : null;
         const label = c ?? "הכל";
         const glyph = c ? m?.emoji || null : ALL_ICON;
         const k = c ?? "__all";
@@ -221,6 +230,23 @@ export default function CategoryBar({
           </button>
         );
       })}
+      {long && (
+        <button
+          onClick={() => setMore((v) => !v)}
+          data-testid="category-more"
+          aria-expanded={more}
+          className="s-r font-semibold border-[1.5px] min-h-11"
+          style={{
+            gridColumn: "1 / -1",
+            justifySelf: "stretch",
+            fontSize: 13,
+            background: "var(--s-surface)",
+            borderColor: "color-mix(in srgb, currentColor 30%, transparent)",
+          }}
+        >
+          {more ? "להציג פחות" : `עוד ${categories.length - limit} קטגוריות`}
+        </button>
+      )}
     </div>
   );
 }

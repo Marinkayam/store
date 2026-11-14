@@ -96,13 +96,9 @@ export default function FirstSteps({
       title: <span data-testid="store-state-banner">עכשיו מפרסמים את הדוכן</span>,
       line: "ככה החברים יוכלו להזמין.",
       body: (
-        <>
-          <a href="/activate" className="btn btn-primary w-full" data-testid="first-steps-publish">
-            לפרסם את הדוכן ←
-          </a>
-          {/* איך זה עובד (ההורים משלמים ₪20 בביט) — לפני שנכנסים למסך ההפעלה */}
-          <ExplainerVideo which="open" />
-        </>
+        <a href="/activate" className="btn btn-primary w-full" data-testid="first-steps-publish">
+          לפרסם את הדוכן ←
+        </a>
       ),
     },
     share: {
@@ -170,6 +166,10 @@ export default function FirstSteps({
         {now.line && <p className="text-[14px] text-[var(--muted)] leading-relaxed -mt-1">{now.line}</p>}
         {now.body}
       </div>
+
+      {/* איך זה עובד (ההורים משלמים ₪20 בביט), לפני שנכנסים למסך ההפעלה.
+          מתחת לכרטיס ולא בתוכו: הכרטיס נשאר משפט אחד וכפתור אחד. */}
+      {current === "publish" && <ExplainerVideo which="open" />}
     </section>
   );
 }
