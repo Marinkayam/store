@@ -8,6 +8,7 @@ import HelpButton from "../help-button";
 import LegalLinks from "../legal-links";
 import Icon from "../icons";
 import HomeStall from "../home-stall";
+import HowToOpenVideo from "../how-to-open-video";
 import { displayPhone } from "@/lib/phone";
 
 // הפלואו: בונים בחינם → רוצים לשתף → כאן מסבירים כמה ולמה → משלמים בביט/פייבוקס
@@ -339,8 +340,12 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         <p className="text-[12.5px] text-[var(--muted)] mt-1.5">בלי מנוי ובלי עמלה על מכירות</p>
       </div>
 
+      {/* מרינה, 11.2026: "ילדים לא מבינים שצריך לשלם בביט 20 שח כדי שהדוכן
+          ייפתח". הסרטון יושב מיד מתחת למחיר, לפני כל השאר. */}
+      <HowToOpenVideo className="mt-7" />
+
       {/* מה מקבלים — סגור. מי שרוצה לדעת פותחת; מי שרוצה להתקדם לא נעצרת. */}
-      <details className="mt-7 bg-white border border-[var(--line)]" data-testid="gets-details">
+      <details className="mt-2.5 bg-white border border-[var(--line)]" data-testid="gets-details">
         <summary className="min-h-12 px-4 flex items-center justify-between text-[14px] font-bold cursor-pointer">
           מה נפתח לך?
           <span className="text-[12px] font-normal text-[var(--muted)]">לראות</span>
