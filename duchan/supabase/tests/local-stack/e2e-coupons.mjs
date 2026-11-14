@@ -73,6 +73,11 @@ const checkCode = (code, qty = 2) =>
   });
 
 async function openCheckout(page) {
+  // העגלה נשמרת עכשיו בין כניסות (store-view: duchan-cart-…). כאן כל פתיחה
+  // מתחילה מעגלה ריקה, אחרת הכמויות מצטברות מבדיקה לבדיקה.
+  await page.evaluate(() => {
+    for (const k of Object.keys(localStorage)) if (k.startsWith("duchan-cart-")) localStorage.removeItem(k);
+  }).catch(() => {});
   await page.goto(fresh(), { waitUntil: "networkidle" });
   await page.click(`button[aria-label='הוספה מהירה, ${prod.name}']`);
   await page.waitForTimeout(300);

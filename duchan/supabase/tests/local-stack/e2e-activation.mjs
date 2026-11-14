@@ -152,7 +152,7 @@ check("ההצהרה נרשמה עם אמצעי התשלום שנבחר",
 check("והצהרה לבדה לא מפעילה את הדוכן", claimed.activated_at === null);
 // "לא מבינה אם כבר שילמה ומה קורה עכשיו" — המסך אומר את שלושתם
 const steps = (await girl.textContent("[data-testid=payment-steps]")) ?? "";
-check("מסך ההמתנה: 'סימנתם ששילמתם' עם סכום, איך ומי", steps.includes("סימנתם ששילמתם") &&
+check("מסך ההמתנה: 'סימנת שהתשלום נשלח' עם סכום, איך ומי", steps.includes("סימנת שהתשלום נשלח") &&
   (await girl.textContent("[data-testid=payment-claim-details]")).match(/₪\d+ בפייבוקס/) !== null && steps.includes("אמא של תמר"), steps.slice(0, 120));
 check("ואומר מה קורה עכשיו: אנחנו בודקים, לא צריך לעשות כלום", steps.includes("אנחנו בודקים שהכסף הגיע") && !steps.includes("מרינה") && steps.includes("לא צריך לעשות כלום"));
 check("ומה יקרה אחר כך: הדוכן נפתח להזמנות", steps.includes("הדוכן נפתח להזמנות"));

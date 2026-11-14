@@ -60,7 +60,7 @@ check("the save screen asks for nothing but a phone",
 await p.screenshot({ path: `${shots}/80-phone-step.png` });
 
 await p.fill("input[aria-label='מספר טלפון']", NUM);
-await p.click("button:has-text('שלחו לי קוד')");
+await p.click("button:has-text('לשלוח לי קוד')");
 await p.waitForSelector("input[aria-label='קוד אימות']", { timeout: 15000 });
 check("a code is requested and the code screen opens",
   (await p.locator("input[aria-label='קוד אימות']").count()) === 1);
@@ -110,7 +110,7 @@ await back.goto(`${BASE}/login`);
 const loginBody = await back.textContent("body");
 check("login asks for a phone, not a password", !loginBody.includes("סיסמה"));
 await back.fill("input[aria-label='מספר טלפון']", NUM);
-await back.click("button:has-text('שלחו לי קוד')");
+await back.click("button:has-text('לשלוח לי קוד')");
 await back.waitForSelector("input[aria-label='קוד אימות']", { timeout: 15000 });
 await back.fill("input[aria-label='קוד אימות']", await lastCode(E164));
 await back.waitForURL("**/dashboard", { timeout: 25000 });
@@ -131,7 +131,7 @@ if (tamar) {
   const old = await phone();
   await old.goto(`${BASE}/login`);
   await old.fill("input[aria-label='מספר טלפון']", "0501234567");
-  await old.click("button:has-text('שלחו לי קוד')");
+  await old.click("button:has-text('לשלוח לי קוד')");
   await old.waitForSelector("input[aria-label='קוד אימות']", { timeout: 15000 });
   await old.fill("input[aria-label='קוד אימות']", await lastCode("972501234567"));
   await old.waitForURL("**/dashboard", { timeout: 25000 });

@@ -57,7 +57,8 @@ async function buyerWithCart() {
   return p;
 }
 const fillBuyer = async (p) => {
-  await p.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "נועה");
+  // במשלוח מבקשים שם ושם משפחה (בקשת לקוחה, 11.2026); באיסוף מספיק שם פרטי
+  await p.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "נועה לוי");
   await p.fill("input[aria-label='מספר טלפון']", "0527778899");
 };
 const lastOrder = async () => (await db.query("select * from orders where store_id=$1 order by created_at desc limit 1", [store.id])).rows[0];
@@ -102,10 +103,19 @@ await p.fill("input[aria-label='עיר למשלוח']", "יבנה");
 await p.fill("input[aria-label='כתובת למשלוח']", "הרצל 12");
 await p.fill("input[aria-label='קומה']", "3");
 await p.click("button[aria-label='תשלום בביט']");
+// שם פרטי בלבד לא מספיק למשלוח
+await p.fill("input[aria-label='שם ושם משפחה']", "נועה");
 await sendBtn.click();
 await p.waitForTimeout(700);
-check("קומה בלי דירה — 'בבניין צריך גם קומה וגם מספר דירה'", ((await p.textContent("body")) ?? "").includes("בבניין צריך גם קומה וגם מספר דירה"));
+check("משלוח עם שם פרטי בלבד — 'למשלוח צריך שם ושם משפחה'", ((await p.textContent("body")) ?? "").includes("למשלוח צריך שם ושם משפחה"));
+await p.fill("input[aria-label='שם ושם משפחה']", "נועה לוי");
+await sendBtn.click();
+await p.waitForTimeout(700);
+check("קומה בלי דירה — 'צריך מספר דירה וקומה (או לסמן בית פרטי)'", ((await p.textContent("body")) ?? "").includes("צריך מספר דירה וקומה"));
 await p.fill("input[aria-label='קומה']", "");
+// בית פרטי: מסמנים את התיבה (עד 11.2026 זה נגזר מכך שלא מילאו קומה ודירה)
+await p.check("[data-testid=private-house]");
+check("בית פרטי: שדות הדירה והקומה ננעלים", await p.locator("input[aria-label='קומה']").isDisabled() && await p.locator("input[aria-label='מספר דירה']").isDisabled());
 
 /* ── 5. איך משלמים ── */
 const next = (await p.textContent("[data-testid=pay-next]")) ?? "";
@@ -116,7 +126,7 @@ await p.screenshot({ path: `${SHOTS}/co-3-pay.png` });
 await sendBtn.click();
 await p.waitForSelector("[data-testid=order-pay-first]", { timeout: 15000 });
 const o1 = await lastOrder();
-check("בית פרטי (בלי קומה ודירה) — נשמר כבית פרטי", o1.ship_details?.homeType === "private" && o1.ship_city === "יבנה", JSON.stringify(o1.ship_details));
+check("בית פרטי (התיבה מסומנת) — נשמר כבית פרטי", o1.ship_details?.homeType === "private" && o1.ship_city === "יבנה", JSON.stringify(o1.ship_details));
 
 /* ── 6. אחרי ההזמנה: ביט דרך וואטסאפ ── */
 const sheet = (await p.textContent("[data-testid=order-pay-first]")) ?? "";
@@ -183,6 +193,14 @@ check("מזומן: 'משלמים במזומן כשמקבלים'", ((await p.text
 await p.locator("button:has-text('שליחת ההזמנה')").click();
 await p.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
 check("ובלי מסך תשלום — ישר 'ההזמנה נשלחה!'", (await p.locator("[data-testid=order-pay-first]").count()) === 0);
+await p.context().close();
+
+/* ── העגלה נשמרת: יוצאים מהדוכן, חוזרים, והמוצר עדיין בסל (בקשת לקוחה, 11.2026) ── */
+p = await buyerWithCart();
+await p.goto(`${BASE}/s/${store.slug}?t=${Date.now()}`, { waitUntil: "networkidle" });
+await p.waitForTimeout(500);
+check("העגלה נשמרת אחרי יציאה וחזרה", (await p.locator("[data-testid=cart-bar]").count()) === 1 && ((await p.textContent("[data-testid=cart-bar]")) ?? "").includes("פריט אחד"),
+  (await p.textContent("[data-testid=cart-bar]").catch(() => "אין סל")) ?? "");
 await p.context().close();
 
 /* ── 10. עוגיות: הפס למטה (מרינה, 10.2026), מעל פס הבית של האייפון ── */

@@ -162,7 +162,7 @@ await sweep(guest, "כניסה");
 /* ── מסך הכניסה: מה שילדות נתקעו בו (יומן הכניסות, 10.2026) ── */
 {
   const field = guest.locator("input[aria-label='מספר טלפון']");
-  const send = guest.locator("button:has-text('שלחו לי קוד')");
+  const send = guest.locator("button:has-text('לשלוח לי קוד')");
   await field.tap();
   await guest.keyboard.type("052538164", { delay: 30 }); // ספרה אחת חסרה
   check("טלפון עם 9 ספרות: 'חסרה עוד ספרה אחת'", ((await guest.textContent("[data-testid=phone-hint]").catch(() => "")) ?? "").includes("חסרה עוד ספרה אחת"));

@@ -136,7 +136,7 @@ try {
   check("המסך: מאיפה הגיעו", await owner.locator("[data-testid=stats-source-instagram]").isVisible());
   check("המסך: מהכניסה ועד ההזמנה", await owner.locator("[data-testid=stats-funnel-carts]").isVisible());
   check("המסך: על מה הכי מסתכלים", ((await owner.textContent("[data-testid=stats-products]")) ?? "").includes(prod.name));
-  check("המסך: מסביר שאין שמות", ((await owner.textContent("[data-testid=stats-privacy]")) ?? "").includes("לא שומרים מי נכנס"));
+  check("המסך: מסביר שאין שמות", ((await owner.textContent("[data-testid=stats-privacy]")) ?? "").includes("לא שומרים שמות"));
   if (process.env.SHOTS) await owner.screenshot({ path: `${process.env.SHOTS}/stats.png`, fullPage: true });
   await owner.click("[data-testid=stats-range-7]");
   await owner.waitForTimeout(800);
