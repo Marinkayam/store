@@ -11,14 +11,18 @@ import { flushSync } from "react-dom";
  *   לוחצים "שילמנו", אנחנו בודקים, והדוכן נפתח.
  * - products: איך מוסיפים מוצרים ומה אפשר לעשות איתם (צבעים ומידות, מבצע,
  *   שקית הפתעה, דרופ, כמה בבת אחת) — "כדי שילדים יתלהבו לפתוח".
+ * - parents: להורים, בדף שהם מקבלים בלינק. מה זה דוכן, מה לומדים מלנהל
+ *   אותו ("תסביר להורים מה לומדים בזה שמקימים את הדוכן"), בטיחות, ואיך
+ *   משלמים בביט. שם הנפילה הגדולה: דוכנים עם מוצרים שלא הגיעו לתשלום.
  *
  * סגור כברירת מחדל: שורה אחת עם כפתור ניגון, כדי לא להאריך את המסך. בלחיצה
  * הסרטון נפתח במקום ומתנגן עם קול. הקובץ (כ-3MB) לא נטען עד שלוחצים.
  * הכתוביות צרובות בסרטון, כך שאפשר לצפות גם בלי קול.
  */
 const VIDEOS = {
-  open: { file: "how-to-open", title: "איך פותחים את הדוכן?", seconds: 45 },
-  products: { file: "how-to-add-products", title: "איך מוסיפים מוצרים, ומה אפשר לעשות?", seconds: 48 },
+  open: { file: "how-to-open", title: "איך פותחים את הדוכן?", length: "45 שניות" },
+  products: { file: "how-to-add-products", title: "איך מוסיפים מוצרים, ומה אפשר לעשות?", length: "48 שניות" },
+  parents: { file: "for-parents", title: "מה זה דוכן, מה לומדים בו, ואיך משלמים", length: "דקה" },
 } as const;
 
 export default function ExplainerVideo({ which, className = "" }: { which: keyof typeof VIDEOS; className?: string }) {
@@ -49,7 +53,7 @@ export default function ExplainerVideo({ which, className = "" }: { which: keyof
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-bold leading-snug">{v.title}</span>
-            <span className="block text-[12.5px] text-[var(--muted)] mt-0.5">סרטון של {v.seconds} שניות</span>
+            <span className="block text-[12.5px] text-[var(--muted)] mt-0.5">סרטון של {v.length}</span>
           </span>
         </button>
       )}

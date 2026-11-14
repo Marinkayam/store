@@ -5,6 +5,7 @@ import HomeStall from "@/app/home-stall";
 import Icon, { type IconName } from "@/app/icons";
 import { LearnsTable, SafetyList } from "@/app/price/sections";
 import { displayPhone } from "@/lib/phone";
+import ExplainerVideo from "@/app/explainer-video";
 
 /**
  * הדף להורה. מרינה, 11.2026: "הבעיה שילדים נתקעים עליה זה העברה של הכסף
@@ -128,6 +129,9 @@ export default function ParentView(p: {
           </a>
         </div>
       </section>
+
+      {/* כל הדף בדקה, בסרטון — למי שמעדיף לשמוע. רק לפני התשלום. */}
+      {state === "open" && <ExplainerVideo which="parents" className="mt-6" />}
 
       {/* ── מה זה ── */}
       <section className="mt-9">
