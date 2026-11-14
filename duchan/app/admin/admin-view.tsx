@@ -25,6 +25,7 @@ import LoginFlow from "./login-flow";
 import AdminPush from "./admin-push";
 import AdminStats from "./admin-stats";
 import Icon from "@/app/icons";
+import { SQUISH_OPEN } from "@/lib/squish-open";
 
 /* ---------- types ---------- */
 
@@ -382,6 +383,7 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
 function SchemaWarning() {
   const [state, setState] = useState<{ ok: boolean; missingColumns?: string[]; missingFunctions?: string[] } | null>(null);
   useEffect(() => {
+    if (!SQUISH_OPEN) return; // המועדון סגור — אין מה להזהיר עליו
     fetch("/api/squish/preflight").then((r) => r.json()).then(setState).catch(() => {});
   }, []);
   if (!state || state.ok) return null;
@@ -410,9 +412,11 @@ function SchemaWarning() {
           <h1 className="text-lg font-bold">דוכן · חמ&quot;ל</h1>
           {/* סקוויש קלאב הוא חמ"ל נפרד. בלי הקישור הזה הוא היה מסך
               שצריך לדעת את הכתובת שלו כדי להגיע אליו. */}
-          <a href="/admin/squish" className="text-[12.5px] border border-[var(--line)] bg-white px-2.5 py-1.5 shrink-0">
-            סקוויש קלאב ←
-          </a>
+          {SQUISH_OPEN && (
+            <a href="/admin/squish" className="text-[12.5px] border border-[var(--line)] bg-white px-2.5 py-1.5 shrink-0">
+              סקוויש קלאב ←
+            </a>
+          )}
         </header>
 
         {/* ── מחכה לך ──

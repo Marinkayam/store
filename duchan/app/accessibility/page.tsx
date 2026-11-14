@@ -9,13 +9,13 @@ export const metadata: Metadata = { title: "הצהרת נגישות · דוכן"
  * פרטי רכז/ת הנגישות ותאריך העדכון. לעדכן בכל שינוי מהותי בנגישות האתר.
  */
 
-const EFFECTIVE = "8 בנובמבר 2026";
+const EFFECTIVE = "14 בנובמבר 2026";
 
 export default function AccessibilityPage() {
   return (
     <LegalDoc
       title="הצהרת נגישות"
-      version="2.0"
+      version="2.1"
       effective={EFFECTIVE}
       related={[
         { href: "/terms", label: "תנאי השימוש" },
@@ -31,7 +31,7 @@ export default function AccessibilityPage() {
       <Clause n={1} title="כללי">
         <Sub n="1.1">
           דוכן (&quot;השירות&quot;, &quot;האתר&quot;) הוא שירות מקוון בלבד, הפועל
-          באתר duchan.app ובתתי-האתרים שלו, לרבות מועדון הסקווישים. לשירות אין
+          באתר duchan.app ובתתי-האתרים שלו. לשירות אין
           מבנה, משרד או מוקד שירות פיזי הפתוח לקהל, ולכן הצהרה זו עוסקת בנגישות
           השירות המקוון בלבד.
         </Sub>

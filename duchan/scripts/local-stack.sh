@@ -124,6 +124,11 @@ done
 # קונטיינר חדש מתחיל בלי .env.local — בלי כתובת Supabase כל דף מחזיר 500.
 # הסקריפט מוסיף רק ערכים מקומיים שחסרים (השימים), ולא דורס כלום.
 node scripts/local-env.mjs
+# המועדון סגור לכניסה בפרודקשן (lib/squish-open.ts); הבדיקות שלו רצות מקומית
+grep -q '^NEXT_PUBLIC_SQUISH_OPEN=1' .env.local 2>/dev/null || {
+  say "מוסיף NEXT_PUBLIC_SQUISH_OPEN ל-.env.local"
+  printf '\nNEXT_PUBLIC_SQUISH_OPEN=1\n' >> .env.local
+}
 grep -q '^NEXT_PUBLIC_SQUISH_PARENT_APPROVAL=1' .env.local 2>/dev/null || {
   say "מוסיף NEXT_PUBLIC_SQUISH_PARENT_APPROVAL ל-.env.local"
   printf '\nNEXT_PUBLIC_SQUISH_PARENT_APPROVAL=1\n' >> .env.local

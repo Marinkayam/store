@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { supabaseUrl } from "@/lib/supabase/url";
 import { NextResponse, type NextRequest } from "next/server";
+import { SQUISH_OPEN } from "@/lib/squish-open";
 
 // רענון session של Supabase + הגנה על הדשבורד.
 // session ארוך (30 יום+) — ההתחברות קורית פעם אחת ואז כמעט אף פעם.
@@ -19,7 +20,29 @@ export async function middleware(request: NextRequest) {
    */
   const host = request.headers.get("host")?.split(":")[0] ?? "";
   const squishHost = (process.env.NEXT_PUBLIC_SQUISH_HOST || "squish.duchan.app").toLowerCase();
-  if (host.toLowerCase() === squishHost && !request.nextUrl.pathname.startsWith("/squish")) {
+  const onSquishHost = host.toLowerCase() === squishHost;
+  const p0 = request.nextUrl.pathname;
+  const squishApi = p0 === "/api/squish" || p0.startsWith("/api/squish/");
+
+  /* המועדון סגור לכניסה (lib/squish-open.ts): הדומיין שלו והמסכים שלו מפנים
+     לדף הבית של דוכן, וה-API שלו עונה 410. הקוד והנתונים נשארים. */
+  if (!SQUISH_OPEN) {
+    if (squishApi) return NextResponse.json({ error: "closed" }, { status: 410 });
+    if (onSquishHost) {
+      const site = (process.env.NEXT_PUBLIC_SITE_URL || "https://duchan.app").replace(/\/$/, "");
+      return NextResponse.redirect(`${site}/`);
+    }
+    if (p0 === "/squish" || p0.startsWith("/squish/") || p0.startsWith("/admin/squish")) {
+      const url = request.nextUrl.clone();
+      url.pathname = p0.startsWith("/admin") ? "/admin" : "/";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
+  // ה-API מנהל את האימות שלו בעצמו; הוא עובר כאן רק בשביל הבדיקה שלמעלה
+  if (squishApi) return NextResponse.next();
+
+  if (onSquishHost && !request.nextUrl.pathname.startsWith("/squish")) {
     const url = request.nextUrl.clone();
     url.pathname = `/squish${request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname}`;
     return NextResponse.rewrite(url);
@@ -106,5 +129,5 @@ export async function middleware(request: NextRequest) {
 // ולכתוב את העוגייה מחדש מהשרת. מוחרגים קבצים סטטיים ו-API, שמנהלים
 // את האימות שלהם בעצמם.
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|manifest.json|icon.svg).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|manifest.json|icon.svg).*)", "/api/squish/:path*"],
 };
