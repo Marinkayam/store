@@ -103,8 +103,8 @@ export async function GET(req: NextRequest) {
       }
     });
 
-  /* שמירה מוגבלת בזמן (מדיניות הפרטיות, סעיף 14): התראות לצוות, קודי SMS
-     וקישורי כניסה — 90 יום; תקלות שמירה בסקוויש — 30 יום. כל אחד לבד,
+  /* שמירה מוגבלת בזמן (מדיניות הפרטיות, סעיף 13): התראות לצוות, קודי SMS,
+     קישורי כניסה וקישורי הפיילוט הישנים של הסקוויש — 90 יום; תקלות שמירה בסקוויש — 30 יום. כל אחד לבד,
      כדי שטבלה אחת שנכשלת לא תעצור את השאר ואת הגיבוי. */
   const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 3600_000).toISOString();
   await Promise.all(
@@ -112,6 +112,7 @@ export async function GET(req: NextRequest) {
       ["admin_alerts", 90],
       ["phone_otps", 90],
       ["login_links", 90],
+      ["squish_pilot_tokens", 90],
       ["squish_write_failures", 30],
     ] as const).map(([table, days]) =>
       db
