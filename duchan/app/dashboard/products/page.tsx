@@ -31,6 +31,7 @@ import BulkAdd from "./bulk-add";
 import CategoryDesigner from "./category-designer";
 import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
 import { kupaCheck } from "../kupa/use-kupa";
+import ExplainerVideo from "../../explainer-video";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -1040,6 +1041,9 @@ export default function ProductsPage() {
             >
               <Icon name="gallery" size={18} /> יש לי כמה תמונות — להעלות בבת אחת
             </button>
+            {/* מרינה, 11.2026: סרטון "איך מוסיפים מוצרים ואיזה אופציות יש, כדי
+                שילדים יתלהבו לפתוח" — כאן, כשהדוכן עוד ריק */}
+            <ExplainerVideo which="products" className="mt-2 text-start" />
             <div className="w-full mt-3">
               <div className="text-[13px] font-bold text-right mb-2">או מתחילים מרעיון:</div>
               <div className="grid grid-cols-3 gap-x-2 gap-y-3">
@@ -1174,6 +1178,10 @@ export default function ProductsPage() {
             </div>
           );
         })}
+
+        {/* אותו סרטון גם כשכבר יש מוצרים: מבצע, שקית הפתעה ודרופ מתגלים
+            רק אחרי המוצר הראשון */}
+        {products.length > 0 && <ExplainerVideo which="products" />}
 
         {deleted.length > 0 && (
           <button

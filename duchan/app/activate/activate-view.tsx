@@ -8,7 +8,7 @@ import HelpButton from "../help-button";
 import LegalLinks from "../legal-links";
 import Icon from "../icons";
 import HomeStall from "../home-stall";
-import HowToOpenVideo from "../how-to-open-video";
+import ExplainerVideo from "../explainer-video";
 import { displayPhone } from "@/lib/phone";
 
 // הפלואו: בונים בחינם → רוצים לשתף → כאן מסבירים כמה ולמה → משלמים בביט/פייבוקס
@@ -342,7 +342,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
 
       {/* מרינה, 11.2026: "ילדים לא מבינים שצריך לשלם בביט 20 שח כדי שהדוכן
           ייפתח". הסרטון יושב מיד מתחת למחיר, לפני כל השאר. */}
-      <HowToOpenVideo className="mt-7" />
+      <ExplainerVideo which="open" className="mt-7" />
 
       {/* מה מקבלים — סגור. מי שרוצה לדעת פותחת; מי שרוצה להתקדם לא נעצרת. */}
       <details className="mt-2.5 bg-white border border-[var(--line)]" data-testid="gets-details">

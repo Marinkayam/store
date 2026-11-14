@@ -5,7 +5,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Store } from "@/lib/types";
 import Icon from "@/app/icons";
 import OrderAlerts from "./order-alerts";
-import HowToOpenVideo from "../how-to-open-video";
+import ExplainerVideo from "../explainer-video";
 
 /**
  * המסך הראשון אחרי פתיחת דוכן — כשעוד אין אף הזמנה.
@@ -101,7 +101,7 @@ export default function FirstSteps({
             לפרסם את הדוכן ←
           </a>
           {/* איך זה עובד (ההורים משלמים ₪20 בביט) — לפני שנכנסים למסך ההפעלה */}
-          <HowToOpenVideo />
+          <ExplainerVideo which="open" />
         </>
       ),
     },
