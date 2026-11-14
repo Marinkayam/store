@@ -29,6 +29,7 @@ import { buildOptionStock, parseOptionStock } from "@/lib/option-stock";
 import SortList from "./sort-list";
 import BulkAdd from "./bulk-add";
 import CategoryDesigner from "./category-designer";
+import CategorySort from "./category-sort";
 import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
 import { kupaCheck } from "../kupa/use-kupa";
 import ExplainerVideo from "../../explainer-video";
@@ -168,6 +169,7 @@ export default function ProductsPage() {
   const { store, setStore, loading } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [newCategory, setNewCategory] = useState("");
+  const [catSorting, setCatSorting] = useState(false);
   const [designOpen, setDesignOpen] = useState(false);
   const [edit, setEdit] = useState<EditState | null>(null);
   /* "עוד אפשרויות" בעורך — סגור כברירת מחדל. מי שפתחה פעם אחת (מוכרת
@@ -355,6 +357,7 @@ export default function ProductsPage() {
       return false;
     }
     setStore({ ...store, categories: cleaned });
+    refreshStorePage(); // שהסדר והקטגוריות החדשות ייראו בדוכן מיד, לא אחרי דקה
     return true;
   }
 
@@ -947,7 +950,21 @@ export default function ProductsPage() {
             <p className="text-[12px] text-[var(--faint)] leading-relaxed mb-4">
               הקונים יוכלו לסנן את הדוכן לפי קטגוריות. אחרי שמוסיפים קטגוריה, בוחרים אותה בעריכה של כל מוצר.
             </p>
-            <div className="flex gap-2 flex-wrap">
+            {/* סידור: הרשימה נפתחת במקום הצ'יפים, עד "שמירה" או "ביטול" */}
+            {catSorting && (
+              <CategorySort
+                categories={store?.categories ?? []}
+                counts={catCount}
+                onCancel={() => setCatSorting(false)}
+                onDone={async (next) => {
+                  if (await saveCategories(next)) {
+                    setCatSorting(false);
+                    showToast("סדר הקטגוריות נשמר");
+                  }
+                }}
+              />
+            )}
+            <div className={catSorting ? "hidden" : "flex gap-2 flex-wrap"}>
               {(store?.categories ?? []).map((c) => (
                 <span
                   key={c}
@@ -980,7 +997,7 @@ export default function ProductsPage() {
             </div>
             {/* קטגוריה מופיעה בדוכן רק כשיש בה מוצר. בלי ההסבר הזה הגדירו
                 קטגוריות, לא ראו אותן בדוכן, ולא הבינו למה. */}
-            {emptyCats.length > 0 && (
+            {!catSorting && emptyCats.length > 0 && (
               <div data-testid="categories-hint" className="mt-4 bg-[var(--warn-bg)] text-[var(--warn-ink)] px-3.5 py-3 text-[12.5px] leading-relaxed">
                 <div className="font-bold mb-0.5">
                   {emptyCats.length === (store?.categories?.length ?? 0)
@@ -990,16 +1007,30 @@ export default function ProductsPage() {
                 קטגוריה מופיעה לקונים רק כשיש בה מוצר. כדי לשייך: לוחצים על מוצר ברשימה למטה, בוחרים לו קטגוריה, ושומרים.
               </div>
             )}
-            {/* שורה שקטה בתחתית הכרטיס, כמו השורות ב"הדוכן שלי" — לא עוד כפתור עם מסגרת ליד הכותרת */}
-            {(store?.categories?.length ?? 0) > 0 && (
-              <button
-                onClick={() => setDesignOpen(true)}
-                data-testid="open-category-designer"
-                className="w-full mt-4 pt-3 border-t border-[var(--line)] min-h-11 flex items-center justify-between text-[13px] font-medium text-[var(--ink)]"
-              >
-                <span>עיצוב הקטגוריות</span>
-                <Chevron className="text-[var(--muted)]" />
-              </button>
+            {/* שורות שקטות בתחתית הכרטיס, כמו השורות ב"הדוכן שלי".
+                הסדר כאן הוא הסדר שבו הקטגוריות מופיעות לקונים. בקשה של בעלת
+                דוכן לקראת חנוכה: להעלות קטגוריה לראש בלי למחוק את כל השאר. */}
+            {!catSorting && (store?.categories?.length ?? 0) > 0 && (
+              <div className="mt-4 border-t border-[var(--line)]">
+                {(store?.categories?.length ?? 0) > 1 && (
+                  <button
+                    onClick={() => setCatSorting(true)}
+                    data-testid="open-category-sort"
+                    className="w-full min-h-12 flex items-center justify-between text-[13px] font-medium text-[var(--ink)] border-b border-[var(--line)]"
+                  >
+                    <span>שינוי סדר הקטגוריות</span>
+                    <Chevron className="text-[var(--muted)]" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setDesignOpen(true)}
+                  data-testid="open-category-designer"
+                  className="w-full min-h-12 -mb-2 flex items-center justify-between text-[13px] font-medium text-[var(--ink)]"
+                >
+                  <span>עיצוב הקטגוריות</span>
+                  <Chevron className="text-[var(--muted)]" />
+                </button>
+              </div>
             )}
           </div>
         )}
