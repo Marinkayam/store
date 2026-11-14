@@ -126,7 +126,7 @@ await buyer.screenshot({ path: `${shots}/82-colour.png` });
 await add.click();
 await buyer.waitForTimeout(700);
 await buyer.click("[data-testid=cart-bar]");
-await buyer.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
+await buyer.waitForSelector("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
 for (const m of ["ביט", "פייבוקס", "מזומן"]) {
   check(`${m} מוצע כי הדוכן מקבל אותו`,
     (await buyer.locator(`button[aria-label='תשלום ב${m}']`).count()) === 1);
@@ -142,10 +142,10 @@ await buyer.screenshot({ path: `${shots}/83-checkout.png` });
 /* השם אינו נוחות: בלעדיו הילדה לא יודעת איזו הזמנה של מי. הטלפון חובה
    מאז שההזמנה נקלטת במערכת (2026-09) — בלעדיו אין דרך לחזור לקונה.
    הדוכן הזה שולח, אז נדרשים גם כתובת ועיר. */
-await buyer.fill("input[aria-label='השם שלך']", "נועה");
+await buyer.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "נועה");
 await buyer.fill("input[aria-label='מספר טלפון']", "052-000-2222");
 await buyer.fill("input[aria-label='עיר למשלוח']", "רמת גן");
-await buyer.fill("input[aria-label='רחוב למשלוח']", "הרצל 12");
+await buyer.fill("input[aria-label='כתובת למשלוח']", "הרצל 12");
 /* בניין = ממלאים קומה ודירה (בלי כפתור "בניין" — נגזר ממה שמולא); הקוד רשות. */
 await buyer.fill("input[aria-label='קומה']", "3");
 await buyer.fill("input[aria-label='מספר דירה']", "8");
@@ -208,11 +208,11 @@ await buyer2.goto(fresh(), { waitUntil: "networkidle" });
 await buyer2.locator("button[aria-label^='הוספה מהירה']:not([aria-label*='גרבי צבעים'])").first().click();
 await buyer2.waitForTimeout(700);
 await buyer2.click("[data-testid=cart-bar]");
-await buyer2.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
-await buyer2.fill("input[aria-label='השם שלך']", "שירה");
+await buyer2.waitForSelector("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
+await buyer2.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "שירה");
 await buyer2.fill("input[aria-label='מספר טלפון']", "0520003333");
 // מסירה אישית — כדי לוודא שכתובת לא נדרשת כשאין משלוח
-await buyer2.click("button:has-text('מסירה אישית')");
+await buyer2.click("button:has-text('איסוף מהדוכן')");
 await buyer2.click("button[aria-label='תשלום בביט']");
 await buyer2.waitForTimeout(400);
 await buyer2.click("button:has-text('שליחת ההזמנה')");

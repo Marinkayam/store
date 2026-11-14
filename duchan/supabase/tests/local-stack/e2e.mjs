@@ -108,12 +108,12 @@ await buyer.click("button[aria-label='עוד']");
 await buyer.click("button[aria-label='הוספה לסל']");
 await buyer.waitForTimeout(800);
 await buyer.click("[data-testid=cart-bar]");
-await buyer.waitForSelector("input[aria-label='השם שלך']", { timeout: 15000 });
-await buyer.fill("input[aria-label='השם שלך']", "רוני");
+await buyer.waitForSelector("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
+await buyer.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "רוני");
 await buyer.fill("input[aria-label='מספר טלפון']", "052-000-1111");
 // אם החנות במצב משלוחים (ריצה קודמת השאירה אותו דלוק) — מסירה אישית,
 // אחרת ההזמנה תדרוש כתובת שהבדיקה הזו לא ממלאת
-const pickup = buyer.locator("button:has-text('מסירה אישית')");
+const pickup = buyer.locator("button:has-text('איסוף מהדוכן')");
 if (await pickup.count()) await pickup.click();
 await buyer.fill("input[placeholder*='אפשר בורוד']", "אפשר בורוד?");
 await buyer.screenshot({ path: `${shots}/12-order-sheet.png` });

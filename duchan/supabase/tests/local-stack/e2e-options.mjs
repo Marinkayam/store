@@ -118,10 +118,10 @@ await buyer.screenshot({ path: `${shots}/63-cart-two-options.png`, fullPage: tru
 
 /* ── 4. הבחירה נכנסת להזמנה ולהודעת הקשר ── */
 // השם והטלפון נדרשים בקופה: ההזמנה נקלטת במערכת והמוכרת חוזרת לקונה
-await buyer.fill("input[aria-label='השם שלך']", "רוני");
+await buyer.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "רוני");
 await buyer.fill("input[aria-label='מספר טלפון']", "0520001111");
 // מסירה אישית אם מוצע — ריצה קודמת אולי השאירה משלוחים דלוקים בחנות
-const pickup = buyer.locator("button:has-text('מסירה אישית')");
+const pickup = buyer.locator("button:has-text('איסוף מהדוכן')");
 if (await pickup.count()) await pickup.click();
 await buyer.locator("button:text-is('שליחת ההזמנה')").click();
 // אם חבילה קודמת השאירה לינק תשלום — קודם מסך "נשאר רק לשלם"

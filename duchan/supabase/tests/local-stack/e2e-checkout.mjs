@@ -57,7 +57,7 @@ async function buyerWithCart() {
   return p;
 }
 const fillBuyer = async (p) => {
-  await p.fill("input[aria-label='השם שלך']", "נועה");
+  await p.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "נועה");
   await p.fill("input[aria-label='מספר טלפון']", "0527778899");
 };
 const lastOrder = async () => (await db.query("select * from orders where store_id=$1 order by created_at desc limit 1", [store.id])).rows[0];
@@ -92,14 +92,14 @@ check("משלוח: מופיע 'לאן לשלוח?' עם עיר ורחוב", (awa
 check("ואין יותר כפתורי 'בניין / בית פרטי'", (await p.locator("button[aria-label='בניין'], button[aria-label='בית פרטי']").count()) === 0);
 await p.locator("[data-testid=ship-address]").scrollIntoViewIfNeeded();
 await p.screenshot({ path: `${SHOTS}/co-2-address.png` });
-await p.click("button:has-text('מסירה אישית')");
-check("מסירה אישית: הכתובת נעלמת", (await p.locator("[data-testid=ship-address]").count()) === 0);
+await p.click("button:has-text('איסוף מהדוכן')");
+check("איסוף מהדוכן: הכתובת נעלמת", (await p.locator("[data-testid=ship-address]").count()) === 0);
 await p.locator("[role=radio]:has-text('משלוח')").click();
 
 /* ── 4. כתובת ── */
 await fillBuyer(p);
 await p.fill("input[aria-label='עיר למשלוח']", "יבנה");
-await p.fill("input[aria-label='רחוב למשלוח']", "הרצל 12");
+await p.fill("input[aria-label='כתובת למשלוח']", "הרצל 12");
 await p.fill("input[aria-label='קומה']", "3");
 await p.click("button[aria-label='תשלום בביט']");
 await sendBtn.click();
@@ -147,7 +147,7 @@ await p.context().close();
 p = await buyerWithCart();
 await fillBuyer(p);
 await p.fill("input[aria-label='עיר למשלוח']", "יבנה");
-await p.fill("input[aria-label='רחוב למשלוח']", "הרצל 12");
+await p.fill("input[aria-label='כתובת למשלוח']", "הרצל 12");
 await p.fill("input[aria-label='קומה']", "2");
 await p.fill("input[aria-label='מספר דירה']", "5");
 await p.click("button[aria-label='תשלום בפייבוקס']");
@@ -162,7 +162,7 @@ await p.context().close();
 await config({ payout_bit_link: "https://www.bitpay.co.il/app/me/ABC123", payout_whatsapp: false });
 p = await buyerWithCart();
 await fillBuyer(p);
-await p.click("button:has-text('מסירה אישית')");
+await p.click("button:has-text('איסוף מהדוכן')");
 await p.click("button[aria-label='תשלום בביט']");
 check("ביט עם לינק: 'יופיע כפתור לתשלום בביט'", ((await p.textContent("[data-testid=pay-next]")) ?? "").includes("יופיע כפתור"));
 await p.locator("button:has-text('שליחת ההזמנה')").click();
@@ -177,7 +177,7 @@ await p.context().close();
 await config({ payout_cash: true });
 p = await buyerWithCart();
 await fillBuyer(p);
-await p.click("button:has-text('מסירה אישית')");
+await p.click("button:has-text('איסוף מהדוכן')");
 await p.click("button[aria-label='תשלום במזומן']");
 check("מזומן: 'משלמים במזומן כשמקבלים'", ((await p.textContent("[data-testid=pay-next]")) ?? "").includes("במזומן"));
 await p.locator("button:has-text('שליחת ההזמנה')").click();

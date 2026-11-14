@@ -173,7 +173,7 @@ check("הסה״כ לתשלום ₪36", ((await buyer.textContent("[data-testid=o
 check("פירוט: סכום המוצרים וקופון", ((await buyer.textContent("[data-testid=coupon-summary]")) ?? "").includes("₪40"));
 await buyer.screenshot({ path: "/tmp/coupon-checkout.png" });
 
-const pickup = buyer.locator("button:has-text('מסירה אישית')");
+const pickup = buyer.locator("button:has-text('איסוף מהדוכן')");
 if (await pickup.count()) await pickup.click();
 await buyer.fill("input[aria-label='שם פרטי']", "מאיה").catch(async () => {
   await buyer.locator("input[placeholder='שם פרטי']").fill("מאיה");
