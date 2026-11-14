@@ -17,7 +17,7 @@ import { ACTIVATION_PRICE } from "@/lib/pricing";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
-import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
+import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
 import SellerCoupons from "../share/seller-coupons";
@@ -1178,6 +1178,7 @@ export default function SettingsPage() {
                     active={null}
                     onSelect={() => setCatDesignOpen(true)}
                     layout={layoutOrDefault(store.category_layout)}
+                    arrange={arrangeOrDefault(store.category_layout)}
                     size={sizeOrDefault(store.category_size)}
                     meta={cleanMeta(store.category_meta)}
                   />

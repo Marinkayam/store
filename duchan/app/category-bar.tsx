@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { mediaUrl } from "@/lib/media";
 import {
   ALL_ICON,
+  CARD_GRID,
   CATEGORY_DIMENSIONS,
+  type CategoryArrange,
   type CategoryLayout,
   type CategoryMeta,
   type CategorySize,
@@ -27,6 +30,7 @@ export default function CategoryBar({
   layout,
   size,
   meta,
+  arrange = "row",
   imageUrl = mediaUrl,
 }: {
   categories: string[];
@@ -35,20 +39,47 @@ export default function CategoryBar({
   layout: CategoryLayout;
   size: CategorySize;
   meta: CategoryMeta;
+  /** "grid" = כל הקטגוריות פרושות בראש הדוכן, במקום שורה נגללת */
+  arrange?: CategoryArrange;
   /** בעורך: תמונה שרק עכשיו נבחרה עדיין לא ב-R2, אז מגיעה כ-blob */
   imageUrl?: (key: string | null | undefined) => string | null;
 }) {
-  const items: (string | null)[] = [null, ...categories];
   const vertical = layout === "circle" || layout === "square";
+  const big = vertical || layout === "card";
   const { gap, after } = CATEGORY_DIMENSIONS[layout][size];
+  /* "כולן בראש הדוכן": צ'יפים פשוט נשברים לשורות. עיגולים, ריבועים
+     וכרטיסים נפרשים לרשת כל עוד לא בחרו קטגוריה; אחרי בחירה הם מתקפלים
+     לשורה אחת (עם "הכל" בהתחלה), כדי שהמוצרים של הקטגוריה ייראו מיד ולא
+     אחרי גלילה על פני כל הרשת. */
+  const spread = arrange === "grid";
+  const grid = spread && big && active === null;
+  const folded = spread && big && active !== null;
+  const items: (string | null)[] = grid ? categories : [null, ...categories];
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!folded) return;
+    box.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [folded, active]);
+  const cardGrid = CARD_GRID[size];
 
   return (
     <div
+      ref={box}
       data-testid="category-chips"
       data-layout={layout}
       data-size={size}
-      className="flex overflow-x-auto"
+      data-arrange={grid ? "grid" : spread && !big ? "wrap" : "row"}
+      className={grid ? "grid" : spread && !big ? "flex flex-wrap" : "flex overflow-x-auto"}
       style={{
+        ...(grid
+          ? layout === "card"
+            ? { gridTemplateColumns: `repeat(${cardGrid.cols}, minmax(0, 1fr))` }
+            : {
+                gridTemplateColumns: `repeat(auto-fill, minmax(${CATEGORY_DIMENSIONS[layout as "circle" | "square"][size].box + 12}px, 1fr))`,
+                justifyItems: "center",
+                rowGap: gap,
+              }
+          : {}),
         gap,
         // 16px מהצדדים כמו שאר הדף; רווח ברור מתחת עד הרשת; ולמעלה מקום
         // לטבעת של העיגול הנבחר ולצל של הכרטיסים, שלא ייחתכו
@@ -160,8 +191,9 @@ export default function CategoryBar({
             {...common}
             className="s-r shrink-0 relative overflow-hidden text-right"
             style={{
-              width: d.w,
-              height: d.h,
+              width: grid ? "100%" : d.w,
+              height: grid ? undefined : d.h,
+              aspectRatio: grid ? cardGrid.ratio : undefined,
               background: "var(--s-thumb)",
               border: on ? "2.5px solid var(--s-primary)" : "var(--s-border)",
               boxShadow: "var(--s-shadow)",
@@ -170,8 +202,8 @@ export default function CategoryBar({
             {img ? (
               <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
             ) : (
-              <span className="absolute inset-0 flex items-center justify-center pb-5" style={{ fontSize: d.h * 0.36 }}>
-                {glyph ?? <Initial name={c} px={d.h * 0.5} />}
+              <span className="absolute inset-0 flex items-center justify-center pb-5" style={{ fontSize: (grid ? cardGrid.h : d.h) * 0.36 }}>
+                {glyph ?? <Initial name={c} px={(grid ? cardGrid.h : d.h) * 0.5} />}
               </span>
             )}
             <span

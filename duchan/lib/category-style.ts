@@ -16,6 +16,15 @@
 
 export type CategoryLayout = "text" | "icon" | "circle" | "square" | "card";
 export type CategorySize = "sm" | "md" | "lg";
+/**
+ * איפה הקטגוריות יושבות: שורה אחת שגוללים הצידה (ברירת המחדל), או כולן
+ * פרושות בראש הדוכן, לפני המומלצים. בקשה של בעלת דוכן, 11.2026:
+ * "שהקטגוריות יופיעו כזה בגדול בהתחלה של האתר ואחרי זה מומלצים".
+ *
+ * נשמר בתוך category_layout כסיומת ("card+grid"), בלי עמודה חדשה ובלי
+ * מיגרציה. קוד ישן שלא מכיר את הסיומת נופל ל"רק טקסט", לא נשבר.
+ */
+export type CategoryArrange = "row" | "grid";
 
 export interface CategoryMetaItem {
   emoji?: string;
@@ -38,9 +47,37 @@ export const CATEGORY_SIZES: { key: CategorySize; label: string }[] = [
   { key: "lg", label: "גדול" },
 ];
 
+export const CATEGORY_ARRANGES: { key: CategoryArrange; label: string; hint: string }[] = [
+  { key: "row", label: "שורה אחת", hint: "גוללים הצידה כדי לראות את כולן" },
+  { key: "grid", label: "כולן בראש הדוכן", hint: "כל הקטגוריות פרושות, לפני המוצרים" },
+];
+
+const GRID_SUFFIX = "+grid";
+
 export function layoutOrDefault(v: string | null | undefined): CategoryLayout {
-  return CATEGORY_LAYOUTS.some((l) => l.key === v) ? (v as CategoryLayout) : "text";
+  const base = (v ?? "").split("+")[0];
+  return CATEGORY_LAYOUTS.some((l) => l.key === base) ? (base as CategoryLayout) : "text";
 }
+
+export function arrangeOrDefault(v: string | null | undefined): CategoryArrange {
+  return (v ?? "").endsWith(GRID_SUFFIX) ? "grid" : "row";
+}
+
+/** הערך שנשמר ב-category_layout. null = ברירת המחדל (רק טקסט, שורה אחת). */
+export function packLayout(layout: CategoryLayout, arrange: CategoryArrange): string | null {
+  const v = arrange === "grid" ? `${layout}${GRID_SUFFIX}` : layout;
+  return v === "text" ? null : v;
+}
+
+/**
+ * כרטיסים בפריסה "כולן בראש הדוכן": כמה בשורה, יחס רוחב-גובה, וגובה משוער
+ * (לגודל האמוג'י). "גדול" = שני ריבועים גדולים בשורה.
+ */
+export const CARD_GRID = {
+  sm: { cols: 3, ratio: "116 / 74", h: 70 },
+  md: { cols: 2, ratio: "144 / 92", h: 108 },
+  lg: { cols: 2, ratio: "1 / 1", h: 168 },
+} as const;
 
 export function sizeOrDefault(v: string | null | undefined): CategorySize {
   return v === "sm" || v === "lg" ? v : "md";

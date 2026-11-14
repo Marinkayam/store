@@ -8,7 +8,7 @@ import { deliveryLine, formatPayPhone, payMethods, paymentLinkLine, payoutLine, 
 import { BADGES, badgeFor } from "@/lib/badges";
 import Icon from "@/app/icons";
 import CategoryBar from "@/app/category-bar";
-import { cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
+import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import { coverCss } from "@/lib/covers";
 import { hasCustomBg, hasPhotoBg, lookOrBase, readablePlate, storeBackground } from "@/lib/looks";
 import { themeOrDefault } from "@/lib/themes";
@@ -1100,6 +1100,7 @@ export default function StoreView({
           active={category}
           onSelect={setCategory}
           layout={layoutOrDefault(store.category_layout)}
+          arrange={arrangeOrDefault(store.category_layout)}
           size={sizeOrDefault(store.category_size)}
           meta={cleanMeta(store.category_meta)}
         />

@@ -8,14 +8,18 @@ import { themeCssVars, themeOrDefault } from "@/lib/themes";
 import { lookCssVars, storeBackground } from "@/lib/looks";
 import CategoryBar from "@/app/category-bar";
 import {
+  CATEGORY_ARRANGES,
   CATEGORY_EMOJIS,
   CATEGORY_IMAGE_HINT,
   CATEGORY_IMAGE_PX,
   CATEGORY_LAYOUTS,
   CATEGORY_SIZES,
+  arrangeOrDefault,
   cleanMeta,
   layoutOrDefault,
+  packLayout,
   sizeOrDefault,
+  type CategoryArrange,
   type CategoryLayout,
   type CategoryMeta,
   type CategorySize,
@@ -40,6 +44,7 @@ export default function CategoryDesigner({
 }) {
   const categories = store.categories ?? [];
   const [layout, setLayout] = useState<CategoryLayout>(layoutOrDefault(store.category_layout));
+  const [arrange, setArrange] = useState<CategoryArrange>(arrangeOrDefault(store.category_layout));
   const [size, setSize] = useState<CategorySize>(sizeOrDefault(store.category_size));
   const [meta, setMeta] = useState<CategoryMeta>(cleanMeta(store.category_meta));
   const [active, setActive] = useState<string | null>(null);
@@ -103,7 +108,7 @@ export default function CategoryDesigner({
     const kept: CategoryMeta = {};
     for (const c of categories) if (meta[c]) kept[c] = meta[c];
     const patch = {
-      category_layout: layout === "text" ? null : layout,
+      category_layout: packLayout(layout, arrange),
       category_size: size === "md" ? null : size,
       category_meta: Object.keys(kept).length ? kept : null,
     };
@@ -152,7 +157,7 @@ export default function CategoryDesigner({
       {/* התצוגה החיה — צמודה, בצבעים ובסגנון של הדוכן */}
       <div
         data-testid="category-preview"
-        className="s-look shrink-0 border-b border-[var(--line)] pt-4"
+        className="s-look shrink-0 border-b border-[var(--line)] pt-4 max-h-[44vh] overflow-y-auto"
         style={{
           ...(themeCssVars(theme) as Record<string, string>),
           ...lookCssVars(theme, store.look),
@@ -167,6 +172,7 @@ export default function CategoryDesigner({
           active={active}
           onSelect={setActive}
           layout={layout}
+          arrange={arrange}
           size={size}
           meta={meta}
           imageUrl={imageUrl}
@@ -215,9 +221,40 @@ export default function CategoryDesigner({
           </div>
         </section>
 
-        {/* 3. אייקון או תמונה לכל קטגוריה */}
+        {/* 3. איפה: שורה אחת שגוללים, או כולן פרושות בראש הדוכן */}
         <section>
-          <div className="text-[14px] font-bold mb-1">3. אייקון או תמונה לכל קטגוריה</div>
+          <div className="text-[14px] font-bold mb-3">3. איפה הן מופיעות</div>
+          <div className="grid grid-cols-2 gap-3" data-testid="category-arranges">
+            {CATEGORY_ARRANGES.map((a) => (
+              <button
+                key={a.key}
+                onClick={() => {
+                  change(setArrange, a.key);
+                  setActive(null); // שהתצוגה למעלה תראה את הפריסה המלאה
+                }}
+                aria-pressed={arrange === a.key}
+                aria-label={`מיקום: ${a.label}`}
+                className={`bg-white border-2 p-3.5 text-right min-h-11 flex flex-col gap-1 ${arrange === a.key ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+              >
+                <ArrangeSketch arrange={a.key} />
+                <div className="text-[13px] font-bold mt-2.5">
+                  {arrange === a.key && "✓ "}
+                  {a.label}
+                </div>
+                <div className="text-[11px] text-[var(--muted)] leading-snug">{a.hint}</div>
+              </button>
+            ))}
+          </div>
+          {arrange === "grid" && (
+            <p className="text-[11.5px] text-[var(--muted)] mt-2.5 leading-snug">
+              הקטגוריות יופיעו בראש הדוכן, ואחריהן המומלצים ושאר המוצרים. הכי בולט עם &quot;כרטיסים&quot; בגודל &quot;גדול&quot; ותמונה לכל קטגוריה.
+            </p>
+          )}
+        </section>
+
+        {/* 4. אייקון או תמונה לכל קטגוריה */}
+        <section>
+          <div className="text-[14px] font-bold mb-1">4. אייקון או תמונה לכל קטגוריה</div>
           <p className="text-[11.5px] text-[var(--muted)] mt-0.5 leading-snug" data-testid="category-image-hint">
             📐 {CATEGORY_IMAGE_HINT}
           </p>
@@ -361,6 +398,25 @@ function Sketch({ layout }: { layout: CategoryLayout }) {
           <span className="absolute inset-x-0 bottom-0 h-2" style={{ background: i ? "#fff" : on }} />
         </span>
       ))}
+    </div>
+  );
+}
+
+/** שרטוט קטן: שורה אחת שממשיכה הצידה, או רשת של כל הקטגוריות מעל המוצרים. */
+function ArrangeSketch({ arrange }: { arrange: CategoryArrange }) {
+  const ink = "#C9C2B8";
+  const tile = (k: number, w: string) => <span key={k} className={`${w} h-4 border`} style={{ borderColor: ink, background: "#F3EEE7" }} />;
+  if (arrange === "row")
+    return (
+      <div className="h-12 flex flex-col justify-center gap-1.5 overflow-hidden" aria-hidden>
+        <div className="flex gap-1 -me-6">{[0, 1, 2, 3, 4].map((k) => tile(k, "w-7 shrink-0"))}</div>
+        <div className="grid grid-cols-2 gap-1">{[0, 1].map((k) => <span key={k} className="h-3" style={{ background: ink }} />)}</div>
+      </div>
+    );
+  return (
+    <div className="h-12 flex flex-col justify-center gap-1" aria-hidden>
+      <div className="grid grid-cols-3 gap-1">{[0, 1, 2, 3, 4, 5].map((k) => tile(k, "w-full"))}</div>
+      <div className="grid grid-cols-2 gap-1">{[0, 1].map((k) => <span key={k} className="h-1.5" style={{ background: ink }} />)}</div>
     </div>
   );
 }
