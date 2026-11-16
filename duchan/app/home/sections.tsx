@@ -77,7 +77,7 @@ export function LearnSection() {
             <span className="w-5 text-[#E3C26F]">
               <Art name="FSTAR" />
             </span>
-            חידה מקופת הדוכן · יש שם יותר מ-100
+            חידה מהמשחק של הדוכן · יש שם יותר מ-100
           </div>
           <p className="text-[20px] leading-snug mt-3 font-medium">{RIDDLE.q}</p>
           <div className="grid grid-cols-3 gap-2 mt-4">
@@ -102,7 +102,7 @@ export function LearnSection() {
             })}
           </div>
           <p className="text-[14px] leading-relaxed mt-3 min-h-[44px]" aria-live="polite" data-testid="home-riddle-answer">
-            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! כוכב לקופה.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
+            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! קיבלת כוכב.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
           </p>
         </div>
       </Reveal>
@@ -142,8 +142,8 @@ export function KupaSection() {
     <section className="px-gutter py-24 bg-[var(--cream)]" aria-labelledby="kupa-title" data-testid="home-kupa">
       <Reveal>
         <Head
-          title={<span id="kupa-title">כל צעד אמיתי — מטבעות לקופה.</span>}
-          sub="מוצר ראשון, הזמנה ראשונה, חידה שנפתרה. הדוכן המצויר גדל, ובחנות הקופה קונים לו סוכך זהב או חתול."
+          title={<span id="kupa-title">כל צעד אמיתי — מטבעות במשחק.</span>}
+          sub="מוצר ראשון, הזמנה ראשונה, חידה שנפתרה. הדוכן המצויר גדל, ובחנות המשחק קונים לו סוכך זהב או חתול."
         />
       </Reveal>
       <div ref={ref} className="max-w-md mx-auto mt-10 text-center">
@@ -153,7 +153,7 @@ export function KupaSection() {
             <CountUp to={345} run={seen} />
           </span>
         </div>
-        <div className="text-[13px] text-[var(--muted)] mt-1">מטבעות מחכים באותות הקופה</div>
+        <div className="text-[13px] text-[var(--muted)] mt-1">מטבעות מחכים באותות המשחק</div>
         <ul className="mt-6 divide-y divide-[var(--sand)] border-y border-[var(--sand)] text-right">
           {COIN_WAYS.map(([w, c], i) => (
             <li key={w} className={`home-reveal flex items-center justify-between py-3 ${seen ? "is-in" : ""}`} style={{ transitionDelay: `${300 + i * 120}ms` }}>
@@ -360,7 +360,7 @@ export function PriceGame() {
           {say}
         </p>
         <ParentNote className="mt-8">
-          ככה נראה שיעור בתמחור כשהכסף אמיתי: הכנסה, הוצאה ורווח. בקופת הדוכן מחכות עוד יותר מ-100 חידות כסף כאלה.
+          ככה נראה שיעור בתמחור כשהכסף אמיתי: הכנסה, הוצאה ורווח. במשחק של הדוכן מחכות עוד יותר מ-100 חידות כסף כאלה.
         </ParentNote>
       </Reveal>
     </section>
@@ -546,7 +546,7 @@ export function MonthSection() {
             <span className="w-5 text-[#E3C26F]">
               <Art name="FSTAR" />
             </span>
-            חידה מקופת הדוכן · יש שם יותר מ-100
+            חידה מהמשחק של הדוכן · יש שם יותר מ-100
           </div>
           <p className="text-[20px] leading-snug mt-3">{RIDDLE.q}</p>
           <div className="grid grid-cols-3 gap-2 mt-4">
@@ -571,7 +571,7 @@ export function MonthSection() {
             })}
           </div>
           <p className="text-[14px] leading-relaxed mt-3 min-h-[44px]" aria-live="polite" data-testid="home-riddle-answer">
-            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! כוכב לקופה.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
+            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! קיבלת כוכב.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
           </p>
         </div>
         <ParentNote className="mt-8">

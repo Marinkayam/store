@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import CloseX from "@/app/close-x";
 
 /**
  * ♿ תפריט נגישות — בכל עמוד באתר.
@@ -98,13 +99,7 @@ export default function A11yMenu() {
           >
             <div className="flex items-center justify-between mb-3">
               <h2 id="a11y-title" className="text-[16px] font-bold">♿ נגישות</h2>
-              <button
-                onClick={() => { setOpen(false); btnRef.current?.focus(); }}
-                aria-label="סגירת תפריט הנגישות"
-                className="w-11 h-11 -my-2 -ml-2 flex items-center justify-center text-[22px]"
-              >
-                ✕
-              </button>
+              <CloseX onClick={() => { setOpen(false); btnRef.current?.focus(); }} label="סגירת תפריט הנגישות" testid="a11y-close" />
             </div>
 
             <div className="text-[13px] font-bold mb-1.5">גודל האותיות</div>

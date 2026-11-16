@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { displayPhone } from "@/lib/phone";
 import VSteps from "./v-steps";
+import CloseX from "@/app/close-x";
 
 /**
  * אימות טלפון בשני מסכים קטנים: מספר → קוד.
@@ -221,13 +222,7 @@ export default function PhoneVerify({
             <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
             <div className="flex items-start justify-between mb-1">
               <h2 className="t-heading">איך מוצאים את המספר</h2>
-              <button
-                onClick={() => setShowFindHelp(false)}
-                aria-label="סגירה"
-                className="w-7 h-7 shrink-0 flex items-center justify-center text-[var(--muted)]"
-              >
-                ✕
-              </button>
+              <CloseX onClick={() => setShowFindHelp(false)} testid="find-help-close" />
             </div>
             {/* קודם *של מי* המספר, ורק אחר כך איך מוצאים אותו: ילדה בלי
                 טלפון משלה תוקעת כאן, ורשימת הוראות לא עוזרת לה. */}

@@ -7,6 +7,7 @@ import { KupaStall, Coin, Medal } from "@/app/kupa-art";
 import type { BadgeState } from "@/lib/kupa";
 import { storePath } from "@/lib/short-link";
 import { fetchKupa, readSeen, writeSeen, useNight, KUPA_CHECK, type KupaData } from "./use-kupa";
+import CloseX from "@/app/close-x";
 
 /**
  * רגע החגיגה של קופת הדוכן — יושב ב-layout של הדשבורד ובודק אחרי כל
@@ -125,7 +126,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
   const top = [...fresh].sort((a, b) => b.coins - a.coins)[0];
   const gained = kind === "welcome" ? kupa.coins : Math.max(0, kupa.coins - show.from);
   const title =
-    kind === "welcome" ? "פתחנו לך קופה!" : kind === "level" ? `הדוכן עלה רמה: ${kupa.levelName}` : top?.title ?? "אות חדש";
+    kind === "welcome" ? "פתחנו לך משחק!" : kind === "level" ? `הדוכן עלה רמה: ${kupa.levelName}` : top?.title ?? "אות חדש";
   const text =
     kind === "welcome"
       ? `על כל מה שכבר עשית בדוכן אספת ${kupa.coins} מטבעות דוכן. כל צעד חדש מוסיף עוד, והדוכן גדל.`
@@ -148,16 +149,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
         data-kind={kind}
         className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[91] bg-white px-gutter pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center flex flex-col gap-3 max-h-[92vh] overflow-y-auto"
       >
-        <button
-          onClick={onClose}
-          aria-label="סגירה"
-          data-testid="kupa-x"
-          className="absolute top-2 left-2 z-10 w-11 h-11 flex items-center justify-center bg-white/85 text-[var(--ink)]"
-        >
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
+        <CloseX corner onClick={onClose} testid="kupa-x" className="bg-white/85 text-[var(--ink)]" />
         <div className={kind === "badge" && top ? "relative mx-auto" : "-mx-gutter -mt-5"}>
           {kind === "badge" && top ? (
             <div className="relative w-[96px] h-[96px] mx-auto">
@@ -188,7 +180,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
             </span>
           )}
           <span className="text-[13px] text-[var(--muted)] tabular-nums" data-testid="kupa-celebrate-total">
-            בקופה: <b className="text-[var(--ink)]">{count}</b>
+            יש לך: <b className="text-[var(--ink)]">{count}</b>
           </span>
         </div>
 
@@ -228,7 +220,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
             data-testid="kupa-open"
             className={canShare ? "border-[1.5px] border-[var(--ink)] py-3 text-[14px] font-bold" : "bg-[var(--ink)] text-white py-3.5 text-[15px] font-bold"}
           >
-            {kind === "badge" ? "לפתור את החידה של האות" : "לראות את הקופה"}
+            {kind === "badge" ? "לפתור את החידה של האות" : "למשחק"}
           </a>
           <button onClick={onClose} data-testid="kupa-close" className="py-2 text-[13px] text-[var(--muted)] underline">
             סגירה

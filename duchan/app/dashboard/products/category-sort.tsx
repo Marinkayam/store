@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Icon from "@/app/icons";
+import { scrollByY } from "@/lib/scroll-root";
 
 /**
  * סידור הקטגוריות — גוררים באצבע, כמו סידור המוצרים (sort-list.tsx).
@@ -55,8 +56,8 @@ export default function CategorySort({
     const s = g.current;
     if (!s) return;
     // ליד קצה המסך — גוללים, כדי שאפשר לגרור גם ברשימה ארוכה
-    if (e.clientY < 90) window.scrollBy(0, -12);
-    else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 12);
+    if (e.clientY < 90) scrollByY(-12);
+    else if (e.clientY > window.innerHeight - 90) scrollByY(12);
     const dy = e.clientY - s.startY;
     const target = s.base + Math.round(dy / s.rowH);
     if (target !== order.indexOf(s.c)) moveTo(s.c, target);

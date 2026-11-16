@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CloseX from "@/app/close-x";
 
 /**
  * "להוסיף את הדוכן למסך הבית" — הדוכן כאפליקציה בטלפון.
@@ -113,10 +114,11 @@ export default function InstallCard({ force = false }: { force?: boolean }) {
   const device = platform.kind === "android" || (platform.kind === "inapp" && !platform.ios) ? "אנדרואיד" : "אייפון";
 
   return (
-    <div className="bg-white border-[1.5px] border-[var(--olive)] p-3.5" data-testid="install-card" data-platform={platform.kind}>
+    <div className="relative bg-white border-[1.5px] border-[var(--olive)] p-3.5" data-testid="install-card" data-platform={platform.kind}>
       <div className="flex items-start gap-3">
         <img src="/icon-192.png" alt="" className="w-11 h-11 shrink-0" />
-        <div className="flex-1 min-w-0">
+        {/* pe-9: מקום לאיקס שבפינה, שהכותרת לא תיכנס מתחתיו */}
+        <div className={`flex-1 min-w-0 ${force ? "" : "pe-9"}`}>
           <div className="text-[14px] font-bold">הדוכן כאפליקציה בטלפון</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             אייקון במסך הבית — נכנסים בלחיצה אחת, בלי לחפש את הקישור.
@@ -125,11 +127,7 @@ export default function InstallCard({ force = false }: { force?: boolean }) {
             זיהינו: {device}
           </span>
         </div>
-        {!force && (
-          <button onClick={dismiss} aria-label="לא עכשיו" className="shrink-0 w-8 h-8 text-[var(--muted)] text-[17px] leading-none">
-            ×
-          </button>
-        )}
+        {!force && <CloseX corner onClick={dismiss} label="לא עכשיו" testid="install-dismiss" />}
       </div>
 
       {/* דפדפן בתוך אפליקציה — קודם לצאת ממנו */}

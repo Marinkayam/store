@@ -134,7 +134,7 @@ export default function KupaPage() {
   return (
     <div className="px-gutter pt-4 pb-8 flex flex-col gap-5" data-testid="kupa-page">
       <header>
-        <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">קופת הדוכן</h1>
+        <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">המשחק של הדוכן</h1>
         {/* מטבעות וכוכבים — באותו גודל, קטנים, בלי קופסאות. לחיצה מסבירה מה זה (מרינה) */}
         <div className="flex items-center gap-4 mt-2.5">
           <button
@@ -164,7 +164,7 @@ export default function KupaPage() {
       </header>
 
       {/* טאבים פנימיים: הדוכן · משימות · חידות · חנות */}
-      <div role="tablist" aria-label="קופת הדוכן" className="grid grid-cols-4 border-b border-[var(--line)] -mb-1">
+      <div role="tablist" aria-label="המשחק של הדוכן" className="grid grid-cols-4 border-b border-[var(--line)] -mb-1">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -1002,7 +1002,7 @@ function Shop({
       </div>
 
       {picked && (
-        <div className="kp-sheet-up sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] bg-white border-[1.5px] border-[var(--ink)] p-3 flex items-center gap-2" data-testid="shop-confirm">
+        <div className="kp-sheet-up sticky bottom-3 bg-white border-[1.5px] border-[var(--ink)] p-3 flex items-center gap-2" data-testid="shop-confirm">
           <span className="flex-1 text-[13px] leading-snug">
             {balance >= picked.price ? (
               <>לקנות <b>{picked.title}</b> ב-{picked.price} מטבעות?</>
@@ -1061,11 +1061,7 @@ function ExplainSheet({
         data-kind={kind}
         className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[61] bg-white px-gutter pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col gap-3"
       >
-        <button onClick={onClose} aria-label="סגירה" className="absolute top-2 left-2 w-11 h-11 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
+        <CloseX corner onClick={onClose} testid="explain-close" />
         <div className="flex items-center gap-2.5">
           {coinsKind ? <Coin size={36} /> : <Icon name="star" size={36} tone="var(--warning)" className="text-[#6f4b28]" />}
           <h2 id="explain-title" className="text-[20px] font-black">

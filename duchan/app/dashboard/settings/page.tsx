@@ -18,6 +18,7 @@ import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
 import { useCategoryImages } from "@/app/use-category-images";
+import { scrollToTop } from "@/lib/scroll-root";
 import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
@@ -189,7 +190,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const read = () => {
       setSection(asSection(window.location.hash));
-      window.scrollTo(0, 0);
+      scrollToTop();
     };
     read();
     window.addEventListener("hashchange", read);
@@ -213,7 +214,7 @@ export default function SettingsPage() {
     } else {
       window.history.replaceState(null, "", window.location.pathname);
       setSection(null);
-      window.scrollTo(0, 0);
+      scrollToTop();
     }
   };
 
@@ -759,8 +760,10 @@ export default function SettingsPage() {
               <InstallCard />
             </div>
           }
-          after={
-            <button onClick={logout} className="w-full text-center text-[13px] text-[var(--muted)] py-3">
+          /* יציאה מהחשבון ישבה בתחתית המסך הראשי, צמוד לתפריט. מרינה, 11.2026:
+             "זה לא אמור להיות שם". עכשיו היא בסוף "עוד הגדרות", רחוק מהאגודל. */
+          moreAfter={
+            <button onClick={logout} data-testid="logout" className="w-full text-center text-[13px] text-[var(--muted)] py-3">
               יציאה מהחשבון
             </button>
           }
@@ -768,7 +771,7 @@ export default function SettingsPage() {
       ) : (
         <>
           {/* כותרת המקטע: חזרה, אייקון ושם. דביקה, כדי שהדרך חזרה תמיד על המסך */}
-          <div className="sticky top-[env(safe-area-inset-top)] z-30 h-[54px] flex items-center gap-2 px-gutter bg-[var(--canvas)] border-b border-[var(--line)]">
+          <div className="sticky top-0 z-30 h-[54px] flex items-center gap-2 px-gutter bg-[var(--canvas)] border-b border-[var(--line)]">
             {/* -ms-3: אזור הלחיצה נשאר 44px, והחץ עצמו יושב על קו השוליים */}
             <button
               onClick={closeSection}

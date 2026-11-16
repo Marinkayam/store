@@ -137,7 +137,7 @@ export const GET_GROUPS: { key: string; title: string; tone: string; items: Get[
   },
   {
     key: "fun",
-    title: "קופת הדוכן: כיף ולומדים",
+    title: "המשחק של הדוכן: כיף ולומדים",
     tone: "var(--olive)",
     items: [
       { icon: "coin", title: "מטבעות, אותות ורמות", body: "כל צעד בדוכן שווה מטבעות, והדוכן גדל: מעגלה קטנה ועד כוכב השוק." },

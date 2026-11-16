@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Icon from "@/app/icons";
 import { WHATSNEW } from "@/lib/whatsnew";
+import CloseX from "@/app/close-x";
 
 /**
  * באנר "חדש בדוכן" בראש מסך ההזמנות (היה פופאפ שחוסם את המסך).
@@ -46,9 +47,7 @@ export default function WhatsNewBanner({ createdAt }: { createdAt: string }) {
           <span id="whatsnew-title" className="text-[14px] font-bold">{WHATSNEW.title}</span>
           <span className="text-[12.5px] text-[var(--muted)]">{open ? "סגירה" : `${WHATSNEW.items.length} דברים לנסות`}</span>
         </button>
-        <button onClick={close} aria-label="להסתיר" data-testid="whatsnew-close" className="w-11 h-11 flex items-center justify-center text-[20px] text-[var(--muted)]">
-          ×
-        </button>
+        <CloseX onClick={close} label="להסתיר" testid="whatsnew-close" />
       </div>
       <ul hidden={!open} className="pb-3.5 flex gap-2.5 overflow-x-auto px-gutter scroll-px-gutter snap-x snap-mandatory [scrollbar-width:none]">
         {WHATSNEW.items.map((it) => (

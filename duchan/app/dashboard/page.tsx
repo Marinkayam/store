@@ -208,6 +208,10 @@ export default function OrdersPage() {
   }
 
   const newCount = orders.filter((o) => o.status === "sent").length;
+  // הסימון על טאב "הזמנות" (layout.tsx) מתעדכן מיד כשמסמנים או מבטלים הזמנה
+  useEffect(() => {
+    window.dispatchEvent(new Event("duchan-orders-changed"));
+  }, [newCount]);
   const byStatus = filter === "all" ? orders : orders.filter((o) => o.status === filter);
   /* חיפוש על שם, מספר הזמנה, מוצר והערות. עם הרבה הזמנות זה מה שמחליף
      גלילה ארוכה — והוא סובל גם "7" וגם "#7". */

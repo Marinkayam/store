@@ -28,7 +28,7 @@ export function GetsList({ compact = false }: { compact?: boolean }) {
       <div className="flex flex-col gap-2">
         {GETS.slice(0, 6).map((g) => <GetRow key={g.title} g={g} compact />)}
         <p className="text-[12px] text-[var(--muted)] text-center">
-          ועוד: קופונים · דרופים · קופת הדוכן עם מטבעות וחידות · דוכן משותף ·{" "}
+          ועוד: קופונים · דרופים · משחק עם מטבעות וחידות · דוכן משותף ·{" "}
           <a href="/price" target="_blank" className="underline">
             כל מה שמקבלים
           </a>

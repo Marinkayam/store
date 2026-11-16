@@ -7,7 +7,7 @@ import StallHero from "@/app/stall-hero";
 
 export const metadata: Metadata = {
   title: "מה מקבלים בדוכן",
-  description: "דוכן אמיתי, לינק לשיתוף, קופה עם מטבעות וחידות, וכל מה שצריך כדי למכור, בתשלום אחד.",
+  description: "דוכן אמיתי, לינק לשיתוף, משחק עם מטבעות וחידות, וכל מה שצריך כדי למכור, בתשלום אחד.",
 };
 
 /**

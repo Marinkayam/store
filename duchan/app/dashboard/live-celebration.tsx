@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore, confettiBurst } from "./use-store";
 import HomeStall from "../home-stall";
 import { storePath } from "@/lib/short-link";
+import CloseX from "@/app/close-x";
 
 /**
  * "התשלום התקבל והדוכן באוויר!" — רגע ההפעלה.
@@ -68,15 +69,7 @@ function Sheet({ name, slug, onClose }: { name: string; slug: string; onClose: (
         data-testid="live-celebration"
         className="kp-sheet-up fixed bottom-0 inset-x-0 max-w-md mx-auto z-[96] bg-white px-gutter pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-center flex flex-col gap-3 max-h-[92vh] overflow-y-auto"
       >
-        <button
-          onClick={onClose}
-          aria-label="סגירה"
-          className="absolute top-2 left-2 z-10 w-11 h-11 flex items-center justify-center bg-white/85 text-[var(--ink)]"
-        >
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
+<CloseX corner onClick={onClose} testid="live-x" className="bg-white/85 text-[var(--ink)]" />
 
         <div className="-mx-gutter -mt-5">
           <HomeStall name={name} celebrate className="w-full max-w-[360px] mx-auto block" />

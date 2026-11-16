@@ -24,7 +24,7 @@ export const WHATSNEW: { version: string; releasedAt: string; title: string; ite
   items: [
     { key: "stats", icon: "chart", title: "מי מסתכל על הדוכן", text: "כמה נכנסו, מאיפה, ומה הכי מעניין", href: "/dashboard/stats", fresh: true },
     { key: "push", icon: "bell", title: "התראה על כל הזמנה", text: "הטלפון מצלצל כשמישהו מזמין", href: "/dashboard/settings#app", fresh: true },
-    { key: "kupa", icon: "coin", title: "קופת הדוכן", text: "מטבעות, אותות וחידות כסף", href: "/dashboard/kupa" },
+    { key: "kupa", icon: "coin", title: "המשחק של הדוכן", text: "מטבעות, אותות וחידות כסף", href: "/dashboard/kupa" },
     { key: "drop", icon: "hourglass", title: "דרופ", text: "מוצר שנפתח בשעה שבוחרים", href: "/dashboard/products" },
     { key: "mystery", icon: "gift", title: "מוצר בהפתעה", text: "בלי לגלות מה בפנים", href: "/dashboard/products" },
     { key: "coupons", icon: "receipt", title: "קופונים", text: "קוד הנחה לחברים", href: "/dashboard/settings#coupons" },

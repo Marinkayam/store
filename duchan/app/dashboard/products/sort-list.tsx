@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import type { Product } from "@/lib/types";
 import { mediaUrl } from "@/lib/media";
 import Icon from "@/app/icons";
+import { scrollByY } from "@/lib/scroll-root";
 
 /**
  * סידור מוצרים — גוררים באצבע.
@@ -57,8 +58,8 @@ export default function SortList({
     const s = g.current;
     if (!s) return;
     // ליד קצה המסך — גוללים, כדי שאפשר לגרור גם לרשימה ארוכה
-    if (e.clientY < 90) window.scrollBy(0, -12);
-    else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 12);
+    if (e.clientY < 90) scrollByY(-12);
+    else if (e.clientY > window.innerHeight - 90) scrollByY(12);
     const dy = e.clientY - s.startY;
     const target = s.base + Math.round(dy / s.rowH);
     const cur = ids.indexOf(s.id);

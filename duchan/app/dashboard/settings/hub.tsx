@@ -44,6 +44,7 @@ export default function SettingsHub({
   before,
   optional,
   after,
+  moreAfter,
 }: {
   /** הדוכן הקטן בראש המסך */
   hero: ReactNode;
@@ -58,6 +59,8 @@ export default function SettingsHub({
   /** אזור נפרד בסוף, לדברים שאינם חובה (לנהל ביחד) */
   optional?: ReactNode;
   after?: ReactNode;
+  /** בסוף "עוד הגדרות", אחרי הכל — לפעולות שלא צריכות לשבת על המסך הראשי */
+  moreAfter?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   let i = 0;
@@ -94,6 +97,7 @@ export default function SettingsHub({
               <Group key={g.title} g={g} onOpen={onOpen} />
             ))}
             {optional}
+            {moreAfter}
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { hasUnsaved } from "@/lib/unsaved";
+import { scrollTopNow } from "@/lib/scroll-root";
 
 /**
  * משיכה למטה ← רענון, עם הגג של הדוכן שמציץ מלמעלה.
@@ -43,7 +44,7 @@ export default function PullRefresh() {
       setPull(v);
     };
     const onStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1 || window.scrollY > 0) return;
+      if (e.touches.length !== 1 || scrollTopNow() > 0) return;
       const t = e.target as Element | null;
       if (t?.closest(".fixed, [role=dialog], input, textarea, select, [data-no-ptr]")) return;
       startY = e.touches[0].clientY;
@@ -52,7 +53,7 @@ export default function PullRefresh() {
     const onMove = (e: TouchEvent) => {
       if (!active || startY === null) return;
       const dy = e.touches[0].clientY - startY;
-      if (dy <= 0 || window.scrollY > 0) {
+      if (dy <= 0 || scrollTopNow() > 0) {
         if (pullRef.current) set(0);
         return;
       }

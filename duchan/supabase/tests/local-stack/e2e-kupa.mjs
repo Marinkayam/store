@@ -95,14 +95,14 @@ check("סגירה — והחגיגה לא חוזרת במעבר מסך", await (
 /* ── 7. טאב משלה בשורה למטה ── */
 await p.goto(`${BASE}/dashboard/settings`, { waitUntil: "networkidle" });
 const tabs = await p.locator("nav button").allTextContents();
-check("4 טאבים למטה, והקופה אחרונה", tabs.length === 4 && tabs[3].includes("הקופה"), tabs.join(" | "));
-await p.click("nav button:has-text('הקופה')");
+check("4 טאבים למטה, והקופה אחרונה", tabs.length === 4 && tabs[3].includes("משחק"), tabs.join(" | "));
+await p.click("nav button:has-text('משחק')");
 await p.waitForURL("**/dashboard/kupa");
-check("הטאב של הקופה מסומן כפעיל", (await p.getAttribute("nav button:has-text('הקופה')", "aria-current")) === "page");
+check("הטאב של הקופה מסומן כפעיל", (await p.getAttribute("nav button:has-text('משחק')", "aria-current")) === "page");
 await p.waitForSelector("[data-testid=kupa-page]");
 check("העמוד: מטבעות ורמה", ((await p.textContent("[data-testid=kupa-coins]")) ?? "").includes(String(k0.coins)) &&
   (await p.textContent("[data-testid=kupa-level]")) === k0.levelName);
-check("4 טאבים פנימיים: הדוכן, משימות, חידות, חנות", (await p.locator("[role=tablist][aria-label='קופת הדוכן'] [role=tab]").allTextContents()).join("|") === "הדוכן|משימות|חידות|חנות");
+check("4 טאבים פנימיים: הדוכן, משימות, חידות, חנות", (await p.locator("[role=tablist][aria-label='המשחק של הדוכן'] [role=tab]").allTextContents()).join("|") === "הדוכן|משימות|חידות|חנות");
 // רק פעולות שעוד אפשר לעשות (שורות "בוצע" ירדו) — תמיד לפחות "לסמן הזמנה ששולמה"
 check("בטאב הדוכן: 'מה נותן מטבעות עכשיו'", (await p.locator("[data-testid^=kupa-action-]").count()) >= 1 &&
   (await p.locator("[data-testid=kupa-action-orders]").count()) === 1);

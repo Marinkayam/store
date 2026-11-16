@@ -4,7 +4,7 @@ import { Clause, ContactLines, LegalDoc, Sub, Term } from "../legal-doc";
 export const metadata: Metadata = { title: "תנאי שימוש · דוכן" };
 
 // עמוד סטטי. לעדכן את הגרסה ואת תאריך התחילה בכל שינוי מהותי.
-const EFFECTIVE = "14 בנובמבר 2026";
+const EFFECTIVE = "16 בנובמבר 2026";
 
 const ink = "text-[var(--ink)]";
 
@@ -12,7 +12,7 @@ export default function TermsPage() {
   return (
     <LegalDoc
       title="תנאי שימוש"
-      version="2.1"
+      version="2.2"
       effective={EFFECTIVE}
       related={[
         { href: "/privacy", label: "מדיניות הפרטיות" },
@@ -255,8 +255,8 @@ export default function TermsPage() {
 
       <Clause n={10} title="תכונות מיוחדות בשירות">
         <Sub n="10.1">
-          <b className={ink}>קופת הדוכן.</b> המטבעות, הרמות, הכוכבים והקישוטים
-          בקופת הדוכן הם חלק ממשחק בלבד, <b className={ink}>ואין להם ערך כספי</b>.
+          <b className={ink}>המשחק של הדוכן.</b> המטבעות, הרמות, הכוכבים והקישוטים
+          במשחק של הדוכן נועדו לשעשוע בלבד, <b className={ink}>ואין להם ערך כספי</b>.
           לא ניתן לרכוש אותם בכסף, להמירם לכסף, להעבירם או לקבל באמצעותם מוצרים,
           הנחות או קידום. הם מחושבים בשרת לפי הפעילות בדוכן, ושייכים לדוכן ולא
           למשתמש מסוים. מפעילת השירות רשאית לשנות את המשחק, החידות והמחירים
