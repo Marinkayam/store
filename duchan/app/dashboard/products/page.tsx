@@ -22,6 +22,7 @@ import { uploadBlob } from "@/lib/upload-client";
 import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
+import Dock from "@/app/dashboard/dock";
 import { KupaStall } from "@/app/kupa-art";
 import { formatPrice, parsePrice, priceText, typedPrice } from "@/lib/money";
 import { dealActive, dealExplain, dealLabel, parseDeal, type Deal } from "@/lib/deals";
@@ -937,7 +938,7 @@ export default function ProductsPage() {
         </p>
       </header>
 
-      <div className="px-gutter pt-5 pb-8 flex flex-col gap-4">
+      <div className="px-gutter pt-5 pb-8 flex flex-col gap-5">
         {/* ── קטגוריות של החנות ──
             המוכרת מגדירה כאן רשימה משלה (נידו, מים, קרח...), מתייגת
             מוצרים בעורך, והקונות מקבלות צ'יפים לסינון בדף החנות.
@@ -1227,7 +1228,8 @@ export default function ProductsPage() {
       {/* היה עיגול "+" בלי מילה, וקל היה לפספס אותו לגמרי.
           כשהדוכן ריק יש כבר כפתור גדול באמצע המסך — אין צורך בשניים */}
       {products.length > 0 && !sorting && (
-        <div data-bottom-bar className="fixed bottom-20 inset-x-0 mx-auto max-w-[calc(28rem-1.5rem)] w-[calc(100%-1.5rem)] z-30 flex gap-2">
+        <Dock>
+        <div data-bottom-bar className="bg-[var(--canvas)] border-t border-[var(--line)] px-gutter py-2.5 flex gap-2">
           <button
             onClick={() => openEditor(null)}
             aria-label="מוצר חדש"
@@ -1244,6 +1246,7 @@ export default function ProductsPage() {
             <Icon name="gallery" size={17} /> כמה בבת אחת
           </button>
         </div>
+        </Dock>
       )}
       <input
         ref={bulkRef}
@@ -1431,7 +1434,7 @@ export default function ProductsPage() {
               </span>
             </button>
             <div hidden={!moreOpen} data-testid="editor-more-panel" className="pt-1">
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-2">
               <label className="block text-[12px] text-[var(--muted)]">תיאור קצר</label>
               {store.ai_enabled && (edit.pendingImage || edit.imageKey || edit.posterKey) && (
                 <button data-testid="ai-describe" onClick={writeDescription} disabled={aiBusy}
@@ -1442,15 +1445,15 @@ export default function ProductsPage() {
             </div>
             <textarea value={edit.description} maxLength={120} rows={2} placeholder={edit.isMystery ? "מה יכול להיות בפנים? למשל: 3 סקווישים מפתיעים" : "למשל: רך במיוחד, חוזר לאט"}
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
-              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-3 resize-none" />
+              className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-5 resize-none" />
 
             {/* צבע ומידה: שני כפתורים נפרדים שמוציאים זה את זה, לא שדה טקסט
                 לשם הקטגוריה. זה מה שמנע את הבאג הקודם: אין יותר שדה חופשי
                 שאפשר לרשום בו בטעות צבע במקום השם. */}
-            <div className="mb-1.5">
+            <div className="mb-2.5">
               <span className="text-[13px]">יש לזה כמה צבעים או מידות?</span>
             </div>
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-2 mb-5">
               {(["color", "size"] as const).map((kind) => {
                 const on = edit.optionKind === kind;
                 return (
@@ -1481,10 +1484,10 @@ export default function ProductsPage() {
 
             {edit.optionKind !== "none" && (
               <>
-                <label className="block text-[11.5px] text-[var(--faint)] mb-1">
+                <label className="block text-[11.5px] text-[var(--faint)] mb-2">
                   {edit.optionKind === "color" ? "אילו צבעים הקונים יכולים לבחור?" : "אילו מידות הקונים יכולים לבחור?"}
                 </label>
-                <div className="flex flex-col gap-1.5 mb-2">
+                <div className="flex flex-col gap-2.5 mb-3">
                   {edit.optionList.map((v, i) => (
                     <div key={i} className="flex gap-1.5">
                       <input
@@ -1553,13 +1556,13 @@ export default function ProductsPage() {
                 {edit.optionList.length < 30 && (
                   <button
                     onClick={() => setEdit((s) => s && { ...s, optionList: [...s.optionList, ""], optionCounts: [...s.optionCounts, 1] })}
-                    className="w-full border border-dashed border-[#D3D5DC] py-2.5 text-[12.5px] text-[var(--muted)] mb-3"
+                    className="w-full border border-dashed border-[#D3D5DC] py-2.5 text-[12.5px] text-[var(--muted)] mb-5"
                   >
                     + עוד {edit.optionKind === "color" ? "צבע" : "מידה"}
                   </button>
                 )}
                 {edit.trackStock && (
-                  <div className="mb-3">
+                  <div className="mb-5">
                     <Choice
                       value={edit.perOption}
                       onChange={(v) => setEdit((s) => s && { ...s, perOption: v, optionCounts: s.optionList.map((_, j) => s.optionCounts[j] ?? 0) })}
@@ -1577,12 +1580,12 @@ export default function ProductsPage() {
                 קטגוריה תקין לגמרי; הצ'יפים בחנות פשוט לא יסננו אותו. */}
             {store && (
               <>
-                <label id="editor-categories" className="block text-[12px] text-[var(--muted)] mb-1 scroll-mt-24">
+                <label id="editor-categories" className="block text-[12px] text-[var(--muted)] mb-2 scroll-mt-24">
                   {store.categories?.length
                     ? "באיזו קטגוריה המוצר יופיע בדוכן? (אפשר לבחור כמה)"
                     : "קטגוריה (לא חובה) — הקונים יוכלו לסנן לפיה"}
                 </label>
-                <div className="flex gap-1.5 flex-wrap mb-3" role="group" aria-labelledby="editor-categories">
+                <div className="flex gap-1.5 flex-wrap mb-5" role="group" aria-labelledby="editor-categories">
                   {(store.categories ?? []).map((c) => {
                     const on = edit.categories.includes(c);
                     return (
@@ -1646,9 +1649,9 @@ export default function ProductsPage() {
 
             {/* מבצע (0064). שלוש אפשרויות שילדה מכירה מהסופר, ואחת "בלי".
                 מה שייראה בדוכן מופיע מתחת, במילים, לפני ששומרים. */}
-            <div id="editor-deal" className="mb-3" data-testid="editor-deal">
-              <label className="block text-[12px] text-[var(--muted)] mb-1">מבצע (לא חובה)</label>
-              <div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="סוג מבצע">
+            <div id="editor-deal" className="mb-5" data-testid="editor-deal">
+              <label className="block text-[12px] text-[var(--muted)] mb-2">מבצע (לא חובה)</label>
+              <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="סוג מבצע">
                 {([
                   ["none", "בלי"],
                   ["sale", "מחיר מבצע"],
@@ -1762,8 +1765,8 @@ export default function ProductsPage() {
 
             {/* תגיות. רק שתיים לבחירה — השאר מחושבות מהמכירות ומהמלאי, וזה
                 בכוונה: "הכי נמכר" שאפשר להדביק הוא מדבקה, לא הישג. */}
-            <label className="block text-[12px] text-[var(--muted)] mb-1">תגית (לא חובה)</label>
-            <div className="flex gap-2 mb-1">
+            <label className="block text-[12px] text-[var(--muted)] mb-2">תגית (לא חובה)</label>
+            <div className="flex gap-2 mb-2">
               {PICKABLE.map((b) => (
                 <button
                   key={b.key}
@@ -1781,7 +1784,7 @@ export default function ProductsPage() {
                 </button>
               ))}
             </div>
-            <p className="text-[12px] text-[var(--faint)] mb-3 leading-relaxed">
+            <p className="text-[12px] text-[var(--faint)] mb-5 leading-relaxed">
               התגיות "הכי נמכר", "חדש" ו"אחרון במלאי" מופיעות לבד, לפי המכירות ולפי מה שנשאר.
             </p>
 
@@ -1792,7 +1795,7 @@ export default function ProductsPage() {
               aria-pressed={edit.featured}
               aria-label="מומלץ"
               data-testid="featured-toggle"
-              className={`w-full flex items-center gap-3 border-2 px-3 py-3 mb-3 text-right ${
+              className={`w-full flex items-center gap-3 border-2 px-3 py-3 mb-5 text-right ${
                 edit.featured ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)] bg-white"
               }`}
             >
@@ -1813,7 +1816,7 @@ export default function ProductsPage() {
               aria-pressed={edit.isMystery}
               aria-label="שקית הפתעה"
               data-testid="mystery-toggle"
-              className={`w-full flex items-center gap-3 border-2 px-3 py-3 mb-3 text-right ${
+              className={`w-full flex items-center gap-3 border-2 px-3 py-3 mb-5 text-right ${
                 edit.isMystery ? "border-[var(--ink)] bg-[var(--canvas)]" : "border-[var(--line)] bg-white"
               }`}
             >
@@ -1832,8 +1835,8 @@ export default function ProductsPage() {
             </button>
 
             {/* 🔥 דרופ — נפתח להזמנה בזמן קבוע, עם ספירה לאחור בדוכן */}
-            <div id="editor-drop" className="border border-[var(--line)] px-3 py-3 mb-3 scroll-mt-24">
-              <div className="text-[13px] font-semibold mb-2">מתי אפשר להזמין?</div>
+            <div id="editor-drop" className="border border-[var(--line)] px-4 py-4 mb-5 scroll-mt-24">
+              <div className="text-[13px] font-semibold mb-3">מתי אפשר להזמין?</div>
               <Choice
                 value={!edit.dropOn}
                 onChange={(v) =>
@@ -1846,7 +1849,7 @@ export default function ProductsPage() {
               />
               {edit.dropOn && (
                 <div className="mt-2.5">
-                  <label htmlFor="drop-at" className="block text-[12px] text-[var(--muted)] mb-1">מתי נפתח להזמנה? (שעון ישראל)</label>
+                  <label htmlFor="drop-at" className="block text-[12px] text-[var(--muted)] mb-2">מתי נפתח להזמנה? (שעון ישראל)</label>
                   <input
                     id="drop-at"
                     type="datetime-local"
@@ -1874,8 +1877,8 @@ export default function ProductsPage() {
             </div>
 
             {/* רואים אותו? — עם הסבר מה זה "מוסתר", כדי שיהיה ברור שזה לא מחיקה */}
-            <div className="border border-[var(--line)] px-3 py-3 mb-3">
-              <div className="text-[13px] font-semibold mb-2">הקונים רואים אותו בדוכן?</div>
+            <div className="border border-[var(--line)] px-4 py-4 mb-5">
+              <div className="text-[13px] font-semibold mb-3">הקונים רואים אותו בדוכן?</div>
               <Choice
                 value={edit.isVisible}
                 onChange={(v) => setEdit((s) => s && { ...s, isVisible: v })}
@@ -1892,8 +1895,8 @@ export default function ProductsPage() {
             </div>
 
             {/* לספור או לא — הכמות עצמה למעלה, ליד המחיר */}
-            <div className="border border-[var(--line)] px-3 py-3 mb-3">
-              <div className="text-[13px] font-semibold mb-2">לספור כמה נשארו?</div>
+            <div className="border border-[var(--line)] px-4 py-4 mb-5">
+              <div className="text-[13px] font-semibold mb-3">לספור כמה נשארו?</div>
               <Choice
                 value={edit.trackStock}
                 onChange={(v) => setEdit((s) => s && { ...s, trackStock: v })}

@@ -86,6 +86,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <StoreSwitcher />
         {children}
       </div>
+      {/* כפתורי הפעולה של העמוד (מוצר חדש, שמירה) נכנסים לכאן דרך <Dock>:
+          חלק מהמעטפת, צמודים לניווט, ושום תוכן לא מציץ מתחתם */}
+      <div id="dash-dock" className="shrink-0 empty:hidden" />
       {/* באייפון: רק כמה פיקסלים מעל פס הבית, לא כל אזור הבטיחות + ריווח —
           אחרת נשאר רווח לבן גדול מתחת לשורה */}
       <nav data-bottom-bar className="shrink-0 relative z-40 bg-white border-t border-[var(--line)] flex pt-1.5 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.875rem))]">
@@ -102,7 +105,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               }}
               className={`flex-1 flex flex-col items-center gap-0.5 py-1 text-[11px] ${on ? "text-[var(--ink)] font-medium" : "text-[var(--muted)]"}`}
             >
-              <span className="relative">
+              {/* קופסה קבועה: ארבעת האייקונים יושבים על אותה שורה, גם עם התג */}
+              <span className="relative flex items-center justify-center w-[21px] h-[21px]">
                 <Icon
                   name={t.icon}
                   size={21}
@@ -111,8 +115,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {t.href === "/dashboard" && newOrders > 0 && (
                   <span
                     data-testid="orders-badge"
+                    /* מרובע, כמו כל השאר בדשבורד (e2e-square: בלי פינות מעוגלות) */
                     className="absolute -top-1.5 -end-2.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-[var(--danger)] text-white text-[11px] font-bold leading-none"
-                    style={{ borderRadius: 999 }}
                   >
                     <span dir="ltr">{newOrders > 9 ? "9+" : newOrders}</span>
                     <span className="sr-only"> הזמנות חדשות</span>

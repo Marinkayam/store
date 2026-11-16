@@ -19,6 +19,7 @@ import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
 import { useCategoryImages } from "@/app/use-category-images";
 import { scrollToTop } from "@/lib/scroll-root";
+import Dock from "../dock";
 import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import SettingsHub, { type HubGroup } from "./hub";
 import Choice from "@/app/choice";
@@ -1669,9 +1670,9 @@ export default function SettingsPage() {
       {/* הכפתור ישב פעם בתחתית הדף הארוך — מי ששינתה את השם למעלה לא
           ידעה שיש בכלל מה ללחוץ, ריעננה, והשינוי נעלם. עכשיו הוא צף
           מעל שורת הניווט ברגע שיש שינוי, תמיד על המסך. */}
-      {dirty && <div className="h-12" aria-hidden />}
       {dirty && (
-        <div data-bottom-bar className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] inset-x-0 max-w-md mx-auto px-gutter z-40">
+        <Dock>
+        <div data-bottom-bar className="bg-[var(--canvas)] border-t border-[var(--line)] px-gutter py-2.5">
           <button
             data-testid="save-settings"
             onClick={save}
@@ -1680,6 +1681,7 @@ export default function SettingsPage() {
             שמירת שינויים
           </button>
         </div>
+        </Dock>
       )}
 
 

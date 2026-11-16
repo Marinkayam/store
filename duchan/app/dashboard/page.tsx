@@ -284,7 +284,7 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <header className="bg-[var(--canvas)] px-gutter pt-5 pb-3 border-b border-[var(--line)] flex items-start justify-between">
+      <header className="bg-[var(--canvas)] px-gutter pt-6 pb-4 border-b border-[var(--line)] flex items-start justify-between">
         <div>
           <h1 className="text-[20px] font-bold">הזמנות</h1>
           <p className="text-[13px] text-[var(--muted)] mt-0.5" data-testid="orders-subtitle">
@@ -329,19 +329,19 @@ export default function OrdersPage() {
 
       {/* הקופה שלי — שני מספרים גדולים, ומה הכי נמכר מתחתם */}
       {revenue > 0 && (
-        <section className="mx-gutter mt-4 bg-white border border-[var(--line)]" data-testid="orders-summary">
+        <section className="mx-gutter mt-5 bg-white border border-[var(--line)]" data-testid="orders-summary">
           <div className="grid grid-cols-2">
-            <div className="px-4 py-3">
+            <div className="px-4 py-4">
               <div className="text-[22px] font-bold leading-tight">{money(revenue)}</div>
               <div className="text-[12px] text-[var(--muted)] mt-0.5">נכנסו ממכירות</div>
             </div>
-            <div className="px-4 py-3 border-r border-[var(--line)]">
+            <div className="px-4 py-4 border-r border-[var(--line)]">
               <div className="text-[22px] font-bold leading-tight">{sold.length}</div>
               <div className="text-[12px] text-[var(--muted)] mt-0.5">{sold.length === 1 ? "הזמנה ששולמה" : "הזמנות ששולמו"}</div>
             </div>
           </div>
           {topProduct && (
-            <div className="px-4 py-2.5 border-t border-[var(--line)] text-[12.5px] flex gap-1.5 min-w-0">
+            <div className="px-4 py-3 border-t border-[var(--line)] text-[12.5px] flex gap-1.5 min-w-0">
               <span className="text-[var(--muted)] shrink-0">הכי נמכר:</span>
               <span className="font-medium truncate">{topProduct}</span>
             </div>
@@ -351,20 +351,20 @@ export default function OrdersPage() {
 
       {/* חיפוש — מופיע רק כשיש מספיק הזמנות בשביל שיהיה בו טעם */}
       {orders.length >= 5 && (
-        <div className="px-gutter pt-3">
+        <div className="px-gutter pt-5">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="חיפוש לפי שם, מספר הזמנה או מוצר"
             aria-label="חיפוש בהזמנות"
-            className="w-full border border-[var(--line)] bg-white px-3 py-2.5 text-[13px]"
+            className="w-full border border-[var(--line)] bg-white px-3.5 py-3 text-[13.5px]"
           />
         </div>
       )}
 
       {/* סינון */}
       {orders.length > 0 && (
-        <div className="flex gap-2 px-gutter pt-4 overflow-x-auto">
+        <div className="flex gap-2.5 px-gutter pt-5 overflow-x-auto">
           {FILTERS.map((f) => {
             const count =
               f.key === "all" ? orders.length : orders.filter((o) => o.status === f.key).length;
@@ -373,7 +373,7 @@ export default function OrdersPage() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 text-[12px] font-medium whitespace-nowrap border ${
+                className={`px-3.5 py-2 text-[12.5px] font-medium whitespace-nowrap border ${
                   filter === f.key
                     ? "bg-[var(--ink)] text-white border-[var(--ink)]"
                     : "bg-white text-[var(--muted)] border-[var(--line)]"
@@ -386,7 +386,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <div className="px-gutter pt-4 pb-6 flex flex-col gap-4">
+      <div className="px-gutter pt-5 pb-8 flex flex-col gap-5">
         {/* "להוסיף למסך הבית" יושב כאן ולא בהגדרות: זה המסך שהיא פותחת
             הכי הרבה, וזה הרגע שבו כדאי לה שיהיה לזה קיצור. הכרטיס נעלם
             לבד כשהאפליקציה כבר במסך הבית, או כשסוגרים אותו. */}
@@ -437,7 +437,7 @@ export default function OrdersPage() {
             data-testid="order-card"
           >
             {/* מי ומתי — השם הוא מה שהעין מחפשת מול השיחות בוואטסאפ */}
-            <header className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-3">
+            <header className="flex items-start justify-between gap-3 px-4 pt-4 pb-3.5">
               <div className="min-w-0">
                 <div className="text-[16px] font-bold leading-snug truncate">{o.buyer_name || "בלי שם"}</div>
                 <div className="text-[12px] text-[var(--muted)] mt-0.5">
@@ -453,7 +453,7 @@ export default function OrdersPage() {
                 const full = lineTotal(it.price, it.qty);
                 const paid = it.line ?? full;
                 return (
-                  <li key={i} className="flex items-start gap-3 py-2.5 border-b border-[var(--sand)] last:border-b-0">
+                  <li key={i} className="flex items-start gap-3 py-3 border-b border-[var(--sand)] last:border-b-0">
                     <span className="shrink-0 min-w-8 text-center text-[12.5px] font-bold bg-[var(--sub)] px-1.5 py-0.5 mt-px">
                       {it.qty}×
                     </span>
@@ -489,7 +489,7 @@ export default function OrdersPage() {
 
             {/* איך זה מגיע אליה ואיך משלמים — שורה לכל דבר, עם תווית */}
             {(o.buyer_phone || o.wants_shipping != null || o.pay_method) && (
-              <dl className="border-t border-[var(--line)] px-4 py-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[13px]" data-testid="order-details">
+              <dl className="border-t border-[var(--line)] px-4 py-3.5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-[13px]" data-testid="order-details">
                 {o.buyer_phone && (
                   <>
                     <dt className="text-[var(--muted)]">טלפון</dt>
@@ -564,7 +564,7 @@ export default function OrdersPage() {
             </div>
 
             {/* הסכום */}
-            <div className="border-t border-[var(--line)] px-4 py-3">
+            <div className="border-t border-[var(--line)] px-4 py-3.5">
               {o.coupon_code && (
                 <div className="flex justify-between text-[12px] text-[var(--muted)] mb-1.5" data-testid="order-coupon">
                   <span>קופון <bdi>{o.coupon_code}</bdi> · לפני הנחה ₪{formatPrice(o.subtotal)}</span>
@@ -579,7 +579,7 @@ export default function OrdersPage() {
 
             {/* פעולות: אחת ראשית, וואטסאפ אחד (עם ההודעה), וביטול קטן בצד */}
             {(o.status === "sent" || o.status === "paid") && (
-              <div className="flex gap-2 px-4 pb-3.5">
+              <div className="flex gap-2.5 px-4 pb-4">
                 <button
                   onClick={(e) => (o.status === "sent" ? markPaid(o) : markDelivered(o, e))}
                   className="flex-1 bg-[var(--ink)] text-white py-2.5 min-h-11 text-[13px] font-bold"
@@ -615,7 +615,7 @@ export default function OrdersPage() {
 
             {/* הערה לעצמי + להוריד מהרשימה — קטנים, בשורה אחת בתחתית.
                 הקונה יכולה ללחוץ "הזמנה" ולא להתכוון, ורק בעלת הדוכן יודעת. */}
-            <div className="border-t border-[var(--sand)] px-4 py-2">
+            <div className="border-t border-[var(--sand)] px-4 py-3">
               {noteEditId === o.id ? (
                 <div className="flex gap-1.5 py-1">
                   <input

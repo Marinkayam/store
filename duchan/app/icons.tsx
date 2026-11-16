@@ -47,7 +47,7 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
   ),
   bag: (t) => (
     <>
-      <path d="M5 8h14l-1 12H6z" fill={t} />
+      <path d="M5 8h14l-1 13H6z" fill={t} />
       <path d="M9 8V6a3 3 0 0 1 6 0v2" fill="none" />
     </>
   ),
@@ -205,8 +205,8 @@ const SHAPES: Record<IconName, (t: string) => React.ReactNode> = {
   ),
   shop: (t) => (
     <>
-      <path d="M4 10h16v10H4z" fill={t} />
-      <path d="M3 10 5 4h14l2 6M10 20v-5h4v5" fill="none" />
+      <path d="M4 10h16v11H4z" fill={t} />
+      <path d="M3 10 5 3h14l2 7M10 21v-5h4v5" fill="none" />
     </>
   ),
   phone: (t) => (
