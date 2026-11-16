@@ -99,25 +99,27 @@ export default function StatsPage() {
 
       <div className="px-gutter pt-4 pb-10 flex flex-col gap-6">
         {/* ── עכשיו ── */}
-        <section className="flex items-center gap-3" data-testid="stats-live" aria-live="polite">
-          <span className="relative flex w-3.5 h-3.5 shrink-0" aria-hidden>
-            {!!data?.live && <span data-gutter-ignore className="absolute inset-0 bg-[var(--olive)] opacity-60 animate-ping" />}
-            <span className={`relative w-3.5 h-3.5 ${data?.live ? "bg-[var(--olive)]" : "bg-[var(--stone)]"}`} />
+        {/* המספר מופיע פעם אחת, גדול, והמשפט ממשיך אותו: "3 · אנשים מסתכלים…".
+            הנקודה החיה בקצה, באמצע הגובה, ולא צמודה לטקסט שיורד שורה. */}
+        <section className="flex items-center gap-3.5" data-testid="stats-live" aria-live="polite">
+          <span className="min-w-[1.25em] text-center text-[32px] leading-none font-bold tabular-nums shrink-0" data-testid="stats-live-n">
+            {data?.live ?? "–"}
           </span>
-          <div className="flex-1">
-            <div className="text-[15px] font-bold" data-testid="stats-live-text">
+          <div className="flex-1 min-w-0">
+            <div className="text-[15px] font-bold leading-snug" data-testid="stats-live-text">
               {!data
                 ? "בודקים מי בדוכן…"
                 : data.live === 0
-                  ? "ברגע זה אף אחד לא בדוכן"
+                  ? "אף אחד לא בדוכן ברגע זה"
                   : data.live === 1
-                    ? "מישהו מסתכל על הדוכן עכשיו!"
-                    : `${data.live} אנשים מסתכלים על הדוכן עכשיו!`}
+                    ? "מסתכל על הדוכן עכשיו"
+                    : "אנשים מסתכלים על הדוכן עכשיו"}
             </div>
-            <div className="text-[12px] text-[var(--muted)]">מתעדכן לבד כל רבע דקה</div>
+            <div className="text-[12px] text-[var(--muted)] mt-0.5">מתעדכן לבד כל רבע דקה</div>
           </div>
-          <span className="text-[28px] font-bold tabular-nums" data-testid="stats-live-n">
-            {data?.live ?? "–"}
+          <span className="relative flex w-3 h-3 shrink-0" aria-hidden>
+            {!!data?.live && <span data-gutter-ignore className="absolute inset-0 bg-[var(--olive)] opacity-60 animate-ping" />}
+            <span className={`relative w-3 h-3 ${data?.live ? "bg-[var(--olive)]" : "bg-[var(--stone)]"}`} />
           </span>
         </section>
 

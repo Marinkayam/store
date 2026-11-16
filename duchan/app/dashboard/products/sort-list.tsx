@@ -84,22 +84,25 @@ export default function SortList({
 
   return (
     <section className="flex flex-col gap-3" data-testid="sort-list">
-      <div className="sticky top-0 z-20 -mx-gutter px-gutter py-2.5 bg-[var(--canvas)] border-b border-[var(--line)] flex items-center gap-2">
-        <p className="flex-1 text-[13px] leading-snug">
+      <div className="sticky top-0 z-20 -mx-gutter px-gutter py-3 bg-[var(--canvas)] border-b border-[var(--line)] flex items-center gap-3">
+        <p className="flex-1 min-w-0 text-[13px] leading-snug">
           <b className="whitespace-nowrap">תופסים את <Icon name="drag" size={14} tone="none" className="inline-block align-[-2px]" /> וגוררים</b>
-          <span className="block text-[12px] text-[var(--muted)]">מה שלמעלה מופיע ראשון בדוכן</span>
+          <span className="block text-[12px] text-[var(--muted)] text-balance">מה שלמעלה מופיע ראשון</span>
         </p>
-        <button onClick={onCancel} className="min-h-10 px-3 text-[13px] text-[var(--muted)]" data-testid="sort-cancel">
-          ביטול
-        </button>
-        <button
-          onClick={done}
-          disabled={saving}
-          className="min-h-10 px-4 bg-[var(--ink)] text-white text-[13px] font-bold disabled:opacity-50"
-          data-testid="sort-done"
-        >
-          {saving ? "שומרים…" : changed ? "שמירה" : "סיימתי"}
-        </button>
+        {/* שני כפתורים באותו גובה ובאותה צורה: אחד שקט, אחד ראשי */}
+        <div className="flex shrink-0 gap-2">
+          <button onClick={onCancel} className="h-10 px-3.5 bg-white border border-[var(--line)] text-[13px]" data-testid="sort-cancel">
+            ביטול
+          </button>
+          <button
+            onClick={done}
+            disabled={saving}
+            className="h-10 px-4 bg-[var(--ink)] text-white text-[13px] font-bold disabled:opacity-50"
+            data-testid="sort-done"
+          >
+            {saving ? "שומרים…" : changed ? "שמירה" : "סיימתי"}
+          </button>
+        </div>
       </div>
 
       <ol ref={listRef} className="flex flex-col gap-2" onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>

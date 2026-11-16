@@ -82,21 +82,23 @@ export default function CategorySort({
 
   return (
     <div data-testid="category-sort">
-      <div className="sticky top-0 z-20 bg-white py-2 flex items-center gap-2 border-b border-[var(--line)] mb-3">
-        <p className="flex-1 text-[12.5px] leading-snug text-[var(--muted)]">
-          מה שלמעלה מופיע ראשון בדוכן
+      <div className="sticky top-0 z-20 bg-white py-2.5 flex items-center gap-3 border-b border-[var(--line)] mb-3">
+        <p className="flex-1 min-w-0 text-[12.5px] leading-snug text-[var(--muted)] text-balance">
+          מה שלמעלה מופיע ראשון
         </p>
-        <button onClick={onCancel} className="min-h-10 px-3 text-[13px] text-[var(--muted)]" data-testid="category-sort-cancel">
-          ביטול
-        </button>
-        <button
-          onClick={done}
-          disabled={saving}
-          className="min-h-10 px-4 bg-[var(--ink)] text-white text-[13px] font-bold disabled:opacity-50"
-          data-testid="category-sort-done"
-        >
-          {saving ? "שומרים…" : changed ? "שמירה" : "סיימתי"}
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button onClick={onCancel} className="h-10 px-3.5 bg-white border border-[var(--line)] text-[13px]" data-testid="category-sort-cancel">
+            ביטול
+          </button>
+          <button
+            onClick={done}
+            disabled={saving}
+            className="h-10 px-4 bg-[var(--ink)] text-white text-[13px] font-bold disabled:opacity-50"
+            data-testid="category-sort-done"
+          >
+            {saving ? "שומרים…" : changed ? "שמירה" : "סיימתי"}
+          </button>
+        </div>
       </div>
 
       <ol className="flex flex-col gap-1.5" onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
