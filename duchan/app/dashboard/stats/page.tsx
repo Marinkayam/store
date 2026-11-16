@@ -89,11 +89,11 @@ export default function StatsPage() {
 
   return (
     <div data-testid="stats-page">
-      <header className="bg-[var(--canvas)] px-gutter pt-4 pb-3 border-b border-[var(--line)]">
-        <a href="/dashboard" className="inline-flex items-center gap-1 text-[12.5px] text-[var(--muted)] mb-2" data-testid="stats-back">
+      <header className="bg-[var(--canvas)] px-gutter pt-2 pb-4 border-b border-[var(--line)]">
+        <a href="/dashboard" className="inline-flex items-center gap-1 min-h-11 text-[13px] text-[var(--muted)]" data-testid="stats-back">
           <span aria-hidden>→</span> להזמנות
         </a>
-        <h1 className="text-lg font-bold">מי מסתכל על הדוכן</h1>
+        <h1 className="text-[20px] font-bold">מי מסתכל על הדוכן</h1>
         <p className="text-xs text-[var(--muted)] font-light">כמה נכנסו, מאיפה, ועל מה הכי מסתכלים</p>
       </header>
 

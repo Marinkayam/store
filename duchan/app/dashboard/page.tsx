@@ -645,10 +645,10 @@ export default function OrdersPage() {
               {confirmHide === o.id ? (
                 <div className="flex items-center gap-1.5 py-1">
                   <span className="flex-1 text-[12px] text-[var(--muted)]">להוריד את ההזמנה מהרשימה?</span>
-                  <button onClick={() => hideOrder(o)} className="bg-[var(--ink)] text-white py-2 px-3 text-xs font-medium">
+                  <button onClick={() => hideOrder(o)} className="bg-[var(--ink)] text-white min-h-10 px-3.5 text-xs font-medium">
                     כן, להוריד
                   </button>
-                  <button onClick={() => setConfirmHide(null)} className="bg-white border border-[var(--line)] py-2 px-3 text-xs">
+                  <button onClick={() => setConfirmHide(null)} className="bg-white border border-[var(--line)] min-h-10 px-3.5 text-xs">
                     לא
                   </button>
                 </div>
@@ -660,12 +660,12 @@ export default function OrdersPage() {
                         setNoteEditId(o.id);
                         setNoteText("");
                       }}
-                      className="underline py-1.5"
+                      className="underline min-h-11 inline-flex items-center"
                     >
                       הערה לעצמי
                     </button>
                   ) : <span />}
-                  <button onClick={() => setConfirmHide(o.id)} className="underline py-1.5">
+                  <button onClick={() => setConfirmHide(o.id)} className="underline min-h-11 inline-flex items-center">
                     {o.status === "sent" ? "הזמנה לא אמיתית? להוריד" : "להוריד מהרשימה"}
                   </button>
                 </div>

@@ -4,6 +4,7 @@
 // נקרא ישירות מהטבלה (RLS: קריאה בלבד). מצב "נקרא" נשמר ב-localStorage.
 
 import { useEffect, useState } from "react";
+import Icon from "@/app/icons";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "./use-store";
 
@@ -50,10 +51,11 @@ export default function WhatsNew() {
 
   return (
     <>
-      <button onClick={openSheet} className="relative text-xl leading-none p-1" aria-label="מה חדש">
-        ✨
+      {/* אייקון מצויר כמו שאר הדשבורד (לא אימוג'י), ושטח לחיצה של 44 */}
+      <button onClick={openSheet} className="relative w-11 h-11 -my-2 flex items-center justify-end" aria-label="מה חדש">
+        <Icon name="sparkle" size={22} />
         {unread > 0 && (
-          <span data-gutter-ignore className="absolute -top-1 -left-1 bg-[var(--danger)] text-white text-[9px] font-bold min-w-4 h-4 px-1 flex items-center justify-center">
+          <span data-gutter-ignore className="absolute top-1 left-3.5 bg-[var(--danger)] text-white text-[11px] font-bold leading-none min-w-[18px] h-[18px] px-1 flex items-center justify-center">
             {unread}
           </span>
         )}

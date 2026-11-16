@@ -132,9 +132,9 @@ export default function KupaPage() {
   const rank = rankOf(stars);
 
   return (
-    <div className="px-gutter pt-4 pb-8 flex flex-col gap-5" data-testid="kupa-page">
+    <div className="px-gutter pt-6 pb-8 flex flex-col gap-5" data-testid="kupa-page">
       <header>
-        <h1 className="text-[22px] font-black text-[var(--ink)] leading-tight">המשחק של הדוכן</h1>
+        <h1 className="text-[20px] font-bold text-[var(--ink)]">המשחק של הדוכן</h1>
         {/* מטבעות וכוכבים — באותו גודל, קטנים, בלי קופסאות. לחיצה מסבירה מה זה (מרינה) */}
         <div className="flex items-center gap-4 mt-2.5">
           <button

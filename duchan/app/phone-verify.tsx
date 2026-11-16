@@ -209,7 +209,7 @@ export default function PhoneVerify({
         <button
           type="button"
           onClick={() => setShowFindHelp(true)}
-          className="t-small text-[var(--muted)] underline"
+          className="t-small text-[var(--muted)] underline min-h-11"
         >
           לא יודעים מה המספר?
         </button>

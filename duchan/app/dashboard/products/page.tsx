@@ -931,9 +931,9 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <header className="bg-[var(--canvas)] px-gutter pt-6 pb-3 border-b border-[var(--line)]">
-        <h1 className="text-lg font-bold">המוצרים שלי</h1>
-        <p className="text-xs text-[var(--muted)] font-light">
+      <header className="bg-[var(--canvas)] px-gutter pt-6 pb-4 border-b border-[var(--line)]">
+        <h1 className="text-[20px] font-bold">המוצרים שלי</h1>
+        <p className="text-[13px] text-[var(--muted)] mt-0.5">
           {products.length === 1 ? "מוצר אחד" : `${products.length} מוצרים`}
         </p>
       </header>
@@ -1286,12 +1286,15 @@ export default function ProductsPage() {
             aria-label={edit.id ? "עריכת מוצר" : "מוצר חדש"}
             className="fixed bottom-0 inset-x-0 max-w-md mx-auto z-50 bg-white max-h-[90%] flex flex-col"
           >
-          <div className="px-gutter pt-3 overflow-y-auto">
-            <div className="w-9 h-1 bg-black/15 mx-auto mb-3.5" />
-            <div className="flex items-center justify-between gap-2 mb-3">
+          {/* הכותרת והאיקס מחוץ לאזור הגלילה: תמיד למעלה, לא נגללים החוצה */}
+          <div className="px-gutter pt-3 pb-2 shrink-0 border-b border-[var(--line)]">
+            <div className="w-9 h-1 bg-black/15 mx-auto mb-2.5" />
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-bold">{edit.id ? "עריכת מוצר" : "מוצר חדש"}</h2>
               <CloseX onClick={closeEditor} testid="editor-close" />
             </div>
+          </div>
+          <div className="px-gutter pt-4 overflow-y-auto overscroll-contain" data-editor-scroll>
 
             {/* מרינה, 10.2026: "להוסיף תמונה / להוסיף מוצר — איזה בלאגן. תחשוב
                 כמו ילדה בת 9". היו כאן 13 חלקים בגלילה אחת. עכשיו: תמונה, שם,

@@ -1080,7 +1080,7 @@ export default function StoreView({
            אין ריפוד עליון משלה. כל ערך אחר כאן יוצר באנר שנצמד למוצרים
            ומרחף מתחת לכותרת — נראה כאילו הוא שייך לרשת ולא הודעה בפני
            עצמה. שני הצדדים נמדדים בבדיקה, כדי שלא ייפרד בשקט. */
-        <div className="px-gutter pb-4">
+        <div className="w-full max-w-5xl mx-auto px-gutter pb-4">
           <div
             data-testid="store-promo"
             className="s-r mx-auto max-w-sm border-[1.5px] px-3.5 py-3 text-center"
@@ -1113,7 +1113,7 @@ export default function StoreView({
 
       {/* באנר הדרופ הקרוב — לוחצים ופותחים את המוצר */}
       {nextDrop && clock && !category && (
-        <div className="px-gutter mb-3.5">
+        <div className="w-full max-w-5xl mx-auto px-gutter mb-3.5">
           <button
             onClick={() => openProduct(nextDrop)}
             data-testid="drop-banner"
@@ -1132,7 +1132,7 @@ export default function StoreView({
       )}
 
       {/* grid */}
-      <div className={`flex-1 px-gutter ${footer ? "pb-6" : "pb-24"}`} ref={gridRef}>
+      <div className={`flex-1 w-full max-w-5xl mx-auto px-gutter ${footer ? "pb-6" : "pb-24"}`} ref={gridRef}>
         {sorted.length === 0 ? (
           <div className="text-center pt-14">
             <p className={customBg ? "s-r inline-block text-sm px-4 py-2" : "text-sm opacity-75"} style={plate}>
@@ -1144,17 +1144,17 @@ export default function StoreView({
           <div className="flex flex-col gap-5">
             <section className="flex flex-col gap-3.5" data-testid="featured-section">
               <SectionTitle text={store.featured_title?.trim() || "המומלצים שלי"} star plate={plate} testId="featured-title" />
-              <div className="grid grid-cols-2 gap-3.5">{featured.map((p, i) => renderCard(p, i))}</div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">{featured.map((p, i) => renderCard(p, i))}</div>
             </section>
             {rest.length > 0 && (
               <section className="flex flex-col gap-3.5 mt-3">
                 <SectionTitle text="עוד מוצרים" plate={plate} testId="rest-title" />
-                <div className="grid grid-cols-2 gap-3.5">{rest.map((p, i) => renderCard(p, featured.length + i))}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">{rest.map((p, i) => renderCard(p, featured.length + i))}</div>
               </section>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3.5">{sorted.map((p, i) => renderCard(p, i))}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">{sorted.map((p, i) => renderCard(p, i))}</div>
         )}
         <p
           className={customBg ? "s-r w-fit mx-auto mt-6 mb-1 px-3 py-1.5 text-center text-[11px]" : "text-center text-[11px] opacity-75 pt-6 pb-1"}
@@ -1202,7 +1202,7 @@ export default function StoreView({
       {/* product sheet */}
       {current && (
         <div
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-gutter pt-3 pb-0 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
+          className="s-sheet fixed bottom-0 inset-x-0 sm:max-w-lg sm:mx-auto z-50 px-gutter pb-0 max-h-[88%] overflow-y-auto overscroll-contain flex flex-col gap-4"
           style={{
             background: "var(--s-surface)",
             color: "var(--s-ink)",
@@ -1213,7 +1213,8 @@ export default function StoreView({
             touchAction: "pan-y",
           }}
         >
-          <div className="flex items-center justify-between -mb-2">
+          {/* האיקס נשאר למעלה גם כשגוללים בתוך החלונית */}
+          <div className="sticky top-0 z-10 -mx-gutter px-gutter pt-3 -mb-2 flex items-center justify-between" style={{ background: "var(--s-surface)" }}>
             <span className="w-11" aria-hidden />
             <div className="w-9 h-1 bg-current opacity-15" />
             <CloseX onClick={() => setCurrent(null)} testid="product-close" />
@@ -1468,7 +1469,7 @@ export default function StoreView({
       )}
       {orderOpen && (
         <div
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 max-h-[92%] flex flex-col"
+          className="s-sheet fixed bottom-0 inset-x-0 sm:max-w-lg sm:mx-auto z-50 max-h-[92%] flex flex-col"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           {/* אזור גלילה — הסיכום והכפתור יושבים קבועים מתחתיו */}
@@ -1499,7 +1500,7 @@ export default function StoreView({
                 className="flex items-center gap-3 text-[13.5px] py-3.5 border-b border-black/5"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="truncate font-medium" data-line-name="">
+                  <div className="line-clamp-2 leading-snug font-medium" data-line-name="">
                     {l.name}
                     {l.option ? ` (${l.option})` : ""}
                   </div>
@@ -1890,7 +1891,7 @@ export default function StoreView({
       {confirmed?.payFirst && (payTarget || confirmed.waPayUrl) && (
         <div
           data-testid="order-pay-first"
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-gutter pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 sm:max-w-lg sm:mx-auto z-50 px-gutter pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <OrderBadge pending />
@@ -1988,7 +1989,7 @@ export default function StoreView({
       {confirmed && !confirmed.payFirst && (
         <div
           data-testid="order-confirmed"
-          className="s-sheet fixed bottom-0 inset-x-0 z-50 px-gutter pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
+          className="s-sheet fixed bottom-0 inset-x-0 sm:max-w-lg sm:mx-auto z-50 px-gutter pt-6 pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-center"
           style={{ background: "var(--s-surface)", color: "var(--s-ink)", fontFamily: "var(--s-font)" }}
         >
           <OrderBadge />
@@ -2042,7 +2043,12 @@ export default function StoreView({
 
       {/* toast */}
       {toast && (
-        <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
+        <div
+          role="status"
+          className={`fixed right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90] max-w-[calc(100%-2rem)] text-center ${
+            orderOpen || current ? "top-[calc(0.75rem+env(safe-area-inset-top))]" : "bottom-24"
+          }`}
+        >
           {toast}
         </div>
       )}

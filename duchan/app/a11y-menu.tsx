@@ -76,7 +76,7 @@ export default function A11yMenu() {
         aria-expanded={open}
         aria-controls="a11y-panel"
         data-testid="a11y-button"
-        className="a11y-fab fixed left-0 top-1/2 -translate-y-1/2 z-[95] w-6 h-11 flex items-center justify-center bg-white/90 border border-l-0 border-[var(--line)] text-[var(--muted)]"
+        className="a11y-fab fixed left-0 top-1/2 -translate-y-1/2 z-[95] w-5 h-11 flex items-center justify-center bg-white/90 border border-l-0 border-[var(--line)] text-[var(--muted)]"
       >
         {/* לשונית צרה בצד ואייקון מצויר — לא אימוג'י גדול וכהה שמכסה כפתורים */}
         <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

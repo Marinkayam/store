@@ -58,7 +58,7 @@ export default function LoginPage() {
           <Login />
         </Suspense>
       </div>
-      <a href="/" className="text-xs text-[var(--muted)]">
+      <a href="/" className="min-h-11 inline-flex items-center gap-1 text-xs text-[var(--muted)]">
         עוד אין דוכן? <span className="underline">פותחים אחד בדקות</span>
       </a>
       </div>

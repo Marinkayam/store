@@ -86,8 +86,8 @@ export default function SortList({
     <section className="flex flex-col gap-3" data-testid="sort-list">
       <div className="sticky top-0 z-20 -mx-gutter px-gutter py-2.5 bg-[var(--canvas)] border-b border-[var(--line)] flex items-center gap-2">
         <p className="flex-1 text-[13px] leading-snug">
-          <b>תופסים את</b> <Icon name="drag" size={14} tone="none" className="inline-block align-[-2px]" /> <b>וגוררים</b>
-          <span className="text-[var(--muted)]"> · מה שלמעלה מופיע ראשון בדוכן</span>
+          <b className="whitespace-nowrap">תופסים את <Icon name="drag" size={14} tone="none" className="inline-block align-[-2px]" /> וגוררים</b>
+          <span className="block text-[12px] text-[var(--muted)]">מה שלמעלה מופיע ראשון בדוכן</span>
         </p>
         <button onClick={onCancel} className="min-h-10 px-3 text-[13px] text-[var(--muted)]" data-testid="sort-cancel">
           ביטול
@@ -113,7 +113,7 @@ export default function SortList({
               key={id}
               data-testid="sort-row"
               data-id={id}
-              className={`bg-white border flex items-center gap-3 pe-2 h-16 select-none ${
+              className={`bg-white border flex items-center gap-2.5 pe-2 h-16 select-none ${
                 dragging ? "border-[var(--ink)] relative z-10" : "border-[var(--line)] transition-transform"
               }`}
               style={dragging ? { transform: `translateY(${drag!.dy}px)`, boxShadow: "0 6px 18px rgba(0,0,0,.12)" } : undefined}
@@ -127,12 +127,12 @@ export default function SortList({
                 }}
                 aria-label={`גרירה: ${p.name}. מקום ${i + 1} מתוך ${ids.length}. חצים להזזה`}
                 data-testid="sort-handle"
-                className="w-12 h-full flex items-center justify-center text-[var(--muted)] cursor-grab active:cursor-grabbing"
+                className="w-11 h-full shrink-0 flex items-center justify-center text-[var(--muted)] cursor-grab active:cursor-grabbing"
                 style={{ touchAction: "none" }}
               >
                 <Icon name="drag" size={20} tone="none" />
               </button>
-              <span className="w-6 text-center text-[13px] font-bold text-[var(--muted)] tabular-nums">{i + 1}</span>
+              <span className="w-5 shrink-0 text-center text-[13px] font-bold text-[var(--muted)] tabular-nums">{i + 1}</span>
               <span className="w-11 h-11 shrink-0 bg-[var(--canvas)] overflow-hidden flex items-center justify-center">
                 {img ? <img src={img} alt="" className="w-full h-full object-cover" draggable={false} /> : <Icon name="bag" size={16} />}
               </span>
@@ -141,11 +141,11 @@ export default function SortList({
                 <button
                   type="button"
                   onClick={() => moveTo(id, 0)}
-                  className="shrink-0 min-h-10 px-2.5 border border-[var(--line)] text-[12px] font-medium"
+                  className="shrink-0 min-h-10 min-w-10 px-2.5 border border-[var(--line)] text-[12px] font-medium"
                   data-testid="sort-top"
                   aria-label={`${p.name} לראש הרשימה`}
                 >
-                  לראש ↑
+                  <span className="max-[379px]:hidden">לראש </span>↑
                 </button>
               )}
             </li>
