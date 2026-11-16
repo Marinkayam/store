@@ -80,7 +80,7 @@ await p.evaluate(() => { for (const k of Object.keys(localStorage)) if (k.starts
 await p.goto(`${BASE}/dashboard/settings`, { waitUntil: "networkidle" });
 const cele = p.locator("[data-testid=kupa-celebrate]");
 await cele.waitFor({ timeout: 8000 });
-check("פעם ראשונה: 'פתחנו לך קופה!'", (await cele.getAttribute("data-kind")) === "welcome" && (await cele.textContent()).includes("פתחנו לך קופה"));
+check("פעם ראשונה: 'פתחנו לך משחק!'", (await cele.getAttribute("data-kind")) === "welcome" && (await cele.textContent()).includes("פתחנו לך משחק"));
 await p.waitForTimeout(1800);
 check("המונה מגיע לסכום בקופה", ((await p.textContent("[data-testid=kupa-celebrate-total]")) ?? "").includes(String(k0.coins)), (await p.textContent("[data-testid=kupa-celebrate-total]")) ?? "");
 await p.screenshot({ path: `${SHOTS}/kupa-welcome.png` });
