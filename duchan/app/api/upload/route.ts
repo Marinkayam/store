@@ -4,11 +4,16 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { canManage } from "@/lib/team";
 import { presignedUpload } from "@/lib/r2";
-import { recountStoreMedia, recountSquishMedia } from "@/lib/media-usage";
+import { recountStoreMedia, recountSquishMedia, reserveMedia, releaseMedia } from "@/lib/media-usage";
 import { QUOTAS } from "@/lib/quotas";
 
 // POST /api/upload  { kind: 'image'|'video'|'poster'|'cover', contentType, bytes }
-// השרת מאמת בעלות ומכסה לפני שהוא חותם, ומעדכן media_bytes.
+// השרת מאמת בעלות, תופס מקום במכסה אטומית (lib/media-usage.ts) — ורק אז חותם.
+
+const FULL = (where: string) =>
+  NextResponse.json({ error: `נגמר המקום ב${where}, אפשר למחוק סרטון ישן כדי לפנות` }, { status: 413 });
+const BUSY = () =>
+  NextResponse.json({ error: "יש הרבה העלאות בבת אחת, אפשר לנסות שוב עוד רגע" }, { status: 503 });
 
 const EXT: Record<string, string> = {
   "image/webp": "webp",
@@ -18,40 +23,6 @@ const EXT: Record<string, string> = {
 };
 
 const IMAGE_TYPES = ["image/webp", "image/jpeg"];
-
-/**
- * שמירת מקום במכסה, אטומית, *לפני* החתימה.
- *
- * קודם המונה נקרא, הלינק נחתם, ורק אז נכתב "ישן + חדש" — כמה העלאות
- * במקביל (העלאה מרובה) עברו כולן את אותה בדיקה ועקפו את התקרה. עכשיו
- * העדכון עובר רק אם המונה עדיין מה שקראנו; אם מישהו הקדים, קוראים שוב
- * ובודקים מחדש.
- */
-async function reserveMedia(
-  db: ReturnType<typeof supabaseAdmin>,
-  table: "stores" | "squish_profiles",
-  id: string,
-  stored: number,
-  base: number,
-  bytes: number,
-  cap: number
-): Promise<boolean> {
-  for (let i = 0; i < 6; i++) {
-    if (base + bytes > cap) return false;
-    const { data } = await db
-      .from(table)
-      .update({ media_bytes: base + bytes })
-      .eq("id", id)
-      .eq("media_bytes", stored)
-      .select("id");
-    if (data?.length) return true;
-    const { data: cur } = await db.from(table).select("media_bytes").eq("id", id).maybeSingle();
-    if (!cur) return false;
-    stored = (cur as { media_bytes: number }).media_bytes;
-    base = stored;
-  }
-  return false;
-}
 
 export async function POST(req: NextRequest) {
   const supa = await supabaseServer();
@@ -140,28 +111,25 @@ export async function POST(req: NextRequest) {
     if (!profile) return NextResponse.json({ error: "עוד אין לך אוסף" }, { status: 404 });
     /* תקרה פר-אוסף כשהמנהלת הגדילה, אחרת הגלובלית */
     const squishCap = profile.media_quota_bytes ?? QUOTAS.mediaBytesPerStore;
-    const squishStored = profile.media_bytes;
-    if (profile.media_bytes + bytes > squishCap) {
-      /* המונה רק עולה בהעלאות — החלפות ומחיקות לא הורידו אותו, והמכסה
-         "נסתמה" מרוח. לפני שמסרבים, סופרים את האמת מהאחסון עצמו. */
-      const fresh = await recountSquishMedia(db, profile.id, user.id);
-      if (fresh === null || fresh + bytes > squishCap) {
-        return NextResponse.json(
-          { error: "נגמר המקום באוסף, אפשר למחוק סרטון ישן כדי לפנות" },
-          { status: 413 }
-        );
-      }
-      profile.media_bytes = fresh;
-    }
-    if (!(await reserveMedia(db, "squish_profiles", profile.id, squishStored, profile.media_bytes, bytes, squishCap))) {
-      return NextResponse.json(
-        { error: "נגמר המקום באוסף, אפשר למחוק סרטון ישן כדי לפנות" },
-        { status: 413 }
-      );
-    }
+    /* תופסים את המקום לפני החתימה, בעדכון מותנה אחד. מעל התקרה —
+       המונה רק עולה בהעלאות, אז סופרים קודם את האמת מהאחסון עצמו. */
+    const squishHold = await reserveMedia(db, {
+      table: "squish_profiles",
+      id: profile.id,
+      bytes,
+      cap: squishCap,
+      recount: () => recountSquishMedia(db, profile.id, user.id),
+    });
+    if (squishHold === "full") return FULL("אוסף");
+    if (squishHold === "busy") return BUSY();
     const squishKey = `squish/items/${profile.id}/${randomUUID()}.${EXT[contentType]}`;
-    const squishUrl = await presignedUpload(squishKey, contentType, bytes);
-    return NextResponse.json({ url: squishUrl, key: squishKey });
+    try {
+      const squishUrl = await presignedUpload(squishKey, contentType, bytes);
+      return NextResponse.json({ url: squishUrl, key: squishKey });
+    } catch (e) {
+      await releaseMedia(db, "squish_profiles", profile.id, bytes);
+      throw e;
+    }
   }
 
   // storeId מפורש כשיש יותר מחנות אחת לחשבון — אחרת ההעלאה נוחתת בחנות הלא נכונה.
@@ -185,20 +153,19 @@ export async function POST(req: NextRequest) {
 
   /* תקרה פר-חנות כשהמנהלת הגדילה, אחרת הגלובלית */
   const storeCap = store.media_quota_bytes ?? QUOTAS.mediaBytesPerStore;
-  const storeStored = store.media_bytes;
-  if (store.media_bytes + bytes > storeCap) {
-    /* המונה רק עולה בהעלאות — החלפת תמונה נספרה פעמיים ומחיקת מוצר לא
-       פינתה כלום, עד ש"נגמר המקום" בחנות שרובה רוח (קרה לים). לפני
-       שמסרבים, סופרים את האמת מהאחסון: רק מדיה של מוצרים חיים והקאבר. */
-    const fresh = await recountStoreMedia(db, store.id);
-    if (fresh === null || fresh + bytes > storeCap) {
-      return NextResponse.json(
-        { error: "נגמר המקום בדוכן, אפשר למחוק סרטון ישן כדי לפנות" },
-        { status: 413 }
-      );
-    }
-    store.media_bytes = fresh;
-  }
+  /* תפיסת המקום לפני החתימה, בעדכון מותנה אחד (ראה reserveMedia).
+     המונה רק עולה בהעלאות — החלפת תמונה נספרה פעמיים ומחיקת מוצר לא
+     פינתה כלום, עד ש"נגמר המקום" בחנות שרובה רוח (קרה לים). לכן מעל
+     התקרה סופרים קודם את האמת מהאחסון: רק מדיה של מוצרים חיים והקאבר. */
+  const hold = await reserveMedia(db, {
+    table: "stores",
+    id: store.id,
+    bytes,
+    cap: storeCap,
+    recount: () => recountStoreMedia(db, store.id),
+  });
+  if (hold === "full") return FULL("דוכן");
+  if (hold === "busy") return BUSY();
 
   const key =
     kind === "cover"
@@ -212,14 +179,13 @@ export async function POST(req: NextRequest) {
             ? `${store.id}/cat/${randomUUID()}.${EXT[contentType]}`
             : `${store.id}/products/${randomUUID()}.${EXT[contentType]}`;
 
-  // המקום נשמר לפני החתימה; חתימה שלא מומשה תתוקן בספירה מחדש מהאחסון
-  if (!(await reserveMedia(db, "stores", store.id, storeStored, store.media_bytes, bytes, storeCap))) {
-    return NextResponse.json(
-      { error: "נגמר המקום בדוכן, אפשר למחוק סרטון ישן כדי לפנות" },
-      { status: 413 }
-    );
+  // המקום כבר נתפס. חתימה שלא מומשה תתוקן בספירה מחדש מהאחסון;
+  // חתימה שנכשלה כאן משחררת מיד.
+  try {
+    const url = await presignedUpload(key, contentType, bytes);
+    return NextResponse.json({ url, key });
+  } catch (e) {
+    await releaseMedia(db, "stores", store.id, bytes);
+    throw e;
   }
-
-  const url = await presignedUpload(key, contentType, bytes);
-  return NextResponse.json({ url, key });
 }
