@@ -72,6 +72,7 @@
 .wl-view { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; }
 .wl-root[data-drag="1"] .wl-view { cursor: grabbing; }
 
+.wl-rig { position: absolute; left: 0; top: 0; width: 0; height: 0; }
 .wl-plane {
   position: absolute;
   left: 0;
@@ -211,17 +212,20 @@
 .wl-root[data-night="1"] .wl-night-only { display: inline; }
 .wl-root[data-night="1"] .wl-lantern { fill: #ffe98a; }
 
-/* רמות פירוט של התנועה: מה שרחוק לא זז, ובזמן תעופה הכול נח */
+/* רמות פירוט של התנועה: מה שרחוק לא זז, ובזמן תעופה הכול נח.
+   הכללים פונים רק לאלמנטים שבאמת מונפשים (ולא ל-"*"), כדי שהחלפת רמה לא
+   תחייב את הדפדפן לחשב מחדש את העיצוב של כל 1,500 הצורות בעולם. */
 .wl-root[data-level="0"] .wl-mall-life,
 .wl-root[data-level="0"] .wl-detail { display: none; }
-.wl-root[data-level="0"] .wl-mall *,
+.wl-root[data-level="0"] .wl-mall :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
 .wl-root[data-level="1"] .wl-mall .wl-sway,
-.wl-root[data-level="1"] .wl-plot * { animation: none !important; }
-.wl-root[data-level="2"] .wl-city *,
-.wl-root[data-level="3"] .wl-city * { animation-play-state: paused !important; }
-.wl-root[data-moving="1"] .wl-plane *,
-.wl-root[data-drag="1"] .wl-plane * { animation-play-state: paused !important; }
-.wl-root[data-calm="1"] .wl-plane * { animation: none !important; }
+.wl-root[data-level="1"] .wl-plot :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation: none !important; }
+.wl-root[data-level="2"] .wl-city :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
+.wl-root[data-level="3"] .wl-city :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation-play-state: paused !important; }
+.wl-root[data-moving="1"] .wl-plane :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
+.wl-root[data-drag="1"] .wl-plane :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation-play-state: paused !important; }
+.wl-root[data-calm="1"] .wl-plane :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation: none !important; }
+.wl-root[data-calm="1"] .wl-plane :is(.wl-near, .wl-splash, .wl-hop, .wl-cat-jump) { animation: none !important; }
 .wl-root[data-calm="1"] .wl-store, .wl-root[data-calm="1"] .wl-sheet, .wl-root[data-calm="1"] .wl-bubble { transition: none; animation: none; }
 
 /* ── ממשק ── */
@@ -404,6 +408,7 @@
 .wl-store-cartnote { font-weight: 300; font-size: 12.5px; opacity: 0.85; }
 
 @media (prefers-reduced-motion: reduce) {
-  .wl-plane * { animation: none !important; }
+  .wl-plane :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation: none !important; }
+  .wl-plane :is(.wl-near, .wl-splash, .wl-hop, .wl-cat-jump) { animation: none !important; }
   .wl-store, .wl-sheet, .wl-card, .wl-bubble { transition: none; animation: none; }
 }

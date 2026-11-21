@@ -87,6 +87,10 @@ export default function World() {
   const rootRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
   const planeRef = useRef<HTMLDivElement>(null);
+  const rigRef = useRef<HTMLDivElement>(null);
+  /** "חידוד במנוחה" (ראה applyCam). ref כדי שהמצלמה תקרא את הערך העדכני. */
+  const sharpRef = useRef(false);
+  const restScale = useRef<number | null>(null);
   const vp = useRef({ w: 390, h: 800 });
   const camRef = useRef<Cam>({ x: 0, y: 0, s: 1, lv: 3 });
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -97,6 +101,7 @@ export default function World() {
   const [night, setNight] = useState(false);
   const [dusk, setDusk] = useState(false);
   const [calm, setCalm] = useState(false);
+  const [sharp, setSharp] = useState(false);
   const [level, setLevel] = useState<Level>(3);
   const [moving, setMoving] = useState(false);
   const [, setTick] = useState(0); // המצלמה עצמה חיה ב-ref; זה רק מבקש ציור מחדש
@@ -123,16 +128,61 @@ export default function World() {
 
   /* ── מצלמה ── */
 
+  /**
+   * המצלמה. שתי דרכים לצייר את אותה תמונה:
+   *
+   * רגילה — transform אחד על המישור (הזזה והגדלה). כך נבדק ב-Chromium, ושם
+   *   הדפדפן מצייר מחדש בחדות אחרי כל הגדלה.
+   *
+   * "חידוד במנוחה" — לדפדפנים של אייפון (WebKit), שעלולים להשאיר שכבה
+   *   מוגדלת מטושטשת. ההזזה יושבת על עטיפה (rig), וההגדלה על המישור. בזמן
+   *   תעופה ההגדלה היא transform; כשהמצלמה נעצרת היא מוחלפת ב-zoom, שגורם
+   *   לדפדפן לפרוס ולצייר את העולם בגודל האמיתי. אותו מיקום בדיוק.
+   */
   const applyCam = useCallback((c: Cam, animate: boolean) => {
     const el = planeRef.current;
-    if (!el) return;
+    const rig = rigRef.current;
+    if (!el || !rig) return;
     const { w, h } = vp.current;
     const i = insets(c.lv, h);
-    const ox = (w - i.r) / 2;
-    const oy = i.t + (h - i.t - i.b) / 2;
-    el.style.transition = animate ? `transform ${DUR}ms cubic-bezier(.33,.02,.18,1)` : "none";
-    el.style.transform = `translate3d(${ox - c.x * c.s}px, ${oy - c.y * c.s}px, 0) scale(${c.s})`;
+    const tx = (w - i.r) / 2 - c.x * c.s;
+    const ty = i.t + (h - i.t - i.b) / 2 - c.y * c.s;
+    const tr = animate ? `transform ${DUR}ms cubic-bezier(.33,.02,.18,1)` : "none";
     el.style.setProperty("--s", String(c.s));
+    if (!sharpRef.current) {
+      rig.style.transition = "none";
+      rig.style.transform = "none";
+      el.style.setProperty("zoom", "1");
+      restScale.current = null;
+      el.style.transition = tr;
+      el.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${c.s})`;
+      return;
+    }
+    if (restScale.current !== null && (animate || restScale.current !== c.s)) {
+      // יוצאים ממנוחה: אותה תמונה, אבל עכשיו כ-transform שאפשר להנפיש
+      el.style.transition = "none";
+      el.style.setProperty("zoom", "1");
+      el.style.transform = `scale(${restScale.current})`;
+      restScale.current = null;
+      void el.offsetWidth;
+    }
+    rig.style.transition = tr;
+    rig.style.transform = `translate(${tx}px, ${ty}px)`;
+    if (restScale.current === null) {
+      el.style.transition = tr;
+      el.style.transform = `scale(${c.s})`;
+    }
+  }, []);
+
+  /** המצלמה נעצרה: במצב "חידוד במנוחה" מחליפים את ההגדלה ב-zoom */
+  const rest = useCallback(() => {
+    const el = planeRef.current;
+    if (!el || !sharpRef.current) return;
+    const sc = camRef.current.s;
+    el.style.transition = "none";
+    el.style.transform = "none";
+    el.style.setProperty("zoom", String(sc));
+    restScale.current = sc;
   }, []);
 
   const go = useCallback(
@@ -145,11 +195,12 @@ export default function World() {
       applyCam(camRef.current, !calm);
       if (settleTimer.current) clearTimeout(settleTimer.current);
       settleTimer.current = setTimeout(() => {
+        rest();
         setMoving(false);
         setTick((t) => t + 1);
       }, calm ? 30 : DUR + 40);
     },
-    [applyCam, calm]
+    [applyCam, calm, rest]
   );
 
   const nearestPlot = useCallback(
@@ -256,7 +307,9 @@ export default function World() {
     setStoreOpen(null);
     setFromWorld(true);
     applyCam(camRef.current, !calm);
-  }, [applyCam, calm]);
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(rest, calm ? 30 : DUR + 40);
+  }, [applyCam, calm, rest]);
 
   const goHome = useCallback(() => {
     setSheet(null);
@@ -284,9 +337,18 @@ export default function World() {
     setLevel(start);
     if (idx >= 0) setStoreOpen(null);
     applyCam(idx >= 0 ? camRef.current : { ...camRef.current, s: camRef.current.s * 1.8 }, false);
+    // דפדפני אייפון (כולם WebKit) ו-Safari במק: מפעילים "חידוד במנוחה"
+    const ua = navigator.userAgent;
+    const webkit = /AppleWebKit/.test(ua) && !/Chrome\/|Chromium|Edg\/|OPR\/|Android/.test(ua);
+    sharpRef.current = webkit;
+    setSharp(webkit);
     const hour = new Date().getHours();
     setNight(hour >= 19 || hour < 6);
     setCalm(typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (webkit) {
+      applyCam(idx >= 0 ? camRef.current : { ...camRef.current, s: camRef.current.s * 1.8 }, false);
+      if (idx >= 0) rest();
+    }
     setReady(true);
 
     const onResize = () => {
@@ -294,6 +356,7 @@ export default function World() {
       setLevel((lv) => {
         camRef.current = { ...camRef.current, s: scaleFor(lv, vp.current.w, vp.current.h) };
         applyCam(camRef.current, false);
+        rest();
         return lv;
       });
       setTick((t) => t + 1);
@@ -454,12 +517,14 @@ export default function World() {
         const p = clampCam(level, c.x + dx, c.y + dy);
         camRef.current = { ...c, x: p.x, y: p.y };
         applyCam(camRef.current, !calm);
+        if (settleTimer.current) clearTimeout(settleTimer.current);
+        settleTimer.current = setTimeout(rest, calm ? 30 : DUR + 40);
         setTick((n) => n + 1);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [applyCam, calm, closeStore, level, sheet, storeOpen, zoomIn, zoomOut]);
+  }, [applyCam, calm, closeStore, level, rest, sheet, storeOpen, zoomIn, zoomOut]);
 
   /* ── הפתעות ── */
 
@@ -544,6 +609,7 @@ export default function World() {
         onWheel={onWheel}
         inert={worldBusy}
       >
+        <div ref={rigRef} className="wl-rig">
         <div ref={planeRef} className="wl-plane" style={{ width: WORLD.w, height: WORLD.h }}>
           <SceneryMemo size={size} flowers={stallCount + fx.watered} alley={alleyOpen(size)} splash={fx.splash} hop={fx.hop} />
 
@@ -646,6 +712,7 @@ export default function World() {
             );
           })}
           <span className="wl-label" data-lv="2" style={{ left: MALL.x + 205, top: MALL.y + 884 }}>הגינה של הכיתה</span>
+        </div>
         </div>
       </div>
 
@@ -825,9 +892,22 @@ export default function World() {
                   <span className="wl-field-label">תנועה</span>
                   <div className="wl-toggles">
                     <button type="button" className="wl-btn wl-toggle" aria-pressed={calm} onClick={() => setCalm((v) => !v)} data-testid="wl-calm">פחות תנועה</button>
+                    <button
+                      type="button" className="wl-btn wl-toggle" aria-pressed={sharp} data-testid="wl-sharp"
+                      onClick={() => {
+                        const v = !sharp;
+                        sharpRef.current = v;
+                        setSharp(v);
+                        applyCam(camRef.current, false);
+                        if (v) rest();
+                      }}
+                    >
+                      חידוד מקרוב
+                    </button>
                     <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); }}>לאפס הפתעות והזמנות</button>
                   </div>
                 </div>
+                <p className="wl-sheet-note">"חידוד מקרוב" נדלק לבד באייפון. אם התמונה מטושטשת כשמתקרבים, או שמשהו זז ממקומו, כדאי להחליף את ההגדרה הזו.</p>
                 <p className="wl-sheet-note">הכול כאן נשמר רק עד שסוגרים את הדף. אין חיבור לחנויות אמיתיות.</p>
               </>
             )}
