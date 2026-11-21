@@ -145,7 +145,8 @@
   text-overflow: ellipsis;
 }
 .wl-label-pin { transform: translate(-50%, -100%) scale(calc(1 / var(--s))); transform-origin: 50% 100%; font-weight: 700; }
-.wl-plate { font-size: 12px; font-weight: 400; max-width: none; overflow: visible; display: inline-flex; gap: 5px; align-items: center; }
+.wl-plate { font-size: 12px; font-weight: 400; max-width: 122px; display: inline-flex; gap: 5px; align-items: center; }
+.wl-plate > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .wl-plate b { font-weight: 700; font-size: 10.5px; padding: 0 4px; background: #6f4b28; color: #fff; }
 .wl-plate[data-mine="1"] { border-width: 1.5px; font-weight: 500; }
 .wl-root[data-moving="0"][data-level="0"] .wl-label[data-lv="0"],
@@ -400,6 +401,10 @@
 .wl-store-grid li { background: var(--s-surface); border: var(--s-border); display: flex; flex-direction: column; }
 .wl-store-thumb { aspect-ratio: 1; background: var(--s-thumb); display: flex; align-items: center; justify-content: center; padding: 16%; }
 .wl-store-art { width: 100%; height: 100%; }
+.wl-store-thumb[data-photo="1"] { padding: 0; }
+.wl-store-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wl-store-avatar { overflow: hidden; }
+.wl-store-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .wl-store-row { display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px 4px; font-size: 14.5px; }
 .wl-store-name { font-weight: 400; }
 .wl-store-price { font-weight: 700; color: var(--s-primary-text); direction: ltr; }

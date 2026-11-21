@@ -34,6 +34,8 @@ export interface LabProduct {
   art: ArtName;
   name: string;
   price: number;
+  /** תמונת מוצר אמיתית (כתובת). כשיש, היא מוצגת במקום האיור. */
+  image?: string | null;
 }
 
 export interface LabStore {
@@ -48,6 +50,8 @@ export interface LabStore {
   /** צבע הסוכך והבד. ברירת המחדל: הצבע הראשי של הערכה. */
   awning: string;
   emblem: Emblem;
+  /** תמונת הפרופיל של החנות. כשיש, היא על השלט במקום הסמל. */
+  avatar?: string | null;
   products: LabProduct[];
   deco: Deco;
   mine?: boolean;
@@ -197,31 +201,38 @@ export const ZONES = {
 
 const byId = (id: string) => STORES.find((s) => s.id === id)!;
 
+/** סדר החנויות הבדויות: שמונה לרחוב הסוככים, ושלוש לסמטה */
+const FICTION = ["maya", "itai", "beads", "noa", "teddy", "slime", "mugs", "balls", "rainbow", "tamar", "stars"];
+
 /**
  * מי עומד איפה, לפי גודל הכיתה.
  *   3  — פינה: שלושה דוכנים צמודים, ומשני הצדדים מקום פנוי. שאר הרחוב גינה.
- *   8  — הרחוב מלא, עם מקום פנוי אחד ליד הדוכן שלי. הסמטה נפתחה וריקה.
+ *   8  — הרחוב מלא, עם מקום פנוי אחד באמצע. הסמטה נפתחה וריקה.
  *   11 — גם בסמטה יש שלושה דוכנים.
  * מקום פנוי הוא מקום פנוי: לא ממלאים אותו בדוכן שלא קיים.
+ *
+ * list — החנויות להציב, לפי הסדר. בלי הערך הזה: החנויות הבדויות.
+ * אם יש פחות חנויות ממקומות, הראשון שנשאר ריק הוא "מקום פנוי" והשאר גינה.
  */
-export function layout(size: ClassSize): Plot[] {
-  const a: (string | "empty" | "garden")[] =
-    size === 3
-      ? ["garden", "garden", "empty", "maya", "noa", "itai", "empty", "garden", "garden"]
-      : ["maya", "itai", "beads", "noa", "empty", "teddy", "slime", "mugs", "balls"];
-  const b: (string | "empty" | "garden")[] =
-    size === 3
-      ? ["garden", "garden", "garden", "garden", "garden"]
-      : size === 8
-        ? ["garden", "empty", "empty", "empty", "garden"]
-        : ["empty", "rainbow", "tamar", "stars", "empty"];
-  const make = (zone: "A" | "B", row: (string | "empty" | "garden")[]): Plot[] =>
-    row.map((v, i) => {
+export function layout(size: ClassSize, list?: LabStore[]): Plot[] {
+  const pool = list ?? (size === 3 ? ["maya", "noa", "itai"] : FICTION).map(byId);
+  type Slot = number | "empty" | "garden";
+  const a: Slot[] = size === 3 ? ["garden", "garden", "empty", 0, 1, 2, "empty", "garden", "garden"] : [0, 1, 2, 3, "empty", 4, 5, 6, 7];
+  const b: Slot[] = size === 3 ? ["garden", "garden", "garden", "garden", "garden"] : size === 8 ? ["garden", "empty", "empty", "empty", "garden"] : ["empty", 8, 9, 10, "empty"];
+  const make = (zone: "A" | "B", row: Slot[]): Plot[] => {
+    let opened = row.includes("empty");
+    return row.map((v, i) => {
       const z = ZONES[zone];
       const base = { id: `${zone}${i}`, zone, cx: z.x0 + PITCH * i, by: z.by };
-      if (v === "empty" || v === "garden") return { ...base, kind: v };
-      return { ...base, kind: "stall" as const, store: byId(v) };
+      if (typeof v === "number") {
+        const store = pool[v];
+        if (store) return { ...base, kind: "stall" as const, store };
+        if (!opened) { opened = true; return { ...base, kind: "empty" as const }; }
+        return { ...base, kind: "garden" as const };
+      }
+      return { ...base, kind: v };
     });
+  };
   return [...make("A", a), ...make("B", b)];
 }
 

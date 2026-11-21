@@ -27,7 +27,8 @@ export default function StoreSim({ store, onExit, fromWorld }: { store: LabStore
 
       <header className="wl-store-head">
         <div className="wl-store-avatar" aria-hidden>
-          <span>{store.short.slice(0, 1)}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {store.avatar ? <img src={store.avatar} alt="" /> : <span>{store.short.slice(0, 1)}</span>}
         </div>
         <h1>{store.name}</h1>
         <p>{store.tagline}</p>
@@ -37,8 +38,9 @@ export default function StoreSim({ store, onExit, fromWorld }: { store: LabStore
       <ul className="wl-store-grid">
         {store.products.map((p, i) => (
           <li key={i}>
-            <div className="wl-store-thumb">
-              <Art name={p.art} className="wl-store-art" />
+            <div className="wl-store-thumb" data-photo={p.image ? "1" : undefined}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {p.image ? <img src={p.image} alt="" className="wl-store-photo" /> : <Art name={p.art} className="wl-store-art" />}
             </div>
             <div className="wl-store-row">
               <span className="wl-store-name">{p.name}</span>

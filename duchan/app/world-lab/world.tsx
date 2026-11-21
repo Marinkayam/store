@@ -83,7 +83,11 @@ function LevelIcon({ level }: { level: Level }) {
   );
 }
 
-export default function World() {
+/**
+ * review — חנויות מקובץ מקומי (ראה page.tsx), לסקירה בלבד. אין "הדוכן שלי",
+ * מתחילים מהקניון, ובוחרים קבוצה של 11 חנויות בכל פעם.
+ */
+export default function World({ review }: { review?: LabStore[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
   const planeRef = useRef<HTMLDivElement>(null);
@@ -97,7 +101,9 @@ export default function World() {
   const chain = useRef(0);
   const selfHash = useRef(false);
 
-  const [size, setSize] = useState<ClassSize>(8);
+  const [size, setSize] = useState<ClassSize>(review ? 11 : 8);
+  const [group, setGroup] = useState(0);
+  const groups = review ? Math.ceil(review.length / 11) : 0;
   const [night, setNight] = useState(false);
   const [dusk, setDusk] = useState(false);
   const [calm, setCalm] = useState(false);
@@ -106,8 +112,8 @@ export default function World() {
   const [moving, setMoving] = useState(false);
   const [, setTick] = useState(0); // המצלמה עצמה חיה ב-ref; זה רק מבקש ציור מחדש
   const [ready, setReady] = useState(false);
-  const [storeOpen, setStoreOpen] = useState<string | null>("noa");
-  const [storeShown, setStoreShown] = useState<string>("noa");
+  const [storeOpen, setStoreOpen] = useState<string | null>(review ? null : "noa");
+  const [storeShown, setStoreShown] = useState<string>(review ? review[0].id : "noa");
   const [fromWorld, setFromWorld] = useState(false);
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [mine, setMine] = useState<{ awning: string; deco: Deco }>(() => {
@@ -120,10 +126,10 @@ export default function World() {
   const [bubble, setBubble] = useState<{ text: string; k: number } | null>(null);
   const [fx, setFx] = useState({ splash: 0, hop: 0, cat: 0, watered: 0 });
 
-  const plots = useMemo(() => layout(size), [size]);
-  const stores = useMemo(() => STORES.map((s) => (s.mine ? { ...s, awning: mine.awning, deco: mine.deco } : s)), [mine]);
+  const plots = useMemo(() => layout(size, review ? review.slice(group * 11, group * 11 + 11) : undefined), [group, review, size]);
+  const stores = useMemo(() => review ?? STORES.map((s) => (s.mine ? { ...s, awning: mine.awning, deco: mine.deco } : s)), [mine, review]);
   const storeOf = useCallback((id: string | undefined) => stores.find((s) => s.id === id), [stores]);
-  const myPlot = useMemo(() => plots.find((p) => p.store?.mine)!, [plots]);
+  const myPlot = useMemo(() => plots.find((p) => p.store?.mine) ?? plots.find((p) => p.kind === "stall") ?? plots[0], [plots]);
   const stallCount = plots.filter((p) => p.kind === "stall").length;
 
   /* ── מצלמה ── */
@@ -313,11 +319,13 @@ export default function World() {
 
   const goHome = useCallback(() => {
     setSheet(null);
+    const id = myPlot.store?.id;
+    if (!id) return;
     if (storeOpen) {
-      if (storeOpen === "noa") return;
+      if (storeOpen === id) return;
       closeStore();
     }
-    void flyTo(3, myPlot.cx, myPlot.by - 24, () => openStore("noa"));
+    void flyTo(3, myPlot.cx, myPlot.by - 24, () => openStore(id));
   }, [closeStore, flyTo, myPlot, openStore, storeOpen]);
 
   /* ── התחלה, שינוי גודל מסך ── */
@@ -329,7 +337,7 @@ export default function World() {
     };
     measure();
     const hash = typeof location !== "undefined" ? location.hash.slice(1) : "";
-    const idx = (LEVEL_NAMES as readonly string[]).indexOf(hash);
+    const idx = review && !(LEVEL_NAMES as readonly string[]).includes(hash) ? 1 : (LEVEL_NAMES as readonly string[]).indexOf(hash);
     const start: Level = idx >= 0 ? (idx as Level) : 3;
     const { w, h } = vp.current;
     const at = start === 0 ? CITY_C : start === 1 ? MALL_C : start === 2 ? { x: myPlot.cx, y: ROWS[0] } : { x: myPlot.cx, y: myPlot.by - 24 };
@@ -387,7 +395,7 @@ export default function World() {
       const name = location.hash.slice(1);
       const st = stateRef.current;
       if (name === "store") {
-        if (!st.storeOpen) actions.current.openStore("noa");
+        if (!st.storeOpen && !review) actions.current.openStore("noa");
         return;
       }
       const idx = (LEVEL_NAMES as readonly string[]).indexOf(name);
@@ -706,7 +714,7 @@ export default function World() {
             const st = storeOf(p.store!.id)!;
             return (
               <span key={p.id} className="wl-label wl-plate" data-lv="2" data-mine={st.mine ? "1" : undefined} style={{ left: p.cx, top: p.by + 9 }}>
-                {st.name}
+                <span>{st.name}</span>
                 {st.mine && <b>שלי</b>}
               </span>
             );
@@ -786,10 +794,14 @@ export default function World() {
           )}
           {hint && !bubble && <div className="wl-hint">{hint}</div>}
           <div className="wl-bottom-row">
-            <button type="button" className="wl-btn wl-home" onClick={goHome} data-testid="wl-home">
-              <Icon name="stall" size={22} tone="var(--lavender)" />
-              הדוכן שלי
-            </button>
+            {review ? (
+              <span />
+            ) : (
+              <button type="button" className="wl-btn wl-home" onClick={goHome} data-testid="wl-home">
+                <Icon name="stall" size={22} tone="var(--lavender)" />
+                הדוכן שלי
+              </button>
+            )}
             {level > 0 && (
               <button type="button" className="wl-btn wl-out" onClick={zoomOut} data-testid="wl-out">
                 <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
@@ -800,7 +812,7 @@ export default function World() {
               </button>
             )}
           </div>
-          <div className="wl-proto">אב־טיפוס · כל החנויות והשמות בדויים</div>
+          <div className="wl-proto">{review ? "סקירה פרטית · חנויות מקובץ מקומי" : "אב־טיפוס · כל החנויות והשמות בדויים"}</div>
         </div>
       </div>
 
@@ -878,7 +890,19 @@ export default function World() {
             {sheet === "lab" && (
               <>
                 <h2>הגדרות הניסוי</h2>
-                <div className="wl-field">
+                {review && (
+                  <div className="wl-field">
+                    <span className="wl-field-label">איזו קבוצת חנויות להציג</span>
+                    <div className="wl-toggles" role="radiogroup" aria-label="איזו קבוצת חנויות להציג">
+                      {Array.from({ length: groups }, (_, i) => (
+                        <button key={i} type="button" role="radio" aria-checked={group === i} className="wl-btn wl-toggle" onClick={() => setGroup(i)} data-testid={`wl-group-${i}`}>
+                          קבוצה {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="wl-field" hidden={!!review}>
                   <span className="wl-field-label">כמה דוכנים יש בכיתה</span>
                   <div className="wl-toggles" role="radiogroup" aria-label="כמה דוכנים יש בכיתה">
                     {([3, 8, 11] as ClassSize[]).map((n) => (

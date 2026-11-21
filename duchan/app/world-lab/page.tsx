@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { readFileSync } from "node:fs";
 import World from "./world";
+import type { LabStore } from "./data";
 import "./world.css";
 
 /**
@@ -20,7 +22,23 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/**
+ * סקירה פרטית: אם WORLD_LAB_DATA מצביע על קובץ JSON מקומי של חנויות, העולם
+ * מציג אותן במקום החנויות הבדויות. הקובץ לא נמצא בריפו ולא אמור להיכנס אליו;
+ * המשתנה מוגדר רק במחשב של מי שמריץ את הסקירה. בלי המשתנה: נתוני הדוגמה.
+ */
+function reviewStores(): LabStore[] | undefined {
+  const path = process.env.WORLD_LAB_DATA;
+  if (!path) return undefined;
+  try {
+    const list = JSON.parse(readFileSync(path, "utf8")) as LabStore[];
+    return Array.isArray(list) && list.length ? list : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export default function WorldLabPage() {
   if (process.env.VERCEL_ENV === "production") notFound();
-  return <World />;
+  return <World review={reviewStores()} />;
 }

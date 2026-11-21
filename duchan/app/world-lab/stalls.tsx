@@ -60,7 +60,11 @@ function ProductShelf({ store }: { store: LabStore }) {
         return (
           <g key={i}>
             <rect x={x} y={72} width="38" height="36" fill={CANVAS} stroke={INK} strokeWidth={1.1} strokeLinejoin="round" />
-            <svg x={x + 4} y={75} width="30" height="30" dangerouslySetInnerHTML={{ __html: ART[p.art] }} />
+            {p.image ? (
+              <image href={p.image} x={x + 2.500} y={74.500} width="33" height="31" preserveAspectRatio="xMidYMid slice" />
+            ) : (
+              <svg x={x + 4} y={75} width="30" height="30" dangerouslySetInnerHTML={{ __html: ART[p.art] }} />
+            )}
           </g>
         );
       })}
@@ -73,9 +77,17 @@ const MID_PRODUCT_FILL: Record<string, string> = {
   mug: "#B89AC8", car: "#A8A46D", necklace: "#E3C26F", bracelets: "#B89AC8",
 };
 
-function MidProduct({ art, x }: { art: string; x: number }) {
+function MidProduct({ art, x, image }: { art: string; x: number; image?: string | null }) {
   const f = MID_PRODUCT_FILL[art] ?? "#F2D9DC";
   const cx = x + 19;
+  if (image) {
+    return (
+      <g>
+        <rect x={x} y={72} width="38" height="36" fill={CANVAS} {...LINE} />
+        <image href={image} x={x + 2.500} y={74.500} width="33" height="31" preserveAspectRatio="xMidYMid slice" />
+      </g>
+    );
+  }
   return (
     <g>
       <rect x={x} y={72} width="38" height="36" fill={CANVAS} {...LINE} />
@@ -112,7 +124,7 @@ function StallMid({ store }: { store: LabStore }) {
       </g>
       <rect x="24" y="108" width="192" height="10" fill={WOOD} {...LINE} />
       {store.products.slice(0, 3).map((p, i) => (
-        <MidProduct key={i} art={p.art} x={54 + i * 47} />
+        <MidProduct key={i} art={p.art} x={54 + i * 47} image={p.image} />
       ))}
       <g {...LINE} className="awning-flap">
         <rect x="24" y="30" width="192" height="9" fill={WOOD} />
@@ -122,7 +134,11 @@ function StallMid({ store }: { store: LabStore }) {
       </g>
       <path d="M96 30 l4 -6 M144 30 l-4 -6" stroke={INK} strokeWidth={1.2} />
       <rect x="84" y="0" width="72" height="25" fill={CANVAS} {...LINE} />
-      <EmblemMark kind={store.emblem} x={120} y={12.5} size={19} fill={AW} />
+      {store.avatar ? (
+        <image href={store.avatar} x="109" y="1.500" width="22" height="22" preserveAspectRatio="xMidYMid slice" />
+      ) : (
+        <EmblemMark kind={store.emblem} x={120} y={12.5} size={19} fill={AW} />
+      )}
       {store.deco.flowers && (
         <g>
           <path d="M184 140 v-12 M188 140 v-16 M192 140 v-11" stroke="var(--olive)" strokeWidth={1.4} fill="none" />
