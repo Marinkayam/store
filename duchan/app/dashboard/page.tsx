@@ -439,7 +439,7 @@ export default function OrdersPage() {
             {/* מי ומתי — השם הוא מה שהעין מחפשת מול השיחות בוואטסאפ */}
             <header className="flex items-start justify-between gap-3 px-4 pt-4 pb-3.5">
               <div className="min-w-0">
-                <div className="text-[16px] font-bold leading-snug truncate">{o.buyer_name || "בלי שם"}</div>
+                <div className="text-[16px] font-bold leading-snug truncate">{o.buyer_name || (o.pii_purged_at ? "קונה" : "בלי שם")}</div>
                 <div className="text-[12px] text-[var(--muted)] mt-0.5">
                   <bdi>#{o.order_number}</bdi> · <bdi>{orderWhen(o.created_at)}</bdi>
                 </div>
@@ -552,6 +552,12 @@ export default function OrdersPage() {
                   </button>
                 </div>
               </div>
+            ) : o.pii_purged_at ? (
+              /* פרטי הקונה נמחקו אחרי תקופת השמירה (0071). ההזמנה עצמה נשארת,
+                 ואי אפשר להוסיף אותם מחדש */
+              <p className="text-[12px] text-[var(--muted)] mt-1.5" data-testid="order-purged">
+                פרטי הקונה נמחקו. מה שנמכר והסכום נשארים.
+              </p>
             ) : !o.buyer_name ? (
               <button
                 onClick={() => openWho(o)}
@@ -654,7 +660,7 @@ export default function OrdersPage() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-3 text-[12px] text-[var(--muted)]">
-                  {!o.owner_note && noteEditId !== o.id && o.status !== "cancelled" ? (
+                  {!o.owner_note && noteEditId !== o.id && o.status !== "cancelled" && !o.pii_purged_at ? (
                     <button
                       onClick={() => {
                         setNoteEditId(o.id);

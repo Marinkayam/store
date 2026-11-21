@@ -43,7 +43,7 @@ await db.query(
   [store.id, ["ורוד", "כחול", "צהוב"]]
 );
 await db.query(
-  `update stores set tagline=null, about=null, city=null, ships=false, shipping_note=null,
+  `update stores set tagline=null, about=null, city=null, city_id=null, ships=false, shipping_note=null,
    shipping_price=null, order_intro=null, order_outro=null,
    payout_bit=true, payout_paybox=true, payout_cash=true,
    payout_link='https://link.payboxapp.com/abc123',
@@ -80,7 +80,9 @@ const STORY = "אני תמר, בת 11, ואני מכינה צמידים.";
 await openSection("design"); // השם, התיאור והתמונה — ב"עיצוב הדוכן"
 await girl.fill("textarea[aria-label='תיאור הדוכן']", STORY);
 await openSection("details");
-await girl.fill("input[aria-label='עיר בארץ']", "רמת גן");
+// העיר נבחרת מרשימת היישובים: מקלידים כמה אותיות ובוחרים
+await girl.fill("[data-testid=city-input]", "רמת ג");
+await girl.locator("[data-testid=city-option]", { hasText: /^רמת גן$/ }).click();
 await openSection("shipping");
 await girl.click("[data-testid=ships-choice-on]");
 await girl.waitForTimeout(400);
@@ -90,7 +92,7 @@ await girl.click("[data-testid=save-settings]");
 await girl.waitForTimeout(2000);
 
 const { rows: [saved] } = await db.query("select * from stores where id=$1", [store.id]);
-check("התיאור והעיר נשמרו", saved.tagline === STORY && saved.city === "רמת גן", `${saved.city}`);
+check("התיאור והעיר נשמרו (סמל יישוב 8600)", saved.tagline === STORY && saved.city_id === 8600, `${saved.city_id}`);
 check("והמשלוח נשמר עם המחיר שלו",
   saved.ships === true && Number(saved.shipping_price) === 15,
   `${saved.ships} · ₪${saved.shipping_price}`);

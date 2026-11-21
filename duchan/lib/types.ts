@@ -37,7 +37,10 @@ export interface Store {
   payout_link: string | null; // לינק ביט/פייבוקס. נאכף בטריגר (מיגרציה 0018).
   // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה (מיגרציה 0019)
   about: string | null;
+  /** טקסט חופשי ישן. לא מוצג ולא נכתב מאז 0070; העיר היא city_id */
   city: string | null;
+  /** סמל יישוב מתוך localities (0070). השם: lib/localities.ts */
+  city_id?: number | null;
   // גיל, לא תאריך לידה — פחות מזהה. לעולם לא בקריאה הפומבית (מיגרציה 0021)
   age: number | null;
   ships: boolean;
@@ -126,6 +129,10 @@ export interface Order {
   owner_note: string | null;
   buyer_phone: string | null; // חובה מאז 2026-09; null רק בהזמנות ותיקות
   buyer_name: string | null;  // שם פרטי. מה שמקשר בין ההזמנה לשיחה בוואטסאפ
+  /** שמירה מוגבלת בזמן (0071): מתי נסגרה, ומתי נמחקו הכתובת ופרטי הקונה */
+  closed_at?: string | null;
+  address_purged_at?: string | null;
+  pii_purged_at?: string | null;
   ship_address: string | null; // הנוסח המלא של הכתובת. נראה רק למוכרת.
   ship_city: string | null;
   /** הפירוק: street, homeType (building|private), floor, apartment, entryCode */

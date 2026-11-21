@@ -31,7 +31,7 @@ const RESTORE = [
   "featured_title", "show_sold_out", "promo_on", "promo_title", "promo_text",
   "payout_bit", "payout_paybox", "payout_cash", "payout_bit_phone", "payout_paybox_phone",
   "payout_bit_link", "payout_paybox_link", "payout_link", "payout_whatsapp",
-  "ships", "shipping_note", "shipping_price", "city", "age", "status", "contact_phone",
+  "ships", "shipping_note", "shipping_price", "city", "city_id", "age", "status", "contact_phone",
 ];
 await db.query("update stores set status='active', payout_bit=true, payout_paybox=false, payout_bit_link=null, payout_bit_phone=null, payout_paybox_link=null, payout_paybox_phone=null, payout_link=null, payout_whatsapp=false where id=$1", [orig.id]);
 
@@ -62,7 +62,6 @@ const row = async () => (await db.query("select * from stores where id=$1", [ori
 await open("design");
 await page.fill("input[aria-label='שם הדוכן']", "בדיקת שמירה");
 await page.fill("textarea[aria-label='תיאור הדוכן']", "צמידים וסקווישים בעבודת יד");
-await page.fill("input[aria-label='עיר']", "חולון");
 await page.click("button[aria-label='אמוג׳י 🐼']");
 await page.click("button[aria-label='ערכת לבנדר']");
 await page.click("button[aria-label='סגנון רך']");
@@ -70,8 +69,10 @@ await page.click("button[aria-label='רקע כוכבים']");
 await page.click("button[aria-label='קאבר זית']"); // נשמר מיד
 await back();
 let r = await row();
-check("עיצוב: שם, תיאור ועיר", r.display_name === "בדיקת שמירה" && r.tagline === "צמידים וסקווישים בעבודת יד" && r.city === "חולון",
-  `${r.display_name} · ${r.tagline} · ${r.city}`);
+check("עיצוב: שם ותיאור", r.display_name === "בדיקת שמירה" && r.tagline === "צמידים וסקווישים בעבודת יד",
+  `${r.display_name} · ${r.tagline}`);
+// העיר כבר לא נכתבת כאן: בוחרים אותה מרשימה ב"הפרטים שלי" (e2e-city)
+check("עיצוב: אין שדה טקסט חופשי לעיר", (await page.locator("input[aria-label='עיר']").count()) === 0);
 check("עיצוב: אמוג׳י, צבעים, סגנון ורקע", r.emoji === "🐼" && r.theme === "berry" && r.look === "soft" && r.bg_pattern === "stars",
   `${r.emoji} ${r.theme} ${r.look} ${r.bg_pattern}`);
 check("עיצוב: הקאבר", r.cover_preset === "olive", String(r.cover_preset));
@@ -156,8 +157,8 @@ check("אחרי טעינה מחדש: מסך הבית מראה את מה שנשמ
   ["בדיקת שמירה", "לבנדר", "רך", "כוכבים", "הכי שווים", "מבצע חנוכה", "משלוח ₪12.90"].every((w) => hub.includes(w)),
   hub.replace(/\s+/g, " ").slice(0, 160));
 await open("design");
-check("ובתוך העיצוב: השם והעיר במקום",
-  (await page.inputValue("input[aria-label='שם הדוכן']")) === "בדיקת שמירה" && (await page.inputValue("input[aria-label='עיר']")) === "חולון");
+check("ובתוך העיצוב: השם במקום",
+  (await page.inputValue("input[aria-label='שם הדוכן']")) === "בדיקת שמירה");
 check("והבחירות מסומנות", (await page.getAttribute("button[aria-label='סגנון רך']", "aria-pressed")) === "true" &&
   (await page.getAttribute("button[aria-label='רקע כוכבים']", "aria-pressed")) === "true");
 await back();

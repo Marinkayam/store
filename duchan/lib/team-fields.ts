@@ -6,7 +6,7 @@
  */
 export const PARTNER_FIELDS = [
   "display_name", "emoji", "tagline", "theme", "cover_key", "cover_preset", "avatar_key",
-  "about", "city", "ships", "shipping_note", "shipping_price", "order_intro", "order_outro",
+  "about", "city", "city_id", "ships", "shipping_note", "shipping_price", "order_intro", "order_outro",
   "promo_on", "promo_title", "promo_text", "categories", "look", "bg_pattern", "bg_key",
   "category_layout", "category_size", "category_meta", "featured_title", "show_sold_out", "status",
 ] as const;

@@ -19,6 +19,8 @@ import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
 import { useCategoryImages } from "@/app/use-category-images";
 import { scrollToTop } from "@/lib/scroll-root";
+import CityPicker from "@/app/city-picker";
+import { localityName, matchLocality } from "@/lib/localities";
 import Dock from "../dock";
 import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
 import SettingsHub, { type HubGroup } from "./hub";
@@ -87,7 +89,8 @@ export default function SettingsPage() {
   // מה שהחנות מספרת על עצמה, ואיך ההזמנה מגיעה אליה
   const [info, setInfo] = useState({
     about: "",
-    city: "",
+    // העיר נבחרת מרשימת היישובים (0070). אין יותר טקסט חופשי.
+    cityId: null as number | null,
     age: "" as string,
     ships: false,
     shipping_note: "",
@@ -150,7 +153,9 @@ export default function SettingsPage() {
     });
     setInfo({
       about: store.about ?? "",
-      city: store.city ?? "",
+      // דוכן ישן שעוד לא מופה: אם הטקסט הישן הוא שם מדויק של יישוב, הוא
+      // נבחר מראש, והשמירה הבאה כבר תכתוב את המזהה
+      cityId: store.city_id ?? matchLocality(store.city),
       age: store.age == null ? "" : String(store.age),
       ships: store.ships ?? false,
       shipping_note: store.shipping_note ?? "",
@@ -301,7 +306,7 @@ export default function SettingsPage() {
       // התיאור כולו יושב ב-tagline. about מתאפס בשמירה כדי שהדוכן לא יציג
       // את אותו טקסט פעמיים, אחרי שהתוכן שלו כבר אוחד לשדה היחיד.
       about: null,
-      city: info.city.trim() || null,
+      city_id: info.cityId,
       age: info.age !== "" && Number(info.age) >= 5 && Number(info.age) <= 18 ? Number(info.age) : null,
       ships: info.ships,
       shipping_note: info.ships ? info.shipping_note.trim() || null : null,
@@ -689,7 +694,7 @@ export default function SettingsPage() {
         { key: "app", icon: "bell", title: "אפליקציה והתראות", summary: "אייקון במסך הבית והתראה על כל הזמנה" },
         {
           key: "details", icon: "phone", title: "הפרטים שלי",
-          summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, info.city].filter(Boolean).join(" · "),
+          summary: [normalizePhone(phone) ? displayPhone(normalizePhone(phone)!) : phone, localityName(info.cityId)].filter(Boolean).join(" · "),
           ...(isPartner ? { locked: "רק ראש הדוכן משנה את זה" } : {}),
         },
       ],
@@ -893,19 +898,17 @@ export default function SettingsPage() {
                   המשלוחים מופיעים רק כשהם דלוקים, וזו התשובה ל"אם מפעילים,
                   רואים?" — ההדלקה עצמה נמצאת למטה במסך. */}
               <div className="flex items-center justify-center gap-1.5 text-[12px] opacity-75 flex-wrap">
-                <span aria-hidden>📍</span>
-                <input
-                  value={info.city}
-                  maxLength={30}
-                  aria-label="עיר"
-                  placeholder="עיר (לא חובה)"
-                  onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                  className="editable editable-quiet text-center w-32"
-                  style={{ color: t.ink }}
-                />
+                {/* העיר מוצגת כאן כמו בדוכן האמיתי. בוחרים אותה ב"הפרטים שלי",
+                    מרשימת היישובים, ולא מקלידים כאן טקסט חופשי */}
+                {localityName(info.cityId) && (
+                  <span data-testid="preview-city">
+                    <Icon name="pin" size={13} tone="none" className="inline-block align-[-2px] me-0.5" />
+                    {localityName(info.cityId)}
+                  </span>
+                )}
                 {info.ships && (
                   <>
-                    <span aria-hidden>·</span>
+                    {localityName(info.cityId) && <span aria-hidden>·</span>}
                     <span>
                       🚚 משלוח
                       {info.shipping_price !== "" ? ` ₪${formatPrice(parsePrice(info.shipping_price))}` : " בתיאום"}
@@ -1631,21 +1634,17 @@ export default function SettingsPage() {
                 className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
               />
             </div>
-            <div className="flex-1">
-              <label className="block text-[12px] text-[var(--muted)] mb-1">עיר בארץ</label>
-              <input
-                value={info.city}
-                onChange={(e) => { setInfo({ ...info, city: e.target.value }); setDirty(true); }}
-                placeholder="למשל: רמת גן"
-                maxLength={30}
-                aria-label="עיר בארץ"
-                className="w-full border border-[var(--line)] px-3 py-2.5 text-[13px]"
+            <div className="flex-1 min-w-0">
+              <CityPicker
+                value={info.cityId}
+                onChange={(id) => { setInfo((cur) => ({ ...cur, cityId: id })); setDirty(true); }}
               />
             </div>
           </div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-1.5">
             הגיל לא מופיע בדוכן, והקונים לא רואים אותו. העיר כן מופיעה, למעלה
-            מתחת לשם, כדי שהקונים ידעו אם המסירה הגיונית. כתובת לא מבקשים אף פעם.
+            מתחת לשם, כדי שהקונים ידעו אם המסירה הגיונית. בוחרים אותה מהרשימה.
+            כתובת לא מבקשים אף פעם.
           </p>
         </div>
 

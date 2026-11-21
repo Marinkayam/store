@@ -45,6 +45,7 @@ const TABLES = [
   "squish_feedback",
   "squish_parent_approvals",
   "squish_admin_actions",
+  "app_settings",
 ] as const;
 
 /** PostgREST מגביל תשובה בודדת. בלי הדפדוף הזה הגיבוי נקטע בשקט. */
@@ -212,6 +213,13 @@ export async function GET(req: NextRequest) {
     console.error("[cron] backup prune failed:", e instanceof Error ? e.message : String(e));
   }
 
+  /* שמירה מוגבלת בזמן של פרטי קונים (מיגרציה 0071).
+     רק אחרי שהגיבוי של היום נכתב, ורק אם טבלת ההזמנות נכנסה אליו במלואה:
+     מה שנמחק כאן אפשר לשחזר מהגיבוי במשך 30 יום, ואחר כך לא.
+     כברירת מחדל זו הרצה "על יבש" שרק סופרת. מחיקה בפועל רק כשבמסד
+     app_settings.order_retention_enforce = '1' — מתג שנקבע ידנית אחרי אישור. */
+  const retention = await runOrderRetention(db, !failed.some((f) => f.startsWith("orders:")));
+
   if (failed.length) {
     console.error("[cron] partial backup:", failed.join(" | "));
     await notifyTelegram(
@@ -219,5 +227,36 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true, partial: failed.length > 0, failed, counts });
+  return NextResponse.json({ ok: true, partial: failed.length > 0, failed, counts, retention });
+}
+
+/**
+ * מריץ את purge_buyer_data ושומר את הדוח ב-app_settings, כדי שאפשר יהיה
+ * לראות כל יום מה נמחק (או מה היה נמחק). כישלון כאן לא מפיל את הקרון.
+ */
+async function runOrderRetention(db: Admin, ordersBackedUp: boolean): Promise<unknown> {
+  try {
+    const { data: flag, error: flagErr } = await db
+      .from("app_settings")
+      .select("value")
+      .eq("key", "order_retention_enforce")
+      .maybeSingle();
+    if (flagErr) return { skipped: "not_installed" }; // המיגרציה עוד לא רצה
+    // בלי גיבוי תקין של ההזמנות לא מוחקים, גם אם המתג דלוק
+    const enforce = flag?.value === "1" && ordersBackedUp;
+    const { data, error } = await db.rpc("purge_buyer_data", { p_enforce: enforce });
+    if (error) {
+      console.error("[cron] order retention:", error.message);
+      return { error: error.message };
+    }
+    const report = { ...(data as Record<string, unknown>), backup_ok: ordersBackedUp };
+    await db.from("app_settings").upsert(
+      { key: "order_retention_last", value: JSON.stringify(report), updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+    return report;
+  } catch (e) {
+    console.error("[cron] order retention failed:", e instanceof Error ? e.message : String(e));
+    return { error: "failed" };
+  }
 }

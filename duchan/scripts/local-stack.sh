@@ -92,6 +92,10 @@ psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0057_sto
 # ו-0065: מחליפה את mark_order_paid / cancel_order של 0057 (מלאי לכל צבע) —
 # חייבת לרוץ אחריה, אחרת ההרצה החוזרת של 0057 מחזירה את הגרסה הישנה
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0065_option_stock.sql >/dev/null 2>&1
+# ו-0070 / 0071: רשימת היישובים לקריאה בלבד, והניקוי של פרטי הקונים
+# (purge_buyer_data, app_settings) של השרת בלבד
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0070_localities.sql >/dev/null 2>&1
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0071_order_retention.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
 # קונטיינר חדש מגיע בלי הבינארי ובלי הקונפיג. מורידים גרסה קבועה,

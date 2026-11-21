@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/phone";
 import { randomSlug } from "@/lib/slug";
 import { QUOTAS } from "@/lib/quotas";
+import { isLocalityId } from "@/lib/localities";
 import { THEMES } from "@/lib/themes";
 import { COVERS, DEFAULT_COVER } from "@/lib/covers";
 import { notifyAdmins } from "@/lib/admin-notify";
@@ -20,7 +21,8 @@ interface Body {
   theme?: string;
   contactPhone?: string;
   age?: number;
-  city?: string;
+  /** סמל יישוב מתוך רשימת היישובים (lib/localities.ts). אין טקסט חופשי. */
+  cityId?: number;
   parentAware?: boolean;
   ref?: string | null; // הסלאג של החנות שממנה הגיעה
   firstProduct?: {
@@ -51,7 +53,7 @@ export async function POST(req: NextRequest) {
   // שניהם לא חובה. גיל מחוץ לטווח נשמר כלא-קיים במקום לדחות את כל הבקשה —
   // זה שדה עזר לפיד עתידי, לא משהו שצריך לחסום עליו פתיחת דוכן.
   const age = Number.isInteger(body.age) && body.age! >= 5 && body.age! <= 18 ? body.age : null;
-  const city = body.city?.trim().slice(0, 30) || null;
+  const cityId = isLocalityId(body.cityId) ? body.cityId : null;
 
   const theme = body.theme && body.theme in THEMES ? body.theme : "cloud";
   // רשימה סגורה — מפתח קאבר שלא קיים היה מוגש כרקע ריק
@@ -117,7 +119,7 @@ export async function POST(req: NextRequest) {
       cover_preset: coverPreset,
       contact_phone: contactPhone,
       age,
-      city,
+      ...(cityId ? { city_id: cityId } : {}),
       // נשמר רק אם יש כתובת אמיתית. בכניסה בסמס אין כזו, והכתובת הפנימית
       // @phone.duchan.app היא לא מייל שמישהי קוראת — אין טעם לשמור אותה.
       parent_email: user.email?.endsWith("@phone.duchan.app") ? null : user.email?.toLowerCase() ?? null,
