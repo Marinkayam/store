@@ -21,11 +21,14 @@ const check = (n, ok, d = "") => {
 };
 
 const { rows: [store] } = await db.query(
-  `select id, slug, tagline, about, promo_on, promo_title, promo_text, shipping_note, ships, order_intro
+  `select id, slug, tagline, about, promo_on, promo_title, promo_text, shipping_note, ships, order_intro, payout_bit, payout_bit_link
      from stores where contact_phone='972501234567' order by created_at limit 1`);
 const { rows: [prod] } = await db.query(
-  `select id, name, description from products where store_id=$1 and deleted_at is null and (is_visible is null or is_visible)
+  `select id, name, description, price from products where store_id=$1 and deleted_at is null and (is_visible is null or is_visible)
     order by sort_order, created_at limit 1`, [store.id]);
+// קישור תשלום הוא שדה משלו, והוא מותר: בלעדיו אי אפשר לשלם
+const BIT_LINK = "https://www.bitpay.co.il/app/me/E2E0CONTACTS0TEST";
+let orderId = null;
 let tick = 0;
 const fresh = () => `${BASE}/s/${store.slug}?t=${Date.now()}-${tick++}`;
 const SECRETS = ["054-765-4321", "0547654321", "054 76 54 321", "+972 54 765 4321", "972547654321", "noa.kid@gmail.com", "wa.me/972547654321", "https://instagram.com/noa_kid", "@noa_kid12", "7654321", "765 4321", "noa_kid"];
@@ -36,8 +39,9 @@ try {
        tagline = 'צמידים בעבודת יד. להזמנות: 054-765-4321',
        about = 'שלחו לי מייל noa.kid@gmail.com או בוואטסאפ wa.me/972547654321',
        promo_on = true, promo_title = 'מבצע! 0547654321', promo_text = 'עקבו אחריי https://instagram.com/noa_kid וגם @noa_kid12',
-       ships = true, shipping_note = 'שולחת בדואר. לתיאום 054 76 54 321', order_intro = 'היי! +972 54 765 4321'
-     where id=$1`, [store.id]);
+       ships = true, shipping_note = 'שולחת בדואר. לתיאום 054 76 54 321', order_intro = 'היי! +972 54 765 4321',
+       payout_bit = true, payout_bit_link = $2
+     where id=$1`, [store.id, BIT_LINK]);
   await db.query("update products set name=$2, description=$3 where id=$1",
     [prod.id, "צמיד קשת 3 צבעים", "רק ₪12, יש 20 במלאי, מידה 16. מגיל 2026? לא: מגיל 6. טלפון 972547654321"]);
 
@@ -61,6 +65,29 @@ try {
     sheet.slice(sheet.indexOf("רק ₪12"), sheet.indexOf("רק ₪12") + 70));
   check("והטלפון שבתיאור המוצר לא מוצג", !sheet.includes("972547654321") && !(await buyer.content()).includes("972547654321"));
 
+  /* תצוגה מקדימה לשיתוף (וואטסאפ): אותו טקסט, בלי המספר */
+  const metas = await buyer.evaluate(() =>
+    ["meta[name=description]", "meta[property='og:description']", "meta[name='twitter:description']", "meta[property='og:title']"]
+      .map((q) => document.querySelector(q)?.getAttribute("content") ?? ""));
+  check("תצוגת השיתוף: התיאור מופיע, והמספר לא", metas[1].includes("צמידים בעבודת יד") && metas.every((m) => !/\d{7}/.test(m.replace(/\D/g, ""))), metas[1]);
+
+  /* מה שמותר נשאר: קישור התשלום, והמחיר */
+  check("קישור תשלום (שדה נפרד) לא נפגע", html.includes(BIT_LINK));
+
+  /* ההזמנה עובדת כרגיל, והמספר של הדוכן מגיע רק אחריה */
+  const res = await fetch(`${BASE}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slug: store.slug, items: [{ productId: prod.id, qty: 2 }], buyerName: "נועה", buyerPhone: "0521112233", payMethod: "cash" }),
+  });
+  const order = await res.json();
+  check("הזמנה נשלחת כרגיל", res.ok && Number.isInteger(order.orderNumber), JSON.stringify(order).slice(0, 140));
+  check("אחרי ההזמנה הקונה מקבלת את המספר של הדוכן", order.phone === "972501234567");
+  check("הסכום לפי המחיר שבמסד", Number(order.total) === Number(prod.price) * 2, `${order.total}`);
+  const { rows: [saved] } = await db.query("select id, items from orders where store_id=$1 and order_number=$2", [store.id, order.orderNumber]);
+  orderId = saved?.id ?? null;
+  check("בעלת הדוכן רואה בהזמנה את שם המוצר כמו שכתבה", saved?.items?.[0]?.name === "צמיד קשת 3 צבעים" && saved?.items?.[0]?.qty === 2);
+
   const { rows: [kept] } = await db.query("select tagline, about from stores where id=$1", [store.id]);
   check("במסד לא נמחק דבר", kept.tagline.includes("054-765-4321") && kept.about.includes("noa.kid@gmail.com"));
 
@@ -81,8 +108,9 @@ try {
   await browser.close();
 } finally {
   await db.query(
-    "update stores set tagline=$2, about=$3, promo_on=$4, promo_title=$5, promo_text=$6, shipping_note=$7, ships=$8, order_intro=$9 where id=$1",
-    [store.id, store.tagline, store.about, store.promo_on, store.promo_title, store.promo_text, store.shipping_note, store.ships, store.order_intro]);
+    "update stores set tagline=$2, about=$3, promo_on=$4, promo_title=$5, promo_text=$6, shipping_note=$7, ships=$8, order_intro=$9, payout_bit=$10, payout_bit_link=$11 where id=$1",
+    [store.id, store.tagline, store.about, store.promo_on, store.promo_title, store.promo_text, store.shipping_note, store.ships, store.order_intro, store.payout_bit, store.payout_bit_link]);
+  if (orderId) await db.query("delete from orders where id=$1", [orderId]).catch(() => {});
   await db.query("update products set name=$2, description=$3 where id=$1", [prod.id, prod.name, prod.description]);
 }
 
