@@ -256,6 +256,7 @@ export function KupaStall({
   night = false,
   deco,
   bare = false,
+  shelf,
   className = "",
 }: {
   level: number;
@@ -269,6 +270,9 @@ export function KupaStall({
   /** בלי "מסגרת": בלי ריבוע שמיים ובלי פס קרקע — הדוכן עומד על הדף עצמו.
       בשביל מסך הפתיחה ודף המחיר (מרינה: "הדוכן לא יפה בתוך המסגרת"). */
   bare?: boolean;
+  /** מה עומד על הדלפק במקום החפצים המצוירים ותוויות המחיר (מרמה 2).
+      בשביל חזית שמציגה את המוצרים של החנות עצמה. בלי הערך הזה: הציור הרגיל. */
+  shelf?: React.ReactNode;
   className?: string;
 }) {
   const AW = AWNING_FILL[deco?.awning ?? "lavender"];
@@ -380,16 +384,20 @@ export function KupaStall({
               <rect x="24" y="108" width="192" height="10" fill={W} />
               <path d="M24 113 h192" fill="none" strokeWidth={0.43} opacity=".6" />
             </g>
-            <Tag x={70} y={118} text="₪8" />
-            <Tag x={168} y={118} text="₪12" />
+            {!shelf && <Tag x={70} y={118} text="₪8" />}
+            {!shelf && <Tag x={168} y={118} text="₪12" />}
           </g>
           <g {...part(1, build, 2)}>
-            <Plant x={46} y={108} />
-            <Basket x={70} y={108} />
-            <HopCoin x={100} y={80} />
-            <Bag x={120} y={108} />
-            <Jar x={152} y={108} />
-            <Bracelets x={180} y={108} />
+            {shelf ?? (
+              <>
+                <Plant x={46} y={108} />
+                <Basket x={70} y={108} />
+                <HopCoin x={100} y={80} />
+                <Bag x={120} y={108} />
+                <Jar x={152} y={108} />
+                <Bracelets x={180} y={108} />
+              </>
+            )}
           </g>
 
           {/* פרפר שמרחף ליד ארגז התפוחים, מרמה 3 */}

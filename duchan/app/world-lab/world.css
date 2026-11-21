@@ -1,0 +1,409 @@
+/* עולם דוכן — אב־טיפוס. כל המחלקות כאן מתחילות ב-wl ולא נוגעות בשאר האתר. */
+
+.wl-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--wl-field);
+  color: var(--ink);
+  font-family: "Heebo", system-ui, sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /* הפלטה של העולם, ביום */
+  --wl-field: #dfe3c3;
+  --wl-field2: #cfd6ad;
+  --wl-grass: #cdd7a8;
+  --wl-grass2: #bdc993;
+  --wl-road: #d3ccc0;
+  --wl-roadline: #fbf8f3;
+  --wl-pave: #efe6d8;
+  --wl-pave2: #e6dac8;
+  --wl-plaza: #f7f0e5;
+  --wl-soil: #c9a983;
+  --wl-water: #bcd6dd;
+  --wl-water2: #d3e5e9;
+  --wl-sand: #f0e2c4;
+  --wl-wall: #fbf5ea;
+  --wl-wall2: #f2d9dc;
+  --wl-wall3: #e4d8ec;
+  --wl-roof: #c98a72;
+  --wl-roof2: #b89ac8;
+  --wl-roof3: #a8a46d;
+  --wl-window: #bcd6dd;
+  --wl-hedge: #a8a46d;
+  --wl-tree: #9eab6a;
+  --wl-tree2: #b6c081;
+  --wl-trunk: #9b6d3e;
+  --wl-line: #6f4b28;
+}
+
+/* לילה: הקרקע מחשיכה, החלונות והפנסים נדלקים, והדוכנים נשארים מוארים */
+.wl-root[data-night="1"] {
+  --wl-field: #343c52;
+  --wl-field2: #2f374c;
+  --wl-grass: #3b475a;
+  --wl-grass2: #354153;
+  --wl-road: #2a2c45;
+  --wl-roadline: #666887;
+  --wl-pave: #474462;
+  --wl-pave2: #403d59;
+  --wl-plaza: #4f4b6b;
+  --wl-soil: #5b4a45;
+  --wl-water: #2c385f;
+  --wl-water2: #37446f;
+  --wl-sand: #575267;
+  --wl-wall: #6b6786;
+  --wl-wall2: #75637d;
+  --wl-wall3: #666087;
+  --wl-roof: #5d4451;
+  --wl-roof2: #554b71;
+  --wl-roof3: #4c5249;
+  --wl-window: #ffe98a;
+  --wl-hedge: #42523f;
+  --wl-tree: #3f5244;
+  --wl-tree2: #4a5d4c;
+  --wl-trunk: #5b4634;
+  --wl-line: #1c1d33;
+}
+
+.wl-view { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; }
+.wl-root[data-drag="1"] .wl-view { cursor: grabbing; }
+
+.wl-plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  direction: ltr;
+  --s: 1;
+}
+.wl-root[data-ready="0"] .wl-plane { visibility: hidden; }
+
+.wl-scenery, .wl-front { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+/* יום ולילה: הצבעים מתחלפים בבת אחת מאחורי מסך שמחשיך ומתבהר לרגע.
+   החלפה הדרגתית של אלף צורות בנפרד תקעה את הטלפון (נמדד: 300 אלפיות שנייה). */
+.wl-dusk { position: absolute; inset: 0; z-index: 5; background: #2a2c45; opacity: 0; pointer-events: none; transition: opacity 0.24s ease; }
+.wl-root[data-dusk="1"] .wl-dusk { opacity: 1; }
+.wl-root[data-calm="1"] .wl-dusk { transition: none; }
+
+/* ── דוכנים ── */
+.wl-plot { position: absolute; padding: 0; margin: 0; border: 0; background: none; display: block; pointer-events: none; }
+.wl-stall-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.wl-near { animation: wl-fade 0.28s ease-out both; }
+/* השמש, הענן והציפורים של הדוכן במשחק שייכים לשמיים. בעולם רואים את הקרקע מלמעלה, ואין שמיים. */
+.wl-near .kp-fade, .wl-near .kp-drift, .wl-near .kp-bird { display: none; }
+@keyframes wl-fade { from { opacity: 0.35; } to { opacity: 1; } }
+
+/* בלילה: כתם אור שטוח מאחורי כל דוכן */
+.wl-root[data-night="1"] .wl-plot[data-kind="stall"]::before {
+  content: "";
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 4%;
+  bottom: -6%;
+  border-radius: 50%;
+  background: #ffd966;
+  opacity: 0.1;
+}
+
+/* ── אזורי נגיעה: פעילים רק ברמה שלהם ── */
+.wl-hit { position: absolute; padding: 0; margin: 0; border: 0; background: transparent; pointer-events: none; }
+.wl-surprise { border-radius: 50%; }
+.wl-root[data-level="0"] [data-lv~="0"],
+.wl-root[data-level="1"] [data-lv~="1"],
+.wl-root[data-level="2"] [data-lv~="2"],
+.wl-root[data-level="3"] [data-lv~="3"] { pointer-events: auto; cursor: pointer; }
+.wl-plot:focus-visible, .wl-hit:focus-visible {
+  outline: calc(3px / var(--s)) solid #4a3a66;
+  outline-offset: calc(3px / var(--s));
+}
+
+/* ── תוויות: גודל קבוע על המסך ── */
+.wl-label {
+  position: absolute;
+  transform: translate(-50%, 0) scale(calc(1 / var(--s)));
+  transform-origin: 50% 0;
+  direction: rtl;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 3px 8px;
+  background: var(--canvas);
+  color: #4a3320;
+  border: 1px solid #6f4b28;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wl-label-pin { transform: translate(-50%, -100%) scale(calc(1 / var(--s))); transform-origin: 50% 100%; font-weight: 700; }
+.wl-plate { font-size: 12px; font-weight: 400; max-width: none; overflow: visible; display: inline-flex; gap: 5px; align-items: center; }
+.wl-plate b { font-weight: 700; font-size: 10.5px; padding: 0 4px; background: #6f4b28; color: #fff; }
+.wl-plate[data-mine="1"] { border-width: 1.5px; font-weight: 500; }
+.wl-root[data-moving="0"][data-level="0"] .wl-label[data-lv="0"],
+.wl-root[data-moving="0"][data-level="1"] .wl-label[data-lv="1"],
+.wl-root[data-moving="0"][data-level="2"] .wl-label[data-lv="2"] { opacity: 1; }
+.wl-root[data-drag="1"] .wl-label { opacity: 0 !important; transition: none; }
+
+/* ── תנועה קטנה בעולם ── */
+@keyframes wl-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+.wl-sway { animation: wl-sway 4.2s ease-in-out infinite; }
+@keyframes wl-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.wl-bob { animation: wl-bob 3.2s ease-in-out infinite; }
+@keyframes wl-waves { to { transform: translateX(-240px); } }
+.wl-waves { animation: wl-waves 7s linear infinite; }
+@keyframes wl-bus { from { transform: translateX(-200px); } to { transform: translateX(2500px); } }
+.wl-bus { animation: wl-bus 40s linear infinite; }
+@keyframes wl-cloud { from { transform: translateX(-900px); } to { transform: translateX(2700px); } }
+.wl-cloud { animation: wl-cloud 80s linear infinite; }
+.wl-clouds { transition: opacity 0.5s; }
+.wl-root[data-level="2"] .wl-clouds, .wl-root[data-level="3"] .wl-clouds { opacity: 0; }
+
+@keyframes wl-ripple { from { transform: scale(0.5); opacity: 0.9; } to { transform: scale(1.45); opacity: 0; } }
+.wl-ripple circle { transform-origin: 550px 660px; animation: wl-ripple 2.4s ease-out infinite; }
+@keyframes wl-jets { from { opacity: 0.45; transform: translateY(2px); } to { opacity: 1; transform: translateY(-1px); } }
+.wl-jets { animation: wl-jets 1.4s ease-in-out infinite alternate; }
+@keyframes wl-splash { 0% { transform: scale(0.4); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+.wl-splash { transform-origin: 574px 664px; animation: wl-splash 0.9s ease-out both; }
+@keyframes wl-hop {
+  0% { transform: translate(0, 0); }
+  18% { transform: translate(0, -14px); }
+  36% { transform: translate(0, -42px); }
+  54% { transform: translate(-14px, -56px); }
+  72% { transform: translate(0, -84px); }
+  100% { transform: translate(0, -98px); opacity: 0; }
+}
+.wl-hop { animation: wl-hop 1.4s ease-in-out both; }
+@keyframes wl-grow { from { transform: scale(0); } to { transform: scale(1); } }
+.wl-grow { transform-box: fill-box; transform-origin: 50% 100%; animation: wl-grow 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.3) both; }
+@keyframes wl-catjump { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-18px); } }
+.wl-cat-jump { animation: wl-catjump 0.55s ease-out both; }
+
+@keyframes wl-flutter-a { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(90px, -26px); } 50% { transform: translate(190px, 8px); } 75% { transform: translate(80px, 30px); } }
+@keyframes wl-flutter-b { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-70px, -30px); } 50% { transform: translate(-170px, -4px); } 75% { transform: translate(-60px, 24px); } }
+.wl-butterfly-a { animation: wl-flutter-a 14s ease-in-out infinite; }
+.wl-butterfly-b { animation: wl-flutter-b 17s ease-in-out infinite; }
+
+/* אנשים שעוברים ברחוב */
+@keyframes wl-walk-a { 0%, 100% { transform: translateX(70px); } 50% { transform: translateX(1030px); } }
+@keyframes wl-walk-b { 0%, 100% { transform: translateX(990px); } 50% { transform: translateX(110px); } }
+@keyframes wl-walk-c { 0%, 100% { transform: translateX(270px); } 50% { transform: translateX(830px); } }
+@keyframes wl-face-a { 0%, 49.9% { transform: scaleX(1); } 50%, 100% { transform: scaleX(-1); } }
+@keyframes wl-face-b { 0%, 49.9% { transform: scaleX(-1); } 50%, 100% { transform: scaleX(1); } }
+.wl-walk-a { animation: wl-walk-a 52s linear infinite; }
+.wl-walk-b { animation: wl-walk-b 64s linear infinite; }
+.wl-walk-c { animation: wl-walk-c 38s linear infinite; }
+.wl-walk-a .wl-walker-flip { animation: wl-face-a 52s linear infinite; }
+.wl-walk-b .wl-walker-flip { animation: wl-face-b 64s linear infinite; }
+.wl-walk-c .wl-walker-flip { animation: wl-face-a 38s linear infinite; }
+@keyframes wl-step { from { transform: rotate(-20deg); } to { transform: rotate(20deg); } }
+.wl-step { transform-origin: 0 0; animation: wl-step 0.42s ease-in-out infinite alternate; }
+.wl-step-b { animation-direction: alternate-reverse; }
+
+.wl-night-only { display: none; }
+.wl-root[data-night="1"] .wl-night-only { display: inline; }
+.wl-root[data-night="1"] .wl-lantern { fill: #ffe98a; }
+
+/* רמות פירוט של התנועה: מה שרחוק לא זז, ובזמן תעופה הכול נח */
+.wl-root[data-level="0"] .wl-mall-life,
+.wl-root[data-level="0"] .wl-detail { display: none; }
+.wl-root[data-level="0"] .wl-mall *,
+.wl-root[data-level="1"] .wl-mall .wl-sway,
+.wl-root[data-level="1"] .wl-plot * { animation: none !important; }
+.wl-root[data-level="2"] .wl-city *,
+.wl-root[data-level="3"] .wl-city * { animation-play-state: paused !important; }
+.wl-root[data-moving="1"] .wl-plane *,
+.wl-root[data-drag="1"] .wl-plane * { animation-play-state: paused !important; }
+.wl-root[data-calm="1"] .wl-plane * { animation: none !important; }
+.wl-root[data-calm="1"] .wl-store, .wl-root[data-calm="1"] .wl-sheet, .wl-root[data-calm="1"] .wl-bubble { transition: none; animation: none; }
+
+/* ── ממשק ── */
+.wl-hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+.wl-hud > * { pointer-events: auto; }
+
+.wl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  background: var(--white);
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.wl-btn:disabled { opacity: 0.4; cursor: default; }
+.wl-btn:focus-visible, .wl-swatch:focus-visible, .wl-sheet-x:focus-visible, .wl-exit-btn:focus-visible, .wl-store-add:focus-visible { outline: 3px solid #4a3a66; outline-offset: 2px; }
+.wl-sq { width: 44px; padding: 0; }
+.wl-chip { min-height: 44px; padding: 0 10px; font-size: 13px; font-weight: 400; }
+.wl-primary { background: var(--ink); color: var(--white); font-weight: 700; flex: 1; }
+.wl-wide { width: 100%; }
+
+.wl-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 8px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
+  pointer-events: none;
+}
+.wl-top > * { pointer-events: auto; }
+.wl-top-side { display: flex; gap: 6px; }
+.wl-top-end { justify-content: flex-end; }
+.wl-place {
+  max-width: 46vw;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: var(--white);
+  border: 1.5px solid var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wl-found {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 10px;
+  background: var(--white);
+  border: 1.5px solid var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+
+.wl-ladder {
+  position: absolute;
+  right: max(10px, env(safe-area-inset-right, 0px));
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.wl-ladder .wl-btn { margin-top: -1.5px; }
+.wl-ladder .wl-btn:first-child { margin-top: 0; }
+.wl-step-btn { flex-direction: column; gap: 0; width: 50px; min-height: 52px; padding: 2px 0; font-size: 11.5px; font-weight: 400; color: #5a5348; }
+.wl-step-btn[aria-current="true"] { background: var(--ink); color: var(--white); font-weight: 700; }
+
+.wl-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  pointer-events: none;
+}
+.wl-bottom > * { pointer-events: auto; }
+.wl-bottom-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.wl-home, .wl-out { font-weight: 700; }
+.wl-hint { align-self: center; font-size: 13px; font-weight: 400; background: var(--canvas); color: #4a3320; padding: 4px 10px; border: 1px solid #6f4b28; }
+.wl-proto { font-size: 11px; color: var(--ink); opacity: 0.75; text-align: center; pointer-events: none; }
+.wl-root[data-night="1"] .wl-proto { color: #fff; }
+
+.wl-card { background: var(--white); border: 1.5px solid var(--ink); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; max-width: 460px; width: 100%; margin: 0 auto; animation: wl-up 0.28s ease-out both; }
+.wl-card-title { font-size: 17px; font-weight: 700; line-height: 1.25; }
+.wl-card-sub { font-size: 13.5px; font-weight: 300; color: var(--muted, #6a6257); }
+.wl-card-actions { display: flex; gap: 8px; margin-top: 8px; }
+@keyframes wl-up { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.wl-bubble { display: flex; gap: 8px; align-items: flex-start; background: #fff8e6; border: 1.5px solid var(--ink); padding: 10px 12px; font-size: 14px; line-height: 1.4; max-width: 460px; width: 100%; margin: 0 auto; animation: wl-up 0.28s ease-out both; }
+.wl-bubble svg { flex: none; margin-top: 1px; }
+
+/* ── גיליון ── */
+.wl-sheet-wrap { position: absolute; inset: 0; z-index: 20; display: flex; align-items: flex-end; }
+.wl-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  max-height: 62%;
+  overflow: auto;
+  background: var(--white);
+  border-top: 1.5px solid var(--ink);
+  padding: 18px max(18px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: wl-up 0.3s ease-out both;
+  touch-action: pan-y;
+}
+@media (min-width: 540px) { .wl-sheet { border: 1.5px solid var(--ink); border-bottom: 0; } }
+.wl-sheet h2 { font-size: 20px; font-weight: 500; margin: 0; padding-left: 44px; }
+.wl-sheet-x { position: absolute; top: 8px; left: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink); cursor: pointer; }
+.wl-field { display: flex; flex-direction: column; gap: 8px; }
+.wl-field-label { font-size: 13px; font-weight: 500; color: var(--muted, #6a6257); }
+.wl-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.wl-swatch { width: 46px; height: 46px; border: 1.5px solid var(--ink); border-radius: 0; padding: 0; cursor: pointer; position: relative; }
+.wl-swatch[aria-checked="true"]::after { content: ""; position: absolute; inset: 5px; border: 2.5px solid #fff; }
+.wl-toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+.wl-toggle { font-weight: 400; }
+.wl-toggle[aria-pressed="true"], .wl-toggle[aria-checked="true"] { background: var(--ink); color: var(--white); font-weight: 700; }
+.wl-sheet-note { font-size: 13px; font-weight: 300; color: var(--muted, #6a6257); margin: 0; line-height: 1.45; }
+.wl-msg { background: var(--ok-bg, #eef3ec); border: 1px solid var(--ok-line, #cfdccb); padding: 12px; font-size: 15px; line-height: 1.45; }
+.wl-notices { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.wl-notices li { border: 1px solid var(--stone, #d6cfc4); padding: 10px 12px; font-size: 15px; background: var(--canvas); }
+
+/* ── החנות (הדמיה) ── */
+.wl-store {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  transform-origin: 50% 44%;
+  transition: transform 0.5s cubic-bezier(0.3, 0.9, 0.3, 1), opacity 0.32s ease, visibility 0s linear 0s;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.wl-store[data-open="0"] { transform: scale(0.26); opacity: 0; pointer-events: none; visibility: hidden; transition: transform 0.45s cubic-bezier(0.5, 0, 0.7, 0.4), opacity 0.4s ease, visibility 0s linear 0.45s; }
+.wl-store-page { min-height: 100%; background: var(--s-bg); color: var(--s-ink); font-family: var(--s-font); padding: calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.wl-store-exit { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; top: calc(8px + env(safe-area-inset-top, 0px)); z-index: 2; }
+.wl-exit-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; background: #fff; color: #262626; border: 1.5px solid #262626; border-radius: 0; font: inherit; font-family: "Heebo", system-ui, sans-serif; font-size: 15.5px; font-weight: 700; cursor: pointer; }
+.wl-sim-tag { font-size: 11.5px; font-family: "Heebo", system-ui, sans-serif; padding: 3px 7px; background: #fff; color: #262626; border: 1px solid #262626; }
+.wl-store-head { text-align: center; padding: 26px 0 18px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.wl-store-avatar { width: 76px; height: 76px; border-radius: 50%; background: var(--s-primary); color: var(--s-onprimary); display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 300; margin-bottom: 8px; }
+.wl-store-head h1 { font-size: 26px; font-weight: 300; margin: 0; line-height: 1.2; }
+.wl-store-head p { margin: 0; font-size: 15px; font-weight: 300; opacity: 0.85; }
+.wl-store-meta { font-size: 13px !important; opacity: 0.7 !important; }
+.wl-store-grid { list-style: none; margin: 0 auto; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 520px; }
+.wl-store-grid li { background: var(--s-surface); border: var(--s-border); display: flex; flex-direction: column; }
+.wl-store-thumb { aspect-ratio: 1; background: var(--s-thumb); display: flex; align-items: center; justify-content: center; padding: 16%; }
+.wl-store-art { width: 100%; height: 100%; }
+.wl-store-row { display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px 4px; font-size: 14.5px; }
+.wl-store-name { font-weight: 400; }
+.wl-store-price { font-weight: 700; color: var(--s-primary-text); direction: ltr; }
+.wl-store-add { margin: 6px 10px 10px; min-height: 44px; background: var(--s-primary); color: var(--s-onprimary); border: 0; border-radius: 0; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+.wl-store-cart { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px; background: var(--s-ink); color: var(--s-bg); font-size: 15px; font-weight: 700; white-space: nowrap; }
+.wl-store-cartnote { font-weight: 300; font-size: 12.5px; opacity: 0.85; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-plane * { animation: none !important; }
+  .wl-store, .wl-sheet, .wl-card, .wl-bubble { transition: none; animation: none; }
+}

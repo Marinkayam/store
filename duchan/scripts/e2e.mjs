@@ -115,6 +115,7 @@ const DUCHAN = [
   "e2e-retention.mjs",
   "e2e-contacts.mjs",
   "e2e-backup.mjs",
+  "e2e-world-lab.mjs",
   "e2e-admin.mjs",
   "e2e-schema-drift.mjs",
   "e2e-selfheal.mjs",
