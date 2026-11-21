@@ -237,3 +237,6 @@ end $$;
 -- של השרת בלבד. בלי זה כל דפדפן היה יכול להריץ מחיקה דרך ה-API.
 revoke all on function purge_buyer_data(boolean, integer, integer, integer) from public, anon, authenticated;
 grant execute on function purge_buyer_data(boolean, integer, integer, integer) to service_role;
+-- פונקציות טריגר לא נקראות ישירות; אין סיבה שיופיעו ב-API
+revoke all on function orders_track_closed() from public, anon, authenticated;
+revoke all on function guard_order_client_write() from public, anon, authenticated;
