@@ -59,20 +59,38 @@ try {
   const unknown = (only ?? []).filter((t) => !inFile.includes(t));
   if (unknown.length) throw new Error(`הטבלאות האלה לא בקובץ הגיבוי: ${unknown.join(", ")}`);
 
-  /* סדר: טבלה שמצביעה על אחרת נכנסת אחריה */
+  /* סדר: טבלה שמצביעה על אחרת נכנסת אחריה.
+     יש טבלאות שמצביעות זו על זו (למשל פריט → פרופיל, ופרופיל → הפריט
+     המועדף). מעגל כזה אי אפשר לסדר, ולכן מבחינים בין שני סוגי הצבעה:
+       - חובה (העמודה NOT NULL): קובעת את הסדר.
+       - רשות (העמודה יכולה להיות ריקה): אם היעד נכנס מאוחר יותר, השורה
+         נכנסת קודם בלי הערך, והוא מושלם בסוף, אחרי שכל השורות בפנים. */
   const { rows: fks } = await db.query(
-    `select c.conrelid::regclass::text as child, c.confrelid::regclass::text as parent
-       from pg_constraint c where c.contype='f' and c.connamespace='public'::regnamespace`);
+    `select c.conrelid::regclass::text as child, c.confrelid::regclass::text as parent,
+            a.attname as col, a.attnotnull as hard, format_type(a.atttypid, a.atttypmod) as type
+       from pg_constraint c
+       join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+      where c.contype='f' and c.connamespace='public'::regnamespace`);
   const order = [];
-  const seen = new Set();
-  const visit = (t) => {
-    if (seen.has(t)) return;
-    seen.add(t);
-    for (const f of fks) if (f.child === t && f.parent !== t && tables.includes(f.parent)) visit(f.parent);
+  const state = new Map(); // 1 = בדרך, 2 = נכנסה
+  const visit = (t, path) => {
+    if (state.get(t) === 2) return;
+    if (state.get(t) === 1) throw new Error(`מעגל של הצבעות חובה, אי אפשר לסדר: ${[...path, t].join(" → ")}`);
+    state.set(t, 1);
+    for (const f of fks) if (f.child === t && f.hard && f.parent !== t && tables.includes(f.parent)) visit(f.parent, [...path, t]);
+    state.set(t, 2);
     order.push(t);
   };
-  tables.forEach(visit);
+  tables.forEach((t) => visit(t, []));
   tables = order;
+  /* עמודות רשות שהיעד שלהן נכנס אחרי הטבלה (או שהוא הטבלה עצמה) */
+  const later = new Map();
+  for (const f of fks) {
+    if (f.hard || !tables.includes(f.child) || !tables.includes(f.parent)) continue;
+    if (tables.indexOf(f.parent) >= tables.indexOf(f.child)) {
+      later.set(f.child, [...(later.get(f.child) ?? []), { col: f.col, type: f.type }]);
+    }
+  }
 
   /* משתמשי Auth. בסביבת הבדיקות auth.users היא טבלה פשוטה (id, email) ואפשר
      לשחזר אליה ישירות. ב-Supabase אמיתי המשתמשים מוקמים דרך ה-Admin API,
@@ -93,6 +111,10 @@ try {
     }
   }
 
+  /* הטריגרים כבויים עד הסוף, כולל שלב ההשלמה */
+  for (const t of tables) await db.query(`alter table public.${ident(t)} disable trigger user`);
+
+  const fill = []; // מה להשלים בסוף: { t, keys, cols, rows }
   for (const t of tables) {
     const rows = backup[t];
     const { rows: pk } = await db.query(
@@ -103,6 +125,12 @@ try {
       `select column_name from information_schema.columns where table_schema='public' and table_name=$1
         and is_generated='NEVER' order by ordinal_position`, [t]);
     const cols = colRows.map((r) => r.column_name);
+    const wait = (later.get(t) ?? []).filter((d) => cols.includes(d.col));
+    if (wait.length && !keys.length) throw new Error(`${t}: אין מפתח ראשי, אי אפשר להשלים הצבעות`);
+    const value = (c) => {
+      const w = wait.find((d) => d.col === c);
+      return w ? `null::${w.type}` : ident(c);
+    };
     let conflict = "on conflict do nothing";
     if (mode === "overwrite" && keys.length) {
       const sets = cols.filter((c) => !keys.includes(c)).map((c) => `${ident(c)} = excluded.${ident(c)}`);
@@ -110,18 +138,36 @@ try {
         ? `on conflict (${keys.map(ident).join(", ")}) do update set ${sets.join(", ")}`
         : "on conflict do nothing";
     }
-    await db.query(`alter table public.${ident(t)} disable trigger user`);
+    const returning = keys.length ? `returning ${keys.map((k) => `${ident(k)}::text as ${ident(k)}`).join(", ")}` : "";
     let written = 0;
+    const touched = new Set();
     for (let i = 0; i < rows.length; i += 500) {
       const r = await db.query(
         `insert into public.${ident(t)} (${cols.map(ident).join(", ")})
-         select ${cols.map(ident).join(", ")} from jsonb_populate_recordset(null::public.${ident(t)}, $1::jsonb)
-         ${conflict}`, [JSON.stringify(rows.slice(i, i + 500))]);
+         select ${cols.map(value).join(", ")} from jsonb_populate_recordset(null::public.${ident(t)}, $1::jsonb)
+         ${conflict} ${returning}`, [JSON.stringify(rows.slice(i, i + 500))]);
       written += r.rowCount ?? 0;
+      for (const row of r.rows) touched.add(keys.map((k) => row[k]).join("\u0001"));
     }
-    await db.query(`alter table public.${ident(t)} enable trigger user`);
+    if (wait.length) {
+      // רק שורות שנכתבו עכשיו: שורה קיימת שלא נגענו בה נשארת כמו שהיא
+      const mine = rows.filter((row) => touched.has(keys.map((k) => String(row[k])).join("\u0001")));
+      if (mine.length) fill.push({ t, keys, cols: wait.map((d) => d.col), rows: mine });
+    }
     report.push({ table: t, inFile: rows.length, written });
   }
+
+  /* השלמה: עכשיו כל השורות בפנים, ואפשר להחזיר את ההצבעות שחיכו */
+  for (const { t, keys, cols, rows } of fill) {
+    for (let i = 0; i < rows.length; i += 500) {
+      await db.query(
+        `update public.${ident(t)} x set ${cols.map((c) => `${ident(c)} = r.${ident(c)}`).join(", ")}
+           from jsonb_populate_recordset(null::public.${ident(t)}, $1::jsonb) r
+          where ${keys.map((k) => `x.${ident(k)} = r.${ident(k)}`).join(" and ")}`, [JSON.stringify(rows.slice(i, i + 500))]);
+    }
+  }
+
+  for (const t of tables) await db.query(`alter table public.${ident(t)} enable trigger user`);
 
   await db.query(dry ? "rollback" : "commit");
 } catch (e) {
