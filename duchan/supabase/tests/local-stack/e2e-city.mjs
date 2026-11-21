@@ -156,8 +156,42 @@ try {
   check("בעלת הדוכן כותבת מזהה, אבל לא טקסט חופשי", w1.ok && r.city_id === 8600 && r.city === "ערך ישן", JSON.stringify(r));
   const w2 = await asOwner("update stores set city_id=999999 where id=$1", [store.id]);
   check("מזהה שלא קיים ברשימה נדחה", !w2.ok && /foreign key|violates/i.test(w2.error ?? ""), (w2.error ?? "").slice(0, 80));
+
+  /* ── 5. רשימת הבדיקה בחמ"ל ── */
+  await db.query("update stores set city='יוקעם', city_id=null, city_reviewed_at=null where id=$1", [store.id]);
+  const b2 = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  const admin = await (await b2.newContext({ viewport: { width: 720, height: 900 } })).newPage();
+  await admin.goto(`${BASE}/login`);
+  await verifyPhone(admin, "0509990000");
+  await admin.waitForTimeout(1200);
+  const anon = await fetch(`${BASE}/api/admin/cities`);
+  check("רשימת הבדיקה סגורה למי שאינה מנהלת", anon.status === 403);
+  await admin.goto(`${BASE}/admin`, { waitUntil: "networkidle" });
+  await admin.waitForSelector("[data-testid=admin-cities]", { timeout: 15000 });
+  const mine = admin.locator("[data-testid=admin-city-row]").filter({ has: admin.locator(`a[href='/s/${store.slug}']`) });
+  check("דוכן עם טקסט שלא זוהה מופיע ברשימה, עם מה שנכתב במקור", (await mine.count()) === 1 && ((await mine.locator("[data-testid=admin-city-old]").textContent()) ?? "") === "יוקעם");
+  check("בלי בחירה אי אפשר לשמור עיר", await mine.locator("[data-testid=admin-city-save]").isDisabled());
+  await mine.locator("[data-testid=city-input]").fill("יקנע");
+  await mine.locator("[data-testid=city-option]", { hasText: /^יקנעם עילית$/ }).click();
+  await mine.locator("[data-testid=admin-city-save]").click();
+  await admin.waitForFunction((slug) => !document.querySelector(`[data-testid=admin-city-row] a[href='/s/${slug}']`), store.slug, { timeout: 10000 });
+  let rr = (await db.query("select city, city_id, city_reviewed_at from stores where id=$1", [store.id])).rows[0];
+  check("המנהלת בחרה עיר: נשמר המזהה (240), והטקסט הישן לא נמחק", rr.city_id === 240 && rr.city === "יוקעם" && rr.city_reviewed_at !== null, JSON.stringify(rr));
+
+  await db.query("update stores set city='חיפה נשר', city_id=null, city_reviewed_at=null where id=$1", [store.id]);
+  await admin.reload({ waitUntil: "networkidle" });
+  const again = admin.locator("[data-testid=admin-city-row]").filter({ has: admin.locator(`a[href='/s/${store.slug}']`) });
+  await again.locator("[data-testid=admin-city-empty]").click();
+  await admin.waitForFunction((slug) => !document.querySelector(`[data-testid=admin-city-row] a[href='/s/${slug}']`), store.slug, { timeout: 10000 });
+  rr = (await db.query("select city, city_id, city_reviewed_at from stores where id=$1", [store.id])).rows[0];
+  check("'להשאיר בלי עיר': יורד מהרשימה, בלי עיר, והטקסט הישן נשאר", rr.city_id === null && rr.city === "חיפה נשר" && rr.city_reviewed_at !== null);
+  const w3 = await asOwner("update stores set city_reviewed_at=null where id=$1", [store.id]);
+  rr = (await db.query("select city_reviewed_at from stores where id=$1", [store.id])).rows[0];
+  check("בעלת דוכן לא משנה את סימון הבדיקה", w3.ok && rr.city_reviewed_at !== null);
+  await b2.close();
 } finally {
   await setCity(restore.city, restore.city_id);
+  await db.query("update stores set city_reviewed_at=null where id=$1", [store.id]).catch(() => {});
 }
 
 const failed = results.filter((x) => !x.ok);

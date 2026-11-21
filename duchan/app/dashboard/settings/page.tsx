@@ -20,6 +20,7 @@ import CategoryDesigner from "../products/category-designer";
 import { useCategoryImages } from "@/app/use-category-images";
 import { scrollToTop } from "@/lib/scroll-root";
 import CityPicker from "@/app/city-picker";
+import ContactNote from "@/app/contact-note";
 import { localityName, matchLocality } from "@/lib/localities";
 import Dock from "../dock";
 import { arrangeOrDefault, cleanMeta, layoutOrDefault, sizeOrDefault } from "@/lib/category-style";
@@ -893,6 +894,7 @@ export default function SettingsPage() {
                 className="editable editable-quiet block w-full text-center text-[12px] resize-none leading-snug opacity-85"
                 style={{ color: t.ink }}
               />
+              <ContactNote text={tagline} className="text-center mt-1" />
 
               {/* עיר ומשלוחים בשורה אחת, בדיוק כמו בדוכן האמיתי.
                   המשלוחים מופיעים רק כשהם דלוקים, וזו התשובה ל"אם מפעילים,

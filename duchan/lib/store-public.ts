@@ -4,6 +4,7 @@ import { supabaseAdmin } from "./supabase/admin";
 import type { PublicStore, PublicProduct } from "./types";
 import { bestSellerOf, soldProductIds } from "./badges";
 import { publicCityName } from "@/lib/localities";
+import { redactContacts } from "@/lib/public-text";
 
 /**
  * חנות שלא הופעלה עדיין היא "תצוגה מקדימה" ולא "סגורה": הלינק עובד, החברות
@@ -60,6 +61,22 @@ const PRODUCT_FEAT = `${PRODUCT_PREV}, featured`;
 const PRODUCT_DROPS = `${PRODUCT_FEAT}, drop_at, is_mystery`; // דרופ ושקית הפתעה (0056)
 const PRODUCT_DEALS = `${PRODUCT_DROPS}, deal`; // מבצעים (0064)
 const PRODUCT_FULL = `${PRODUCT_DEALS}, option_stock`; // מלאי לכל אפשרות (0065)
+
+/** הטקסטים החופשיים של הדוכן, בלי פרטי קשר. רק שדות שקיימים בשורה. */
+const TEXT_FIELDS = [
+  "display_name", "tagline", "about", "promo_title", "promo_text", "shipping_note",
+  "order_intro", "order_outro", "payout_note", "featured_title",
+] as const;
+function publicTexts(row: Record<string, unknown>): Record<string, string | null> {
+  const out: Record<string, string | null> = {};
+  for (const k of TEXT_FIELDS) {
+    const v = row[k];
+    if (typeof v !== "string") continue;
+    const clean = redactContacts(v);
+    out[k] = k === "display_name" ? clean || "דוכן" : clean || null;
+  }
+  return out;
+}
 
 export const getPublicStore = cache(async (slug: string): Promise<PublicStoreResult> => {
   const db = supabaseAdmin();
@@ -139,7 +156,13 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     .maybeSingle();
   const buyerConfetti = !confettiErr && !!confettiRow;
 
-  const list = (products ?? []) as unknown as PublicProduct[];
+  /* פרטי קשר (טלפון, מייל, קישור) לא יוצאים בטקסט ציבורי — ראה lib/public-text.ts.
+     המסד לא משתנה; רק מה שנשלח לדף הציבורי. */
+  const list = ((products ?? []) as unknown as PublicProduct[]).map((p) => ({
+    ...p,
+    name: redactContacts(p.name) || "מוצר",
+    description: redactContacts(p.description),
+  }));
   const bestSellerId = bestSellerOf(sold ?? [], list);
   const soldIds = soldProductIds(sold ?? [], list);
 
@@ -191,6 +214,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     /* העיר בדוכן הציבורי היא תמיד שם מרשימת היישובים, אף פעם לא הטקסט
        החופשי כמו שהוא: בשדה הישן הצטברו גם מספר טלפון וקישור (0070). */
     city: publicCityName(cityId as number | null | undefined, rest.city as string | null | undefined),
+    ...publicTexts(rest),
     payout_bit_phone: null,
     payout_paybox_phone: null,
     has_bit_phone: hasBitPhone,

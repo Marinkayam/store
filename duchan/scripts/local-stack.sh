@@ -96,6 +96,8 @@ psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0065_opt
 # (purge_buyer_data, app_settings) של השרת בלבד
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0070_localities.sql >/dev/null 2>&1
 psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0071_order_retention.sql >/dev/null 2>&1
+# ו-0072 אחרי 0070: שתיהן מגדירות את guard_store_client_write, והאחרונה היא שקובעת
+psql -h localhost -p 5433 -U postgres -d duchan -qf supabase/migrations/0072_city_review.sql >/dev/null 2>&1
 
 # ── PostgREST והשימים ──
 # קונטיינר חדש מגיע בלי הבינארי ובלי הקונפיג. מורידים גרסה קבועה,

@@ -24,6 +24,7 @@ import NoSmsLogin from "./no-sms-login";
 import LoginFlow from "./login-flow";
 import AdminPush from "./admin-push";
 import AdminStats from "./admin-stats";
+import AdminCities from "./admin-cities";
 import Icon from "@/app/icons";
 import { SQUISH_OPEN } from "@/lib/squish-open";
 
@@ -584,6 +585,9 @@ function SchemaWarning() {
                 <Stat label="מכירות ששולמו" value={`₪${formatPrice(totals.revenue)}`} sub="בכל הדוכנים" />
               </div>
             )}
+
+            {/* ערים שלא זוהו בוודאות (0070, 0072). נעלם כשאין מה לבדוק */}
+            <AdminCities />
 
             <section className="bg-white border border-[var(--line)] p-3">
               <h2 className="text-sm font-bold mb-2">דורשים תשומת לב</h2>
