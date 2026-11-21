@@ -23,6 +23,7 @@ import type { Product } from "@/lib/types";
 import { PICKABLE } from "@/lib/badges";
 import Icon from "@/app/icons";
 import Dock from "@/app/dashboard/dock";
+import ContactNote from "@/app/contact-note";
 import { KupaStall } from "@/app/kupa-art";
 import { formatPrice, parsePrice, priceText, typedPrice } from "@/lib/money";
 import { dealActive, dealExplain, dealLabel, parseDeal, type Deal } from "@/lib/deals";
@@ -1449,6 +1450,7 @@ export default function ProductsPage() {
             <textarea value={edit.description} maxLength={120} rows={2} placeholder={edit.isMystery ? "מה יכול להיות בפנים? למשל: 3 סקווישים מפתיעים" : "למשל: רך במיוחד, חוזר לאט"}
               onChange={(e) => setEdit((s) => s && { ...s, description: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-2.5 text-sm mb-5 resize-none" />
+            <ContactNote text={`${edit.name} ${edit.description}`} className="-mt-3.5 mb-5" />
 
             {/* צבע ומידה: שני כפתורים נפרדים שמוציאים זה את זה, לא שדה טקסט
                 לשם הקטגוריה. זה מה שמנע את הבאג הקודם: אין יותר שדה חופשי

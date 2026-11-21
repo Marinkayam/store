@@ -22,31 +22,62 @@ import { notifyAdmins } from "@/lib/admin-notify";
  * במפורש *לא* כאן: login_events (נשמרת 30 יום ונמחקת למטה), phone_otps ו-sms_outbox (חולפות, וקוד חד-פעמי שפג
  * תוקפו הוא רק סיכון בקובץ), ו-schema_migrations (נגזרת מהקוד).
  */
-const TABLES = [
-  "stores",
-  "products",
-  "orders",
-  "phone_accounts",
-  "admin_phones",
-  "announcements",
-  "store_views",
-  "squish_profiles",
-  "squish_items",
-  "squish_connections",
-  "squish_invites",
-  "squish_interests",
-  "squish_wishlist",
-  "squish_trade_proposals",
-  "squish_trade_versions",
-  "squish_trade_version_items",
-  "squish_trade_reports",
-  "squish_blocks",
-  "squish_item_reports",
-  "squish_feedback",
-  "squish_parent_approvals",
-  "squish_admin_actions",
-  "app_settings",
-] as const;
+/* טבלה → מפתח ראשי. הדפדוף חייב סדר קבוע: בלי order, שורה שמתעדכנת בזמן
+   הגיבוי יכולה לזוז בין עמודים, ואז היא נכנסת פעמיים או לא נכנסת בכלל. */
+const BACKUP: Record<string, string[]> = {
+  stores: ["id"],
+  products: ["id"],
+  orders: ["id"],
+  coupons: ["id"],
+  phone_accounts: ["phone"],
+  store_members: ["store_id", "user_id"],
+  store_invites: ["id"],
+  kupa_purchases: ["store_id", "item_key"],
+  kupa_solved: ["store_id", "riddle_id"],
+  store_views: ["store_id", "day"],
+  store_stats: ["store_id", "day", "hour", "source"],
+  product_stats: ["store_id", "product_id", "day"],
+  store_push_subscriptions: ["id"],
+  admin_push_subscriptions: ["id"],
+  admin_phones: ["phone"],
+  announcements: ["id"],
+  app_settings: ["key"],
+  // רשימת היישובים קטנה, ודוכנים מצביעים עליה: בלעדיה שחזור למסד ריק נכשל
+  localities: ["id"],
+  squish_profiles: ["id"],
+  squish_items: ["id"],
+  squish_connections: ["id"],
+  squish_invites: ["id"],
+  squish_interests: ["id"],
+  squish_wishlist: ["id"],
+  squish_trade_proposals: ["id"],
+  squish_trade_versions: ["id"],
+  squish_trade_version_items: ["version_id", "item_id"],
+  squish_trade_reports: ["id"],
+  squish_blocks: ["id"],
+  squish_item_reports: ["id"],
+  squish_feedback: ["id"],
+  squish_parent_approvals: ["id"],
+  squish_admin_actions: ["id"],
+};
+const TABLES = Object.keys(BACKUP);
+
+/**
+ * טבלאות שבכוונה לא בגיבוי, וכל אחת עם הסיבה. e2e-backup משווה את שתי
+ * הרשימות לטבלאות שבמסד: טבלה חדשה שלא מופיעה באחת מהן מפילה את הבדיקה.
+ */
+const SKIPPED: Record<string, string> = {
+  login_events: "יומן כניסות, נמחק אחרי 30 יום",
+  phone_otps: "קודים חד-פעמיים שפג תוקפם",
+  login_links: "קישורי כניסה חד-פעמיים, נמחקים אחרי 90 יום",
+  admin_alerts: "התראות תפעוליות, נמחקות אחרי 90 יום",
+  store_presence: "מי בדוכן ברגע זה, מתיישן תוך דקות",
+  squish_pilot_tokens: "קישורי פיילוט ישנים, נמחקים אחרי 90 יום",
+  squish_write_failures: "יומן תקלות, נמחק אחרי 30 יום",
+  app_secrets: "מפתחות. לא שמים סודות בקובץ גיבוי; אפשר להנפיק מחדש",
+  schema_migrations: "נגזרת מהקוד",
+  sms_outbox: "קיימת רק בסביבת הבדיקות",
+};
 
 /** PostgREST מגביל תשובה בודדת. בלי הדפדוף הזה הגיבוי נקטע בשקט. */
 const PAGE = 1000;
@@ -56,7 +87,9 @@ type Admin = ReturnType<typeof supabaseAdmin>;
 async function dumpTable(db: Admin, table: string): Promise<{ rows: unknown[]; error?: string }> {
   const rows: unknown[] = [];
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await db.from(table).select("*").range(from, from + PAGE - 1);
+    let query = db.from(table).select("*");
+    for (const col of BACKUP[table] ?? []) query = query.order(col, { ascending: true });
+    const { data, error } = await query.range(from, from + PAGE - 1);
     if (error) {
       // טבלה שעוד לא קיימת (דאטהבייס מאחורי הקוד) לא מפילה את שאר הגיבוי,
       // אבל היא כן נספרת ככישלון ומדווחת.
@@ -69,15 +102,17 @@ async function dumpTable(db: Admin, table: string): Promise<{ rows: unknown[]; e
 
 /** משתמשי Auth — בלעדיהם שורת חנות משוחזרת מצביעה על בעלים שלא קיים. */
 async function dumpUsers(db: Admin): Promise<{
-  users: { id: string; phone: string | null; created_at: string }[];
+  users: { id: string; email: string | null; phone: string | null; created_at: string }[];
   error?: string;
 }> {
-  const users: { id: string; phone: string | null; created_at: string }[] = [];
+  const users: { id: string; email: string | null; phone: string | null; created_at: string }[] = [];
   for (let page = 1; ; page++) {
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
     if (error) return { users, error: error.message };
     users.push(
-      ...data.users.map((u) => ({ id: u.id, phone: u.phone ?? null, created_at: u.created_at }))
+      // המייל הוא מה שמזהה את החשבון בכניסה (גם המייל הפנימי {טלפון}@phone.duchan.app);
+      // בלעדיו אי אפשר להקים את המשתמש מחדש בשחזור
+      ...data.users.map((u) => ({ id: u.id, email: u.email ?? null, phone: u.phone ?? null, created_at: u.created_at }))
     );
     if (data.users.length < 200) return { users };
   }
@@ -176,7 +211,7 @@ export async function GET(req: NextRequest) {
         ContentType: "application/json",
         // partial מסומן בקובץ עצמו: מי שמשחזר חייב לדעת שחסר בו משהו,
         // ולא לגלות את זה אחרי שכבר הריץ אותו.
-        Body: JSON.stringify({ day, partial: failed.length > 0, failed, counts, ...data }),
+        Body: JSON.stringify({ day, format: 2, partial: failed.length > 0, failed, counts, keys: BACKUP, ...data }),
       })
     );
   } catch (e) {
@@ -227,7 +262,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true, partial: failed.length > 0, failed, counts, retention });
+  return NextResponse.json({ ok: true, partial: failed.length > 0, failed, counts, skipped: Object.keys(SKIPPED), retention });
 }
 
 /**

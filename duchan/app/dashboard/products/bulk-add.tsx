@@ -68,7 +68,15 @@ export default function BulkAdd({
       setItems(out);
       setSkipped(bad + Math.max(0, files.length - MAX));
       setLoading(false);
-      setTimeout(() => firstName.current?.focus(), 50);
+      setTimeout(() => {
+        /* לא חוטפים את המיקוד ממי שכבר התחילה להקליד בשדה אחר: המיקוד
+           קופץ לשם הראשון, והאותיות הבאות נכנסות אליו במקום לשדה שבו
+           הקלידו. תחת עומס הטיימר מתעכב, וזה בדיוק מה שהפיל לפעמים את
+           e2e-products-easy ("חסר שם או מחיר במוצר אחד"). */
+        const a = document.activeElement;
+        if (a instanceof HTMLElement && a.matches("input, textarea, select")) return;
+        firstName.current?.focus();
+      }, 50);
     })();
     return () => {
       alive = false;
