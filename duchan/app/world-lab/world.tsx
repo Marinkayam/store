@@ -3,9 +3,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/app/icons";
 import {
-  AWNINGS, CLASS_NAME, LEVEL_LABELS, LEVEL_NAMES, MALL, NOTICES, STALL, STORES, SURPRISES, WORLD, ZONES,
-  alleyOpen, layout, type ClassSize, type Deco, type LabStore, type Level, type Plot,
+  AWNINGS, CAMPUS, CITY_K, CLASSES, CLASS_NAME, GRADE_ROWS, LEVEL_LABELS, LEVEL_NAMES, LOCKED_REASON, MALL, NOTICES, OTHER_SCHOOL,
+  SCHOOL_NAME, STAGES, STALL, STORES, SURPRISES, WORLD, ZONES,
+  alleyOpen, cityPt, layout, type ClassSize, type Deco, type LabStore, type Level, type Plot,
 } from "./data";
+import InviteSim, { type InviteResult } from "./invite-sim";
 import { Foreground, Scenery } from "./scenery";
 import { EmptyPlot, GardenPlot, WorldStall, type Lod } from "./stalls";
 import StoreSim from "./store-sim";
@@ -13,10 +15,13 @@ import StoreSim from "./store-sim";
 /**
  * עולם דוכן — אב־טיפוס.
  *
- * עולם אחד, מצלמה אחת. המישור כולו (עיר, קניון, רחובות, דוכנים) מצויר
- * פעם אחת, והמצלמה היא transform על המישור: הזזה והגדלה. "רמה" היא גובה
- * מצלמה (עיר, קניון, רחוב, דוכן), לא מסך נפרד — ולכן כשמתרחקים רואים את
- * אותו דוכן קטן יותר בתוך אותו רחוב, ולא עוברים לדף אחר.
+ * עולם אחד, מצלמה אחת. המישור כולו (עיר, בית ספר, קניון, רחובות, דוכנים)
+ * מצויר פעם אחת, והמצלמה היא transform על המישור: הזזה והגדלה. "רמה" היא
+ * גובה מצלמה, לא מסך נפרד — ולכן כשמתרחקים רואים את אותו דוכן קטן יותר
+ * בתוך אותו רחוב, ולא עוברים לדף אחר.
+ *
+ * חמש רמות: 0 עיר · 1 בית ספר · 2 קניון של כיתה · 3 רחוב · 4 דוכן.
+ * רמה רחוקה נפתחת רק כשיש בה מה לראות (STAGES ב-data.ts).
  *
  * מה ששומר על זה קל בטלפון:
  *   - תנועת המצלמה היא transform בלבד (המעבד הגרפי), בלי ציור מחדש בכל פריים.
@@ -27,7 +32,8 @@ import StoreSim from "./store-sim";
  */
 
 const DUR = 720;
-const CITY_C = { x: WORLD.w / 2, y: 2150 };
+const CITY_C = cityPt(1200, 2150);
+const SCHOOL_C = { x: CAMPUS.x + CAMPUS.w / 2, y: CAMPUS.y + CAMPUS.h / 2 };
 const MALL_C = { x: MALL.x + MALL.w / 2, y: MALL.y + MALL.h / 2 };
 /** מרכזי המצלמה ברמת הרחוב: רחוב הסוככים, הכיכר, הסמטה, השטח הפתוח */
 const ROWS = [MALL.y + 400, MALL.y + 690, MALL.y + 1130, MALL.y + 1300];
@@ -42,23 +48,25 @@ interface Cam { x: number; y: number; s: number; lv: Level }
  */
 function insets(level: Level, h: number) {
   if (level === 0) return { r: 0, t: 0, b: 0 };
-  return { r: 62, t: 62, b: level === 3 ? Math.min(250, h * 0.3) : 104 };
+  return { r: 62, t: 62, b: level === 4 ? Math.min(250, h * 0.3) : 104 };
 }
 
 function scaleFor(level: Level, w: number, h: number): number {
   const i = insets(level, h);
   const fw = w - i.r;
   const fh = h - i.t - i.b;
-  if (level === 0) return Math.min(fw / 2400, fh / 4300);
-  if (level === 1) return Math.min(fw / 1150, fh / 1540);
-  if (level === 2) return Math.min(fw / 270, fh / 430, 1.9);
+  if (level === 0) return Math.min(fw / WORLD.w, fh / (4300 * CITY_K));
+  if (level === 1) return Math.min(fw / (CAMPUS.w + 260), fh / (CAMPUS.h + 260));
+  if (level === 2) return Math.min(fw / 1150, fh / 1540);
+  if (level === 3) return Math.min(fw / 270, fh / 430, 1.9);
   return Math.min(fw / 108, fh / 96, 5.6);
 }
 
 function clampCam(level: Level, x: number, y: number) {
   const box =
-    level === 0 ? [700, 1700, 1300, 3300]
-    : level === 1 ? [MALL_C.x - 260, MALL_C.x + 260, MALL_C.y - 380, MALL_C.y + 380]
+    level === 0 ? [700 * CITY_K, 1700 * CITY_K, 1300 * CITY_K, 3300 * CITY_K]
+    : level === 1 ? [SCHOOL_C.x - 800, SCHOOL_C.x + 800, SCHOOL_C.y - 1500, SCHOOL_C.y + 1500]
+    : level === 2 ? [MALL_C.x - 260, MALL_C.x + 260, MALL_C.y - 380, MALL_C.y + 380]
     : [MALL.x + 50, MALL.x + MALL.w - 50, MALL.y + 180, MALL.y + MALL.h - 40];
   return { x: Math.min(box[1], Math.max(box[0], x)), y: Math.min(box[3], Math.max(box[2], y)) };
 }
@@ -76,9 +84,10 @@ function LevelIcon({ level }: { level: Level }) {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
       {level === 0 && <path d="M3 20V11l4-3 4 3v9M11 20V6l5-3v17M16 9h5v11M3 20h18M6.500 14h1M6.500 17h1M13.500 9h.5M13.500 13h.5" {...p} />}
-      {level === 1 && <path d="M3 20V12a9 9 0 0 1 18 0v8M3 20h18M9 20v-6h6v6M7 9.500h10" {...p} />}
-      {level === 2 && <path d="M2 8h9v3a1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0zM13 8h9v3a1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0zM3.500 12.500V19M9.500 12.500V19M14.500 12.500V19M20.500 12.500V19M1.500 19h21" {...p} />}
-      {level === 3 && <path d="M3 6h18v2H3zM3 8h4.500v3a2.250 2 0 0 1-4.500 0zM7.500 8H12v3a2.250 2 0 0 1-4.500 0zM12 8h4.500v3a2.250 2 0 0 1-4.500 0zM16.500 8H21v3a2.250 2 0 0 1-4.500 0zM5 11v8M19 11v8M3 18h18" {...p} />}
+      {level === 1 && <path d="M3 20V10l9-5 9 5v10M3 20h18M10 20v-5h4v5M12 5V2.500l3.500 1L12 4.500M6.500 12h2M15.500 12h2M6.500 15.500h2M15.500 15.500h2" {...p} />}
+      {level === 2 && <path d="M3 20V12a9 9 0 0 1 18 0v8M3 20h18M9 20v-6h6v6M7 9.500h10" {...p} />}
+      {level === 3 && <path d="M2 8h9v3a1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0zM13 8h9v3a1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0 1.500 1.500 0 0 1-3 0zM3.500 12.500V19M9.500 12.500V19M14.500 12.500V19M20.500 12.500V19M1.500 19h21" {...p} />}
+      {level === 4 && <path d="M3 6h18v2H3zM3 8h4.500v3a2.250 2 0 0 1-4.500 0zM7.500 8H12v3a2.250 2 0 0 1-4.500 0zM12 8h4.500v3a2.250 2 0 0 1-4.500 0zM16.500 8H21v3a2.250 2 0 0 1-4.500 0zM5 11v8M19 11v8M3 18h18" {...p} />}
     </svg>
   );
 }
@@ -96,19 +105,22 @@ export default function World({ review }: { review?: LabStore[] }) {
   const sharpRef = useRef(false);
   const restScale = useRef<number | null>(null);
   const vp = useRef({ w: 390, h: 800 });
-  const camRef = useRef<Cam>({ x: 0, y: 0, s: 1, lv: 3 });
+  const camRef = useRef<Cam>({ x: 0, y: 0, s: 1, lv: 4 });
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chain = useRef(0);
   const selfHash = useRef(false);
 
-  const [size, setSize] = useState<ClassSize>(review ? 11 : 8);
+  /** שלב הצמיחה: כמה דוכנים יש בכיתה, ועד איזו רמה אפשר להתרחק */
+  const [stage, setStage] = useState(STAGES.length - 1);
+  const size: ClassSize = review ? 11 : STAGES[stage].size;
+  const far: Level = review ? 2 : STAGES[stage].far;
   const [group, setGroup] = useState(0);
   const groups = review ? Math.ceil(review.length / 11) : 0;
   const [night, setNight] = useState(false);
   const [dusk, setDusk] = useState(false);
   const [calm, setCalm] = useState(false);
   const [sharp, setSharp] = useState(false);
-  const [level, setLevel] = useState<Level>(3);
+  const [level, setLevel] = useState<Level>(4);
   const [moving, setMoving] = useState(false);
   const [, setTick] = useState(0); // המצלמה עצמה חיה ב-ref; זה רק מבקש ציור מחדש
   const [ready, setReady] = useState(false);
@@ -122,12 +134,25 @@ export default function World({ review }: { review?: LabStore[] }) {
   });
   const [invited, setInvited] = useState<string[]>([]);
   const [invitePlot, setInvitePlot] = useState<string | null>(null);
+  /** דוכנים שנפתחו דרך הזמנה, לפי המקום שבו הם עומדים */
+  const [joined, setJoined] = useState<Record<string, LabStore>>({});
+  /** המקום שעל ההזמנה שלו מסתכלים "מהצד השני" */
+  const [inviteView, setInviteView] = useState<string | null>(null);
   const [found, setFound] = useState<string[]>([]);
   const [bubble, setBubble] = useState<{ text: string; k: number } | null>(null);
   const [fx, setFx] = useState({ splash: 0, hop: 0, cat: 0, watered: 0 });
 
-  const plots = useMemo(() => layout(size, review ? review.slice(group * 11, group * 11 + 11) : undefined), [group, review, size]);
-  const stores = useMemo(() => review ?? STORES.map((s) => (s.mine ? { ...s, awning: mine.awning, deco: mine.deco } : s)), [mine, review]);
+  const plots = useMemo(
+    () =>
+      layout(size, review ? review.slice(group * 11, group * 11 + 11) : undefined).map((p) =>
+        p.kind === "empty" && joined[p.id] ? { ...p, kind: "stall" as const, store: joined[p.id] } : p
+      ),
+    [group, joined, review, size]
+  );
+  const stores = useMemo(
+    () => review ?? [...STORES.map((s) => (s.mine ? { ...s, awning: mine.awning, deco: mine.deco } : s)), ...Object.values(joined)],
+    [joined, mine, review]
+  );
   const storeOf = useCallback((id: string | undefined) => stores.find((s) => s.id === id), [stores]);
   const myPlot = useMemo(() => plots.find((p) => p.store?.mine) ?? plots.find((p) => p.kind === "stall") ?? plots[0], [plots]);
   const stallCount = plots.filter((p) => p.kind === "stall").length;
@@ -230,23 +255,26 @@ export default function World({ review }: { review?: LabStore[] }) {
     (atX?: number, atY?: number) => {
       chain.current++;
       const c = camRef.current;
-      if (level === 0) return go(1, MALL_C.x, MALL_C.y);
-      if (level === 1) return go(2, atX ?? c.x, nearestRow(atY ?? c.y));
-      if (level === 2) {
+      if (level === 0) return go(1, SCHOOL_C.x, SCHOOL_C.y);
+      if (level === 1) return go(2, MALL_C.x, MALL_C.y);
+      if (level === 2) return go(3, atX ?? c.x, nearestRow(atY ?? c.y));
+      if (level === 3) {
         const p = nearestPlot(atX ?? c.x, atY ?? c.y);
-        return p ? go(3, p.cx, p.by - 24) : go(3, atX ?? c.x, atY ?? c.y);
+        return p ? go(4, p.cx, p.by - 24) : go(4, atX ?? c.x, atY ?? c.y);
       }
     },
     [go, level, nearestPlot]
   );
 
   const zoomOut = useCallback(() => {
+    if (level <= far) return;
     chain.current++;
     const c = camRef.current;
-    if (level === 3) return go(2, c.x, nearestRow(c.y + 60));
-    if (level === 2) return go(1, MALL_C.x, MALL_C.y);
+    if (level === 4) return go(3, c.x, nearestRow(c.y + 60));
+    if (level === 3) return go(2, MALL_C.x, MALL_C.y);
+    if (level === 2) return go(1, SCHOOL_C.x, SCHOOL_C.y);
     if (level === 1) return go(0, CITY_C.x, CITY_C.y);
-  }, [go, level]);
+  }, [far, go, level]);
 
   /** תעופה רמה אחרי רמה אל נקודה — ככה גם קפיצה רחוקה מרגישה כמו מסע */
   const flyTo = useCallback(
@@ -257,33 +285,47 @@ export default function World({ review }: { review?: LabStore[] }) {
       while (lv !== target) {
         lv = (lv < target ? lv + 1 : lv - 1) as Level;
         if (lv === 0) go(0, CITY_C.x, CITY_C.y);
-        else if (lv === 1) go(1, MALL_C.x, MALL_C.y);
-        else if (lv === 2) go(2, x, nearestRow(y + 60));
-        else go(3, x, y);
+        else if (lv === 1) go(1, SCHOOL_C.x, SCHOOL_C.y);
+        else if (lv === 2) go(2, MALL_C.x, MALL_C.y);
+        else if (lv === 3) go(3, x, nearestRow(y + 60));
+        else go(4, x, y);
         await wait();
         if (chain.current !== id) return;
       }
-      if (lv === target && target === 3) go(3, x, y);
+      if (lv === target && target === 4) go(4, x, y);
       then?.();
     },
     [calm, go, level]
   );
 
+  const say = useCallback((text: string) => setBubble({ text, k: Date.now() }), []);
+
   const goLevel = useCallback(
     (t: Level) => {
+      if (t < far) return say(LOCKED_REASON[t] ?? "");
       if (t === level) return;
       const c = camRef.current;
       if (t < level) {
         // החוצה: נשארים מעל אותו מקום
         void flyTo(t, c.x, c.y);
       } else {
-        const near = level >= 2 ? nearestPlot(c.x, c.y, 200, 300) : null;
+        const near = level >= 3 ? nearestPlot(c.x, c.y, 200, 300) : null;
         const p = near ?? myPlot;
         void flyTo(t, p.cx, p.by - 24);
       }
     },
-    [flyTo, level, myPlot, nearestPlot]
+    [far, flyTo, level, myPlot, nearestPlot, say]
   );
+
+  /* כשעוברים לשלב צמיחה מוקדם יותר, רמה רחוקה נסגרת: מתקרבים עד הרמה הפתוחה */
+  useEffect(() => {
+    if (level < far) {
+      if (far === 3) go(3, myPlot.cx, ROWS[0]);
+      else if (far === 2) go(2, MALL_C.x, MALL_C.y);
+      else go(1, SCHOOL_C.x, SCHOOL_C.y);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [far]);
 
   /** יום ולילה: המסך מחשיך לרגע, הצבעים מתחלפים מאחוריו, והוא מתבהר */
   const toggleNight = useCallback(() => {
@@ -314,7 +356,13 @@ export default function World({ review }: { review?: LabStore[] }) {
     setFromWorld(true);
     applyCam(camRef.current, !calm);
     if (settleTimer.current) clearTimeout(settleTimer.current);
-    settleTimer.current = setTimeout(rest, calm ? 30 : DUR + 40);
+    // אם יצאו מהחנות בזמן שהמצלמה עוד נחתה, הטיימר הזה מחליף את של הטיסה,
+    // ולכן גם הוא חייב לסמן שהתנועה הסתיימה.
+    settleTimer.current = setTimeout(() => {
+      rest();
+      setMoving(false);
+      setTick((t) => t + 1);
+    }, calm ? 30 : DUR + 40);
   }, [applyCam, calm, rest]);
 
   const goHome = useCallback(() => {
@@ -325,7 +373,7 @@ export default function World({ review }: { review?: LabStore[] }) {
       if (storeOpen === id) return;
       closeStore();
     }
-    void flyTo(3, myPlot.cx, myPlot.by - 24, () => openStore(id));
+    void flyTo(4, myPlot.cx, myPlot.by - 24, () => openStore(id));
   }, [closeStore, flyTo, myPlot, openStore, storeOpen]);
 
   /* ── התחלה, שינוי גודל מסך ── */
@@ -337,10 +385,11 @@ export default function World({ review }: { review?: LabStore[] }) {
     };
     measure();
     const hash = typeof location !== "undefined" ? location.hash.slice(1) : "";
-    const idx = review && !(LEVEL_NAMES as readonly string[]).includes(hash) ? 1 : (LEVEL_NAMES as readonly string[]).indexOf(hash);
-    const start: Level = idx >= 0 ? (idx as Level) : 3;
+    const named = (LEVEL_NAMES as readonly string[]).indexOf(hash);
+    const idx = review && named < 0 ? 2 : named >= 0 ? Math.max(named, far) : -1;
+    const start: Level = idx >= 0 ? (idx as Level) : 4;
     const { w, h } = vp.current;
-    const at = start === 0 ? CITY_C : start === 1 ? MALL_C : start === 2 ? { x: myPlot.cx, y: ROWS[0] } : { x: myPlot.cx, y: myPlot.by - 24 };
+    const at = start === 0 ? CITY_C : start === 1 ? SCHOOL_C : start === 2 ? MALL_C : start === 3 ? { x: myPlot.cx, y: ROWS[0] } : { x: myPlot.cx, y: myPlot.by - 24 };
     camRef.current = { ...at, s: scaleFor(start, w, h), lv: start };
     setLevel(start);
     if (idx >= 0) setStoreOpen(null);
@@ -536,7 +585,6 @@ export default function World({ review }: { review?: LabStore[] }) {
 
   /* ── הפתעות ── */
 
-  const say = useCallback((text: string) => setBubble({ text, k: Date.now() }), []);
   useEffect(() => {
     if (!bubble) return;
     const t = setTimeout(() => setBubble(null), 5200);
@@ -559,37 +607,66 @@ export default function World({ review }: { review?: LabStore[] }) {
   /* ── מה רואים עכשיו ── */
 
   const c = camRef.current;
-  const focus = level === 3 ? nearestPlot(c.x, c.y, 42, 60) : null;
+  const focus = level === 4 ? nearestPlot(c.x, c.y, 42, 60) : null;
   const focusStore = focus?.kind === "stall" ? storeOf(focus.store!.id) ?? null : null;
 
   const lodOf = (p: Plot): Lod => {
-    if (level < 2) return "far";
+    if (level < 3) return "far";
     if (Math.abs(p.cx - c.x) > 560 || Math.abs(p.by - c.y) > 640) return "far";
-    return level === 3 && !moving && focus?.id === p.id ? "near" : "mid";
+    return level === 4 && !moving && focus?.id === p.id ? "near" : "mid";
   };
 
   const place = (() => {
     if (level === 0) return "העיר";
-    if (level === 1) return `הקניון של ${CLASS_NAME}`;
+    if (level === 1) return SCHOOL_NAME;
+    if (level === 2) return `הקניון של ${CLASS_NAME}`;
     const ly = c.y - MALL.y;
     const zone = ly < 580 ? ZONES.A.name : ly < 960 ? "כיכר המזרקה" : ly < 1235 ? ZONES.B.name : "שטח לרחוב חדש";
-    if (level === 3 && focus) return focus.kind === "stall" ? focusStore?.name ?? zone : "מקום פנוי";
+    if (level === 4 && focus) return focus.kind === "stall" ? focusStore?.name ?? zone : "מקום פנוי";
     return zone;
   })();
 
   const hint =
-    level === 0 ? "נוגעים בקניון כדי להתקרב"
-    : level === 1 ? "נוגעים ברחוב כדי להיכנס אליו"
-    : level === 2 ? "נוגעים בדוכן כדי להתקרב אליו"
+    level === 0 ? "נוגעים בבית הספר כדי להתקרב"
+    : level === 1 ? "נוגעים בכיתה כדי להיכנס לקניון שלה"
+    : level === 2 ? "נוגעים ברחוב כדי להיכנס אליו"
+    : level === 3 ? "נוגעים בדוכן כדי להתקרב אליו"
     : focus ? "" : "גוררים כדי להסתכל מסביב";
 
   const tapPlot = (p: Plot) => {
-    if (level === 2 || focus?.id !== p.id) return go(3, p.cx, p.by - 24);
+    if (level === 3 || focus?.id !== p.id) return go(4, p.cx, p.by - 24);
     if (p.kind === "stall") return openStore(p.store!.id);
     if (p.kind === "empty") { setInvitePlot(p.id); setSheet("invite"); }
   };
 
-  const worldBusy = !!storeOpen || !!sheet;
+  const othersOpen = far <= 1;
+  const myName = stores.find((x) => x.mine)?.owner ?? "נועה";
+
+  /** מה קרה בצד השני של ההזמנה */
+  const finishInvite = (r: InviteResult) => {
+    const id = inviteView;
+    setInviteView(null);
+    if (!id) return;
+    const plot = plots.find((p) => p.id === id);
+    setInvited((v) => v.filter((x) => x !== id));
+    if (r.kind === "declined") return say("ההורה לא אישר. שום דבר לא נחשף, והמקום נשאר פנוי.");
+    if (r.kind === "visit") return say(`המשפחה של ${r.owner} הצטרפה לקניון כמבקרת. המקום נשאר פנוי להזמנה נוספת.`);
+    setJoined((j) => ({
+      ...j,
+      [id]: {
+        id: `new-${id}`, name: r.name, short: r.owner, sign: r.name.slice(0, 14), owner: r.owner, fresh: true,
+        tagline: "דוכן חדש בקניון", theme: "mint", awning: r.awning, emblem: "star",
+        products: [{ art: "squishy", name: "מוצר ראשון", price: 10 }],
+        deco: { flowers: false, openSign: true, cat: false },
+      },
+    }));
+    if (plot) go(4, plot.cx, plot.by - 24);
+    say(`ל${r.owner} יש עכשיו דוכן לידך. פרח חדש נוסף לגינה של הכיתה.`);
+  };
+
+  // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי").
+  const showOwner = (st: LabStore) => !!st.owner && !st.name.includes(st.owner);
+  const worldBusy = !!storeOpen || !!sheet || !!inviteView;
   const isInvited = (id: string) => invited.includes(id);
 
   return (
@@ -619,16 +696,31 @@ export default function World({ review }: { review?: LabStore[] }) {
       >
         <div ref={rigRef} className="wl-rig">
         <div ref={planeRef} className="wl-plane" style={{ width: WORLD.w, height: WORLD.h }}>
-          <SceneryMemo size={size} flowers={stallCount + fx.watered} alley={alleyOpen(size)} splash={fx.splash} hop={fx.hop} />
+          <SceneryMemo size={size} flowers={stallCount + fx.watered} alley={alleyOpen(size)} splash={fx.splash} hop={fx.hop} others={othersOpen} second={far === 0} />
 
-          {/* אזורי נגיעה: הקניון (מהעיר), הרחובות (מהקניון), ההפתעות */}
+          {/* אזורי נגיעה: בית הספר (מהעיר), הכיתות (מבית הספר), הרחובות (מהקניון) */}
           <button
             type="button" className="wl-hit" data-lv="0" tabIndex={level === 0 ? 0 : -1}
-            aria-label={`להתקרב אל הקניון של ${CLASS_NAME}`}
-            style={{ left: MALL.x, top: MALL.y, width: MALL.w, height: MALL.h }}
-            onClick={() => go(1, MALL_C.x, MALL_C.y)}
-            data-testid="wl-hit-mall"
+            aria-label={`להתקרב אל ${SCHOOL_NAME}`}
+            style={{ left: CAMPUS.x, top: CAMPUS.y, width: CAMPUS.w, height: CAMPUS.h }}
+            onClick={() => go(1, SCHOOL_C.x, SCHOOL_C.y)}
+            data-testid="wl-hit-school"
           />
+          {CLASSES.map((cl) => {
+            const has = cl.mine || (othersOpen && cl.stalls > 0);
+            return (
+              <button
+                key={cl.id} type="button" className="wl-hit" data-lv="1" tabIndex={level === 1 ? 0 : -1}
+                aria-label={cl.mine ? `להיכנס לקניון של ${cl.name}, הכיתה שלי` : has ? `הקניון של ${cl.name}, סגור למי שאינו מהכיתה` : `${cl.name}, עוד אין דוכנים`}
+                style={{ left: cl.x, top: cl.y, width: cl.w, height: cl.h }}
+                onClick={() =>
+                  cl.mine ? go(2, MALL_C.x, MALL_C.y)
+                  : say(has ? `הקניון של ${cl.name} פתוח רק לילדים ולהורים מהכיתה.` : `ב${cl.name} עוד אין דוכנים. כשייפתח שם דוכן ראשון, יקום כאן קניון.`)
+                }
+                data-testid={`wl-hit-class-${cl.id}`}
+              />
+            );
+          })}
           {[
             { id: "A", label: ZONES.A.name, x: MALL.x + 20, y: MALL.y + 150, w: 1060, h: 290, row: ROWS[0] },
             { id: "P", label: "כיכר המזרקה", x: MALL.x + 60, y: MALL.y + 452, w: 980, h: 476, row: ROWS[1] },
@@ -636,12 +728,12 @@ export default function World({ review }: { review?: LabStore[] }) {
             { id: "C", label: "שטח לרחוב חדש", x: MALL.x + 120, y: MALL.y + 1240, w: 860, h: 150, row: ROWS[3] },
           ].map((z) => (
             <button
-              key={z.id} type="button" className="wl-hit" data-lv="1" tabIndex={level === 1 ? 0 : -1}
+              key={z.id} type="button" className="wl-hit" data-lv="2" tabIndex={level === 2 ? 0 : -1}
               aria-label={`להיכנס אל ${z.label}`}
               style={{ left: z.x, top: z.y, width: z.w, height: z.h }}
               onClick={(e) => {
                 const m = e.detail === 0 ? { x: z.x + z.w / 2 } : worldAt(e.clientX, e.clientY);
-                go(2, m.x, z.row);
+                go(3, m.x, z.row);
               }}
               data-testid={`wl-hit-zone-${z.id}`}
             />
@@ -668,13 +760,13 @@ export default function World({ review }: { review?: LabStore[] }) {
                 data-kind={p.kind}
                 data-lod={lod}
                 data-mine={st?.mine ? "1" : undefined}
-                data-lv="2 3"
+                data-lv="3 4"
                 data-testid={`wl-plot-${p.id}`}
-                tabIndex={level >= 2 ? 0 : -1}
+                tabIndex={level >= 3 ? 0 : -1}
                 aria-label={
                   st
-                    ? `${st.name}${st.mine ? ", הדוכן שלי" : ""}. ${level === 3 && focus?.id === p.id ? "להיכנס לחנות" : "להתקרב"}`
-                    : `מקום פנוי${isInvited(p.id) ? ", הזמנה נשלחה" : ""}. ${level === 3 && focus?.id === p.id ? "להזמין לפתוח כאן דוכן" : "להתקרב"}`
+                    ? `${st.name}${st.owner ? `, של ${st.owner}` : ""}${st.mine ? ", הדוכן שלי" : ""}. ${level === 4 && focus?.id === p.id ? "להיכנס לחנות" : "להתקרב"}`
+                    : `מקום פנוי${isInvited(p.id) ? ", הזמנה נשלחה" : ""}. ${level === 4 && focus?.id === p.id ? "להזמין לפתוח כאן דוכן" : "להתקרב"}`
                 }
                 style={{ ...style, ...vars }}
                 onClick={() => tapPlot(p)}
@@ -702,24 +794,42 @@ export default function World({ review }: { review?: LabStore[] }) {
           ))}
 
           {/* תוויות. גודל קבוע על המסך, בלי קשר לזום. */}
-          <span className="wl-label wl-label-pin" data-lv="0" style={{ left: MALL_C.x, top: MALL.y - 10 }}>הקניון של {CLASS_NAME}</span>
-          <span className="wl-label" data-lv="0" style={{ left: 2110, top: 1345 }}>בית הספר</span>
-          <span className="wl-label" data-lv="0" style={{ left: 300, top: 1620 }}>הפארק</span>
-          <span className="wl-label" data-lv="0" style={{ left: 1200, top: 3130 }}>מתחם פנוי לכיתה נוספת</span>
-          <span className="wl-label" data-lv="0" style={{ left: 1200, top: 4000 }}>הים</span>
-          <span className="wl-label" data-lv="1" style={{ left: MALL_C.x, top: MALL.y + 345 }}>{ZONES.A.name}</span>
-          <span className="wl-label" data-lv="1" style={{ left: MALL_C.x, top: MALL.y + 760 }}>כיכר המזרקה</span>
-          <span className="wl-label" data-lv="1" style={{ left: MALL_C.x, top: MALL.y + 1140 }}>{ZONES.B.name}{alleyOpen(size) ? "" : " · נפתחת ב־8 דוכנים"}</span>
-          {plots.filter((p) => p.kind === "stall").map((p) => {
-            const st = storeOf(p.store!.id)!;
+          <span className="wl-label wl-label-pin" data-lv="0" style={{ left: SCHOOL_C.x, top: CAMPUS.y - 30 }}>{SCHOOL_NAME}</span>
+          <span className="wl-label" data-lv="0" style={{ left: cityPt(2110, 0).x, top: cityPt(0, 925).y }}>הספרייה</span>
+          <span className="wl-label" data-lv="0" style={{ left: cityPt(300, 0).x, top: cityPt(0, 1620).y }}>הפארק</span>
+          <span className="wl-label" data-lv="0" style={{ left: cityPt(1200, 0).x, top: cityPt(0, 3380).y }}>{far === 0 ? OTHER_SCHOOL : "מקום פנוי לבית ספר נוסף"}</span>
+          <span className="wl-label" data-lv="0" style={{ left: cityPt(1200, 0).x, top: cityPt(0, 4000).y }}>הים</span>
+          {GRADE_ROWS.map((g) => (
+            <span key={g.name} className="wl-label wl-grade" data-lv="1" style={{ left: CAMPUS.x + CAMPUS.w - 250, top: g.y }}>{g.name}</span>
+          ))}
+          {CLASSES.map((cl) => {
+            const n = cl.mine ? stallCount : othersOpen ? cl.stalls : 0;
             return (
-              <span key={p.id} className="wl-label wl-plate" data-lv="2" data-mine={st.mine ? "1" : undefined} style={{ left: p.cx, top: p.by + 9 }}>
-                <span>{st.name}</span>
-                {st.mine && <b>שלי</b>}
+              <span key={cl.id} className="wl-label wl-class" data-lv="1" data-mine={cl.mine ? "1" : undefined} style={{ left: cl.x + cl.w / 2, top: cl.y + cl.h / 2 - 60 }} data-testid={`wl-class-${cl.id}`}>
+                <b>{cl.name}</b>
+                <span>{n > 0 ? `${n} דוכנים` : "מקום פנוי"}</span>
               </span>
             );
           })}
-          <span className="wl-label" data-lv="2" style={{ left: MALL.x + 205, top: MALL.y + 884 }}>הגינה של הכיתה</span>
+          <span className="wl-label" data-lv="2" style={{ left: MALL_C.x, top: MALL.y + 345 }}>{ZONES.A.name}</span>
+          <span className="wl-label" data-lv="2" style={{ left: MALL_C.x, top: MALL.y + 760 }}>כיכר המזרקה</span>
+          <span className="wl-label" data-lv="2" style={{ left: MALL_C.x, top: MALL.y + 1140 }}>{ZONES.B.name}{alleyOpen(size) ? "" : " · נפתחת ב־8 דוכנים"}</span>
+          {plots.filter((p) => p.kind === "stall").map((p) => {
+            const st = storeOf(p.store!.id)!;
+            return (
+              <span key={p.id} className="wl-label wl-plate" data-lv="3" data-mine={st.mine ? "1" : undefined} style={{ left: p.cx, top: p.by + 9 }}>
+                <span>{st.name}</span>
+                {(showOwner(st) || st.mine || st.fresh) && (
+                  <em>
+                    {showOwner(st) && <i>{st.owner}</i>}
+                    {st.mine && <b>שלי</b>}
+                    {st.fresh && <b>חדש</b>}
+                  </em>
+                )}
+              </span>
+            );
+          })}
+          <span className="wl-label" data-lv="3" style={{ left: MALL.x + 205, top: MALL.y + 884 }}>הגינה של הכיתה</span>
         </div>
         </div>
       </div>
@@ -745,28 +855,34 @@ export default function World({ review }: { review?: LabStore[] }) {
         </div>
 
         <nav className="wl-ladder" aria-label="כמה קרוב מסתכלים">
-          {LEVEL_LABELS.map((label, i) => (
-            <button
-              key={label} type="button" className="wl-btn wl-step-btn" aria-current={level === i ? "true" : undefined}
-              onClick={() => goLevel(i as Level)} data-testid={`wl-level-${i}`}
-            >
-              <LevelIcon level={i as Level} />
-              <span>{label}</span>
-            </button>
-          ))}
+          {LEVEL_LABELS.map((label, i) => {
+            if (review && i < far) return null;
+            const locked = i < far;
+            return (
+              <button
+                key={label} type="button" className="wl-btn wl-step-btn" aria-current={level === i ? "true" : undefined}
+                data-locked={locked ? "1" : undefined}
+                aria-label={locked ? `${label}, עוד לא נפתח` : label}
+                onClick={() => goLevel(i as Level)} data-testid={`wl-level-${i}`}
+              >
+                {locked ? <Icon name="lock" size={20} /> : <LevelIcon level={i as Level} />}
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </nav>
 
         <div className="wl-bottom">
-          {level === 3 && !moving && focus && !sheet && (
+          {level === 4 && !moving && focus && !sheet && (
             <div className="wl-card" data-testid="wl-card">
               {focusStore ? (
                 <>
                   <div className="wl-card-title">{focusStore.name}</div>
-                  <div className="wl-card-sub">{focusStore.tagline}</div>
+                  <div className="wl-card-sub">{focusStore.owner ? `הדוכן של ${focusStore.owner}. ` : ""}{focusStore.tagline}</div>
                   <div className="wl-card-actions">
                     <button type="button" className="wl-btn wl-primary" onClick={() => openStore(focusStore.id)} data-testid="wl-enter">להיכנס לחנות</button>
                     {focusStore.mine && (
-                      <button type="button" className="wl-btn" onClick={() => { setSheet("decorate"); go(3, focus.cx, focus.by + 8); }} data-testid="wl-decorate">
+                      <button type="button" className="wl-btn" onClick={() => { setSheet("decorate"); go(4, focus.cx, focus.by + 8); }} data-testid="wl-decorate">
                         <Icon name="palette" size={20} tone="var(--lavender)" />
                         לעצב
                       </button>
@@ -775,12 +891,21 @@ export default function World({ review }: { review?: LabStore[] }) {
                 </>
               ) : (
                 <>
-                  <div className="wl-card-title">{isInvited(focus.id) ? "הזמנה נשלחה" : "מקום פנוי"}</div>
-                  <div className="wl-card-sub">כאן יכול לקום דוכן של חברה או חבר מהכיתה.</div>
+                  <div className="wl-card-title">{isInvited(focus.id) ? "הזמנה ממתינה" : "מקום פנוי"}</div>
+                  <div className="wl-card-sub">
+                    {isInvited(focus.id) ? "הקישור מיועד לחבר או חברה אחת, ותקף לשבוע." : "כאן יכול לקום דוכן של חברה או חבר מהכיתה."}
+                  </div>
                   <div className="wl-card-actions">
-                    <button type="button" className="wl-btn wl-primary" onClick={() => { setInvitePlot(focus.id); setSheet("invite"); }} data-testid="wl-invite">
-                      {isInvited(focus.id) ? "להזמין עוד מישהו" : "להזמין לפתוח כאן דוכן"}
-                    </button>
+                    {isInvited(focus.id) ? (
+                      <>
+                        <button type="button" className="wl-btn wl-primary" onClick={() => setInviteView(focus.id)} data-testid="wl-invite-view">לראות את הצד השני</button>
+                        <button type="button" className="wl-btn" onClick={() => setInvited((v) => v.filter((x) => x !== focus.id))} data-testid="wl-invite-cancel">לבטל</button>
+                      </>
+                    ) : (
+                      <button type="button" className="wl-btn wl-primary" onClick={() => { setInvitePlot(focus.id); setSheet("invite"); }} data-testid="wl-invite">
+                        להזמין לפתוח כאן דוכן
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -802,7 +927,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                 הדוכן שלי
               </button>
             )}
-            {level > 0 && (
+            {level > far && (
               <button type="button" className="wl-btn wl-out" onClick={zoomOut} data-testid="wl-out">
                 <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
                   <circle cx="10.500" cy="10.500" r="6.500" fill="none" stroke="currentColor" strokeWidth="1.6" />
@@ -861,14 +986,19 @@ export default function World({ review }: { review?: LabStore[] }) {
             {sheet === "invite" && (
               <>
                 <h2>מזמינים לפתוח דוכן</h2>
-                <div className="wl-msg">היי! יש מקום פנוי בקניון של הכיתה שלנו, ממש ליד הדוכן שלי. רוצה לפתוח שם דוכן?</div>
-                <p className="wl-sheet-note">הקישור מוביל לתהליך הצטרפות באישור הורה. הוא לא מציג את החנויות של הכיתה למי שעוד לא הצטרף.</p>
+                <div className="wl-msg">היי, זו {myName}. יש מקום פנוי בקניון של הכיתה שלנו, ממש ליד הדוכן שלי. רוצה לפתוח שם דוכן?</div>
+                <ul className="wl-rules">
+                  <li>הקישור מיועד לחבר או חברה אחת, ותקף לשבוע.</li>
+                  <li>מי שפותח אותו רואה רק מי הזמין ולאן. לא את החנויות.</li>
+                  <li>מצטרפים רק אחרי שהורה אישר.</li>
+                  <li>אפשר להצטרף גם רק כדי לבקר, בלי לפתוח דוכן.</li>
+                </ul>
                 <button
                   type="button" className="wl-btn wl-primary wl-wide"
                   onClick={() => {
                     if (invitePlot && !invited.includes(invitePlot)) setInvited((v) => [...v, invitePlot]);
                     setSheet(null);
-                    say("ההזמנה סומנה על המקום הפנוי. בהדמיה לא נשלחת הודעה אמיתית.");
+                    say("ההזמנה סומנה על המקום הפנוי. בהדמיה לא נשלחת הודעה אמיתית. אפשר לראות את הצד השני.");
                   }}
                   data-testid="wl-invite-send"
                 >
@@ -902,16 +1032,19 @@ export default function World({ review }: { review?: LabStore[] }) {
                     </div>
                   </div>
                 )}
-                <div className="wl-field" hidden={!!review}>
-                  <span className="wl-field-label">כמה דוכנים יש בכיתה</span>
-                  <div className="wl-toggles" role="radiogroup" aria-label="כמה דוכנים יש בכיתה">
-                    {([3, 8, 11] as ClassSize[]).map((n) => (
-                      <button key={n} type="button" role="radio" aria-checked={size === n} className="wl-btn wl-toggle" onClick={() => setSize(n)} data-testid={`wl-size-${n}`}>
-                        {n} דוכנים
-                      </button>
-                    ))}
+                {!review && (
+                  <div className="wl-field">
+                    <span className="wl-field-label">שלב הצמיחה</span>
+                    <div className="wl-stages" role="radiogroup" aria-label="שלב הצמיחה">
+                      {STAGES.map((st, i) => (
+                        <button key={st.label} type="button" role="radio" aria-checked={stage === i} className="wl-btn wl-toggle" onClick={() => setStage(i)} data-testid={`wl-stage-${i + 1}`}>
+                          <span className="wl-stage-n">{i + 1}</span>
+                          {st.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="wl-field">
                   <span className="wl-field-label">תנועה</span>
                   <div className="wl-toggles">
@@ -928,7 +1061,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                     >
                       חידוד מקרוב
                     </button>
-                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); }}>לאפס הפתעות והזמנות</button>
+                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); }}>לאפס הפתעות והזמנות</button>
                   </div>
                 </div>
                 <p className="wl-sheet-note">"חידוד מקרוב" נדלק לבד באייפון. אם התמונה מטושטשת כשמתקרבים, או שמשהו זז ממקומו, כדאי להחליף את ההגדרה הזו.</p>
@@ -938,6 +1071,8 @@ export default function World({ review }: { review?: LabStore[] }) {
           </div>
         </div>
       )}
+
+      {inviteView && <InviteSim inviter={myName} onDone={finishInvite} onClose={() => setInviteView(null)} />}
 
       {/* ── החנות ── */}
       <div

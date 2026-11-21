@@ -114,10 +114,11 @@
 /* ── אזורי נגיעה: פעילים רק ברמה שלהם ── */
 .wl-hit { position: absolute; padding: 0; margin: 0; border: 0; background: transparent; pointer-events: none; }
 .wl-surprise { border-radius: 50%; }
-.wl-root[data-level="0"] [data-lv~="0"],
-.wl-root[data-level="1"] [data-lv~="1"],
-.wl-root[data-level="2"] [data-lv~="2"],
-.wl-root[data-level="3"] [data-lv~="3"] { pointer-events: auto; cursor: pointer; }
+.wl-root[data-level="0"] [data-lv~="0"]:not(.wl-label),
+.wl-root[data-level="1"] [data-lv~="1"]:not(.wl-label),
+.wl-root[data-level="2"] [data-lv~="2"]:not(.wl-label),
+.wl-root[data-level="3"] [data-lv~="3"]:not(.wl-label),
+.wl-root[data-level="4"] [data-lv~="4"]:not(.wl-label) { pointer-events: auto; cursor: pointer; }
 .wl-plot:focus-visible, .wl-hit:focus-visible {
   outline: calc(3px / var(--s)) solid #4a3a66;
   outline-offset: calc(3px / var(--s));
@@ -145,13 +146,21 @@
   text-overflow: ellipsis;
 }
 .wl-label-pin { transform: translate(-50%, -100%) scale(calc(1 / var(--s))); transform-origin: 50% 100%; font-weight: 700; }
-.wl-plate { font-size: 12px; font-weight: 400; max-width: 122px; display: inline-flex; gap: 5px; align-items: center; }
-.wl-plate > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.wl-plate { font-size: 12px; font-weight: 400; max-width: 128px; display: inline-flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.25; }
+.wl-plate > span { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.wl-plate em { font-style: normal; display: inline-flex; gap: 5px; align-items: center; }
 .wl-plate b { font-weight: 700; font-size: 10.5px; padding: 0 4px; background: #6f4b28; color: #fff; }
 .wl-plate[data-mine="1"] { border-width: 1.5px; font-weight: 500; }
 .wl-root[data-moving="0"][data-level="0"] .wl-label[data-lv="0"],
 .wl-root[data-moving="0"][data-level="1"] .wl-label[data-lv="1"],
-.wl-root[data-moving="0"][data-level="2"] .wl-label[data-lv="2"] { opacity: 1; }
+.wl-root[data-moving="0"][data-level="2"] .wl-label[data-lv="2"],
+.wl-root[data-moving="0"][data-level="3"] .wl-label[data-lv="3"] { opacity: 1; }
+.wl-plate i { font-style: normal; font-weight: 700; flex: none; }
+.wl-class { display: inline-flex; flex-direction: column; align-items: center; gap: 0; padding: 4px 8px; text-align: center; transform: translate(-50%, -50%) scale(calc(1 / var(--s))); transform-origin: 50% 50%; }
+.wl-class b { font-size: 15px; font-weight: 700; }
+.wl-class span { font-size: 11px; font-weight: 400; }
+.wl-class[data-mine="1"] { background: #6f4b28; color: #fff; border-color: #6f4b28; }
+.wl-grade { background: none; border: 0; font-size: 12px; font-weight: 700; color: #4a3320; padding: 0; }
 .wl-root[data-drag="1"] .wl-label { opacity: 0 !important; transition: none; }
 
 /* ── תנועה קטנה בעולם ── */
@@ -166,7 +175,7 @@
 @keyframes wl-cloud { from { transform: translateX(-900px); } to { transform: translateX(2700px); } }
 .wl-cloud { animation: wl-cloud 80s linear infinite; }
 .wl-clouds { transition: opacity 0.5s; }
-.wl-root[data-level="2"] .wl-clouds, .wl-root[data-level="3"] .wl-clouds { opacity: 0; }
+.wl-root[data-level="2"] .wl-clouds, .wl-root[data-level="3"] .wl-clouds, .wl-root[data-level="4"] .wl-clouds { opacity: 0; }
 
 @keyframes wl-ripple { from { transform: scale(0.5); opacity: 0.9; } to { transform: scale(1.45); opacity: 0; } }
 .wl-ripple circle { transform-origin: 550px 660px; animation: wl-ripple 2.4s ease-out infinite; }
@@ -216,13 +225,18 @@
 /* רמות פירוט של התנועה: מה שרחוק לא זז, ובזמן תעופה הכול נח.
    הכללים פונים רק לאלמנטים שבאמת מונפשים (ולא ל-"*"), כדי שהחלפת רמה לא
    תחייב את הדפדפן לחשב מחדש את העיצוב של כל 1,500 הצורות בעולם. */
-.wl-root[data-level="0"] .wl-mall-life,
-.wl-root[data-level="0"] .wl-detail { display: none; }
+.wl-root[data-level="0"] .wl-mall-life, .wl-root[data-level="1"] .wl-mall-life,
+.wl-root[data-level="0"] .wl-detail, .wl-root[data-level="1"] .wl-detail { display: none; }
 .wl-root[data-level="0"] .wl-mall :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
-.wl-root[data-level="1"] .wl-mall .wl-sway,
-.wl-root[data-level="1"] .wl-plot :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation: none !important; }
+.wl-root[data-level="1"] .wl-mall :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
+.wl-root[data-level="0"] .wl-campus :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
+.wl-root[data-level="2"] .wl-mall .wl-sway,
+.wl-root[data-level="2"] .wl-plot :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation: none !important; }
 .wl-root[data-level="2"] .wl-city :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
-.wl-root[data-level="3"] .wl-city :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation-play-state: paused !important; }
+.wl-root[data-level="3"] .wl-city :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
+.wl-root[data-level="4"] .wl-city :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
+.wl-root[data-level="3"] .wl-campus :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
+.wl-root[data-level="4"] .wl-campus :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation-play-state: paused !important; }
 .wl-root[data-moving="1"] .wl-plane :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]),
 .wl-root[data-drag="1"] .wl-plane :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation-play-state: paused !important; }
 .wl-root[data-calm="1"] .wl-plane :is(.wl-sway, .wl-bob, .wl-waves, .wl-bus, .wl-cloud, .wl-ripple circle, .wl-jets, .wl-walker, .wl-walker-flip, .wl-step, .wl-butterfly-a, .wl-butterfly-b, .wl-grow, .awning-flap, .star-bob, [class*="kp-"]) { animation: none !important; }
@@ -312,6 +326,8 @@
 .wl-ladder .wl-btn:first-child { margin-top: 0; }
 .wl-step-btn { flex-direction: column; gap: 0; width: 50px; min-height: 52px; padding: 2px 0; font-size: 11.5px; font-weight: 400; color: #5a5348; }
 .wl-step-btn[aria-current="true"] { background: var(--ink); color: var(--white); font-weight: 700; }
+.wl-step-btn[data-locked="1"] { background: var(--sand, #ece6de); color: #6a6257; }
+.wl-ladder .wl-step-btn { min-height: 50px; }
 
 .wl-bottom {
   position: absolute;
@@ -371,6 +387,26 @@
 .wl-toggle[aria-pressed="true"], .wl-toggle[aria-checked="true"] { background: var(--ink); color: var(--white); font-weight: 700; }
 .wl-sheet-note { font-size: 13px; font-weight: 300; color: var(--muted, #6a6257); margin: 0; line-height: 1.45; }
 .wl-msg { background: var(--ok-bg, #eef3ec); border: 1px solid var(--ok-line, #cfdccb); padding: 12px; font-size: 15px; line-height: 1.45; }
+.wl-rules { margin: 0; padding: 0 18px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 300; line-height: 1.45; }
+.wl-stages { display: flex; flex-direction: column; gap: 6px; }
+.wl-stages .wl-btn { justify-content: flex-start; gap: 10px; }
+.wl-stage-n { font-weight: 700; font-variant-numeric: tabular-nums; }
+.wl-input { min-height: 48px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: 0; background: var(--white); color: var(--ink); font: inherit; font-size: 17px; width: 100%; user-select: text; -webkit-user-select: text; }
+.wl-input:focus-visible { outline: 3px solid #4a3a66; outline-offset: 2px; }
+
+/* ── הצד השני של ההזמנה (הדמיה) ── */
+.wl-invite { position: absolute; inset: 0; z-index: 40; background: var(--canvas); overflow-y: auto; touch-action: pan-y; animation: wl-up 0.3s ease-out both; user-select: text; -webkit-user-select: text; }
+.wl-invite-bar { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: calc(8px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) 8px max(14px, env(safe-area-inset-left, 0px)); background: var(--canvas); border-bottom: 1px solid var(--stone, #d6cfc4); z-index: 2; }
+.wl-invite-x { position: static; }
+.wl-invite-body { max-width: 460px; margin: 0 auto; padding: 18px max(18px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 14px; }
+.wl-invite-body h2 { font-size: 24px; font-weight: 300; line-height: 1.25; margin: 0; }
+.wl-invite-body p { margin: 0; font-size: 16px; line-height: 1.5; }
+.wl-invite-art { width: 62%; margin: 4px auto 0; }
+.wl-invite-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.wl-invite-steps { display: flex; gap: 6px; }
+.wl-invite-steps span { flex: 1; height: 4px; background: var(--stone, #d6cfc4); }
+.wl-invite-steps span[data-on="1"] { background: var(--ink); }
+
 .wl-notices { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .wl-notices li { border: 1px solid var(--stone, #d6cfc4); padding: 10px 12px; font-size: 15px; background: var(--canvas); }
 

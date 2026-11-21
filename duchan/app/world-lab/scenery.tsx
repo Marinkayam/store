@@ -1,4 +1,4 @@
-import { CLASS_NAME, MALL, WORLD, type ClassSize } from "./data";
+import { CAMPUS, CITY_K, CLASSES, CLASS_NAME, MALL, OTHER_SCHOOL, SCHOOL_NAME, WORLD, type ClassLot, type ClassSize } from "./data";
 
 /**
  * הסביבה של עולם דוכן: עיר קטנה ליד הים, ובמרכזה הקניון של הכיתה.
@@ -95,7 +95,7 @@ const CITY_TREES: [number, number, number?][] = [
   [80, 900, 30], [2330, 900, 30],
 ];
 
-function City() {
+function City({ second }: { second: boolean }) {
   return (
     <g className="wl-city">
       {/* שדות מסביב לעיר, והים בדרום */}
@@ -195,12 +195,34 @@ function City() {
         <path d="M100 2760h400v440h-400zM100 2980h400M240 2760v50h120v-50M240 3200v-50h120v50" stroke="var(--canvas)" strokeWidth={6} fill="none" />
         <circle cx="300" cy="2980" r="50" stroke="var(--canvas)" strokeWidth={6} fill="none" />
       </g>
-      <g>
-        <rect x="760" y="2760" width="880" height="600" rx="30" fill="var(--wl-pave2)" stroke={L} strokeWidth={6} strokeDasharray="34 26" />
-        <path d="M1200 3110 v-110" stroke={L} strokeWidth={8} />
-        <rect x="1080" y="2900" width="240" height="100" fill="var(--canvas)" {...city} />
-        <path d="M1200 2925 v50 M1175 2950 h50" stroke={L} strokeWidth={8} strokeLinecap="round" />
-      </g>
+      {second ? (
+        <g>
+          {/* בית ספר נוסף בעיר: בניין, חצר, ומתחמי כיתות */}
+          <rect x="760" y="2760" width="880" height="600" rx="30" fill="var(--wl-pave)" {...city} />
+          <rect x="960" y="2800" width="480" height="130" fill="var(--wl-wall)" {...city} />
+          <rect x="950" y="2780" width="500" height="30" fill="var(--wl-roof3)" {...city} />
+          {Array.from({ length: 7 }, (_, i) => (
+            <rect key={i} x={985 + i * 64} y="2830" width="34" height="34" className="wl-window" fill="var(--wl-window)" {...city} strokeWidth={3} />
+          ))}
+          <rect x="1180" y="2880" width="40" height="50" fill="var(--wl-trunk)" {...city} strokeWidth={3} />
+          {[0, 1, 2].map((i) => (
+            <g key={i}>
+              <rect x={800 + i * 280} y="2980" width="240" height="330" rx="16" fill="var(--wl-plaza)" stroke="var(--wl-hedge)" strokeWidth={10} />
+              {i !== 1 &&
+                [0, 1, 2, 3].map((j) => (
+                  <rect key={j} x={822 + i * 280 + j * 50} y="3040" width="40" height="26" fill={["var(--wl-roof2)", "var(--wl-roof)", "var(--wl-roof3)", "var(--warning)"][(i + j) % 4]} />
+                ))}
+            </g>
+          ))}
+        </g>
+      ) : (
+        <g>
+          <rect x="760" y="2760" width="880" height="600" rx="30" fill="var(--wl-pave2)" stroke={L} strokeWidth={6} strokeDasharray="34 26" />
+          <path d="M1200 3110 v-110" stroke={L} strokeWidth={8} />
+          <rect x="1080" y="2900" width="240" height="100" fill="var(--canvas)" {...city} />
+          <path d="M1200 2925 v50 M1175 2950 h50" stroke={L} strokeWidth={8} strokeLinecap="round" />
+        </g>
+      )}
 
       {/* עצים */}
       {CITY_TREES.map(([x, y, r], i) => (
@@ -236,6 +258,95 @@ function City() {
         <circle cx="34" cy="2684" r="10" fill={L} />
         <circle cx="116" cy="2684" r="10" fill={L} />
       </g>
+    </g>
+  );
+}
+
+/* ── בית הספר: בניין, חצר, ומתחם לכל כיתה ── */
+
+const school = { stroke: L, strokeWidth: 5, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+const MINI = ["var(--wl-roof2)", "var(--wl-roof)", "var(--wl-roof3)", "var(--warning)", "var(--blush)", "var(--lavender)"];
+
+/** כיתה אחרת: רואים אותה מבחוץ. מתחם, שער, וכמה דוכנים יש בה לפי צבעי הסוככים. */
+function OtherClass({ c, open }: { c: ClassLot; open: boolean }) {
+  const n = open ? c.stalls : 0;
+  return (
+    <g transform={`translate(${c.x} ${c.y})`}>
+      {n > 0 ? (
+        <>
+          <rect x="0" y="0" width={c.w} height={c.h} rx="34" fill="var(--wl-pave)" />
+          <rect x="9" y="9" width={c.w - 18} height={c.h - 18} rx="27" fill="none" stroke="var(--wl-hedge)" strokeWidth={18} />
+          <rect x="34" y="176" width={c.w - 68} height="44" rx="22" fill="var(--wl-hedge)" />
+          <rect x="60" y="452" width={c.w - 120} height="476" rx="46" fill="var(--wl-plaza)" />
+          <circle cx={c.w / 2} cy="660" r="70" fill="var(--wl-water)" {...school} />
+          {Array.from({ length: n }, (_, i) => (
+            <g key={i}>
+              <rect x={36 + i * 116} y="262" width="100" height="26" fill={MINI[i % MINI.length]} />
+              <rect x={40 + i * 116} y="296" width="92" height="34" fill="var(--wl-trunk)" />
+            </g>
+          ))}
+          <rect x={c.w / 2 - 120} y={c.h - 96} width="240" height="96" fill="var(--wl-wall)" {...school} />
+          <path d={`M${c.w / 2 - 50} ${c.h} v-60 h100 v60`} fill="var(--wl-trunk)" {...school} />
+        </>
+      ) : (
+        <>
+          <rect x="0" y="0" width={c.w} height={c.h} rx="34" fill="var(--wl-grass)" stroke={L} strokeWidth={6} strokeDasharray="40 30" />
+          <rect x="0" y="0" width={c.w} height={c.h} rx="34" fill="url(#wl-meadow-far)" />
+          <path d={`M${c.w / 2} ${c.h / 2 + 150} v-150`} stroke={L} strokeWidth={10} />
+          <rect x={c.w / 2 - 170} y={c.h / 2 - 150} width="340" height="150" fill="var(--canvas)" {...school} />
+          <path d={`M${c.w / 2} ${c.h / 2 - 115} v80 M${c.w / 2 - 40} ${c.h / 2 - 75} h80`} stroke={L} strokeWidth={10} strokeLinecap="round" />
+        </>
+      )}
+    </g>
+  );
+}
+
+function Campus({ others }: { others: boolean }) {
+  const cx = CAMPUS.x + CAMPUS.w / 2;
+  const by = CAMPUS.y + 110; // ראש הבניין
+  return (
+    <g className="wl-campus">
+      <rect x={CAMPUS.x} y={CAMPUS.y} width={CAMPUS.w} height={CAMPUS.h} rx="90" fill="var(--wl-pave2)" />
+      <rect x={CAMPUS.x + 14} y={CAMPUS.y + 14} width={CAMPUS.w - 28} height={CAMPUS.h - 28} rx="78" fill="none" stroke="var(--wl-hedge)" strokeWidth={28} />
+      <rect x={cx - 260} y={CAMPUS.y + CAMPUS.h - 40} width="520" height="60" fill="var(--wl-pave2)" />
+
+      {/* הבניין */}
+      <g data-surprise-art="bell">
+        <rect x={cx - 1250} y={by + 70} width="2500" height="470" fill="var(--wl-wall)" {...school} />
+        <rect x={cx - 1280} y={by} width="2560" height="90" fill="var(--wl-roof2)" {...school} />
+        {Array.from({ length: 28 }, (_, i) => {
+          const col = i % 14;
+          if (col === 6 || col === 7) return null;
+          return <rect key={i} x={cx - 1180 + col * 172} y={by + 130 + Math.floor(i / 14) * 170} width="110" height="110" className="wl-window" fill="var(--wl-window)" {...school} strokeWidth={4} />;
+        })}
+        <rect x={cx - 140} y={by + 300} width="280" height="240" fill="var(--wl-trunk)" {...school} />
+        <rect x={cx - 330} y={by + 120} width="660" height="130" fill="var(--canvas)" {...school} />
+        <text x={cx} y={by + 212} textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={700} fontSize="86" fill="#6f4b28">
+          {SCHOOL_NAME}
+        </text>
+        <path d={`M${cx + 1120} ${by} v-190`} stroke={L} strokeWidth={8} />
+        <path className="wl-sway" style={{ transformOrigin: `${cx + 1120}px ${by - 150}px` }} d={`M${cx + 1120} ${by - 190} l150 40 l-150 40 z`} fill="var(--wl-wall3)" {...school} />
+        {/* פעמון */}
+        <path d={`M${cx - 1150} ${by - 20} h120 M${cx - 1090} ${by - 20} v-70`} stroke={L} strokeWidth={8} />
+        <path d={`M${cx - 1150} ${by - 90} q60 -90 120 0 z`} fill="var(--warning)" {...school} />
+      </g>
+
+      {/* החצר התחתונה: מגרש, ספסלים ועצים */}
+      <g>
+        <rect x={cx - 760} y={CAMPUS.y + CAMPUS.h - 1060} width="1520" height="760" rx="30" fill="var(--wl-roof3)" opacity=".5" />
+        <path d={`M${cx - 760} ${CAMPUS.y + CAMPUS.h - 1060} h1520 v760 h-1520 z M${cx} ${CAMPUS.y + CAMPUS.h - 1060} v760`} stroke="var(--canvas)" strokeWidth={10} fill="none" />
+        <circle cx={cx} cy={CAMPUS.y + CAMPUS.h - 680} r="150" stroke="var(--canvas)" strokeWidth={10} fill="none" />
+        {[-1350, -1050, 1050, 1350].map((dx) => (
+          <g key={dx}>
+            <rect x={cx + dx - 14} y={CAMPUS.y + CAMPUS.h - 560} width="28" height="90" fill="var(--wl-trunk)" />
+            <circle cx={cx + dx} cy={CAMPUS.y + CAMPUS.h - 640} r="120" fill="var(--wl-tree)" {...school} />
+          </g>
+        ))}
+      </g>
+
+      {CLASSES.filter((c) => !c.mine).map((c) => (
+        <OtherClass key={c.id} c={c} open={others} />
+      ))}
     </g>
   );
 }
@@ -516,7 +627,7 @@ function Mall({ size, flowers, alley, splash, hop }: { size: ClassSize; flowers:
   );
 }
 
-export function Scenery({ size, flowers, alley, splash, hop }: { size: ClassSize; flowers: number; alley: boolean; splash: number; hop: number }) {
+export function Scenery({ size, flowers, alley, splash, hop, others, second }: { size: ClassSize; flowers: number; alley: boolean; splash: number; hop: number; others: boolean; second: boolean }) {
   return (
     <svg className="wl-scenery" viewBox={`0 0 ${WORLD.w} ${WORLD.h}`} width={WORLD.w} height={WORLD.h} aria-hidden>
       <defs>
@@ -526,13 +637,20 @@ export function Scenery({ size, flowers, alley, splash, hop }: { size: ClassSize
         <pattern id="wl-orchard" width="50" height="46" patternUnits="userSpaceOnUse">
           <circle cx="25" cy="23" r="15" fill="var(--wl-tree)" />
         </pattern>
+        <pattern id="wl-meadow-far" width="150" height="120" patternUnits="userSpaceOnUse">
+          <circle cx="30" cy="34" r="8" fill="var(--blush)" />
+          <circle cx="104" cy="80" r="8" fill="var(--warning)" />
+        </pattern>
         <pattern id="wl-meadow" width="64" height="48" patternUnits="userSpaceOnUse">
           <circle cx="14" cy="14" r="2.6" fill="var(--blush)" />
           <circle cx="44" cy="30" r="2.6" fill="var(--warning)" />
           <path d="M28 40 l-2 -7 M30 40 l1 -8 M32 40 l3 -6" stroke="var(--wl-tree)" strokeWidth={1.2} strokeLinecap="round" />
         </pattern>
       </defs>
-      <City />
+      <g transform={`scale(${CITY_K})`}>
+        <City second={second} />
+      </g>
+      <Campus others={others} />
       <Mall size={size} flowers={flowers} alley={alley} splash={splash} hop={hop} />
     </svg>
   );
@@ -590,7 +708,7 @@ export function Foreground({ catJump }: { catJump: number }) {
         </g>
       </g>
       {/* עננים שעוברים מעל העיר. נעלמים כשמתקרבים. */}
-      <g className="wl-clouds">
+      <g className="wl-clouds" transform={`scale(${CITY_K})`}>
         {[[300, 700, 1], [1500, 1700, 1.3], [700, 3000, 1.1]].map(([x, y, k], i) => (
           <g key={i} className="wl-cloud" style={{ animationDelay: `${-i * 21}s` }}>
             <path
