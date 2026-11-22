@@ -126,12 +126,12 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
   const top = [...fresh].sort((a, b) => b.coins - a.coins)[0];
   const gained = kind === "welcome" ? kupa.coins : Math.max(0, kupa.coins - show.from);
   const title =
-    kind === "welcome" ? "פתחנו לך משחק!" : kind === "level" ? `הדוכן עלה רמה: ${kupa.levelName}` : top?.title ?? "אות חדש";
+    kind === "welcome" ? "פתחנו לכם משחק!" : kind === "level" ? `הדוכן עלה רמה: ${kupa.levelName}` : top?.title ?? "אות חדש";
   const text =
     kind === "welcome"
-      ? `על כל מה שכבר עשית בדוכן אספת ${kupa.coins} מטבעות דוכן. כל צעד חדש מוסיף עוד, והדוכן גדל.`
+      ? `על כל מה שכבר עשיתם בדוכן אספתם ${kupa.coins} מטבעות דוכן. כל צעד חדש מוסיף עוד, והדוכן גדל.`
       : kind === "level"
-        ? "המטבעות שאספת שדרגו את הדוכן. ככה הוא נראה עכשיו."
+        ? "המטבעות שאספתם שדרגו את הדוכן. ככה הוא נראה עכשיו."
         : top?.lesson ?? "";
   const shareLine = kind === "level" ? `הדוכן שלי עלה לרמה ${kupa.level + 1}: ${kupa.levelName} 🎪 בואו לראות 👇` : top?.share;
   const link = typeof window !== "undefined" ? `${window.location.origin}${storePath(kupa.slug)}` : "";
@@ -180,7 +180,7 @@ function Sheet({ show, published, onClose }: { show: Show; published: boolean; o
             </span>
           )}
           <span className="text-[13px] text-[var(--muted)] tabular-nums" data-testid="kupa-celebrate-total">
-            יש לך: <b className="text-[var(--ink)]">{count}</b>
+            יש לכם: <b className="text-[var(--ink)]">{count}</b>
           </span>
         </div>
 

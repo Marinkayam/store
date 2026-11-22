@@ -91,7 +91,7 @@ check("צוות הדוכן: ראש הדוכן לבד, עם 👑 וטלפון ה�
 await owner.page.fill("input[aria-label='טלפון של מי שמצטרפים']", OWNER);
 await owner.page.click("[data-testid=team-invite]");
 await owner.page.waitForTimeout(600);
-check("להזמין את המספר של עצמי — נחסם", ((await owner.page.textContent("body")) ?? "").includes("זה המספר שלך"));
+check("להזמין את המספר של עצמי — נחסם", ((await owner.page.textContent("body")) ?? "").includes("זה המספר שלכם"));
 await owner.page.fill("input[aria-label='טלפון של מי שמצטרפים']", "052-111-0010");
 await owner.page.click("[data-testid=team-invite]");
 await owner.page.waitForSelector("[data-testid=team-invite-row]");

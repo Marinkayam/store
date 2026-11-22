@@ -225,7 +225,7 @@ export default function KupaPage() {
               </span>
             </>
           ) : (
-            <span className="text-[13px] font-bold text-[var(--ok-ink)]">הגעת לרמה הכי גבוהה. כוכב השוק!</span>
+            <span className="text-[13px] font-bold text-[var(--ok-ink)]">הגעתם לרמה הכי גבוהה. כוכב השוק!</span>
           )}
         </div>
       </section>
@@ -255,7 +255,7 @@ export default function KupaPage() {
           )}
           {nb.href && (
             <a href={nb.href} className="bg-[var(--ink)] text-white text-center py-3 text-[14px] font-bold" data-testid="kupa-next-go">
-              בואי נעשה את זה
+              בואו נעשה את זה
             </a>
           )}
         </section>
@@ -521,7 +521,7 @@ function RiddleBox({ lesson, solved, onSolved }: { lesson: Lesson; solved: boole
         <span className="text-[11.5px] font-bold px-2 py-0.5 bg-[var(--warn-bg)] text-[var(--warn-ink)]">חידת {lesson.topic}</span>
         {(solved || right) && (
           <span className="flex items-center gap-1 text-[12px] font-bold text-[var(--ok-ink)]">
-            <Icon name="star" size={14} tone="var(--warning)" className="text-[#6f4b28]" /> פתרת!
+            <Icon name="star" size={14} tone="var(--warning)" className="text-[#6f4b28]" /> פתרתם!
           </span>
         )}
       </div>
@@ -561,11 +561,11 @@ function RiddleBox({ lesson, solved, onSolved }: { lesson: Lesson; solved: boole
         )}
         {right ? (
           <p className="text-[13px] leading-relaxed text-[var(--ink)]" data-testid="riddle-why">
-            <b>נכון!{earned && " קיבלת כוכב."} </b>
+            <b>נכון!{earned && " קיבלתם כוכב."} </b>
             <Mathy text={lesson.why} />
           </p>
         ) : picked ? (
-          <p className="text-[13px] text-[var(--danger)] font-bold" data-testid="riddle-retry">לא בדיוק. נסי שוב 🙂</p>
+          <p className="text-[13px] text-[var(--danger)] font-bold" data-testid="riddle-retry">לא בדיוק. נסו שוב 🙂</p>
         ) : null}
       </div>
     </section>
@@ -593,7 +593,7 @@ function RiddlesCard({
           <div className="text-[11.5px] font-bold text-[var(--wood)] tracking-wide">חידות של סוחרים</div>
           <h2 id="riddles-title" className="text-[16px] font-black leading-tight" data-testid="riddle-rank">{rank.name}</h2>
           <div className="text-[12.5px] text-[var(--muted)] mt-0.5">
-            {rank.next ? `עוד ${rank.next.missing} כוכבים לתואר "${rank.next.name}"` : "הגעת לתואר הכי גבוה!"}
+            {rank.next ? `עוד ${rank.next.missing} כוכבים לתואר "${rank.next.name}"` : "הגעתם לתואר הכי גבוה!"}
           </div>
         </div>
         <span className="flex items-center gap-1 text-[18px] font-black tabular-nums shrink-0" data-testid="kupa-stars">
@@ -607,7 +607,7 @@ function RiddlesCard({
         data-testid="riddle-new"
         className="bg-[var(--ink)] text-white py-3 text-[14.5px] font-bold disabled:opacity-40"
       >
-        {remaining ? "חידה חדשה" : "פתרת את כל החידות!"}
+        {remaining ? "חידה חדשה" : "פתרתם את כל החידות!"}
       </button>
       <p className="text-[12px] text-[var(--muted)] leading-relaxed">
         כל חידה שפותרים = כוכב. במאגר מחכות עוד <b className="tabular-nums" data-testid="riddle-remaining">{remaining}</b> חידות: חשבון, צרכנות, עסק וחיסכון.
@@ -670,7 +670,7 @@ function RiddleSheet({
         {current ? (
           <RiddleBox key={current.id} lesson={current} solved={false} onSolved={(answer) => onSolved(current.id, answer)} />
         ) : (
-          <p className="text-center text-[15px] font-bold py-6">פתרת את כל החידות במאגר!</p>
+          <p className="text-center text-[15px] font-bold py-6">פתרתם את כל החידות במאגר!</p>
         )}
 
         {done && (
@@ -791,7 +791,7 @@ function WeekQuest({ kupa, storeId }: { kupa: KupaData; storeId: string }) {
           <p className="text-[13px] text-[var(--muted)] leading-relaxed">{q.how}</p>
           <div className="flex gap-2">
             <a href={q.href} className="flex-1 bg-[var(--ink)] text-white text-center py-3 text-[14px] font-bold" data-testid="week-quest-go">
-              בואי נעשה את זה
+              בואו נעשה את זה
             </a>
             <button onClick={skip} className="px-4 border-[1.5px] border-[var(--line)] text-[13px] font-bold" data-testid="week-quest-skip">
               לדלג השבוע
@@ -848,8 +848,8 @@ function PunchCard({ kupa }: { kupa: KupaData }) {
         ))}
       </div>
       <p className="text-[12.5px] text-[var(--muted)] leading-relaxed">
-        מקבלים ניקוב על כל שבוע שעשית בו משהו בדוכן. כרטיסייה מלאה = {CARD_COINS} מטבעות, ומתחילים חדשה. שבוע שמפספסים לא מוחק כלום.
-        {kupa.cards > 0 && <b className="text-[var(--ink)]"> כבר מילאת {kupa.cards === 1 ? "כרטיסייה אחת" : `${kupa.cards} כרטיסיות`}!</b>}
+        מקבלים ניקוב על כל שבוע שעשיתם בו משהו בדוכן. כרטיסייה מלאה = {CARD_COINS} מטבעות, ומתחילים חדשה. שבוע שמפספסים לא מוחק כלום.
+        {kupa.cards > 0 && <b className="text-[var(--ink)]"> כבר מילאתם {kupa.cards === 1 ? "כרטיסייה אחת" : `${kupa.cards} כרטיסיות`}!</b>}
       </p>
     </section>
   );
@@ -904,7 +904,7 @@ function Shop({
       }
       onChange(j);
       if (action === "buy") {
-        setMsg({ ok: true, text: `${shopTitle(item)} — שלך!` });
+        setMsg({ ok: true, text: `${shopTitle(item)} — שלכם!` });
         confettiBurst(window.innerWidth / 2, window.innerHeight * 0.3);
       }
       setPicked(null);
@@ -926,7 +926,7 @@ function Shop({
         <div className="px-4 py-3 flex items-center justify-between gap-2">
           <h2 id="shop-title" className="text-[15px] font-black">חנות הקישוטים</h2>
           <span className="flex items-center gap-1 text-[15px] font-black tabular-nums" data-testid="shop-balance">
-            יש לך {balance}
+            יש לכם {balance}
             <Coin size={18} />
           </span>
         </div>
@@ -946,7 +946,7 @@ function Shop({
         >
           <span className="h-10 bg-[var(--canvas)] flex items-center justify-center"><span className="w-3/4 h-3 bg-[var(--lavender)]" /></span>
           <b className="text-[13px]">סוכך סגול</b>
-          <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{deco.awning === "lavender" ? "✓ על הדוכן" : "שלך · לשים על הדוכן"}</span>
+          <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{deco.awning === "lavender" ? "✓ על הדוכן" : "שלכם · לשים על הדוכן"}</span>
         </button>
         {SHOP.map((it) => {
           const have = owned.includes(it.key);
@@ -981,7 +981,7 @@ function Shop({
               <b className="text-[13px] leading-tight">{it.title}</b>
               <span className="text-[11px] text-[var(--muted)] leading-snug">{it.where}</span>
               {have ? (
-                <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{on ? "✓ על הדוכן" : "שלך · לשים על הדוכן"}</span>
+                <span className="text-[11.5px] font-bold text-[var(--ok-ink)]">{on ? "✓ על הדוכן" : "שלכם · לשים על הדוכן"}</span>
               ) : (
                 <span className={`flex items-center gap-1 text-[13px] font-black tabular-nums ${poor ? "text-[var(--muted)]" : ""}`}>
                   {it.price}
@@ -1007,7 +1007,7 @@ function Shop({
             {balance >= picked.price ? (
               <>לקנות <b>{picked.title}</b> ב-{picked.price} מטבעות?</>
             ) : (
-              <>חסרות עוד <b className="tabular-nums">{picked.price - balance}</b> מטבעות ל{picked.title}</>
+              <>חסרים עוד <b className="tabular-nums">{picked.price - balance}</b> מטבעות ל{picked.title}</>
             )}
           </span>
           {balance >= picked.price && (
@@ -1077,8 +1077,8 @@ function ExplainSheet({
         ) : (
           <ul className="flex flex-col gap-2 text-[14px] leading-relaxed">
             <li><b>איך מקבלים?</b> כוכב על כל חידה שפותרים נכון: חשבון, כסף וצרכנות.</li>
-            <li><b>הדרגה שלך:</b> {rank.name}{rank.next ? `. עוד ${rank.next.missing} כוכבים ל"${rank.next.name}".` : ". הדרגה הכי גבוהה!"}</li>
-            <li><b>טעית?</b> אין עונש. מנסים שוב, והכוכב מחכה.</li>
+            <li><b>הדרגה שלכם:</b> {rank.name}{rank.next ? `. עוד ${rank.next.missing} כוכבים ל"${rank.next.name}".` : ". הדרגה הכי גבוהה!"}</li>
+            <li><b>טעיתם?</b> אין עונש. מנסים שוב, והכוכב מחכה.</li>
           </ul>
         )}
         <div className="flex gap-2 mt-1">

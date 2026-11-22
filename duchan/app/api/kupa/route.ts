@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin();
   const { data: store } = await db.from("stores").select("*").eq("id", storeId).maybeSingle();
   if (!store || !(await canManage(db, store.id, user.id))) {
-    return NextResponse.json({ error: "אין לך גישה לדוכן הזה" }, { status: 403 });
+    return NextResponse.json({ error: "אין לכם גישה לדוכן הזה" }, { status: 403 });
   }
 
   const k = await loadKupa(db, store);

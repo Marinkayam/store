@@ -1,4 +1,4 @@
-// E2E: "רוצה גם דוכן כזה?" בתחתית דוכן.
+// E2E: "רוצים גם דוכן כזה?" בתחתית דוכן.
 //
 // מרינה: "לא רואים את הפרטים של רוצה גם דוכן כזה — זה חשוב מאוד ומביא לקוחות".
 // בדוכן עם תמונת רקע, השכבה הקבועה של התמונה נצבעה מעל הכרטיס (הוא ישב
@@ -34,8 +34,8 @@ async function bottom(label) {
   const card = p.locator("[data-testid=open-own]");
   await card.scrollIntoViewIfNeeded();
   await p.waitForTimeout(300);
-  check(`${label}: הכותרת "רוצה גם דוכן כזה?" נראית`,
-    await p.getByRole("heading", { name: "רוצה גם דוכן כזה?" }).isVisible());
+  check(`${label}: הכותרת "רוצים גם דוכן כזה?" נראית`,
+    await p.getByRole("heading", { name: "רוצים גם דוכן כזה?" }).isVisible());
   const cardText = (await card.textContent()) ?? "";
   check(`${label}: בלי שורת הצעדים ובלי 'בגדים שקטנו'`,
     (await p.locator("[data-testid=open-own-steps]").count()) === 0 && !cardText.includes("בגדים שקטנו"));

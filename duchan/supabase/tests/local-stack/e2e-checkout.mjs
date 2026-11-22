@@ -58,7 +58,7 @@ async function buyerWithCart() {
 }
 const fillBuyer = async (p) => {
   // במשלוח מבקשים שם ושם משפחה (בקשת לקוחה, 11.2026); באיסוף מספיק שם פרטי
-  await p.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "נועה לוי");
+  await p.fill("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", "נועה לוי");
   await p.fill("input[aria-label='מספר טלפון']", "0527778899");
 };
 const lastOrder = async () => (await db.query("select * from orders where store_id=$1 order by created_at desc limit 1", [store.id])).rows[0];

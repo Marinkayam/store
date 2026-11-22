@@ -1,7 +1,7 @@
 // E2E: מסך הפתיחה — מרינה, 10.2026 (ה"אור" הוסר אחר כך — מסך פשוט):
 //   • "הדוכן לא יפה בתוך המסגרת", "קווים יותר דקים", "להדליק את האור"
 //   • "אפשר להוריד את המילה דוכן"
-//   • "אם כבר פתחתי דוכן אז אתה יודע — אל תכתוב 'כבר פתחת דוכן?'"
+//   • "אם כבר פתחתי דוכן אז אתה יודע — אל תכתוב 'כבר פתחתם דוכן?'"
 import { chromium } from "playwright";
 import { verifyPhone, closeHelper } from "./sms-helper.mjs";
 import pg from "pg";
@@ -47,7 +47,7 @@ try {
   await guest.click("button[aria-label='הוספה לסל']", { timeout: 5000 });
   check("ו'הוספה לסל' לחיץ", true);
   await guest.goto(BASE + "/", { waitUntil: "networkidle" });
-  check("אורחת רואה 'כבר פתחת דוכן?'", await guest.locator("a[href='/login']:has-text('כבר פתחת דוכן')").isVisible());
+  check("אורחת רואה 'כבר פתחתם דוכן?'", await guest.locator("a[href='/login']:has-text('כבר פתחתם דוכן')").isVisible());
 
   /* מי שכבר יש לה דוכן */
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -60,7 +60,7 @@ try {
   await me.exposeFunction("__seen", (v) => seen.push(v));
   await me.addInitScript(() => {
     const tick = () => {
-      const a = [...document.querySelectorAll("a[href='/login']")].some((x) => x.textContent.includes("כבר פתחת דוכן"));
+      const a = [...document.querySelectorAll("a[href='/login']")].some((x) => x.textContent.includes("כבר פתחתם דוכן"));
       if (a) window.__seen?.(true);
       requestAnimationFrame(tick);
     };
@@ -80,7 +80,7 @@ try {
   check("ושורת הניווט לחיצה (לא מכוסה)", true);
   await me.click("[data-testid=cookie-ok]");
   check("'הבנתי' סוגר", (await me.locator("[data-testid=cookie-note]").count()) === 0);
-  check("ו'כבר פתחת דוכן?' לא מופיע אפילו לרגע", seen.length === 0, `${seen.length} פריימים`);
+  check("ו'כבר פתחתם דוכן?' לא מופיע אפילו לרגע", seen.length === 0, `${seen.length} פריימים`);
 } finally {
   await browser.close();
   await closeHelper();

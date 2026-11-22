@@ -88,7 +88,7 @@ export default function JoinPage({ params }: { params: Promise<{ token: string }
               {info.store.emoji}
             </div>
             <div>
-              <p className="text-[13px] text-[var(--muted)]">מזמינים אותך לנהל יחד את</p>
+              <p className="text-[13px] text-[var(--muted)]">מזמינים אתכם לנהל יחד את</p>
               <h1 className="text-[22px] font-bold mt-0.5" data-testid="join-store">{info.store.name}</h1>
             </div>
 

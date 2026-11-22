@@ -174,7 +174,7 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
             <div className="text-[13.5px] font-bold">להזמין חברים לפתוח דוכן</div>
             <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-0.5">
               כשחברים פותחים דוכנים, כולם מוכרים יותר, כי כולם גם קונים.
-              {store.ref_clicks > 0 && ` כבר ${store.ref_clicks} נכנסו דרך לינק ההזמנה שלך.`}
+              {store.ref_clicks > 0 && ` כבר ${store.ref_clicks} נכנסו דרך לינק ההזמנה שלכם.`}
             </p>
             <div className="grid grid-cols-2 gap-2 mt-2">
               <button onClick={() => send(inviteText(ctx, refLink))} className="fx-press bg-[var(--ink)] text-white py-2.5 text-[12.5px] font-bold">

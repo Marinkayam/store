@@ -108,8 +108,8 @@ await buyer.click("button[aria-label='עוד']");
 await buyer.click("button[aria-label='הוספה לסל']");
 await buyer.waitForTimeout(800);
 await buyer.click("[data-testid=cart-bar]");
-await buyer.waitForSelector("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
-await buyer.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "רוני");
+await buyer.waitForSelector("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
+await buyer.fill("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", "רוני");
 await buyer.fill("input[aria-label='מספר טלפון']", "052-000-1111");
 // אם החנות במצב משלוחים (ריצה קודמת השאירה אותו דלוק) — מסירה אישית,
 // אחרת ההזמנה תדרוש כתובת שהבדיקה הזו לא ממלאת

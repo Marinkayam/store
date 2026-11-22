@@ -8,7 +8,7 @@ export default function ContactNote({ text, className = "" }: { text: string | n
   if (!hasContact(text)) return null;
   return (
     <p role="status" data-testid="contact-note" className={`text-[12px] leading-snug text-[var(--warn-ink)] ${className}`}>
-      מספר טלפון או קישור לא יופיעו בדוכן. הקונים מקבלים את המספר שלך אחרי שהם מזמינים.
+      מספר טלפון או קישור לא יופיעו בדוכן. הקונים מקבלים את המספר שלכם אחרי שהם מזמינים.
     </p>
   );
 }

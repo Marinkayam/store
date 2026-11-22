@@ -21,7 +21,7 @@ import Icon from "./icons";
  */
 const NIGHT_SKY = "#2E3150";
 
-export default function StallHero({ name = "הדוכן שלך", className = "", still = false }: { name?: string; className?: string; still?: boolean }) {
+export default function StallHero({ name = "הדוכן שלכם",className = "", still = false }: { name?: string; className?: string; still?: boolean }) {
   const [night, setNight] = useState(false);
   if (still) {
     return (

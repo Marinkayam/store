@@ -200,7 +200,7 @@ try {
   check("בסל, עם אחד: 'עוד אחד וזה 2 ב-₪15'", ((await buyer.textContent("[data-testid=deal-nudge]")) ?? "").includes("עוד אחד וזה 2 ב-₪15"));
   await buyer.click(`button[aria-label='עוד, ${A.name}']`);
   await buyer.waitForSelector("[data-testid=line-deal]", { timeout: 5000 });
-  check("עם שניים: 'מבצע 2 ב-₪15 · חסכת ₪5'", ((await buyer.textContent("[data-testid=line-deal]")) ?? "").includes("חסכת ₪5"));
+  check("עם שניים: 'מבצע 2 ב-₪15 · חסכתם ₪5'", ((await buyer.textContent("[data-testid=line-deal]")) ?? "").includes("חסכתם ₪5"));
   check("וההצעה נעלמת", (await buyer.locator("[data-testid=deal-nudge]").count()) === 0);
   check("'חסכת במבצעים ₪5' מעל הסה\"כ", ((await buyer.textContent("[data-testid=deal-saved]")) ?? "").includes("₪5"));
   check("סה\"כ לתשלום ₪15", ((await buyer.textContent("[data-testid=order-total]")) ?? "").includes("₪15"));

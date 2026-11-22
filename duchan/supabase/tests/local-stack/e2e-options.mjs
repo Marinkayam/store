@@ -108,7 +108,7 @@ await buyer.locator("[data-testid=option-chip]", { hasText: "ורוד" }).click(
 await buyer.locator("button[aria-label='הוספה לסל']").click();
 await sheetGone();
 await buyer.click("text=פריטים");
-await buyer.waitForSelector("text=ההזמנה שלך");
+await buyer.waitForSelector("text=ההזמנה שלכם");
 // נבדק על שורות הסל ולא על גוף הדף: ה-placeholder של ההערה הוא "אפשר בורוד?"
 const lines = await buyer.locator("[data-line-name]").allTextContents();
 check("the two colours are two separate cart lines",
@@ -118,7 +118,7 @@ await buyer.screenshot({ path: `${shots}/63-cart-two-options.png`, fullPage: tru
 
 /* ── 4. הבחירה נכנסת להזמנה ולהודעת הקשר ── */
 // השם והטלפון נדרשים בקופה: ההזמנה נקלטת במערכת והמוכרת חוזרת לקונה
-await buyer.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "רוני");
+await buyer.fill("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", "רוני");
 await buyer.fill("input[aria-label='מספר טלפון']", "0520001111");
 // מסירה אישית אם מוצע — ריצה קודמת אולי השאירה משלוחים דלוקים בחנות
 const pickup = buyer.locator("button:has-text('איסוף מהדוכן')");
@@ -174,11 +174,11 @@ await fetch(`${BASE}/api/revalidate`, { method: "POST" }).catch(() => {});
 const stranger = await phone();
 await stranger.goto(`${BASE}/s/${slug}`, { waitUntil: "networkidle" });
 const strangerBody = await stranger.textContent("body");
-check("a buyer sees no management strip at all", !strangerBody.includes("זה הדוכן שלך"));
+check("a buyer sees no management strip at all", !strangerBody.includes("זה הדוכן שלכם"));
 check("a buyer gets no dashboard links", (await stranger.locator("a[href='/dashboard/products']").count()) === 0);
 
 await girl.goto(`${BASE}/s/${slug}`, { waitUntil: "networkidle" });
-await girl.waitForSelector("text=זה הדוכן שלך", { timeout: 10000 });
+await girl.waitForSelector("text=זה הדוכן שלכם", { timeout: 10000 });
 check("the girl sees her store and the way into management", true);
 check("the strip links to orders, products and design",
   (await girl.locator("a[href='/dashboard']").count()) >= 1 &&

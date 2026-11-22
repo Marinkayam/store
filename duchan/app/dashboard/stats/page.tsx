@@ -341,7 +341,7 @@ export default function StatsPage() {
           <summary className="text-[12.5px] font-semibold cursor-pointer">איך אנחנו יודעים את זה? (ולמה אין כאן שמות)</summary>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-2">
             אנחנו רק סופרים כניסות. לא שומרים שמות, טלפונים או מיקום, אז גם אנחנו לא יודעים מי נכנס.
-            כשאת או השותפים שלך נכנסים לדוכן, זה לא נספר.
+            כשאתם או השותפים שלכם נכנסים לדוכן, זה לא נספר.
           </p>
         </details>
       </div>

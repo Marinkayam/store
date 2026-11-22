@@ -97,7 +97,7 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
         return;
       }
       setMine(sub.endpoint);
-      setMsg("מעולה! מעכשיו כל הזמנה חדשה תקפוץ לך בטלפון.");
+      setMsg("מעולה! מעכשיו כל הזמנה חדשה תקפוץ לכם בטלפון.");
     } catch {
       setMsg("לא הצלחנו להדליק התראות. לנסות שוב בעוד רגע");
     } finally {
@@ -212,7 +212,7 @@ export default function OrderAlerts({ storeId, cta }: { storeId: string; cta?: s
             testid: "alerts-step-push",
             state: on ? "done" : installedOrNotNeeded || support === "ok" ? "current" : "later",
             title: on ? "ההתראות פועלות בטלפון הזה" : "להפעיל התראות",
-            sub: on ? "כל הזמנה חדשה תקפוץ לך, גם כשהדוכן סגור." : "כשמישהו מזמין, הטלפון מצלצל.",
+            sub: on ? "כל הזמנה חדשה תקפוץ לכם, גם כשהדוכן סגור." : "כשמישהו מזמין, הטלפון מצלצל.",
             body: enableBody,
           },
         ]}

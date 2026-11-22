@@ -41,7 +41,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
     <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-gutter">
       <div className="text-center">
         <div className="text-4xl mb-2">🎁</div>
-        <h1 className="text-xl font-bold">הדוכן מחכה לך</h1>
+        <h1 className="text-xl font-bold">הדוכן מחכה לכם</h1>
         <p className="text-sm text-[var(--muted)] mt-1">כותבים אימייל ובוחרים סיסמה, וזהו.</p>
       </div>
       <form onSubmit={submit} className="w-full max-w-sm flex flex-col gap-3">

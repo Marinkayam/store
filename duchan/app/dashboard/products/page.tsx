@@ -1393,7 +1393,7 @@ export default function ProductsPage() {
                 </button>
               </div>
               <div className="shrink-0">
-                <div className="block text-[13px] font-medium mb-1.5">כמה יש לך?</div>
+                <div className="block text-[13px] font-medium mb-1.5">כמה יש לכם?</div>
                 {edit.trackStock && edit.perOption && optionValues.length > 0 ? (
                   // מלאי לכל צבע: הסך הכל נספר לבד מהצבעים (למטה, ב"עוד אפשרויות")
                   <div className="h-[50px] flex flex-col items-center justify-center border border-dashed border-[var(--line)] px-3" data-testid="editor-stock-sum">
@@ -1421,7 +1421,7 @@ export default function ProductsPage() {
             {/* מה מותר למכור — שורה אחת, רק במוצר חדש */}
             {!edit.id && (
               <p className="text-[12px] text-[var(--muted)] mb-3 leading-relaxed">
-                מוכרים צעצועים, תכשיטים ודברים שיצרת. בלי דברים מסוכנים.{" "}
+                מוכרים צעצועים, תכשיטים ודברים שיצרתם. בלי דברים מסוכנים.{" "}
                 <a href="/terms" target="_blank" className="underline">מה מותר?</a>
               </p>
             )}
@@ -1895,7 +1895,7 @@ export default function ProductsPage() {
               <p className="text-[12px] text-[var(--muted)] mt-1.5 leading-relaxed" data-testid="visible-help">
                 {edit.isVisible
                   ? "הקונים רואים את המוצר ויכולים להזמין אותו."
-                  : "המוצר נשאר שמור אצלך, אבל הקונים לא רואים אותו. אפשר להחזיר אותו מתי שרוצים."}
+                  : "המוצר נשאר שמור אצלכם, אבל הקונים לא רואים אותו. אפשר להחזיר אותו מתי שרוצים."}
               </p>
             </div>
 
@@ -2018,7 +2018,7 @@ export default function ProductsPage() {
           <Icon name="party" size={68} tone="var(--lavender)" className="text-[var(--wood)]" />
           <h2 className="text-[22px] font-bold leading-tight">המוצר הראשון בדוכן!</h2>
           <p className="text-[13.5px] text-[var(--muted)] leading-relaxed max-w-xs">
-            יש בו מוצר, יש לו לינק, והוא נראה בדיוק כמו שבנית אותו.
+            יש בו מוצר, יש לו לינק, והוא נראה בדיוק כמו שבניתם אותו.
             <br />
             עכשיו הדבר הכי כיף: לשלוח אותו לחברים.
           </p>

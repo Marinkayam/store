@@ -234,7 +234,7 @@ export default function PhoneVerify({
               </p>
             </div>
 
-            <p className="t-sub mb-3">ואם זה הטלפון שלך — ככה מוצאים אותו:</p>
+            <p className="t-sub mb-3">ואם זה הטלפון שלכם — ככה מוצאים אותו:</p>
 
             <FindNumberSteps
               title="באייפון"

@@ -58,7 +58,7 @@ p{color:#5b564e;line-height:1.7;margin:0 0 22px}
 button{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 34px;
 border-radius:999px;background:#756192;color:#fff;border:0;font:inherit;font-weight:500;font-size:1rem;cursor:pointer;width:100%}
 button:active{transform:translateY(1px)}</style></head>
-<body><div class="c"><div class="m">${store ? "🛍️" : "🧸"}</div><h1>הקישור שלך מוכן</h1>
+<body><div class="c"><div class="m">${store ? "🛍️" : "🧸"}</div><h1>הקישור שלכם מוכן</h1>
 <p>לוחצים פעם אחת — ונכנסים. בלי קוד ובלי סיסמה.</p>
 <form method="post"><button type="submit">להיכנס ←</button></form></div></body></html>`,
     { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } }

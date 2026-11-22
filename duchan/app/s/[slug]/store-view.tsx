@@ -579,7 +579,7 @@ export default function StoreView({
     // טלפון חובה: ההזמנה כבר לא עוברת בוואטסאפ, ובלי מספר אין למוכרת
     // דרך לחזור לקונה. אותה בדיקה רצה גם בשרת.
     if (!buyerPhone.trim()) {
-      showToast("צריך מספר טלפון, כדי שבעלי הדוכן יוכלו לחזור אלייך");
+      showToast("צריך מספר טלפון, כדי שבעלי הדוכן יוכלו לחזור אליכם");
       return;
     }
     const shipping = store.ships && wantsShipping;
@@ -947,7 +947,7 @@ export default function StoreView({
         <div className="sticky top-0 z-40 bg-[var(--ink)] text-white" dir="rtl">
           <div className="flex items-center justify-between gap-2 px-3 py-2">
             <span className="text-[12px] opacity-80 leading-tight">
-              זה הדוכן שלך
+              זה הדוכן שלכם
               <br />
               <span className="opacity-70">ככה הקונים רואים אותו</span>
             </span>
@@ -1476,7 +1476,7 @@ export default function StoreView({
           <div className="overflow-y-auto overscroll-contain px-5 pt-3 pb-4">
           <div className="w-9 h-1 bg-current opacity-15 mx-auto mb-5" />
           <div className="flex items-baseline justify-between mb-4">
-            <h2 className="text-[19px] font-bold">ההזמנה שלך</h2>
+            <h2 className="text-[19px] font-bold">ההזמנה שלכם</h2>
             <span className="flex items-center gap-2">
               <span className="text-[12.5px] opacity-75">
                 {cartCount === 1 ? "פריט אחד" : `${cartCount} פריטים`}
@@ -1507,7 +1507,7 @@ export default function StoreView({
                   <div className="opacity-75 text-[12px] mt-0.5">{Number(l.price) === 0 ? "בחינם" : `₪${formatPrice(l.price)} ליחידה`}</div>
                   {d.saved > 0 && (
                     <div className="text-[12px] font-bold mt-0.5" style={{ color: BADGES.sale.text }} data-testid="line-deal">
-                      {d.label} · <span className="whitespace-nowrap">חסכת ₪{formatPrice(d.saved)}</span>
+                      {d.label} · <span className="whitespace-nowrap">חסכתם ₪{formatPrice(d.saved)}</span>
                     </div>
                   )}
                   {nudge && (
@@ -1571,8 +1571,8 @@ export default function StoreView({
             >
               <span aria-hidden>🏷️</span>
               <span className="flex-1">
-                <b>קופונים:</b> עוד אין לך קופון בדוכן, אז הקונים לא רואים כאן שדה קוד.
-                <span className="block opacity-75">ההודעה הזו מופיעה רק לך.</span>
+                <b>קופונים:</b> עוד אין לכם קופון בדוכן, אז הקונים לא רואים כאן שדה קוד.
+                <span className="block opacity-75">ההודעה הזו מופיעה רק לכם.</span>
               </span>
               <span className="font-bold underline shrink-0">ליצירת קופון ←</span>
             </a>
@@ -1591,7 +1591,7 @@ export default function StoreView({
                     {/* הקוד באנגלית ומספרים — בתוך bdi, אחרת הוא מערבב את כיוון השורה */}
                     <span className="block font-extrabold tracking-wider"><bdi>{coupon.code}</bdi></span>
                     <span className="block text-[12px] opacity-75">
-                      {coupon.label} · חסכת <bdi>₪{formatPrice(coupon.discount)}</bdi>
+                      {coupon.label} · חסכתם <bdi>₪{formatPrice(coupon.discount)}</bdi>
                     </span>
                   </span>
                   <button
@@ -1607,7 +1607,7 @@ export default function StoreView({
                   data-testid="coupon-open"
                   className="text-[13px] font-semibold underline underline-offset-4 min-h-11"
                 >
-                  🏷️ יש לך קוד קופון?
+                  🏷️ יש לכם קוד קופון?
                 </button>
               ) : (
                 <div className="flex flex-col gap-1.5">
@@ -1635,7 +1635,7 @@ export default function StoreView({
                       autoCapitalize="characters"
                       autoComplete="off"
                       maxLength={20}
-                      placeholder="הקוד שקיבלת"
+                      placeholder="הקוד שקיבלתם"
                       className="flex-1 min-w-0 border-[1.5px] border-black/15 px-3 py-3 text-[14px] tracking-wide"
                       style={{ background: "var(--s-surface)" }}
                     />
@@ -1684,16 +1684,16 @@ export default function StoreView({
           {/* שם פרטי בלבד — אין כאן שם משפחה או גיל. הטלפון חובה מאז
               שההזמנה נקלטת במערכת: זו הדרך של המוכרת לחזור לקונה. */}
           <section className="mt-8">
-            <h3 className="text-[13.5px] font-bold mb-3.5">הפרטים שלך</h3>
+            <h3 className="text-[13.5px] font-bold mb-3.5">הפרטים שלכם</h3>
             <div className="flex flex-col gap-4">
               <div className="flex gap-3">
                 <label className="flex-1 min-w-0 block">
-                  <span className="block text-[11.5px] opacity-75 mb-1.5">{store.ships && wantsShipping ? "שם ושם משפחה *" : "איך קוראים לך? *"}</span>
+                  <span className="block text-[11.5px] opacity-75 mb-1.5">{store.ships && wantsShipping ? "שם ושם משפחה *" : "איך קוראים לכם? *"}</span>
                   <input
                     value={buyerName}
                     onChange={(e) => setBuyerName(e.target.value)}
                     placeholder={store.ships && wantsShipping ? "שם ושם משפחה" : "שם פרטי"}
-                    aria-label={store.ships && wantsShipping ? "שם ושם משפחה" : "השם שלך"}
+                    aria-label={store.ships && wantsShipping ? "שם ושם משפחה" : "השם שלכם"}
                     autoComplete={store.ships && wantsShipping ? "name" : "given-name"}
                     maxLength={40}
                     className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
@@ -1825,7 +1825,7 @@ export default function StoreView({
                         ? `👉 אחרי שליחת ההזמנה יופיע המספר להעברה ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
                         : store.payout_whatsapp
                           ? `👉 אחרי שליחת ההזמנה כותבים לבעלי הדוכן בוואטסאפ, והם שולחים לאן להעביר ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`
-                          : `👉 אחרי שליחת ההזמנה בעלי הדוכן יחזרו אליך עם פרטי התשלום ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`}
+                          : `👉 אחרי שליחת ההזמנה בעלי הדוכן יחזרו אליכם עם פרטי התשלום ב${chosenPay === "bit" ? "ביט" : "פייבוקס"}.`}
                 </p>
               )}
             </section>
@@ -1851,7 +1851,7 @@ export default function StoreView({
             )}
             {dealSaved > 0 && (
               <div className="flex justify-between text-[12.5px] font-semibold mb-1" style={{ color: BADGES.sale.text }} data-testid="deal-saved">
-                <span>חסכת במבצעים</span>
+                <span>חסכתם במבצעים</span>
                 <bdi dir="ltr">₪{formatPrice(dealSaved)}</bdi>
               </div>
             )}
@@ -1998,7 +1998,7 @@ export default function StoreView({
             הזמנה #{confirmed.orderNumber} · ₪{formatPrice(confirmed.total)}
           </p>
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
-            בעלי הדוכן קיבלו את הפרטים ויחזרו אלייך לטלפון שהשארת.
+            בעלי הדוכן קיבלו את הפרטים ויחזרו אליכם לטלפון שהשארתם.
           </p>
           {payTarget?.kind === "link" && (
             <a

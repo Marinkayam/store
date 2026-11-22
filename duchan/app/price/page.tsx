@@ -26,10 +26,10 @@ export default function PricePage() {
       {/* ── Hero: האיור של הדוכן במקום האייקון (מרינה לא אהבה את האייקון) ── */}
       <section className="border-b border-[var(--line)] bg-white">
         {/* בלי "להדליק את האורות" — מרינה, 11.2026: "עמוס מדי" */}
-        <StallHero name="הדוכן שלך" still />
+        <StallHero name="הדוכן שלכם" still />
         <div className="max-w-lg mx-auto px-gutter pt-6 pb-10 text-center">
           <h1 className="t-title text-[1.75rem]">
-            דוכן אמיתי משלך.
+            דוכן אמיתי משלכם.
             <br />
             תשלום אחד, וזהו.
           </h1>

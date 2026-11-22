@@ -115,8 +115,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: exhausted
-          ? "נגמרו התיאורים האוטומטיים בדוכן שלך"
-          : "כתיבה אוטומטית כבויה בדוכן שלך",
+          ? "נגמרו התיאורים האוטומטיים בדוכן שלכם"
+          : "כתיבה אוטומטית כבויה בדוכן שלכם",
         exhausted: !!exhausted,
       },
       { status: 402 }
