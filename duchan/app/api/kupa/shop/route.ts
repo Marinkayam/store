@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   }
   const db = supabaseAdmin();
   const { data: store } = await db.from("stores").select("*").eq("id", body.storeId ?? "").maybeSingle();
-  if (!store || !(await canManage(db, store.id, user.id))) return err("אין לך גישה לדוכן הזה", 403);
+  if (!store || !(await canManage(db, store.id, user.id))) return err("אין לכם גישה לדוכן הזה", 403);
 
   const state = async () => {
     const k = await loadKupa(db, store);
@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
   if (!item) return err("אין קישוט כזה", 400);
   const k = await loadKupa(db, store);
   if (!k.shopReady) return err("החנות עוד לא מוכנה, לנסות שוב מאוחר יותר", 503);
-  if (k.owned.includes(item.key)) return err("זה כבר שלך", 409);
-  if (k.kupa.balance < item.price) return err(`חסרות עוד ${item.price - k.kupa.balance} מטבעות`, 400);
+  if (k.owned.includes(item.key)) return err("זה כבר שלכם", 409);
+  if (k.kupa.balance < item.price) return err(`חסרים עוד ${item.price - k.kupa.balance} מטבעות`, 400);
   if (item.awning) {
     const awnings = k.owned.filter((x) => shopItem(x)?.awning);
     if (awnings.length) await db.from("kupa_purchases").update({ equipped: false }).eq("store_id", store.id).in("item_key", awnings);
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
   const { error } = await db
     .from("kupa_purchases")
     .insert({ store_id: store.id, item_key: item.key, price: item.price, equipped: true, bought_by: user.id });
-  if (error) return err(error.code === "23505" ? "זה כבר שלך" : "הקנייה לא הצליחה, לנסות שוב", error.code === "23505" ? 409 : 500);
+  if (error) return err(error.code === "23505" ? "זה כבר שלכם" : "הקנייה לא הצליחה, לנסות שוב", error.code === "23505" ? 409 : 500);
   // קונפטי לקונים נראה בדוכן עצמו — לרענן את הדף השמור, שלא יחכו דקה
   if (item.key === "confetti") revalidatePath(`/s/${store.slug}`);
   return state();

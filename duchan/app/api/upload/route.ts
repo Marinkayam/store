@@ -146,9 +146,9 @@ export async function POST(req: NextRequest) {
   let { data: stores, error: storesErr } = await storeSelect("id, media_bytes, media_quota_bytes");
   if (storesErr) ({ data: stores } = await storeSelect("id, media_bytes"));
   const store = stores?.[0];
-  if (!store) return NextResponse.json({ error: "אין לך דוכן עדיין" }, { status: 404 });
+  if (!store) return NextResponse.json({ error: "אין לכם דוכן עדיין" }, { status: 404 });
   if (storeId && !(await canManage(db, store.id, user.id))) {
-    return NextResponse.json({ error: "אין לך דוכן עדיין" }, { status: 404 });
+    return NextResponse.json({ error: "אין לכם דוכן עדיין" }, { status: 404 });
   }
 
   /* תקרה פר-חנות כשהמנהלת הגדילה, אחרת הגלובלית */

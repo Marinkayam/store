@@ -49,7 +49,7 @@ export const SHARE_TEXTS: ShareText[] = [
     key: "new",
     label: "הוספתי מוצרים",
     icon: "✨",
-    when: "אחרי שהעלית משהו חדש",
+    when: "אחרי שהעליתם משהו חדש",
     build: (c) =>
       `הוספתי דברים חדשים לדוכן 👇\n` +
       `${c.name}\n${c.link}\n` +

@@ -72,7 +72,7 @@ try {
     (await p.getAttribute("button[aria-label='ערכת לבנדר']", "aria-checked")) === "true" && ((await p.textContent("[data-testid=ob-preview]")) ?? "").includes("צמיד"));
   await p.click("[data-testid=ob-next]");
   const s4 = (await p.textContent("main")) ?? "";
-  check("שלב 4: ההורים, בלי גיל ועיר", s4.includes("ההורים יודעים?") && s4.includes("וכותבים לך בוואטסאפ") &&
+  check("שלב 4: ההורים, בלי גיל ועיר", s4.includes("ההורים יודעים?") && s4.includes("וכותבים לכם בוואטסאפ") &&
     (await p.locator("input[aria-label='גיל'], input[aria-label='עיר']").count()) === 0);
   check("בלי סימון ההורים אי אפשר להמשיך", await p.locator("button:has-text('הלאה, למספר הטלפון')").isDisabled());
   await p.check("input[aria-label='ההורים שלי יודעים']");
@@ -110,7 +110,7 @@ try {
   await p.goto(`${BASE}/dashboard`);
   await p.waitForSelector("[data-testid=orders-empty]", { timeout: 15000 });
   await p.waitForTimeout(2000);
-  check("לפני הפרסום: בלי 'פתחנו לך משחק'", (await p.locator("[data-testid=kupa-celebrate]").count()) === 0);
+  check("לפני הפרסום: בלי 'פתחנו לכם משחק'", (await p.locator("[data-testid=kupa-celebrate]").count()) === 0);
   check("בלי 'ואם יש זמן' לפני הפרסום", (await p.locator("[data-testid=store-missing]").count()) === 0);
   check("פס התקדמות של ארבע מילים", (await p.locator("[data-testid=orders-empty] ol > li").count()) === 4);
   const { rows: [st] } = await db.query("select id from stores where contact_phone=$1", [E164]);

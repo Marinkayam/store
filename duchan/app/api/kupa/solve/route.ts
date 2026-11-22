@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
   const db = supabaseAdmin();
   const storeId = body.storeId ?? "";
-  if (!storeId || !(await canManage(db, storeId, user.id))) return err("אין לך גישה לדוכן הזה", 403);
+  if (!storeId || !(await canManage(db, storeId, user.id))) return err("אין לכם גישה לדוכן הזה", 403);
 
   const { data: products } = await db
     .from("products")

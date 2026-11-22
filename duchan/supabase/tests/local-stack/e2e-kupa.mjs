@@ -80,7 +80,7 @@ await p.evaluate(() => { for (const k of Object.keys(localStorage)) if (k.starts
 await p.goto(`${BASE}/dashboard/settings`, { waitUntil: "networkidle" });
 const cele = p.locator("[data-testid=kupa-celebrate]");
 await cele.waitFor({ timeout: 8000 });
-check("פעם ראשונה: 'פתחנו לך משחק!'", (await cele.getAttribute("data-kind")) === "welcome" && (await cele.textContent()).includes("פתחנו לך משחק"));
+check("פעם ראשונה: 'פתחנו לכם משחק!'", (await cele.getAttribute("data-kind")) === "welcome" && (await cele.textContent()).includes("פתחנו לכם משחק"));
 await p.waitForTimeout(1800);
 check("המונה מגיע לסכום בקופה", ((await p.textContent("[data-testid=kupa-celebrate-total]")) ?? "").includes(String(k0.coins)), (await p.textContent("[data-testid=kupa-celebrate-total]")) ?? "");
 await p.screenshot({ path: `${SHOTS}/kupa-welcome.png` });
@@ -178,8 +178,8 @@ const q1 = (await p.textContent("[data-testid=riddle-sheet] #riddle-q")) ?? "";
 await p.locator("[data-testid=riddle-sheet] [data-testid=riddle-option]:not([data-right])").first().click();
 check("מאגר: טעות לא נותנת כוכב", ((await p.textContent("[data-testid=riddle-sheet-stars]")) ?? "").includes(`${s0} כוכבים`));
 await p.locator("[data-testid=riddle-sheet] [data-testid=riddle-option][data-right]").click();
-check("מאגר: נכון → כוכב קופץ ו'קיבלת כוכב'", (await p.locator("[data-testid=riddle-star]").count()) === 1 &&
-  ((await p.textContent("[data-testid=riddle-sheet] [data-testid=riddle-why]")) ?? "").includes("קיבלת כוכב"));
+check("מאגר: נכון → כוכב קופץ ו'קיבלתם כוכב'", (await p.locator("[data-testid=riddle-star]").count()) === 1 &&
+  ((await p.textContent("[data-testid=riddle-sheet] [data-testid=riddle-why]")) ?? "").includes("קיבלתם כוכב"));
 check("ומונה הכוכבים עלה", ((await p.textContent("[data-testid=riddle-sheet-stars]")) ?? "").includes(`${s0 + 1} כוכבים`));
 await p.screenshot({ path: `${SHOTS}/kupa-riddle-star.png` });
 await p.click("[data-testid=riddle-next]");
@@ -284,14 +284,14 @@ check("ביטול: התצוגה המקדימה נעלמת, לא נקנה כלו�
 await p.click("[data-testid=shop-item][data-key=flowers]");
 await p.click("[data-testid=shop-buy]");
 await p.waitForSelector("[data-testid=shop-msg]");
-check("קנייה: 'שלך!', היתרה ירדה ב-30, ונשמר במסד", ((await p.textContent("[data-testid=shop-msg]")) ?? "").includes("שלך") && (await bal()) === b0 - 30 &&
+check("קנייה: 'שלכם!', היתרה ירדה ב-30, ונשמר במסד", ((await p.textContent("[data-testid=shop-msg]")) ?? "").includes("שלכם") && (await bal()) === b0 - 30 &&
   (await db.query("select price from kupa_purchases where store_id=$1 and item_key='flowers'", [store.id])).rows[0]?.price === 30);
 const shopApi = (body) => p.request.post(`${BASE}/api/kupa/shop`, { data: { storeId: store.id, ...body } });
 check("לקנות שוב את אותו דבר → 409", (await shopApi({ action: "buy", item: "flowers" })).status() === 409);
 check("קישוט שלא קיים → 400", (await shopApi({ action: "buy", item: "unicorn" })).status() === 400);
 await db.query("insert into kupa_purchases (store_id, item_key, price) values ($1, 'test_spend', 99999)", [store.id]);
 const poor = await shopApi({ action: "buy", item: "cat" });
-check("בלי מספיק מטבעות → 400 'חסרות עוד'", poor.status() === 400 && ((await poor.json()).error ?? "").includes("חסרות"));
+check("בלי מספיק מטבעות → 400 'חסרים עוד'", poor.status() === 400 && ((await poor.json()).error ?? "").includes("חסרות"));
 await db.query("delete from kupa_purchases where store_id=$1 and item_key='test_spend'", [store.id]);
 const after = (await api()).body;
 check("הרמה לפי כל מה שהורווח — קנייה לא מורידה רמה", after.coins === qb.coins && after.level === qb.level && after.balance === qb.coins - 30);

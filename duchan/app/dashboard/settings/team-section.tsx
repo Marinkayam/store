@@ -73,7 +73,7 @@ export default function TeamSection({ store, onToast }: { store: Store; onToast:
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const joinUrl = (token: string) => `${origin}/join/${token}`;
   const inviteText = (token: string) =>
-    `היי! 👋 מזמינה אותך לנהל איתי את הדוכן "${store.display_name}" 🛍️\nנכנסים עם הטלפון, כאן:\n${joinUrl(token)}`;
+    `היי! 👋 רוצה לנהל איתי את הדוכן "${store.display_name}"? 🛍️\nנכנסים עם הטלפון, כאן:\n${joinUrl(token)}`;
   const sendWa = (token: string) => window.open(`https://wa.me/?text=${encodeURIComponent(inviteText(token))}`, "_blank");
 
   async function invite() {

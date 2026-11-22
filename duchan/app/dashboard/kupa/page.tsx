@@ -1007,7 +1007,7 @@ function Shop({
             {balance >= picked.price ? (
               <>לקנות <b>{picked.title}</b> ב-{picked.price} מטבעות?</>
             ) : (
-              <>חסרות עוד <b className="tabular-nums">{picked.price - balance}</b> מטבעות ל{picked.title}</>
+              <>חסרים עוד <b className="tabular-nums">{picked.price - balance}</b> מטבעות ל{picked.title}</>
             )}
           </span>
           {balance >= picked.price && (

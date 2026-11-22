@@ -142,7 +142,7 @@ const linkCtx = await b.newContext({ viewport: { width: 390, height: 900 } });
 const linkPage = await linkCtx.newPage();
 await linkPage.goto(llUrl, { waitUntil: "networkidle" });
 check("הקישור מציג מסך כניסה עם כפתור",
-  (await linkPage.textContent("body")).includes("הקישור שלך מוכן"));
+  (await linkPage.textContent("body")).includes("הקישור שלכם מוכן"));
 await linkPage.click("button:has-text('להיכנס')");
 await linkPage.waitForURL("**/squish/collection", { timeout: 20000 });
 check("לחיצה על הכפתור נכנסת לאוסף — בלי סמס",

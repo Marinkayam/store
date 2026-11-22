@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   if (!body.consent) return err("צריך לסמן שההורים יודעים ומאשרים", 400, { field: "consent" });
 
   const { data: store } = await db.from("stores").select("owner_id").eq("id", inv.store_id).maybeSingle();
-  if (store?.owner_id === user.id) return err("זה כבר הדוכן שלך 🙂", 409);
+  if (store?.owner_id === user.id) return err("זה כבר הדוכן שלכם 🙂", 409);
 
   const { data: existing } = await db
     .from("store_members")

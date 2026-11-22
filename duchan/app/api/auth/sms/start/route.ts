@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
      קישור בוואטסאפ לפני שהילדה מוותרת. */
   after(() => alertIfStuck(phone));
 
-  const sent = await sendSms(phone, `קוד הכניסה שלך לדוכן: ${code}. תקף ל-${OTP_TTL_MINUTES} דקות.`);
+  const sent = await sendSms(phone, `קוד הכניסה שלכם לדוכן: ${code}. תקף ל-${OTP_TTL_MINUTES} דקות.`);
   if (!sent.ok) {
     console.error("[sms] send failed:", sent.reason, sent.code ?? "");
     /* סמס שלא יצא הוא לא "בקשת קוד": בלי למחוק אותו, הוא היה סופר למכסה
