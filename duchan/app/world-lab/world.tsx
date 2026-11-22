@@ -7,6 +7,7 @@ import {
   STAGES, STALL, STORES, SURPRISES, WORLD, ZONES,
   alleyOpen, cityPt, layout, isNightAt, lotSize, pointsOf, tierOf, type ClassSize, type CommunityKind, type PointKey, type Deco, type LabStore, type Level, type Plot,
 } from "./data";
+import WhatsNew from "./whats-new";
 import InviteSim, { type InviteResult } from "./invite-sim";
 import { Foreground, Scenery } from "./scenery";
 import { EmptyPlot, GardenPlot, WorldStall, type Lod } from "./stalls";
@@ -172,6 +173,8 @@ export default function World({ review }: { review?: LabStore[] }) {
   /** יום שוק: אין, בקרוב, או היום. והאם הדוכן שלי נרשם. */
   const [market, setMarket] = useState<"off" | "soon" | "on">("soon");
   const [marketIn, setMarketIn] = useState(false);
+  /** "מה חדש": הפופאפ שרואה מי שכבר יש לה דוכן, בכניסה הראשונה */
+  const [news, setNews] = useState(false);
   const [found, setFound] = useState<string[]>([]);
   const [bubble, setBubble] = useState<{ text: string; k: number } | null>(null);
   const [fx, setFx] = useState({ splash: 0, hop: 0, cat: 0, watered: 0 });
@@ -508,6 +511,10 @@ export default function World({ review }: { review?: LabStore[] }) {
       applyCam(idx >= 0 ? camRef.current : { ...camRef.current, s: camRef.current.s * 1.8 }, false);
       if (idx >= 0) rest();
     }
+    // "מה חדש" מופיע פעם אחת, כשנכנסים ישר לדוכן (לא לקישור של מקום בעולם)
+    let seen = false;
+    try { seen = localStorage.getItem("wl-whatsnew-seen") === "1"; } catch {}
+    if (!review && !seen && idx < 0) setNews(true);
     setReady(true);
 
     const onResize = () => {
@@ -821,7 +828,11 @@ export default function World({ review }: { review?: LabStore[] }) {
 
   const nextTier = myTier < TIERS.length ? TIERS[myTier] : null;
   const tierProgress = nextTier ? (points - TIERS[myTier - 1].at) / (nextTier.at - TIERS[myTier - 1].at) : 1;
-  const worldBusy = !!storeOpen || !!sheet || !!inviteView;
+  const closeNews = () => {
+    setNews(false);
+    try { localStorage.setItem("wl-whatsnew-seen", "1"); } catch {}
+  };
+  const worldBusy = !!storeOpen || !!sheet || !!inviteView || news;
   const isInvited = (id: string) => invited.includes(id);
 
   return (
@@ -1314,6 +1325,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                     >
                       חידוד מקרוב
                     </button>
+                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setSheet(null); setNews(true); }} data-testid="wl-news-again">להציג את ״מה חדש״</button>
                     <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); setCounts(MY_START_COUNTS); setGrew(0); setMarketIn(false); }}>לאפס הפתעות, הזמנות ונקודות</button>
                   </div>
                 </div>
@@ -1327,12 +1339,21 @@ export default function World({ review }: { review?: LabStore[] }) {
 
       {inviteView && <InviteSim inviter={myName} com={com} onDone={finishInvite} onClose={() => setInviteView(null)} />}
 
+      {news && (
+        <WhatsNew
+          store={homeStores.find((x) => x.mine) ?? homeStores[0]}
+          neighbor={homeStores.find((x) => !x.mine) ?? homeStores[0]}
+          onClose={closeNews}
+          onGo={() => { closeNews(); if (storeOpen) closeStore(); }}
+        />
+      )}
+
       {/* ── החנות ── */}
       <div
         className="wl-store"
         data-open={storeOpen ? "1" : "0"}
         aria-hidden={storeOpen ? undefined : true}
-        inert={!storeOpen}
+        inert={!storeOpen || news}
       >
         <StoreSim store={(storeOf(storeShown) ?? homeStores.find((x) => x.id === storeShown) ?? homeStores[0]) as LabStore} onExit={closeStore} fromWorld={fromWorld} />
       </div>

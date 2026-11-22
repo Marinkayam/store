@@ -378,6 +378,29 @@
 .wl-card > .wl-wide { margin-top: 8px; }
 .wl-market { font-weight: 500; background: #fff8e6; }
 .wl-market[data-on="1"] { background: var(--warning); color: #3a2a12; font-weight: 700; }
+/* "מה חדש": פופאפ למי שכבר יש לה דוכן */
+.wl-new { position: absolute; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgba(38, 38, 38, 0.45); animation: wl-fade 0.25s ease-out both; }
+.wl-new-card { position: relative; width: 100%; max-width: 460px; max-height: 100%; overflow-y: auto; background: var(--white); border-top: 1.5px solid var(--ink); padding: 16px max(18px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 10px; animation: wl-up 0.3s ease-out both; }
+@media (min-width: 500px) { .wl-new { align-items: center; } .wl-new-card { border: 1.5px solid var(--ink); } }
+.wl-new-x { position: absolute; top: 8px; inset-inline-end: 8px; }
+.wl-new-tag { align-self: flex-start; font-size: 12.5px; font-weight: 500; padding: 3px 9px; background: var(--lavender); color: #262626; }
+.wl-new-stage { height: 232px; display: flex; align-items: flex-end; justify-content: center; background: var(--wl-pave, #f6efe3); border: 1px solid var(--stone, #d6cfc4); overflow: hidden; padding-bottom: 14px; }
+.wl-new-stall { position: relative; width: 150px; height: 110px; flex: none; }
+.wl-new-row { display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+.wl-new-side { width: 96px; height: 70.4px; opacity: 0.92; }
+.wl-new-video { width: 100%; height: 100%; background: #262626; margin-bottom: -14px; object-fit: contain; }
+.wl-new-stage:has(.wl-new-video) { height: min(62vh, 520px); padding-bottom: 0; }
+.wl-new-grow { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 300; }
+.wl-new-grow input { width: 100%; accent-color: #8858a2; height: 28px; }
+.wl-new-grow b { font-weight: 700; }
+.wl-new-card h2 { margin: 4px 0 0; font-size: 22px; font-weight: 300; line-height: 1.25; }
+.wl-new-card p { margin: 0; font-size: 15px; font-weight: 300; line-height: 1.5; color: var(--muted, #6a6257); }
+.wl-new-dots { display: flex; gap: 6px; justify-content: center; }
+.wl-new-dots button { width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; position: relative; }
+.wl-new-dots button::after { content: ""; position: absolute; left: 6px; right: 6px; top: 12px; height: 4px; background: var(--stone, #d6cfc4); }
+.wl-new-dots button[aria-selected="true"]::after { background: var(--ink); }
+.wl-new-actions { display: flex; gap: 8px; }
+.wl-root[data-calm="1"] .wl-new, .wl-root[data-calm="1"] .wl-new-card { animation: none; }
 /* איקס לסגירת כרטיס ובועה */
 .wl-x { flex: none; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink); cursor: pointer; padding: 0; }
 .wl-card { position: relative; }

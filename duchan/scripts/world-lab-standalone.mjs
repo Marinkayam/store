@@ -61,6 +61,15 @@ for (const banned of ["supabase", "/api/", "SERVICE_ROLE", "r2.cloudflarestorage
   }
 }
 
+// סרטון "מה חדש" נארז בתוך הקובץ, כדי שהקישור המבודד לא יצטרך שרת בשבילו
+let video = "";
+try {
+  const mp4 = readFileSync(join(ROOT, "public", "video", "whats-new-world.mp4"));
+  video = `<script>window.__WL_VIDEO = "data:video/mp4;base64,${mp4.toString("base64")}";</script>`;
+} catch {
+  console.warn("אין public/video/whats-new-world.mp4: הקובץ נבנה בלי הסרטון.");
+}
+
 const html = `<title>עולם דוכן</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&display=swap">
@@ -69,6 +78,7 @@ ${css}
 html, body { height: 100%; margin: 0; background: #dfe3c3; overflow: hidden; }
 </style>
 <div id="root"></div>
+${video}
 <script>
 ${bundle}
 </script>

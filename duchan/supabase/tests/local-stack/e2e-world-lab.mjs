@@ -45,7 +45,7 @@ p.on("request", (r) => {
   const u = r.url();
   if (/\/api\/|:8000\/|:3001\/|supabase/i.test(u)) dataCalls.push(u);
 });
-await p.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); } catch {} });
+await p.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); localStorage.setItem("wl-whatsnew-seen", "1"); } catch {} });
 
 const root = () => p.locator("[data-testid=wl-root]");
 const level = async () => Number(await root().getAttribute("data-level"));
@@ -466,7 +466,7 @@ const inviteTo = async (plot) => {
     const tctx = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: "Asia/Jerusalem" });
     const t = await tctx.newPage();
     await t.clock.setFixedTime(new Date(when));
-    await t.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); } catch {} });
+    await t.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); localStorage.setItem("wl-whatsnew-seen", "1"); } catch {} });
     await t.goto(URL, { waitUntil: "networkidle" });
     await t.waitForTimeout(500);
     ck(`לפי השעה: ${when.slice(5, 16).replace("T", " ")} הוא ${want === "1" ? "לילה" : "יום"}`, (await t.getAttribute("[data-testid=wl-root]", "data-night")) === want, String(await t.getAttribute("[data-testid=wl-root]", "data-night")));
@@ -493,7 +493,7 @@ const inviteTo = async (plot) => {
   /* ── 13. פחות תנועה ── */
   const calmCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
   const q = await calmCtx.newPage();
-  await q.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); } catch {} });
+  await q.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); localStorage.setItem("wl-whatsnew-seen", "1"); } catch {} });
   await q.goto(URL, { waitUntil: "networkidle" });
   await q.click("[data-testid=wl-exit]");
   await q.waitForTimeout(400);
@@ -502,6 +502,52 @@ const inviteTo = async (plot) => {
   await calmCtx.close();
 
 await ctx.close();
+}
+
+/* ── 13ב. "מה חדש": מה שרואה מי שכבר יש לה דוכן, בכניסה הראשונה ── */
+{
+  const nctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const n = await nctx.newPage();
+  const nerr = [];
+  n.on("pageerror", (e) => nerr.push(e.message));
+  await n.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); } catch {} });
+  await n.goto(URL, { waitUntil: "networkidle" });
+  await n.waitForSelector("[data-testid=wl-new]", { timeout: 10000 });
+  await n.waitForTimeout(450);
+  const txt = async (sel) => ((await n.textContent(sel)) ?? "").trim();
+  check("מה חדש: פופאפ בכניסה הראשונה, מעל דף הדוכן", (await txt("[data-testid=wl-new] h2")) === "הדוכן שלך יוצא לעיר" && (await n.locator("[data-testid=wl-new]").getAttribute("aria-modal")) === "true" && (await n.locator(".wl-store[inert]").count()) === 1);
+  check("בפופאפ הדוכן שלה עצמה: אותו שלט ואותם מוצרים", (await txt("[data-testid=wl-new-stage]")).includes("סקווישי נוני") && (await n.locator("[data-testid=wl-new-stage] [data-shelf] > g").count()) === 3);
+  {
+    const r = await new AxeBuilder({ page: n }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).include(".wl-new").analyze();
+    const bad = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    check("מה חדש: נגישות בלי הפרות חמורות", bad.length === 0, bad.map((v) => `${v.id}×${v.nodes.length} ${v.nodes[0]?.target?.join(" ")}`).join(" | "));
+  }
+  await n.click("[data-testid=wl-new-next]");
+  check("צעד שני: מתחילים מדוכן", (await txt("[data-testid=wl-new-tier]")).startsWith("דוכן") && (await n.locator("[data-testid=wl-new-stage] .wl-shop-back").count()) === 0);
+  await n.locator("[data-testid=wl-new-range]").fill("4");
+  check("גוררים את המחוון, והדוכן גדל עד חנות גדולה", (await txt("[data-testid=wl-new-tier]")).includes("חנות גדולה") && (await txt("[data-testid=wl-new-tier]")).includes("500") && (await n.locator("[data-testid=wl-new-stage] .wl-shop-back[data-shop='4']").count()) === 1, await txt("[data-testid=wl-new-tier]"));
+  await n.click("[data-testid=wl-new-play]");
+  const src = await n.getAttribute("[data-testid=wl-new-video]", "src");
+  const head = await fetch(new globalThis.URL(src, BASE), { method: "HEAD" });
+  check("כפתור הסרטון פותח סרטון שקיים בשרת", (src ?? "").endsWith("/video/whats-new-world.mp4") && head.status === 200 && (head.headers.get("content-type") ?? "").includes("video/mp4"), `${src} ${head.status} ${head.headers.get("content-type")}`);
+  check("מהסרטון אפשר לצאת ישר לעיר", (await n.locator("[data-testid=wl-new-go]").count()) === 1);
+  await n.click("[data-testid=wl-new-stop]");
+  await n.click("[data-testid=wl-new-dot-2]");
+  check("צעד שלישי: יום שוק, עם בלונים על הדוכן", (await txt("[data-testid=wl-new] h2")).includes("יום שוק") && (await n.locator("[data-testid=wl-new-stage] .wl-fest").count()) === 1);
+  await n.click("[data-testid=wl-new-go]");
+  await n.waitForFunction(() => !document.querySelector("[data-testid=wl-new]") && document.querySelector("[data-testid=wl-root]").getAttribute("data-moving") === "0" && document.querySelector(".wl-store").getAttribute("data-open") === "0", null, { timeout: 8000 });
+  await n.waitForTimeout(500);
+  check("'לצאת לעיר' סוגר את הפופאפ ומוציא אל הדוכן שלה בעולם", (await n.getAttribute("[data-testid=wl-root]", "data-level")) === "4" && (await txt("[data-testid=wl-place]")) === MY_STORE, await txt("[data-testid=wl-place]"));
+  await n.reload({ waitUntil: "networkidle" });
+  await n.waitForTimeout(600);
+  check("בכניסה הבאה הפופאפ לא חוזר, וחוזרים ישר לדוכן בעולם", (await n.locator("[data-testid=wl-new]").count()) === 0 && (await n.getAttribute("[data-testid=wl-root]", "data-level")) === "4");
+  await n.click("[data-testid=wl-lab]");
+  await n.click("[data-testid=wl-news-again]");
+  check("ואפשר לפתוח אותו שוב מתוך 'ניסוי'", (await n.locator("[data-testid=wl-new]").count()) === 1);
+  await n.click("[data-testid=wl-new-x]");
+  check("איקס סוגר אותו", (await n.locator("[data-testid=wl-new]").count()) === 0);
+  check("מה חדש: בלי שגיאות בדף", nerr.length === 0, nerr.slice(0, 2).join(" | "));
+  await nctx.close();
 }
 
 try {
