@@ -87,9 +87,9 @@ try {
     why.includes("פעם אחת") && why.includes("בלי מנוי") && why.includes("נשאר פתוח") && why.includes("משלחת"));
   /* 22.11.2026: דמי הפתיחה עוברים למשלחת של הנבחרת (lib/pricing TEAM_FUND) */
   const fund = (await parent.textContent("[data-testid=parent-fund]")) ?? "";
-  check("כתוב לאן הכסף הולך: כל הסכום, למשלחת של הנבחרת, לתחרות בפורטוגל",
-    fund.includes("כל ה-₪") && fund.includes("הפועל עירוני יבנה") && fund.includes("אדרנלין") && fund.includes("פורטוגל"), fund);
-  check("לא כתוב שהכסף מכסה אחסון, ולא כתוב 'תרומה'", !body.includes("מכסה את האחסון") && !body.includes("תרומה"));
+  check("כתוב לאן הכסף הולך: כל הסכום, תרומה למשלחת של הנבחרת, לתחרות בפורטוגל",
+    fund.includes("כל ה-₪") && fund.includes("תרומה למשלחת") && fund.includes("הפועל עירוני יבנה") && fund.includes("אדרנלין") && fund.includes("פורטוגל"), fund);
+  check("לא כתוב שהכסף מכסה אחסון", !body.includes("מכסה את האחסון"));
   check("הכפתור הראשי מוביל לקבוצת הפייבוקס של המשלחת",
     (await parent.getAttribute("[data-testid=parent-paybox]", "href")) === "https://links.payboxapp.com/1UMNyxiuX7b" &&
     ((await parent.textContent("[data-testid=parent-pay]")) ?? "").includes("מגיע אליה ישר"));

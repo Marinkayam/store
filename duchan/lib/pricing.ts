@@ -93,8 +93,9 @@ const PAYBOX_STALL_GROUP_URL =
  * ב-Vercel לא יכול לשלוח תשלומים לקבוצה הישנה בשקט. active: false מחזיר את
  * הכול לקבוצת "הקמת דוכן".
  *
- * בכוונה לא כתוב "תרומה" באף מסך: אלה דמי הפתיחה של הדוכן, לא תרומה לעמותה,
- * ואין עליהם קבלה לצורכי מס.
+ * הניסוח "תרומה" הוא החלטת מרינה (22.11.2026). מפעילת השירות אינה מוסד
+ * ציבורי לעניין תרומות ואינה מפיקה קבלה לצורכי מס, וזה כתוב בתקנון (6.2א).
+ * הסעיף מחכה למעבר של עורך הדין.
  */
 export const TEAM_FUND = {
   active: true,
@@ -109,7 +110,7 @@ export const PAY_PAYBOX_URL = TEAM_FUND.active ? TEAM_FUND.payboxUrl : PAYBOX_ST
 export const PAY_PAYBOX_GROUP = TEAM_FUND.active ? TEAM_FUND.payboxGroup : "הקמת דוכן";
 /** משפט אחד על היעד של הכסף, לכל המסכים. ריק כשאין משלחת. */
 export const FUND_LINE = TEAM_FUND.active
-  ? `כל ה-₪${ACTIVATION_PRICE} עוברים למשלחת של ${TEAM_FUND.team}, שנוסעת לתחרות בפורטוגל.`
+  ? `כל ה-₪${ACTIVATION_PRICE} הם תרומה למשלחת של ${TEAM_FUND.team}, שנוסעת לתחרות בפורטוגל.`
   : "";
 /**
  * המספר שאליו שולחים ביט, ושבו פותחים וואטסאפ עם המנהלת. E.164 בלי +.
