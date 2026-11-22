@@ -12,6 +12,7 @@ import HomeStall from "../home-stall";
 import HelpButton from "../help-button";
 import LegalLinks from "../legal-links";
 import { parsePrice, priceText, typedPrice } from "@/lib/money";
+import { displayPhone } from "@/lib/phone";
 
 // חמישה מסכים, שאלה אחת בכל אחד: שם → מוצר ראשון → צבע → הורים → טלפון.
 //
@@ -110,6 +111,17 @@ export default function Onboarding() {
   const productRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setDraft(loadDraft()), []);
+  /* מי שכבר מחוברת (למשל נכנסה בקישור מהחמ"ל כי הסמס לא הגיע אליה) לא
+     צריכה קוד נוסף כדי לפתוח דוכן: המספר כבר אומת והסשן פתוח. בלי זה היא
+     נתקעה בשלב האחרון מול קוד שלא מגיע (מרינה, 11.2026). */
+  const [signedIn, setSignedIn] = useState<string | null>(null);
+  const [otherPhone, setOtherPhone] = useState(false);
+  useEffect(() => {
+    supabaseBrowser().auth.getUser().then(({ data }) => {
+      const m = data.user?.email?.match(/^(\d{9,15})@phone\.duchan\.app$/);
+      if (m) setSignedIn(m[1]);
+    });
+  }, []);
   useEffect(() => {
     if (draft && !result) sessionStorage.setItem("duchan-draft", JSON.stringify(draft));
   }, [draft, result]);
@@ -461,6 +473,19 @@ export default function Onboarding() {
             <button onClick={save} data-testid="ob-retry" className="btn btn-primary">
               לנסות שוב
             </button>
+          ) : signedIn && !otherPhone ? (
+            <div className="flex flex-col gap-3" data-testid="ob-signed-in">
+              <h2 className="t-title text-center">אתם כבר מחוברים</h2>
+              <p className="t-sub text-center">
+                ההזמנות יגיעו בוואטסאפ למספר <bdi dir="ltr">{displayPhone(signedIn)}</bdi>.
+              </p>
+              <button onClick={save} data-testid="ob-open-signed" className="btn btn-primary">
+                לפתוח את הדוכן ←
+              </button>
+              <button onClick={() => setOtherPhone(true)} className="btn btn-tertiary t-small">
+                מספר אחר?
+              </button>
+            </div>
           ) : (
             <PhoneVerify
               title="המספר שלכם"
