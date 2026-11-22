@@ -5,6 +5,7 @@ import HomeStall from "@/app/home-stall";
 import Icon, { type IconName } from "@/app/icons";
 import { LearnsTable, SafetyList } from "@/app/price/sections";
 import { displayPhone } from "@/lib/phone";
+import { FUND_LINE, PAY_PAYBOX_GROUP, TEAM_FUND } from "@/lib/pricing";
 import ExplainerVideo from "@/app/explainer-video";
 
 /**
@@ -13,7 +14,10 @@ import ExplainerVideo from "@/app/explainer-video";
  * פעילה ואפשר להיות יזם".
  *
  * הסדר: מה נבנה (עם הדוכן עצמו) → מה זה → על מה הכסף → מה לומדים →
- * בטיחות → איך משלמים בביט, צעד אחר צעד → "שילמתי". פונים להורה ברבים.
+ * בטיחות → איך משלמים, צעד אחר צעד → "שילמתי". פונים להורה ברבים.
+ *
+ * 22.11.2026: דמי הפתיחה עוברים למשלחת של הנבחרת (TEAM_FUND). לכן פייבוקס,
+ * שמגיע לקבוצה של המשלחת ישר, הוא הדרך הראשית, וביט הוא הדרך השנייה.
  */
 
 type State = "open" | "pending" | "live" | "invalid";
@@ -33,7 +37,7 @@ export default function ParentView(p: {
   ownerWhatsapp: string;
 }) {
   const [state, setState] = useState<State>(p.state);
-  const [method, setMethod] = useState<"bit" | "paybox">("bit");
+  const [method, setMethod] = useState<"bit" | "paybox">("paybox");
   const [ref, setRef] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -155,7 +159,9 @@ export default function ParentView(p: {
           <ul className="mt-3 flex flex-col gap-2.5">
             <Check>תשלום אחד. בלי מנוי, בלי חיוב חודשי ובלי הפתעות.</Check>
             <Check>פותח את הדוכן להזמנות אמיתיות, והוא נשאר פתוח.</Check>
-            <Check>מכסה את האחסון של התמונות, הודעות ה-SMS לכניסה, ובדיקה שלנו של כל דוכן לפני שהוא נפתח.</Check>
+            {FUND_LINE
+              ? <Check><span data-testid="parent-fund">{FUND_LINE}</span></Check>
+              : <Check>מכסה את האחסון של התמונות, הודעות ה-SMS לכניסה, ובדיקה שלנו של כל דוכן לפני שהוא נפתח.</Check>}
           </ul>
         </div>
       </section>
@@ -178,17 +184,39 @@ export default function ParentView(p: {
       {/* ── איך משלמים ── */}
       {state === "open" && (
         <section id="pay" className="mt-10 scroll-mt-4" data-testid="parent-pay">
-          <h2 className="text-[20px] font-black">איך משלמים בביט</h2>
+          <h2 className="text-[20px] font-black">איך משלמים</h2>
           <p className="text-[13.5px] text-[var(--muted)] mt-1">שלושה צעדים, פחות מדקה.</p>
           <ol className="mt-3 bg-white border border-[var(--line)]">
-            {p.bitUrl ? (
-              <Step n={1} title={`לוחצים על הכפתור, ביט נפתח, ומקלידים ₪${p.price}`}>
-                <a href={p.bitUrl} target="_blank" rel="noreferrer" className="mt-2 block bg-[var(--ink)] text-white py-3 text-center text-[14px] font-bold">
+            <Step n={1} title={`לוחצים על הכפתור ונכנסים לקבוצה ״${PAY_PAYBOX_GROUP}״ בפייבוקס`}>
+              {p.payboxUrl && (
+                <a href={p.payboxUrl} target="_blank" rel="noreferrer" className="mt-2 block bg-[var(--ink)] text-white py-3 text-center text-[14px] font-bold" data-testid="parent-paybox">
+                  לקבוצה בפייבוקס ←
+                </a>
+              )}
+              <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
+                {TEAM_FUND.active ? "זו הקבוצה של המשלחת, והכסף מגיע אליה ישר. " : ""}השימוש בפייבוקס בחינם.
+              </p>
+            </Step>
+            <Step n={2} title={`סכום: ₪${p.price}. בהערה כותבים את שם הדוכן`}>
+              <CopyBox label={p.name} done={copied === "name"} onCopy={() => copy("name", p.name)} testid="parent-copy-name" />
+            </Step>
+            <Step n={3} title="משלמים, וחוזרים לכאן ללחוץ ״שילמנו״" last />
+          </ol>
+
+          <details className="mt-2 bg-white border border-[var(--line)]">
+            <summary className="min-h-12 px-4 flex items-center text-[13.5px] font-bold cursor-pointer">
+              אין פייבוקס? אפשר בביט
+            </summary>
+            <div className="px-4 pb-4 text-[13px] text-[var(--muted)] leading-relaxed">
+              {p.bitUrl
+                ? <>לוחצים, ביט נפתח, מקלידים ₪{p.price} וכותבים בהערה את שם הדוכן.</>
+                : <>פותחים את ביט, לוחצים ״העברה״, מקלידים את המספר ו-₪{p.price}, וכותבים בהערה את שם הדוכן.</>}
+              {TEAM_FUND.active && <> ביט מגיע אלינו, ואנחנו מעבירים למשלחת.</>}
+              {p.bitUrl ? (
+                <a href={p.bitUrl} target="_blank" rel="noreferrer" className="mt-2.5 block bg-[var(--ink)] text-white py-3 text-center text-[14px] font-bold">
                   לתשלום בביט ←
                 </a>
-              </Step>
-            ) : (
-              <Step n={1} title="פותחים את ביט, לוחצים ״העברה״ ומקלידים את המספר">
+              ) : (
                 <CopyBox
                   label={phoneLocal}
                   ltr
@@ -196,24 +224,6 @@ export default function ParentView(p: {
                   onCopy={() => copy("phone", phoneLocal.replace(/\D/g, ""))}
                   testid="parent-copy-phone"
                 />
-              </Step>
-            )}
-            <Step n={2} title={`סכום: ₪${p.price}. בהערה כותבים את שם הדוכן`}>
-              <CopyBox label={p.name} done={copied === "name"} onCopy={() => copy("name", p.name)} testid="parent-copy-name" />
-            </Step>
-            <Step n={3} title="שולחים, וחוזרים לכאן ללחוץ ״שילמנו״" last />
-          </ol>
-
-          <details className="mt-2 bg-white border border-[var(--line)]">
-            <summary className="min-h-12 px-4 flex items-center text-[13.5px] font-bold cursor-pointer">
-              אין ביט? אפשר בפייבוקס
-            </summary>
-            <div className="px-4 pb-4 text-[13px] text-[var(--muted)] leading-relaxed">
-              נכנסים לקבוצה &quot;הקמת דוכן&quot;, משלמים בה ₪{p.price}, וכותבים בהערה את שם הדוכן. השימוש בפייבוקס בחינם.
-              {p.payboxUrl && (
-                <a href={p.payboxUrl} target="_blank" rel="noreferrer" className="mt-2.5 block bg-[var(--ink)] text-white py-3 text-center text-[14px] font-bold">
-                  לקבוצה בפייבוקס ←
-                </a>
               )}
             </div>
           </details>
@@ -225,7 +235,7 @@ export default function ParentView(p: {
               לוחצים כאן, ואנחנו בודקים שהכסף הגיע ופותחים את הדוכן.
             </p>
             <div className="flex gap-1.5 mt-3" role="radiogroup" aria-label="איך שילמתם">
-              {(["bit", "paybox"] as const).map((m) => (
+              {(["paybox", "bit"] as const).map((m) => (
                 <button
                   key={m}
                   role="radio"

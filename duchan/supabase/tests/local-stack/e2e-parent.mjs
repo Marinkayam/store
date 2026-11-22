@@ -10,6 +10,10 @@ import { createHmac } from "crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyPhone, closeHelper } from "./sms-helper.mjs";
+import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+
+const shots = join(tmpdir(), "duchan-e2e-shots", "parent");
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASE = process.env.E2E_BASE ?? "http://localhost:3777";
@@ -74,13 +78,25 @@ try {
   check("noindex", html.includes("noindex"));
   await parent.goto(`${BASE}/parent/${seed.slug}?t=${t}`);
   await parent.waitForSelector("[data-testid=parent-pay]", { timeout: 15000 });
+  mkdirSync(shots, { recursive: true });
+  await parent.screenshot({ path: `${shots}/parent.png`, fullPage: true });
   const body = (await parent.textContent("body")) ?? "";
   check("כותרת להורים עם שם הדוכן", body.includes("נבנה אצלכם דוכן") && body.includes(seed.display_name));
   const why = (await parent.textContent("[data-testid=parent-why]")) ?? "";
   check("'על מה הכסף': פעם אחת, בלי מנוי, נשאר פתוח, ועל מה זה הולך",
-    why.includes("פעם אחת") && why.includes("בלי מנוי") && why.includes("נשאר פתוח") && why.includes("אחסון"));
+    why.includes("פעם אחת") && why.includes("בלי מנוי") && why.includes("נשאר פתוח") && why.includes("משלחת"));
+  /* 22.11.2026: דמי הפתיחה עוברים למשלחת של הנבחרת (lib/pricing TEAM_FUND) */
+  const fund = (await parent.textContent("[data-testid=parent-fund]")) ?? "";
+  check("כתוב לאן הכסף הולך: כל הסכום, למשלחת של הנבחרת, לתחרות בפורטוגל",
+    fund.includes("כל ה-₪") && fund.includes("הפועל עירוני יבנה") && fund.includes("אדרנלין") && fund.includes("פורטוגל"), fund);
+  check("לא כתוב שהכסף מכסה אחסון, ולא כתוב 'תרומה'", !body.includes("מכסה את האחסון") && !body.includes("תרומה"));
+  check("הכפתור הראשי מוביל לקבוצת הפייבוקס של המשלחת",
+    (await parent.getAttribute("[data-testid=parent-paybox]", "href")) === "https://links.payboxapp.com/1UMNyxiuX7b" &&
+    ((await parent.textContent("[data-testid=parent-pay]")) ?? "").includes("מגיע אליה ישר"));
+  check("ביט נשאר כדרך שנייה, ואומר ביושר שהכסף עובר דרכנו",
+    ((await parent.textContent("[data-testid=parent-pay] details")) ?? "").includes("אנחנו מעבירים למשלחת"));
   check("יזמות ובטיחות", body.includes("להיות יזמים") && (await parent.locator("[data-testid=learns]").count()) === 1 && (await parent.locator("[data-testid=safety]").count()) === 1);
-  check("שלושה צעדים לביט, עם שם הדוכן להעתקה", (await parent.locator("[data-testid=parent-pay] ol > li").count()) === 3 &&
+  check("שלושה צעדים לתשלום, עם שם הדוכן להעתקה", (await parent.locator("[data-testid=parent-pay] ol > li").count()) === 3 &&
     (await parent.locator("[data-testid=parent-copy-name]").count()) === 1);
 
   /* ── 4: "שילמנו" ── */
@@ -89,7 +105,7 @@ try {
   await parent.waitForSelector("[data-testid=parent-pending]", { timeout: 15000 });
   const { rows: [claimed] } = await db.query("select * from stores where id=$1", [seed.id]);
   check("'שילמנו' רושם הצהרה + אישור הורים, ולא מפעיל",
-    !!claimed.payment_claimed_at && !!claimed.parent_consent_at && claimed.payment_method === "bit" && claimed.payment_ref === "אבא של תמר" && claimed.activated_at === null);
+    !!claimed.payment_claimed_at && !!claimed.parent_consent_at && claimed.payment_method === "paybox" && claimed.payment_ref === "אבא של תמר" && claimed.activated_at === null);
   await parent.waitForTimeout(800);
   const { rows: alerts } = await db.query(
     "select title from admin_alerts where kind='payment_claimed' and ref = $1 and body like '%הורה סימן%'",

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
+import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, FUND_LINE, IS_LAUNCH } from "@/lib/pricing";
 import PromoBurst from "../promo-burst";
 import { GetsList, PaybackCard, LearnsTable, AnchorTable, SafetyList } from "./sections";
 import BackBar from "./back-bar";
@@ -56,6 +56,7 @@ export default function PricePage() {
               )}
             </div>
             <div className="t-label mt-2">פעם אחת · לתמיד</div>
+            {FUND_LINE && <p className="relative z-[3] t-small mt-3 max-w-[30ch] mx-auto leading-relaxed" data-testid="price-fund">{FUND_LINE}</p>}
           </div>
 
           <div className="flex flex-wrap justify-center gap-2 mt-5">
