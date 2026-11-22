@@ -63,7 +63,10 @@ function failPage(store: boolean, title: string, body: string) {
   if (store) {
     return storeShell(
       title,
-      `${EMPTY_STALL_SVG}<h1>${title}</h1><p class="sub">${body}</p><a class="btn" href="/login">לכניסה עם קוד</a>`,
+      /* בדרך כלל מי שמגיעה לכאן כבר נכנסה בקישור הזה (לחיצה שנייה, או פתיחה
+         מחדש מהוואטסאפ), כך שהכפתור הראשי מוביל לדוכן שלה. בלי סשן, הדשבורד
+         שולח אותה לכניסה. */
+      `${EMPTY_STALL_SVG}<h1>${title}</h1><p class="sub">${body}</p><a class="btn" href="/dashboard">לדוכן שלי</a>`,
       410
     );
   }
@@ -97,15 +100,15 @@ function welcomePage(token: string, store = false) {
     return storeShell(
       "דוכן",
       `${STALL_SVG}
-<h1>הקישור שלכם מוכן</h1>
-<p class="sub">נכנסים בלי קוד ובלי סיסמה.</p>
+<h1>נכנסים לדוכן</h1>
+<p class="sub">בלי קוד ובלי סיסמה. לוחצים פעם אחת על הכפתור.</p>
 <form method="post" ${once}><button class="btn" type="submit">להיכנס ←</button></form>
 <ol>
-<li><span>לוחצים <b>להיכנס</b>, פעם אחת, ומחכים רגע.</span></li>
-<li><span>אין לכם עוד דוכן? כותבים לו שם, מוסיפים מוצר ובוחרים צבע.</span></li>
-<li><span>בסוף לוחצים <b>לפתוח את הדוכן</b>. לא צריך קוד.</span></li>
+<li><span>אחרי הלחיצה מחכים רגע, עד שהדף מתחלף.</span></li>
+<li><span>עוד אין לכם דוכן? בוחרים לו שם, מוסיפים מוצר וצבע, ומסמנים שההורים יודעים.</span></li>
+<li><span>בשלב האחרון לוחצים <b>לפתוח את הדוכן</b>. לא צריך קוד.</span></li>
 </ol>
-<p class="note">הקישור עובד פעם אחת, ותקף 24 שעות.</p>`
+<p class="note">הקישור עובד פעם אחת בלבד.</p>`
     );
   }
   return new NextResponse(
@@ -145,7 +148,7 @@ export async function GET(
   if (!peek || peek.used_at || new Date(peek.expires_at).getTime() < Date.now()) {
     return failPage(forStore(_req), 
       "הקישור כבר נוצל או שפג תוקפו",
-      "קישור כניסה עובד פעם אחת בלבד, ותקף 24 שעות. אפשר לבקש חדש ממי ששלח אותו."
+      "קישור כניסה עובד פעם אחת בלבד. אם כבר נכנסתם בו, הדוכן מחכה לכם. אם לא, מבקשים קישור חדש ממי ששלח אותו."
     );
   }
   return welcomePage(token, forStore(_req));
@@ -180,7 +183,7 @@ export async function POST(
     }
     return failPage(forStore(_req), 
       "הקישור כבר נוצל או שפג תוקפו",
-      "קישור כניסה עובד פעם אחת בלבד, ותקף 24 שעות. אפשר לבקש חדש ממי ששלח אותו."
+      "קישור כניסה עובד פעם אחת בלבד. אם כבר נכנסתם בו, הדוכן מחכה לכם. אם לא, מבקשים קישור חדש ממי ששלח אותו."
     );
   }
   const phone = link.phone;

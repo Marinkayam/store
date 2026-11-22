@@ -70,7 +70,7 @@ const peek = await fetch(`${BASE}${path}`);
 const peekHtml = await peek.text();
 check("GET מציג כפתור ולא שורף", peek.status === 200 && peekHtml.includes("להיכנס"), `status=${peek.status}`);
 check("ומסך הכניסה של דוכן, לא של סקוויש: האיור של הדוכן, בלי אימוג'י", peekHtml.includes('aria-label="איור של דוכן') && !peekHtml.includes("🧸") && !peekHtml.includes("🛍️"));
-check("ויש בו הוראות: שלושה צעדים, עד 'לפתוח את הדוכן'", (peekHtml.match(/<li>/g) ?? []).length === 3 && peekHtml.includes("לפתוח את הדוכן") && peekHtml.includes("פעם אחת"));
+check("ויש בו הוראות: שלושה צעדים, עד 'לפתוח את הדוכן'", (peekHtml.match(/<li>/g) ?? []).length === 3 && peekHtml.includes("לפתוח את הדוכן") && peekHtml.includes("ההורים יודעים") && peekHtml.includes("פעם אחת"));
 const token = new URL(url).pathname.split("/").pop();
 const { rows: [l1] } = await db.query("select used_at from login_links where token=$1", [token]);
 check("הקישור עדיין לא נוצל", l1.used_at === null);
@@ -92,7 +92,7 @@ const again = await phone();
 await again.goto(`${BASE}${path}`);
 const againBody = (await again.textContent("body")) ?? "";
 check("פעם שנייה — 'כבר נוצל'", againBody.includes("כבר נוצל"));
-check("וגם מסך השגיאה בעיצוב של דוכן, עם דרך להמשיך", (await again.locator("svg.art").count()) === 1 && (await again.locator("a[href='/login']").count()) === 1);
+check("וגם מסך השגיאה בעיצוב של דוכן, עם דרך להמשיך", (await again.locator("svg.art").count()) === 1 && (await again.locator("a[href='/dashboard']").count()) === 1);
 
 /* ── 5. רק מנהלת ── */
 const stranger = await fetch(`${BASE}/api/admin/login-link`, {
