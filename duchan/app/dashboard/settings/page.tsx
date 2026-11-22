@@ -758,7 +758,7 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <div className="text-[12.5px] opacity-80 leading-relaxed mt-1">
-                      משלמים ₪{ACTIVATION_PRICE} פעם אחת, ואנחנו פותחים את הדוכן לחברים.{TEAM_FUND.active ? ` הכסף עובר ל${TEAM_FUND.short}.` : ""}
+                      משלמים ₪{ACTIVATION_PRICE} פעם אחת, ואנחנו פותחים את הדוכן לחברים.{TEAM_FUND.active ? ` הכסף הוא תרומה ל${TEAM_FUND.short}.` : ""}
                     </div>
                   )}
                 </a>
