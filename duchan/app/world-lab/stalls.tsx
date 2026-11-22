@@ -1,6 +1,6 @@
 import { KupaStall } from "@/app/kupa-art";
 import { ART } from "@/app/home/items";
-import type { Emblem, LabStore } from "./data";
+import type { Emblem, LabStore, Tier } from "./data";
 
 /**
  * דוכן אחד בעולם, בשלוש רמות פירוט. כולן מצוירות באותו מרחב של הדוכן
@@ -10,8 +10,9 @@ import type { Emblem, LabStore } from "./data";
  *   mid  — אותו דוכן בפחות קווים: סוכך, סמל, שלושה מוצרים, קישוטים.
  *   far  — כתם צבע: סוכך ודלפק. לקניון ולעיר.
  *
- * רמת הבנייה של המשחק (שנגזרת ממכירות) לא מוצגת כאן: כל הדוכנים בעולם
- * באותו מבנה, ומה שמבדיל ביניהם הוא הצבע, הסמל, המוצרים והקישוטים.
+ * רמת הבנייה של המשחק (שנגזרת ממכירות) לא מוצגת כאן. מה שכן מוצג הוא גודל
+ * המבנה בעולם (tier): דוכן, דוכן מואר, חנות, חנות גדולה. הוא נקבע לפי נקודות
+ * על שיתוף, הזמנת חברים ובניית הדוכן, ולא לפי מכירות (ראה TIERS ב-data.ts).
  */
 
 const INK = "#6f4b28";
@@ -19,8 +20,39 @@ const WOOD = "var(--wood)";
 const CANVAS = "var(--canvas)";
 const LINE = { stroke: INK, strokeWidth: 1.4, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
 
-/** המבנה של כל דוכן בעולם: דוכן, סוכך ושלט. קבוע, לא תלוי במכירות. */
-const WORLD_LEVEL = 3;
+/** הדוכן שבחזית: דוכן עם סוכך ושלט, ומהדרגה השנייה גם נורות ופנס. */
+const stallLevel = (tier: Tier) => (tier >= 2 ? 4 : 3);
+
+/**
+ * המבנה שמאחורי הדוכן, מדרגת "חנות": קיר, גג בצבע הסוכך, ובחנות הגדולה גם
+ * קומה שנייה ודגל. מצויר באותו מרחב של הדוכן (240×176) וגולש כלפי מעלה, כך
+ * שהדוכן עצמו נשאר במקומו והופך לחזית של החנות.
+ */
+function ShopBack({ tier, flat, grew }: { tier: Tier; flat?: boolean; grew?: boolean }) {
+  const top = tier >= 4 ? -96 : -34;
+  const AW = "var(--aw)";
+  const edge = flat ? {} : LINE;
+  return (
+    <svg viewBox="0 0 240 176" className="wl-shop-back" aria-hidden data-shop={tier}>
+      <g className={grew ? "wl-grow" : undefined}>
+        <rect x="16" y={top} width="208" height={150 - top} fill="var(--wl-wall)" {...edge} />
+        <path d={`M4 ${top} L38 ${top - 40} H202 L236 ${top} z`} fill={AW} {...edge} />
+        <rect x="10" y={top - 4} width="220" height="9" fill={WOOD} {...edge} />
+        {tier >= 4 && (
+          <>
+            <rect x="16" y="-38" width="208" height="7" fill={AW} {...edge} />
+            {[34, 103, 172].map((x) => (
+              <rect key={x} x={x} y="-80" width="34" height="30" className="wl-window" fill="var(--wl-window)" {...edge} />
+            ))}
+            <path d={`M120 ${top - 40} v-30`} fill="none" stroke={INK} strokeWidth={1.6} strokeLinecap="round" />
+            <path d={`M120 ${top - 70} l24 7 l-24 7 z`} fill="var(--warning)" {...edge} />
+          </>
+        )}
+        {!flat && tier === 3 && <circle cx="120" cy={top - 19} r="8" className="wl-window" fill="var(--wl-window)" {...LINE} />}
+      </g>
+    </svg>
+  );
+}
 
 export function EmblemMark({ kind, x, y, size, fill }: { kind: Emblem; x: number; y: number; size: number; fill: string }) {
   const k = size / 24;
@@ -132,6 +164,16 @@ function StallMid({ store }: { store: LabStore }) {
           <path key={i} d={`M${24 + i * 24} 39 h24 v12 a12 9 0 0 1 -24 0 z`} fill={i % 2 ? CANVAS : AW} />
         ))}
       </g>
+      {(store.tier ?? 1) >= 2 && (
+        <g>
+          <path d="M26 57 Q120 69 214 57" fill="none" stroke={INK} strokeWidth={0.8} />
+          {Array.from({ length: 9 }, (_, i) => {
+            const t = (i + 0.5) / 9;
+            const y = 57 + 12 * 2 * t * (1 - t) + 4;
+            return <circle key={i} cx={26 + 188 * t} cy={y} r="3" fill={i % 2 ? "var(--warning)" : "var(--blush)"} stroke={INK} strokeWidth={0.7} />;
+          })}
+        </g>
+      )}
       <path d="M96 30 l4 -6 M144 30 l-4 -6" stroke={INK} strokeWidth={1.2} />
       <rect x="84" y="0" width="72" height="25" fill={CANVAS} {...LINE} />
       {store.avatar ? (
@@ -184,18 +226,23 @@ function StallFar() {
 
 export type Lod = "near" | "mid" | "far";
 
-export function WorldStall({ store, lod }: { store: LabStore; lod: Lod }) {
-  if (lod === "far") return <StallFar />;
-  if (lod === "mid") return <StallMid store={store} />;
+export function WorldStall({ store, lod, grew }: { store: LabStore; lod: Lod; grew?: boolean }) {
+  const tier = store.tier ?? 1;
+  const back = tier >= 3 ? <ShopBack tier={tier} flat={lod === "far"} grew={grew} /> : null;
+  if (lod === "far") return <>{back}<StallFar /></>;
+  if (lod === "mid") return <>{back}<StallMid store={store} /></>;
   return (
-    <KupaStall
-      level={WORLD_LEVEL}
-      name={store.sign}
-      bare
-      deco={{ awning: "lavender", flowers: store.deco.flowers, openSign: store.deco.openSign, cat: store.deco.cat }}
-      shelf={<ProductShelf store={store} />}
-      className="wl-stall-svg wl-near"
-    />
+    <>
+      {back}
+      <KupaStall
+        level={stallLevel(tier)}
+        name={store.sign}
+        bare
+        deco={{ awning: "lavender", flowers: store.deco.flowers, openSign: store.deco.openSign, cat: store.deco.cat }}
+        shelf={<ProductShelf store={store} />}
+        className="wl-stall-svg wl-near"
+      />
+    </>
   );
 }
 

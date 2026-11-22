@@ -3,9 +3,9 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/app/icons";
 import {
-  AWNINGS, CAMPUS, CITY_K, CLASSES, CLASS_NAME, GRADE_ROWS, LEVEL_LABELS, LEVEL_NAMES, LOCKED_REASON, MALL, NOTICES, OTHER_SCHOOL,
+  AWNINGS, CAMPUS, CITY_K, CLASSES, CLASS_NAME, GRADE_ROWS, LEVEL_LABELS, LEVEL_NAMES, LOCKED_REASON, MALL, MY_START_COUNTS, NOTICES, OTHER_SCHOOL, POINT_SOURCES, TIERS,
   SCHOOL_NAME, STAGES, STALL, STORES, SURPRISES, WORLD, ZONES,
-  alleyOpen, cityPt, layout, type ClassSize, type Deco, type LabStore, type Level, type Plot,
+  alleyOpen, cityPt, layout, isNightAt, pointsOf, tierOf, type ClassSize, type PointKey, type Deco, type LabStore, type Level, type Plot,
 } from "./data";
 import InviteSim, { type InviteResult } from "./invite-sim";
 import { Foreground, Scenery } from "./scenery";
@@ -76,7 +76,11 @@ const nearestRow = (y: number) => ROWS.reduce((a, b) => (Math.abs(b - y) < Math.
 const SceneryMemo = memo(Scenery);
 const ForegroundMemo = memo(Foreground);
 
-type SheetKind = "decorate" | "invite" | "notices" | "lab" | null;
+const XIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+);
+
+type SheetKind = "decorate" | "invite" | "notices" | "lab" | "grow" | null;
 
 /* אייקונים קטנים לסולם הרמות */
 function LevelIcon({ level }: { level: Level }) {
@@ -109,6 +113,8 @@ export default function World({ review }: { review?: LabStore[] }) {
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chain = useRef(0);
   const selfHash = useRef(false);
+  /** כמה להרחיק ולהרים את המצלמה מול מבנה גבוה. מתעדכן בכל ציור (ראה למטה). */
+  const frameFor = useRef<(x: number, y: number) => { k: number; up: number }>(() => ({ k: 1, up: 0 }));
 
   /** שלב הצמיחה: כמה דוכנים יש בכיתה, ועד איזו רמה אפשר להתרחק */
   const [stage, setStage] = useState(STAGES.length - 1);
@@ -117,6 +123,8 @@ export default function World({ review }: { review?: LabStore[] }) {
   const [group, setGroup] = useState(0);
   const groups = review ? Math.ceil(review.length / 11) : 0;
   const [night, setNight] = useState(false);
+  const nightRef = useRef(false);
+  nightRef.current = night;
   const [dusk, setDusk] = useState(false);
   const [calm, setCalm] = useState(false);
   const [sharp, setSharp] = useState(false);
@@ -138,6 +146,17 @@ export default function World({ review }: { review?: LabStore[] }) {
   const [joined, setJoined] = useState<Record<string, LabStore>>({});
   /** המקום שעל ההזמנה שלו מסתכלים "מהצד השני" */
   const [inviteView, setInviteView] = useState<string | null>(null);
+  /** הנקודות שלי, והדרגה שהדוכן הגיע אליה זה עתה (בשביל אנימציית הבנייה) */
+  const [counts, setCounts] = useState<Record<PointKey, number>>(MY_START_COUNTS);
+  const points = pointsOf(counts);
+  const [grew, setGrew] = useState(0);
+  /** מה קרה בלחיצה האחרונה בגיליון הצמיחה (שם הבועה מוסתרת) */
+  const [growMsg, setGrowMsg] = useState("");
+  /** אור: לפי השעה, או קבוע (רק מתוך "ניסוי") */
+  const [timeMode, setTimeMode] = useState<"auto" | "day" | "night">("auto");
+  /** הכרטיס שנסגר באיקס: מזהה המקום. נפתח שוב כשעוברים למקום אחר. */
+  const [cardOff, setCardOff] = useState<string | null>(null);
+  const myTier = tierOf(points);
   const [found, setFound] = useState<string[]>([]);
   const [bubble, setBubble] = useState<{ text: string; k: number } | null>(null);
   const [fx, setFx] = useState({ splash: 0, hop: 0, cat: 0, watered: 0 });
@@ -150,10 +169,20 @@ export default function World({ review }: { review?: LabStore[] }) {
     [group, joined, review, size]
   );
   const stores = useMemo(
-    () => review ?? [...STORES.map((s) => (s.mine ? { ...s, awning: mine.awning, deco: mine.deco } : s)), ...Object.values(joined)],
-    [joined, mine, review]
+    () => review ?? [...STORES.map((s) => (s.mine ? { ...s, awning: mine.awning, deco: mine.deco, tier: myTier } : s)), ...Object.values(joined)],
+    [joined, mine, myTier, review]
   );
   const storeOf = useCallback((id: string | undefined) => stores.find((s) => s.id === id), [stores]);
+  frameFor.current = (x, y) => {
+    let tier = 1;
+    let bd = Infinity;
+    for (const p of plots) {
+      if (p.kind !== "stall") continue;
+      const d = Math.abs(p.cx - x) + Math.abs(p.by - 24 - y);
+      if (Math.abs(p.cx - x) <= 60 && Math.abs(p.by - 24 - y) <= 60 && d < bd) { bd = d; tier = stores.find((st) => st.id === p.store!.id)?.tier ?? 1; }
+    }
+    return tier >= 4 ? { k: 0.64, up: 34 } : tier === 3 ? { k: 0.86, up: 15 } : { k: 1, up: 0 };
+  };
   const myPlot = useMemo(() => plots.find((p) => p.store?.mine) ?? plots.find((p) => p.kind === "stall") ?? plots[0], [plots]);
   const stallCount = plots.filter((p) => p.kind === "stall").length;
 
@@ -219,8 +248,10 @@ export default function World({ review }: { review?: LabStore[] }) {
   const go = useCallback(
     (lv: Level, x?: number, y?: number) => {
       const { w, h } = vp.current;
-      const p = clampCam(lv, x ?? camRef.current.x, y ?? camRef.current.y);
-      camRef.current = { x: p.x, y: p.y, s: scaleFor(lv, w, h), lv };
+      // מקרוב, חנות גבוהה צריכה מסגרת רחבה יותר, אחרת הגג נחתך
+      const tall = lv === 4 ? frameFor.current(x ?? camRef.current.x, y ?? camRef.current.y) : { k: 1, up: 0 };
+      const p = clampCam(lv, x ?? camRef.current.x, (y ?? camRef.current.y) - tall.up);
+      camRef.current = { x: p.x, y: p.y, s: scaleFor(lv, w, h) * tall.k, lv };
       setLevel(lv);
       setMoving(true);
       applyCam(camRef.current, !calm);
@@ -328,14 +359,27 @@ export default function World({ review }: { review?: LabStore[] }) {
   }, [far]);
 
   /** יום ולילה: המסך מחשיך לרגע, הצבעים מתחלפים מאחוריו, והוא מתבהר */
-  const toggleNight = useCallback(() => {
-    if (calm) return setNight((n) => !n);
+  /** מעבר בין יום ללילה, דרך "דמדומים" קצרים */
+  const lightTo = useCallback((v: boolean) => {
+    if (calm) return setNight(v);
     setDusk(true);
     setTimeout(() => {
-      setNight((n) => !n);
+      setNight(v);
       requestAnimationFrame(() => requestAnimationFrame(() => setDusk(false)));
     }, 250);
   }, [calm]);
+
+  // האור הולך לפי השעה: בערב חושך, ביום אור. נבדק שוב כל כמה דקות, וגם כשחוזרים לדף.
+  useEffect(() => {
+    if (!ready) return;
+    const want = () => (timeMode === "auto" ? isNightAt(new Date()) : timeMode === "night");
+    const sync = () => { if (want() !== nightRef.current) lightTo(want()); };
+    sync();
+    if (timeMode !== "auto") return;
+    const id = setInterval(sync, 5 * 60 * 1000);
+    document.addEventListener("visibilitychange", sync);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", sync); };
+  }, [lightTo, ready, timeMode]);
 
   /* ── חנות ── */
 
@@ -400,7 +444,8 @@ export default function World({ review }: { review?: LabStore[] }) {
     sharpRef.current = webkit;
     setSharp(webkit);
     const hour = new Date().getHours();
-    setNight(hour >= 19 || hour < 6);
+    void hour;
+    setNight(isNightAt(new Date()));
     setCalm(typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches);
     if (webkit) {
       applyCam(idx >= 0 ? camRef.current : { ...camRef.current, s: camRef.current.s * 1.8 }, false);
@@ -643,6 +688,25 @@ export default function World({ review }: { review?: LabStore[] }) {
   const myName = stores.find((x) => x.mine)?.owner ?? "נועה";
 
   /** מה קרה בצד השני של ההזמנה */
+  /** מוסיפים נקודות, ואם עברו סף, הדוכן גדל. מחזיר משפט קצר על מה שקרה, והאם הדוכן גדל. */
+  const earn = (key: PointKey, times = 1) => {
+    const src = POINT_SOURCES.find((x) => x.key === key)!;
+    const add = src.max ? Math.min(times, Math.max(0, src.max - counts[key])) : times;
+    if (!add) return { msg: `כבר יש ${src.max} מוצרים עם תמונה. מוצרים נוספים לא מוסיפים נקודות.`, up: false };
+    const next = { ...counts, [key]: counts[key] + add };
+    const before = tierOf(points);
+    const after = tierOf(pointsOf(next));
+    setCounts(next);
+    if (after > before) setGrew(after);
+    const n = add * src.points;
+    return { msg: after > before ? `קיבלת ${n} נקודות, והדוכן שלך גדל: עכשיו הוא ${TIERS[after - 1].name}.` : `קיבלת ${n} נקודות.`, up: after > before };
+  };
+  /** לחיצת הדמיה בגיליון הצמיחה. כשהדוכן גדל, הגיליון נסגר כדי שיראו אותו גדל. */
+  const simEarn = (what: string, key: PointKey, times = 1) => {
+    const r = earn(key, times);
+    if (r.up) { setSheet(null); setGrowMsg(""); say(`${what} ${r.msg}`); } else setGrowMsg(`${what} ${r.msg}`);
+  };
+
   const finishInvite = (r: InviteResult) => {
     const id = inviteView;
     setInviteView(null);
@@ -650,7 +714,7 @@ export default function World({ review }: { review?: LabStore[] }) {
     const plot = plots.find((p) => p.id === id);
     setInvited((v) => v.filter((x) => x !== id));
     if (r.kind === "declined") return say("ההורה לא אישר. שום דבר לא נחשף, והמקום נשאר פנוי.");
-    if (r.kind === "visit") return say(`המשפחה של ${r.owner} הצטרפה לקניון כמבקרת. המקום נשאר פנוי להזמנה נוספת.`);
+    if (r.kind === "visit") return say(`המשפחה של ${r.owner} הצטרפה לקניון כמבקרת. ${earn("join_visit").msg}`);
     setJoined((j) => ({
       ...j,
       [id]: {
@@ -661,11 +725,23 @@ export default function World({ review }: { review?: LabStore[] }) {
       },
     }));
     if (plot) go(4, plot.cx, plot.by - 24);
-    say(`ל${r.owner} יש עכשיו דוכן לידך. פרח חדש נוסף לגינה של הכיתה.`);
+    say(`ל${r.owner} יש עכשיו דוכן לידך. ${earn("join_store").msg}`);
   };
 
   // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי").
   const showOwner = (st: LabStore) => !!st.owner && !st.name.includes(st.owner);
+  // הדוכן שלי גדל בזמן שמסתכלים עליו: המצלמה מתרחקת כדי שהמבנה החדש ייכנס כולו
+  useEffect(() => {
+    if (grew && camRef.current.lv === 4 && !storeOpen) go(4, myPlot.cx, myPlot.by - 24);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grew]);
+
+  // כרטיס שנסגר באיקס חוזר כשעוברים למקום אחר, או מתרחקים וחוזרים
+  const focusId = focus?.id ?? null;
+  useEffect(() => { setCardOff((v) => (v && v !== focusId ? null : v)); }, [focusId]);
+
+  const nextTier = myTier < TIERS.length ? TIERS[myTier] : null;
+  const tierProgress = nextTier ? (points - TIERS[myTier - 1].at) / (nextTier.at - TIERS[myTier - 1].at) : 1;
   const worldBusy = !!storeOpen || !!sheet || !!inviteView;
   const isInvited = (id: string) => invited.includes(id);
 
@@ -760,18 +836,19 @@ export default function World({ review }: { review?: LabStore[] }) {
                 data-kind={p.kind}
                 data-lod={lod}
                 data-mine={st?.mine ? "1" : undefined}
+                data-tier={st ? st.tier ?? 1 : undefined}
                 data-lv="3 4"
                 data-testid={`wl-plot-${p.id}`}
                 tabIndex={level >= 3 ? 0 : -1}
                 aria-label={
                   st
-                    ? `${st.name}${st.owner ? `, של ${st.owner}` : ""}${st.mine ? ", הדוכן שלי" : ""}. ${level === 4 && focus?.id === p.id ? "להיכנס לחנות" : "להתקרב"}`
+                    ? `${st.name}, ${TIERS[(st.tier ?? 1) - 1].name}${st.owner ? ` של ${st.owner}` : ""}${st.mine ? ", שלי" : ""}. ${level === 4 && focus?.id === p.id ? "להיכנס לחנות" : "להתקרב"}`
                     : `מקום פנוי${isInvited(p.id) ? ", הזמנה נשלחה" : ""}. ${level === 4 && focus?.id === p.id ? "להזמין לפתוח כאן דוכן" : "להתקרב"}`
                 }
                 style={{ ...style, ...vars }}
                 onClick={() => tapPlot(p)}
               >
-                {st ? <WorldStall store={st} lod={lod} /> : <EmptyPlot lod={lod} invited={isInvited(p.id)} />}
+                {st ? <WorldStall store={st} lod={lod} grew={st.mine && grew === st.tier} /> : <EmptyPlot lod={lod} invited={isInvited(p.id)} />}
               </button>
             );
           })}
@@ -840,9 +917,6 @@ export default function World({ review }: { review?: LabStore[] }) {
       <div className="wl-hud" inert={!!storeOpen}>
         <div className="wl-top">
           <div className="wl-top-side">
-            <button type="button" className="wl-btn wl-sq" onClick={toggleNight} aria-pressed={night} aria-label={night ? "לעבור ליום" : "לעבור ללילה"} data-testid="wl-night">
-              <Icon name={night ? "sun" : "moon"} size={22} tone={night ? "var(--warning)" : "var(--lavender)"} />
-            </button>
             <button type="button" className="wl-btn wl-chip" onClick={() => setSheet("lab")} data-testid="wl-lab">ניסוי</button>
           </div>
           <div className="wl-place" aria-live="polite" data-testid="wl-place">{place}</div>
@@ -873,12 +947,21 @@ export default function World({ review }: { review?: LabStore[] }) {
         </nav>
 
         <div className="wl-bottom">
-          {level === 4 && !moving && focus && !sheet && (
+          {level === 4 && !moving && focus && !sheet && cardOff !== focus.id && (
             <div className="wl-card" data-testid="wl-card">
+              <button type="button" className="wl-x" onClick={() => setCardOff(focus.id)} aria-label="לסגור" data-testid="wl-card-x"><XIcon /></button>
               {focusStore ? (
                 <>
                   <div className="wl-card-title">{focusStore.name}</div>
-                  <div className="wl-card-sub">{focusStore.owner ? `הדוכן של ${focusStore.owner}. ` : ""}{focusStore.tagline}</div>
+                  <div className="wl-card-sub">{focusStore.owner ? `${TIERS[(focusStore.tier ?? 1) - 1].name} של ${focusStore.owner}. ` : ""}{focusStore.tagline}</div>
+                  {focusStore.mine && !review && (
+                    <button type="button" className="wl-points" onClick={() => { setGrowMsg(""); setSheet("grow"); }} data-testid="wl-points" aria-label={`${points} נקודות. ${nextTier ? `עוד ${nextTier.at - points} עד ${nextTier.name}` : "הגעת לחנות הגדולה"}. איך גדלים`}>
+                      <span className="wl-points-bar" aria-hidden><i style={{ width: `${Math.round(tierProgress * 100)}%` }} /></span>
+                      <span className="wl-points-text">
+                        <b>{points}</b> נקודות{nextTier ? ` · עוד ${nextTier.at - points} עד ${nextTier.name}` : ""}
+                      </span>
+                    </button>
+                  )}
                   <div className="wl-card-actions">
                     <button type="button" className="wl-btn wl-primary" onClick={() => openStore(focusStore.id)} data-testid="wl-enter">להיכנס לחנות</button>
                     {focusStore.mine && (
@@ -915,6 +998,7 @@ export default function World({ review }: { review?: LabStore[] }) {
             <div className="wl-bubble" role="status" key={bubble.k} data-testid="wl-bubble">
               <Icon name="sparkle" size={20} tone="var(--warning)" />
               <span>{bubble.text}</span>
+              <button type="button" className="wl-x" onClick={() => setBubble(null)} aria-label="לסגור" data-testid="wl-bubble-x"><XIcon /></button>
             </div>
           )}
           {hint && !bubble && <div className="wl-hint">{hint}</div>}
@@ -944,7 +1028,7 @@ export default function World({ review }: { review?: LabStore[] }) {
       {/* ── גיליונות ── */}
       {sheet && (
         <div className="wl-sheet-wrap" onClick={(e) => { if (e.target === e.currentTarget) setSheet(null); }}>
-          <div className="wl-sheet" role="dialog" aria-modal="true" aria-label={sheet === "decorate" ? "עיצוב הדוכן" : sheet === "invite" ? "הזמנה לפתוח דוכן" : sheet === "notices" ? "לוח המודעות" : "הגדרות הניסוי"} data-testid={`wl-sheet-${sheet}`}>
+          <div className="wl-sheet" role="dialog" aria-modal="true" aria-label={sheet === "decorate" ? "עיצוב הדוכן" : sheet === "invite" ? "הזמנה לפתוח דוכן" : sheet === "notices" ? "לוח המודעות" : sheet === "grow" ? "איך הדוכן גדל" : "הגדרות הניסוי"} data-testid={`wl-sheet-${sheet}`}>
             <button type="button" className="wl-sheet-x" onClick={() => setSheet(null)} aria-label="לסגור" autoFocus>
               <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
             </button>
@@ -980,6 +1064,39 @@ export default function World({ review }: { review?: LabStore[] }) {
                   </div>
                 </div>
                 <p className="wl-sheet-note">בהדמיה הכול פתוח. באפליקציה, קישוטים קונים במטבעות מהמשחק של הדוכן.</p>
+              </>
+            )}
+
+            {sheet === "grow" && (
+              <>
+                <h2>ככה הדוכן גדל</h2>
+                <ol className="wl-tiers">
+                  {TIERS.map((t, i) => (
+                    <li key={t.name} data-on={myTier >= i + 1 ? "1" : undefined} data-now={myTier === i + 1 ? "1" : undefined}>
+                      <b>{t.name}</b>
+                      <span>{t.at === 0 ? "מההתחלה" : `${t.at} נקודות`}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="wl-grow-now" data-testid="wl-grow-now">
+                  <b>{points}</b> נקודות{nextTier ? ` · עוד ${nextTier.at - points} עד ${nextTier.name}` : ""}
+                </p>
+                <ul className="wl-sources">
+                  {POINT_SOURCES.map((x) => (
+                    <li key={x.key} data-testid={`wl-src-${x.key}`}>
+                      <span>{x.label}{x.cap ? <em>{x.cap}</em> : null}</span>
+                      <i>{counts[x.key]} × {x.points}</i>
+                      <b>{counts[x.key] * x.points}</b>
+                    </li>
+                  ))}
+                </ul>
+                <p className="wl-sheet-note">מכירות לא נספרות. את הנקודות רואה רק מי שהדוכן שלה, וכל השאר רואים רק את המבנה.</p>
+                <div className="wl-toggles">
+                  <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("עבר עוד שבוע.", "week")} data-testid="wl-sim-week">הדמיה: עבר שבוע</button>
+                  <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("הוספת מוצר עם תמונה.", "product")} data-testid="wl-sim-product">הדמיה: מוצר חדש</button>
+                  <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("חמישה נכנסו לדוכן מהקישור שלך.", "visit", 5)} data-testid="wl-sim-visits">הדמיה: 5 נכנסו מהקישור</button>
+                </div>
+                {growMsg && <p className="wl-grow-msg" role="status" data-testid="wl-grow-msg">{growMsg}</p>}
               </>
             )}
 
@@ -1046,6 +1163,14 @@ export default function World({ review }: { review?: LabStore[] }) {
                   </div>
                 )}
                 <div className="wl-field">
+                  <span className="wl-field-label">אור</span>
+                  <div className="wl-toggles" role="radiogroup" aria-label="אור">
+                    {([["auto", "לפי השעה"], ["day", "יום"], ["night", "לילה"]] as const).map(([k, label]) => (
+                      <button key={k} type="button" role="radio" aria-checked={timeMode === k} className="wl-btn wl-toggle" onClick={() => setTimeMode(k)} data-testid={`wl-time-${k}`}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="wl-field">
                   <span className="wl-field-label">תנועה</span>
                   <div className="wl-toggles">
                     <button type="button" className="wl-btn wl-toggle" aria-pressed={calm} onClick={() => setCalm((v) => !v)} data-testid="wl-calm">פחות תנועה</button>
@@ -1061,7 +1186,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                     >
                       חידוד מקרוב
                     </button>
-                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); }}>לאפס הפתעות והזמנות</button>
+                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); setCounts(MY_START_COUNTS); setGrew(0); }}>לאפס הפתעות, הזמנות ונקודות</button>
                   </div>
                 </div>
                 <p className="wl-sheet-note">"חידוד מקרוב" נדלק לבד באייפון. אם התמונה מטושטשת כשמתקרבים, או שמשהו זז ממקומו, כדאי להחליף את ההגדרה הזו.</p>

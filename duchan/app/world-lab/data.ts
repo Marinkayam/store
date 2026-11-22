@@ -94,6 +94,43 @@ export const LOCKED_REASON: Record<number, string> = {
   0: "העיר תיפתח כשיהיה בה עוד בית ספר עם דוכנים.",
 };
 
+/**
+ * גודל המבנה בעולם. נקבע לפי "נקודות" שמקבלים על שיתוף, על הזמנת חברים ועל
+ * בניית הדוכן, ולא לפי מכירות: כמה מכרה ילדה נשאר בינה לבין ההורים שלה.
+ * הנקודות עצמן נראות רק לבעלת הדוכן. כל השאר רואים רק את המבנה.
+ */
+export type Tier = 1 | 2 | 3 | 4;
+export const TIERS: { at: number; name: string }[] = [
+  { at: 0, name: "דוכן" },
+  { at: 100, name: "דוכן מואר" },
+  { at: 250, name: "חנות" },
+  { at: 500, name: "חנות גדולה" },
+];
+export const tierOf = (points: number): Tier => TIERS.reduce<number>((t, x, i) => (points >= x.at ? i + 1 : t), 1) as Tier;
+/**
+ * על מה מקבלים נקודות. על תוצאה ולא על שליחה: הודעה שנשלחה אי אפשר לספור, ולא
+ * רוצים לתגמל הצפה. ותיקות ומוצרים נספרים לפי המצב (כמה שבועות, כמה מוצרים
+ * יש עכשיו), ולכן מחיקה והוספה מחדש לא מוסיפות כלום.
+ */
+export type PointKey = "week" | "product" | "visit" | "join_visit" | "join_store";
+export const POINT_SOURCES: { key: PointKey; label: string; points: number; cap?: string; max?: number }[] = [
+  { key: "week", label: "שבוע שהדוכן פעיל", points: 10 },
+  { key: "product", label: "מוצר עם תמונה בדוכן", points: 10, cap: "עד 10 מוצרים", max: 10 },
+  { key: "visit", label: "מישהו נכנס לדוכן מהקישור שלך", points: 5, cap: "עד 30 ביום" },
+  { key: "join_visit", label: "משפחה הצטרפה לקניון בהזמנתך", points: 20 },
+  { key: "join_store", label: "נפתח דוכן בהזמנתך", points: 60 },
+];
+/** הדוכן שלי בתחילת ההדמיה: שלושה שבועות ושלושה מוצרים */
+export const MY_START_COUNTS: Record<PointKey, number> = { week: 3, product: 3, visit: 0, join_visit: 0, join_store: 0 };
+export const pointsOf = (counts: Record<PointKey, number>) => POINT_SOURCES.reduce((sum, x) => sum + (counts[x.key] ?? 0) * x.points, 0);
+
+/** שעת השקיעה בקירוב לכל חודש בישראל. מהשעה הזאת ועד שש בבוקר העולם בלילה. */
+const SUNSET = [17, 17.5, 18, 19, 19.5, 20, 20, 19.5, 18.75, 17.75, 16.75, 16.75];
+export const isNightAt = (d: Date) => {
+  const h = d.getHours() + d.getMinutes() / 60;
+  return h < 6 || h >= SUNSET[d.getMonth()];
+};
+
 export type Emblem = "heart" | "star" | "sun" | "leaf" | "gem" | "flower" | "moon" | "drop";
 
 export interface Deco {
@@ -131,6 +168,8 @@ export interface LabStore {
   products: LabProduct[];
   deco: Deco;
   mine?: boolean;
+  /** גודל המבנה בעולם (ראה TIERS). בלי ערך: דוכן רגיל. */
+  tier?: Tier;
 }
 
 /** צבעי הסוכך שאפשר לבחור בעיצוב הדוכן (הצבעים הראשיים של הערכות) */
@@ -156,7 +195,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: true, openSign: false, cat: true },
   },
   {
-    id: "maya", name: "הציורים של מאיה", short: "מאיה", sign: "ציורי מאיה", owner: "מאיה", tagline: "ציורים קטנים וספלים מצוירים",
+    id: "maya", tier: 3, name: "הציורים של מאיה", short: "מאיה", sign: "ציורי מאיה", owner: "מאיה", tagline: "ציורים קטנים וספלים מצוירים",
     theme: "candy", awning: "#A65330", emblem: "sun",
     products: [
       { art: "painting", name: "ציור נוף", price: 20 },
@@ -166,7 +205,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: false, openSign: true, cat: false },
   },
   {
-    id: "itai", name: "המכוניות של איתי", short: "איתי", sign: "מכוניות איתי", owner: "איתי", tagline: "מכוניות קטנות וכדורים",
+    id: "itai", tier: 1, name: "המכוניות של איתי", short: "איתי", sign: "מכוניות איתי", owner: "איתי", tagline: "מכוניות קטנות וכדורים",
     theme: "slush", awning: "#2563A8", emblem: "star",
     products: [
       { art: "car", name: "מכונית ירוקה", price: 10 },
@@ -176,7 +215,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: false, openSign: false, cat: false },
   },
   {
-    id: "beads", name: "חרוזים וחברים", short: "חרוזים", sign: "חרוזים וחברים", owner: "שירה", tagline: "שרשראות וצמידים בעבודת יד",
+    id: "beads", tier: 2, name: "חרוזים וחברים", short: "חרוזים", sign: "חרוזים וחברים", owner: "שירה", tagline: "שרשראות וצמידים בעבודת יד",
     theme: "mint", awning: "#23785A", emblem: "gem",
     products: [
       { art: "necklace", name: "שרשרת חרוזים", price: 16 },
@@ -186,7 +225,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: true, openSign: true, cat: false },
   },
   {
-    id: "teddy", name: "דובי ושות׳", short: "דובי", sign: "דובי ושות׳", owner: "עומר", tagline: "בובות רכות שמחפשות בית",
+    id: "teddy", tier: 1, name: "דובי ושות׳", short: "דובי", sign: "דובי ושות׳", owner: "עומר", tagline: "בובות רכות שמחפשות בית",
     theme: "minimal", awning: "#8D6236", emblem: "leaf",
     products: [
       { art: "teddy", name: "דובי חום", price: 22 },
@@ -196,7 +235,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: false, openSign: false, cat: true },
   },
   {
-    id: "slime", name: "סליים סטודיו", short: "סליים", sign: "סליים סטודיו", owner: "ליה", tagline: "סליים בכל הצבעים",
+    id: "slime", tier: 4, name: "סליים סטודיו", short: "סליים", sign: "סליים סטודיו", owner: "ליה", tagline: "סליים בכל הצבעים",
     theme: "pastel", awning: "#577157", emblem: "drop",
     products: [
       { art: "slime", name: "סליים ירוק", price: 14 },
@@ -206,7 +245,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: true, openSign: false, cat: false },
   },
   {
-    id: "mugs", name: "ספלים מצוירים", short: "ספלים", sign: "ספלים מצוירים", owner: "דניאל", tagline: "ספל לכל בוקר",
+    id: "mugs", tier: 2, name: "ספלים מצוירים", short: "ספלים", sign: "ספלים מצוירים", owner: "דניאל", tagline: "ספל לכל בוקר",
     theme: "lemon", awning: "#E3B93A", emblem: "flower",
     products: [
       { art: "mug", name: "ספל לב", price: 24 },
@@ -216,7 +255,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: false, openSign: true, cat: false },
   },
   {
-    id: "balls", name: "הכדורים של יובל", short: "יובל", sign: "כדורי יובל", owner: "יובל", tagline: "כדורים קופצים ומכוניות",
+    id: "balls", tier: 1, name: "הכדורים של יובל", short: "יובל", sign: "כדורי יובל", owner: "יובל", tagline: "כדורים קופצים ומכוניות",
     theme: "melon", awning: "#C9403A", emblem: "moon",
     products: [
       { art: "ball", name: "כדור ענק", price: 9 },
@@ -226,7 +265,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: false, openSign: false, cat: false },
   },
   {
-    id: "rainbow", name: "צמידי קשת", short: "קשת", sign: "צמידי קשת", owner: "רוני", tagline: "צמידים בצבעי הקשת",
+    id: "rainbow", tier: 3, name: "צמידי קשת", short: "קשת", sign: "צמידי קשת", owner: "רוני", tagline: "צמידים בצבעי הקשת",
     theme: "bubble", awning: "#C23B6E", emblem: "heart",
     products: [
       { art: "bracelets", name: "צמידי קשת", price: 12 },
@@ -236,7 +275,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: true, openSign: false, cat: false },
   },
   {
-    id: "tamar", name: "פינת היצירה של תמר", short: "תמר", sign: "היצירה של תמר", owner: "תמר", tagline: "ציורים, צמידים והפתעות",
+    id: "tamar", tier: 2, name: "פינת היצירה של תמר", short: "תמר", sign: "היצירה של תמר", owner: "תמר", tagline: "ציורים, צמידים והפתעות",
     theme: "cloud", awning: "#716E43", emblem: "leaf",
     products: [
       { art: "painting", name: "ציור פרחים", price: 18 },
@@ -246,7 +285,7 @@ export const STORES: LabStore[] = [
     deco: { flowers: false, openSign: true, cat: false },
   },
   {
-    id: "stars", name: "כוכבים קטנים", short: "כוכבים", sign: "כוכבים קטנים", owner: "אלה", tagline: "דברים קטנים שעושים שמח",
+    id: "stars", tier: 1, name: "כוכבים קטנים", short: "כוכבים", sign: "כוכבים קטנים", owner: "אלה", tagline: "דברים קטנים שעושים שמח",
     theme: "night", awning: "#7B63A8", emblem: "star",
     products: [
       { art: "squishy", name: "סקוויש כוכב", price: 12 },

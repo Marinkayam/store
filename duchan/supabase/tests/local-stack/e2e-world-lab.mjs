@@ -3,7 +3,8 @@
 // דף ניסוי עם נתוני דוגמה בלבד. הבדיקה מוודאת שמה שהדף מבטיח קורה בפועל:
 //   1. מתחילים בחנות, יוצאים לחזית, מתרחקים לרחוב, לקניון, לבית הספר ולעיר, וחוזרים.
 //   2. אותו עולם בכל הרמות: אותם דוכנים, רק בפחות פירוט ככל שמתרחקים.
-//   3. רמת הבנייה של המשחק (שנגזרת ממכירות) לא מוצגת: כל הדוכנים באותו מבנה.
+//   3. הדוכן גדל (דוכן, דוכן מואר, חנות, חנות גדולה) לפי נקודות על שיתוף, הזמנות
+//      ובניית הדוכן. מכירות לא נספרות, והנקודות עצמן נראות רק לבעלת הדוכן.
 //   4. מקום פנוי הוא מקום פנוי. אין דוכן שלא קיים ברשימת החנויות.
 //   5. השם הפרטי מופיע רק בתוך הקניון, לא בדף החנות.
 //   6. הזמנת חברים: הקישור לא חושף חנויות, מצטרפים רק באישור הורה, ואפשר
@@ -103,6 +104,13 @@ const inviteTo = async (plot) => {
   ck("על השלט שם החנות", ((await near.textContent()) ?? "").includes("סקווישי נוני"));
   ck("על הדלפק שלושה מוצרים של החנות, בלי תוויות המחיר המצוירות", (await near.locator("[data-shelf] > g").count()) === 3 && !((await near.textContent()) ?? "").includes("₪"));
   ck("רק הדוכן שבמרכז מצויר בפירוט מלא", (await lods()).near === 1);
+  ck("אין כפתור יום ולילה: האור הולך לפי השעה", (await p.locator("[data-testid=wl-night]").count()) === 0);
+  // שאר הבדיקה רצה באור יום, כדי שהתוצאה לא תהיה תלויה בשעה שבה מריצים אותה
+  await p.click("[data-testid=wl-lab]");
+  await p.click("[data-testid=wl-time-day]");
+  await p.keyboard.press("Escape");
+  await p.waitForFunction(() => document.querySelector("[data-testid=wl-root]").getAttribute("data-night") !== "1");
+  await p.waitForTimeout(400);
   if (SHARP) {
     // אותה תמונה בשתי דרכי הציור: הדוכן נשאר באותו מקום ובאותו גודל
     const box = () => p.locator(".wl-plot[data-mine='1']").boundingBox();
@@ -130,6 +138,46 @@ const inviteTo = async (plot) => {
   await axe("גיליון העיצוב");
   await p.keyboard.press("Escape");
 
+  /* ── 3ב. הדוכן גדל: ותיקות, מוצרים, שיתוף ── */
+  const myTier = () => p.locator(".wl-plot[data-mine='1']").getAttribute("data-tier");
+  ck("מתחילים מדוכן רגיל, עם הנקודות שלי על הכרטיס", (await myTier()) === "1" && (await text("[data-testid=wl-points]")).includes("60") && (await text("[data-testid=wl-points]")).includes("דוכן מואר"), await text("[data-testid=wl-points]"));
+  await p.click("[data-testid=wl-points]");
+  await p.waitForTimeout(450);
+  const growText = await text("[data-testid=wl-sheet-grow]");
+  ck("ההסבר: ארבע דרגות, חמישה מקורות נקודות, ומכירות לא נספרות", (await p.locator(".wl-tiers li").count()) === 4 && (await p.locator(".wl-sources li").count()) === 5 && growText.includes("מכירות לא נספרות"));
+  ck("רואים מאיפה הנקודות שלי: שלושה שבועות ושלושה מוצרים", (await text("[data-testid=wl-src-week]")).includes("3 × 10") && (await text("[data-testid=wl-src-product]")).includes("3 × 10") && (await text("[data-testid=wl-grow-now]")).includes("60"));
+  await axe("גיליון הצמיחה");
+  await p.click("[data-testid=wl-sim-visits]");
+  ck("שיתוף בלי לעבור סף: נקודות עולות, הדוכן לא משתנה", (await myTier()) === "1" && (await text("[data-testid=wl-grow-msg]")).includes("קיבלת 25 נקודות") && (await text("[data-testid=wl-grow-now]")).includes("85"), await text("[data-testid=wl-grow-now]"));
+  await p.click("[data-testid=wl-sim-week]");
+  await p.click("[data-testid=wl-sim-week]");
+  await p.waitForSelector("[data-testid=wl-bubble]");
+  ck("ותיקות: עוד שבועיים מעבירים את 100, והדוכן נהיה דוכן מואר", (await myTier()) === "2" && (await bubble()).includes("דוכן מואר") && (await p.locator("[data-testid=wl-sheet-grow]").count()) === 0, await bubble());
+  await p.click("[data-testid=wl-points]");
+  for (let i = 0; i < 7; i++) await p.click("[data-testid=wl-sim-product]");
+  ck("מוצרים: עשרה מוצרים עם תמונה", (await text("[data-testid=wl-src-product]")).includes("10 × 10") && (await text("[data-testid=wl-grow-now]")).includes("175"), await text("[data-testid=wl-grow-now]"));
+  await p.click("[data-testid=wl-sim-product]");
+  ck("מוצר אחד-עשר לא מוסיף נקודות", (await text("[data-testid=wl-grow-msg]")).includes("כבר יש 10 מוצרים") && (await text("[data-testid=wl-grow-now]")).includes("175"));
+  for (let i = 0; i < 3; i++) await p.click("[data-testid=wl-sim-visits]");
+  await p.waitForSelector("[data-testid=wl-bubble]");
+  await settle();
+  ck("עוברים 250 נקודות: מאחורי הדוכן קם מבנה של חנות", (await myTier()) === "3" && (await p.locator(".wl-plot[data-mine='1'] .wl-shop-back[data-shop='3']").count()) === 1);
+  ck("החנות נכנסת כולה למסך, מעל הכרטיס ומתחת לסרגל העליון", await p.evaluate(() => {
+    const r = document.querySelector(".wl-plot[data-mine='1'] .wl-shop-back > g").getBoundingClientRect();
+    const card = document.querySelector("[data-testid=wl-card]").getBoundingClientRect();
+    return r.top >= 56 && r.bottom <= card.top + 4 && r.left >= 0 && r.right <= innerWidth;
+  }));
+  await p.click("[data-testid=wl-bubble-x]");
+  ck("לבועה יש איקס שסוגר אותה", (await p.locator("[data-testid=wl-bubble]").count()) === 0);
+  await p.click("[data-testid=wl-card-x]");
+  ck("לכרטיס יש איקס שסוגר אותו", (await p.locator("[data-testid=wl-card]").count()) === 0);
+  await p.click("[data-testid=wl-out]");
+  await settle();
+  await p.click(".wl-plot[data-mine='1']");
+  await settle();
+  ck("כשמתרחקים וחוזרים הכרטיס מופיע שוב", (await p.locator("[data-testid=wl-card]").count()) === 1);
+  ck("הדוכן עצמו נשאר החזית: אותו שלט ואותם מוצרים", ((await near.textContent()) ?? "").includes("סקווישי נוני") && (await near.locator("[data-shelf] > g").count()) === 3);
+
   /* ── 4. מתרחקים: רחוב, קניון, בית ספר, עיר ── */
   await p.click("[data-testid=wl-out]");
   await settle();
@@ -146,6 +194,8 @@ const inviteTo = async (plot) => {
     return { pitch, widest: Math.max(...[...document.querySelectorAll(".wl-plate")].map((el) => el.getBoundingClientRect().width)) };
   });
   ck("לוחיות של דוכנים שכנים לא עולות זו על זו", fit.widest <= fit.pitch, JSON.stringify(fit));
+  const tiers = await p.locator(".wl-plot[data-kind=stall]").evaluateAll((els) => els.map((el) => el.getAttribute("data-tier")));
+  ck("בכיתה יש מבנים בכל הגדלים, מדוכן ועד חנות גדולה", ["1", "2", "3", "4"].every((t) => tiers.includes(t)), tiers.join(","));
   ck("הצבע שבחרתי נשאר גם מרחוק", (await p.locator(".wl-plot[data-mine='1']").evaluate((el) => getComputedStyle(el).getPropertyValue("--aw").trim().toLowerCase())) === "#c9403a");
   await axe("הרחוב");
 
@@ -153,6 +203,7 @@ const inviteTo = async (plot) => {
   await settle();
   l = await lods();
   ck("קניון: כל הדוכנים בפירוט נמוך", (await level()) === 2 && (await place()).startsWith("הקניון של") && l.mid === 0 && l.near === 0 && l.far === l.stall, JSON.stringify(l));
+  ck("גם מרחוק רואים מי חנות ומי דוכן", (await p.locator(".wl-plot[data-mine='1'] .wl-shop-back").count()) === 1 && (await p.locator(".wl-plot[data-tier='1'] .wl-shop-back").count()) === 0);
   ck("בקניון כמה אזורי מסחר", (await p.locator("[data-testid^='wl-hit-zone-']").count()) === 4);
 
   await p.click("[data-testid=wl-out]");
@@ -238,6 +289,8 @@ const inviteTo = async (plot) => {
   await settle();
   ck("אחרי האישור נפתח דוכן אמיתי במקום הפנוי, והמצלמה נוחתת עליו",
     (await level()) === 4 && (await place()) === "הצמידים של גלי" && (await p.locator("[data-testid=wl-plot-A4]").getAttribute("data-kind")) === "stall", await place());
+  ck("על פתיחת דוכן בהזמנתי מקבלים נקודות", (await bubble()).includes("קיבלת 60 נקודות"), await bubble());
+  ck("הנקודות של אחרים לא מוצגות: בכרטיס של דוכן אחר אין נקודות", (await p.locator("[data-testid=wl-card]").count()) === 1 && (await p.locator("[data-testid=wl-points]").count()) === 0);
   await p.click("[data-testid=wl-out]");
   await settle();
   ck("הדוכן החדש מסומן 'חדש' ברחוב", (await p.locator(".wl-plate").allTextContents()).some((t) => t.includes("הצמידים של גלי") && t.includes("חדש")));
@@ -268,6 +321,7 @@ const inviteTo = async (plot) => {
   await p.click("[data-testid=wl-parent-yes]");
   await p.click("[data-testid=wl-join-done]");
   await p.waitForFunction(() => document.querySelector("[data-testid=wl-bubble]")?.textContent.includes("מבקרת"));
+  ck("גם על משפחה שהצטרפה לבקר מקבלים נקודות", (await bubble()).includes("קיבלת 20 נקודות"), await bubble());
   ck("משפחה בלי חנות מצטרפת כמבקרת, והמקום נשאר פנוי", (await lods()).stall === stallsBefore && (await p.locator("[data-testid=wl-plot-B0]").getAttribute("data-kind")) === "empty");
 
   /* ── 10. העולם גדל בשלבים ── */
@@ -301,10 +355,23 @@ const inviteTo = async (plot) => {
   ck("עוד בית ספר: הכול פתוח", JSON.stringify(await locked()) === "[]");
 
   /* ── 11. יום ולילה ── */
-  const n0 = await root().getAttribute("data-night");
-  await p.click("[data-testid=wl-night]");
-  await p.waitForFunction((v) => document.querySelector("[data-testid=wl-root]").getAttribute("data-night") !== v, n0, { timeout: 4000 });
-  ck("יום ולילה מתחלפים", (await root().getAttribute("data-night")) !== n0);
+  await p.click("[data-testid=wl-lab]");
+  await p.click("[data-testid=wl-time-night]");
+  await p.waitForFunction(() => document.querySelector("[data-testid=wl-root]").getAttribute("data-night") === "1", null, { timeout: 4000 });
+  await p.click("[data-testid=wl-time-day]");
+  await p.waitForFunction(() => document.querySelector("[data-testid=wl-root]").getAttribute("data-night") !== "1", null, { timeout: 4000 });
+  await p.keyboard.press("Escape");
+  ck("מתוך 'ניסוי' אפשר לקבוע יום או לילה", true);
+  for (const [when, want] of [["2026-07-10T12:00:00+03:00", "0"], ["2026-07-10T21:30:00+03:00", "1"], ["2026-12-10T17:30:00+02:00", "1"], ["2026-07-10T17:30:00+03:00", "0"]]) {
+    const tctx = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: "Asia/Jerusalem" });
+    const t = await tctx.newPage();
+    await t.clock.setFixedTime(new Date(when));
+    await t.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); } catch {} });
+    await t.goto(URL, { waitUntil: "networkidle" });
+    await t.waitForTimeout(500);
+    ck(`לפי השעה: ${when.slice(5, 16).replace("T", " ")} הוא ${want === "1" ? "לילה" : "יום"}`, (await t.getAttribute("[data-testid=wl-root]", "data-night")) === want, String(await t.getAttribute("[data-testid=wl-root]", "data-night")));
+    await tctx.close();
+  }
 
   /* ── 12. מקלדת ── */
   await p.keyboard.press("Escape");
