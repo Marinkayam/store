@@ -9,7 +9,7 @@ import { EmptyPlot, WorldStall } from "./stalls";
  * "פתחנו לכם משחק": מה שרואה מי שכבר יש לה דוכן, בפעם הראשונה שהיא נכנסת
  * אחרי שהעולם עולה. המשחק הוא לבנות עיר, והדוכן שלה עומד בתוכה. שלושה
  * צעדים קצרים, כל אחד עם הדוכן *שלה* (אותו איור, אותו שלט, אותם מוצרים),
- * סרטון של חצי דקה, וכפתור אחד: להכניס את הדוכן לעיר (עיר, בית ספר, שכונה).
+ * סרטון קצר, וכפתור אחד: להכניס את הדוכן לעיר (עיר, בית ספר, שכונה).
  *
  * מה שאפשר לגעת בו: בצעד השני גוררים מחוון, והדוכן גדל מול העיניים.
  *
@@ -106,7 +106,7 @@ export default function WhatsNew({ store, neighbor, onGo, onClose }: { store: La
           ) : (
             <button type="button" className="wl-btn" onClick={play} data-testid="wl-new-play">
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden><path d="M8 5.5v13l11-6.5z" fill="currentColor" /></svg>
-              סרטון של חצי דקה
+              סרטון קצר
             </button>
           )}
           {last || playing ? (
