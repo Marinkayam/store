@@ -5,36 +5,36 @@ import { COMMUNITIES, type LabStore } from "./data";
 import { EmptyPlot, WorldStall } from "./stalls";
 
 /**
- * "הדוכן שלכם נכנס לעיר": המסכים שבהם אומרים איפה גרים ולומדים. לא בוחרים
- * *איפה* הדוכן ייראה: הוא מופיע בכל המקומות יחד, בקניון של הכיתה, בשוק של
- * השכונה ועל מפת העיר. שואלים רק את מה שצריך כדי לשים אותו שם:
- * עיר, בית ספר וכיתה, ושכונה.
+ * "הדוכן שלכם נכנס לעיר": המסכים שבהם אומרים איפה לומדים ואיפה גרים. לא
+ * בוחרים *איפה* הדוכן ייראה: הוא מופיע בכל המקומות יחד, בקניון של הכיתה,
+ * בשוק של השכונה ועל מפת העיר. העיר היא העיר של המשחק, אחת לכולם: לא
+ * שואלים באיזו עיר גרים.
  *
  * מה שההדמיה מראה:
- *   • העיר היא שדה אחד: מתחילים להקליד, ורשימה נפתחת מתחתיו.
- *   • בית ספר ושכונה נבחרים מרשימה, כך שאי אפשר לכתוב כתובת.
- *   • לא שואלים רחוב ולא בית: את הכיכר בשוק נותנת המערכת.
+ *   • בית הספר הוא שדה אחד: מתחילים להקליד, ורשימה נפתחת מתחתיו. ליד כל
+ *     שם כתוב היישוב, כי יש בתי ספר עם אותו שם.
+ *   • בוחרים מהרשימה, כך שאי אפשר לכתוב כתובת.
+ *   • השכונות הן של היישוב של בית הספר. לא שואלים רחוב ולא בית.
  *   • ההורה רואה בדיוק איפה הדוכן יופיע ומי יראה אותו, לפני שמשהו מופיע.
  *   • הסוף הוא כפתור אחד: להזמין חברים למקום הפנוי שליד.
  *
- * הערים כאן אמיתיות; שמות בתי הספר והשכונות מומצאים. באפליקציה הם יגיעו
- * מרשימה רשמית, לא מהקלדה.
+ * שמות בתי הספר והשכונות מומצאים. באפליקציה הם יגיעו מרשימה רשמית.
  */
 export type PlaceResult =
-  | { kind: "placed"; city: string; school?: string; unit?: string; grade?: string; num?: number; hood?: string; see: "class" | "hood"; invite: boolean }
+  | { kind: "placed"; school: string; unit: string; grade: string; num: number; hood?: string; see: "class" | "hood"; invite: boolean }
   | { kind: "link" };
 
-const CITIES = [
-  "יבנה", "רחובות", "אשדוד", "ראשון לציון", "נס ציונה", "תל אביב-יפו", "ירושלים", "חיפה", "באר שבע", "נתניה", "מודיעין", "כפר סבא",
-  "רעננה", "הרצליה", "חולון", "בת ים", "רמת גן", "גבעתיים", "פתח תקווה", "אשקלון", "קריית גת", "גדרה", "רמלה", "לוד", "יהוד", "אילת",
-];
-const SCHOOLS = ["הדקל", "הגפן", "הרימון", "התמר", "האלון"].map((x) => `בית ספר ${x}`);
+const SCHOOLS: { name: string; town: string }[] = [
+  ["הדקל", "יבנה"], ["הגפן", "יבנה"], ["הרימון", "יבנה"], ["התמר", "יבנה"], ["האלון", "יבנה"],
+  ["התמר", "רחובות"], ["השקד", "רחובות"], ["הדקל", "אשדוד"], ["הגפן", "חיפה"], ["הרימון", "נתניה"],
+  ["הזית", "ראשון לציון"], ["האורן", "מודיעין"], ["הנרקיס", "כפר סבא"], ["הרקפת", "ירושלים"],
+].map(([n, town]) => ({ name: `בית ספר ${n}`, town }));
 const HOODS = ["הדקלים", "הגפן", "נווה אילן", "הפרחים", "רמת הים"].map((x) => `שכונת ${x}`);
 const GRADES = ["ד", "ה", "ו", "ז", "ח"];
 const NUMS = [1, 2, 3, 4, 5, 6];
 const OTHER = "other";
 
-type Step = "city" | "school" | "class" | "hood" | "parent" | "done" | "declined";
+type Step = "school" | "class" | "hood" | "parent" | "done" | "declined";
 
 export function ShareIcon({ size = 18 }: { size?: number }) {
   return (
@@ -45,10 +45,10 @@ export function ShareIcon({ size = 18 }: { size?: number }) {
 }
 
 export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: LabStore; neighbor: LabStore; onDone: (r: PlaceResult) => void; onClose: () => void }) {
-  const [step, setStep] = useState<Step>("city");
+  const [step, setStep] = useState<Step>("school");
   const [q, setQ] = useState("");
-  const [city, setCity] = useState("");
-  const [school, setSchool] = useState("");
+  /** מספר בית הספר ברשימה; -1 עוד לא נבחר, -2 "לא ברשימה" */
+  const [pick, setPick] = useState(-1);
   const [grade, setGrade] = useState("");
   const [num, setNum] = useState(0);
   const [hood, setHood] = useState("");
@@ -56,22 +56,20 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
   const cls = COMMUNITIES.class;
   const hd = COMMUNITIES.hood;
   const who = store.owner ?? "נועה";
-  const noSchool = school === OTHER;
+  const noSchool = pick === -2;
   const noHood = hood === OTHER;
+  const chosen = pick >= 0 ? SCHOOLS[pick] : null;
+  const school = chosen?.name ?? "";
+  const town = chosen?.town ?? "";
   const typed = q.trim();
-  const matches = typed && typed !== city ? CITIES.filter((c) => c.startsWith(typed)).concat(CITIES.filter((c) => !c.startsWith(typed) && c.includes(typed))).slice(0, 6) : [];
+  const open = typed.length > 0 && pick === -1;
+  const matches = open ? SCHOOLS.map((x, i) => ({ ...x, i })).filter((x) => `${x.name} ${x.town}`.includes(typed)).slice(0, 5) : [];
   const unit = `${grade}׳${num}`;
   const mall = cls.mallOf(unit);
-  const market = hd.mallOf(hd.lots.h2);
-  const order: Step[] = noSchool ? ["city", "school", "hood", "parent", "done"] : ["city", "school", "class", "hood", "parent", "done"];
+  const order: Step[] = noSchool ? ["school", "parent", "done"] : ["school", "class", "hood", "parent", "done"];
   const at = order.indexOf(step);
   const back = at > 0 && step !== "done" ? order[at - 1] : null;
-  const pending = noSchool && noHood;
-  const result = (see: "class" | "hood", invite: boolean): PlaceResult => ({
-    kind: "placed", city, see, invite,
-    ...(noSchool ? {} : { school, unit, grade, num }),
-    ...(noHood ? {} : { hood }),
-  });
+  const result = (see: "class" | "hood", invite: boolean): PlaceResult => ({ kind: "placed", school, unit, grade, num, see, invite, ...(noHood ? {} : { hood }) });
 
   return (
     <div className="wl-invite wl-where" role="dialog" aria-modal="true" aria-label="הדוכן שלכם נכנס לעיר" data-testid="wl-where" data-step={step}>
@@ -91,47 +89,33 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
           </div>
         )}
 
-        {step === "city" && (
+        {step === "school" && (
           <>
-            <h2>באיזו עיר אתם גרים?</h2>
+            <h2>באיזה בית ספר אתם לומדים?</h2>
+            <p>הדוכן יעמוד בקניון של הכיתה, ליד החברים.</p>
             <div className="wl-field">
-              <label className="wl-field-label" htmlFor="wl-place-q">עיר</label>
+              <label className="wl-field-label" htmlFor="wl-place-q">בית ספר</label>
               <input
-                id="wl-place-q" className="wl-input" value={q} maxLength={20} autoComplete="off" enterKeyHint="search"
-                role="combobox" aria-expanded={matches.length > 0} aria-controls="wl-city-list" aria-autocomplete="list"
-                onChange={(e) => { setQ(e.target.value); if (e.target.value.trim() !== city) setCity(""); }}
-                data-testid="wl-place-q" data-picked={city ? "1" : undefined}
+                id="wl-place-q" className="wl-input" value={q} maxLength={30} autoComplete="off" enterKeyHint="search"
+                role="combobox" aria-expanded={open} aria-controls="wl-school-list" aria-autocomplete="list"
+                onChange={(e) => { setQ(e.target.value); setPick(-1); }}
+                data-testid="wl-place-q" data-picked={pick !== -1 ? "1" : undefined}
               />
-              {matches.length > 0 && (
-                <div className="wl-combo-list" role="listbox" id="wl-city-list" aria-label="ערים" data-testid="wl-city-list">
-                  {matches.map((c) => (
-                    <button key={c} type="button" role="option" aria-selected={false} className="wl-combo-opt" onClick={() => { setCity(c); setQ(c); }} data-testid={`wl-city-${CITIES.indexOf(c)}`}>{c}</button>
+              {open && (
+                <div className="wl-combo-list" role="listbox" id="wl-school-list" aria-label="בתי ספר" data-testid="wl-school-list">
+                  {matches.map((x) => (
+                    <button key={x.i} type="button" role="option" aria-selected={false} className="wl-combo-opt" onClick={() => { setPick(x.i); setQ(`${x.name}, ${x.town}`); }} data-testid={`wl-school-${x.i}`}>
+                      <span>{x.name}</span><span className="wl-combo-town">{x.town}</span>
+                    </button>
                   ))}
+                  <button type="button" role="option" aria-selected={false} className="wl-combo-opt" onClick={() => setPick(-2)} data-testid="wl-school-other">בית הספר שלנו לא ברשימה</button>
                 </div>
               )}
             </div>
             {!typed && <p className="wl-sheet-note">מתחילים להקליד, ובוחרים מהרשימה.</p>}
-            {typed && !city && matches.length === 0 && <p className="wl-sheet-note" data-testid="wl-city-none">לא מצאנו עיר כזו. אפשר לנסות שם אחר.</p>}
+            {noSchool && <p className="wl-sheet-note" data-testid="wl-school-other-note">ההורה יכתוב לנו את השם. אחרי שנבדוק אותו, הדוכן ייכנס לעיר.</p>}
             <div className="wl-invite-actions">
-              <button type="button" className="wl-btn wl-primary" disabled={!city} onClick={() => setStep("school")} data-testid="wl-place-next">המשך</button>
-            </div>
-          </>
-        )}
-
-        {step === "school" && (
-          <>
-            <h2>באיזה בית ספר?</h2>
-            <div className="wl-place-list" role="radiogroup" aria-label={`בתי ספר ב${city}`}>
-              {SCHOOLS.map((p, i) => (
-                <button key={p} type="button" role="radio" aria-checked={school === p} className="wl-btn wl-toggle wl-place-row" onClick={() => setSchool(p)} data-testid={`wl-school-${i}`}>
-                  <span>{p}</span><span className="wl-place-city">{city}</span>
-                </button>
-              ))}
-              <button type="button" role="radio" aria-checked={noSchool} className="wl-btn wl-toggle wl-place-row" onClick={() => setSchool(OTHER)} data-testid="wl-school-other">בית הספר שלנו לא ברשימה</button>
-            </div>
-            {noSchool && <p className="wl-sheet-note" data-testid="wl-school-other-note">ההורה יכתוב לנו את השם. אחרי שנבדוק אותו, הדוכן ייכנס גם לקניון של הכיתה.</p>}
-            <div className="wl-invite-actions">
-              <button type="button" className="wl-btn wl-primary" disabled={!school} onClick={() => setStep(noSchool ? "hood" : "class")} data-testid="wl-place-next">המשך</button>
+              <button type="button" className="wl-btn wl-primary" disabled={pick === -1} onClick={() => setStep(noSchool ? "parent" : "class")} data-testid="wl-place-next">המשך</button>
             </div>
           </>
         )}
@@ -155,7 +139,6 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
                 ))}
               </div>
             </div>
-            {grade && num ? <p data-testid="wl-place-unit">הכיתה שלכם: <b>{unit}</b>, {school}.</p> : null}
             <p className="wl-sheet-note">בתחילת כל שנת לימודים נשאל שוב, כי הכיתה מתחלפת.</p>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" disabled={!grade || !num} onClick={() => setStep("hood")} data-testid="wl-place-next">המשך</button>
@@ -165,17 +148,18 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
 
         {step === "hood" && (
           <>
-            <h2>באיזו שכונה?</h2>
-            <div className="wl-place-list" role="radiogroup" aria-label={`שכונות ב${city}`}>
+            <h2>באיזו שכונה ב{town}?</h2>
+            <p>הדוכן יעמוד גם בשוק של השכונה, ליד השכנים.</p>
+            <div className="wl-place-list" role="radiogroup" aria-label={`שכונות ב${town}`}>
               {HOODS.map((p, i) => (
                 <button key={p} type="button" role="radio" aria-checked={hood === p} className="wl-btn wl-toggle wl-place-row" onClick={() => setHood(p)} data-testid={`wl-hood-${i}`}>
-                  <span>{p}</span><span className="wl-place-city">{city}</span>
+                  {p}
                 </button>
               ))}
               <button type="button" role="radio" aria-checked={noHood} className="wl-btn wl-toggle wl-place-row" onClick={() => setHood(OTHER)} data-testid="wl-hood-other">השכונה שלנו לא ברשימה</button>
             </div>
             {noHood && <p className="wl-sheet-note" data-testid="wl-hood-other-note">ההורה יכתוב לנו את השם. אחרי שנבדוק אותו, הדוכן ייכנס גם לשוק של השכונה.</p>}
-            <p className="wl-sheet-note">לא שואלים רחוב או בית. את הכיכר בשוק מקבלים מאיתנו.</p>
+            <p className="wl-sheet-note">לא שואלים רחוב או בית.</p>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" disabled={!hood} onClick={() => setStep("parent")} data-testid="wl-place-next">המשך</button>
             </div>
@@ -185,17 +169,29 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
         {step === "parent" && (
           <>
             <h2>צריך אישור של הורה</h2>
-            <p>שלחנו להורה קישור. ככה הוא נראה אצלו:</p>
+            <p>שלחנו להורה קישור. כשההורה יאשר, הדוכן ייכנס לעיר. ככה הקישור נראה:</p>
             <div className="wl-msg" data-testid="wl-place-parent">
-              <b>{who}</b> רוצה שהדוכן ״{store.name}״ ייכנס לעיר של דוכן, ב{city}. הוא יופיע:
-              <ul className="wl-place-where">
-                <li>{noSchool ? "בקניון של הכיתה, אחרי שתכתבו לנו את שם בית הספר ונבדוק אותו" : `ב${mall.slice(1)}, ${school}`}</li>
-                <li>{noHood ? "בשוק של השכונה, אחרי שתכתבו לנו את שם השכונה ונבדוק אותו" : `ב${market.slice(1)}, ${hood}`}</li>
-                <li>על מפת העיר {city}</li>
-              </ul>
-              את הדוכן והמוצרים יראו {cls.seenBy} ו{hd.seenBy}. את השם הפרטי רואים רק הכיתה והכיכר. בלי שם משפחה, בלי טלפון ובלי כתובת.
-              <br />
-              מי שלא אושר לבית הספר או לשכונה לא רואה כלום. אפשר להוציא את הדוכן מהעיר בכל רגע.
+              {noSchool ? (
+                <>
+                  <b>{who}</b> רוצה שהדוכן ״{store.name}״ ייכנס לעיר של דוכן, ליד החברים מהכיתה ומהשכונה.
+                  <br />
+                  בית הספר עוד לא ברשימה שלנו. כתבו לנו את שמו ואת היישוב, ונבדוק אותו לפני שמשהו מופיע.
+                </>
+              ) : (
+                <>
+                  <b>{who}</b> רוצה שהדוכן ״{store.name}״ ייכנס לעיר של דוכן. זו עיר מצוירת בתוך האפליקציה, לא מקום אמיתי. הדוכן יופיע בה:
+                  <ul className="wl-place-where">
+                    <li>ב{mall.slice(1)}, {school} ({town})</li>
+                    <li>{noHood ? "בשוק של השכונה, אחרי שתכתבו לנו את שם השכונה ונבדוק אותו" : `בשוק של ${hood}`}</li>
+                    <li>על מפת העיר, מרחוק ובלי שם</li>
+                  </ul>
+                  את הדוכן והמוצרים יראו {cls.seenBy} ו{hd.seenBy}. את השם הפרטי רואים רק ילדי הכיתה והשכנים שלידו בשוק. בלי שם משפחה, בלי טלפון ובלי כתובת.
+                  <br />
+                  מי שלא אושר לבית הספר או לשכונה לא רואה כלום. ההזמנות עובדות כמו היום. אפשר להזמין חברים בקישור אישי, וגם הם מצטרפים רק באישור הורה.
+                  <br />
+                  אפשר להוציא את הדוכן מהעיר בכל רגע, מההגדרות של הדוכן.
+                </>
+              )}
             </div>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" onClick={() => setStep("done")} data-testid="wl-place-yes">ההורה מאשר (הדמיה)</button>
@@ -204,9 +200,9 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
           </>
         )}
 
-        {step === "done" && pending && (
+        {step === "done" && noSchool && (
           <>
-            <h2>בודקים את בית הספר ואת השכונה</h2>
+            <h2>בודקים את בית הספר</h2>
             <p>כשנסיים נודיע לכם ולהורה. בינתיים הדוכן עובד כרגיל, עם הלינק.</p>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" onClick={() => onDone({ kind: "link" })} data-testid="wl-place-ok">הבנתי</button>
@@ -214,7 +210,7 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
           </>
         )}
 
-        {step === "done" && !pending && (
+        {step === "done" && !noSchool && (
           <>
             <div className="wl-new-row wl-place-row-art" data-testid="wl-place-art">
               <div className="wl-new-stall wl-new-side" style={{ "--aw": neighbor.awning, "--lavender": neighbor.awning } as React.CSSProperties}>
@@ -227,17 +223,17 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
             </div>
             <h2 data-testid="wl-place-title">הדוכן שלכם בעיר</h2>
             <ul className="wl-place-where wl-place-in" data-testid="wl-place-in">
-              <li>{noSchool ? "הקניון של הכיתה: בודקים את בית הספר" : <><b>{mall}</b>{school}</>}</li>
-              <li>{noHood ? "השוק של השכונה: בודקים את השכונה" : <><b>{market}</b>{hood}</>}</li>
-              <li><b>מפת העיר</b>{city}</li>
+              <li><b>{mall}</b>{school}</li>
+              <li>{noHood ? "השוק של השכונה: בודקים את השכונה" : <><b>השוק של השכונה</b>{hood}</>}</li>
+              <li><b>מפת העיר</b></li>
             </ul>
-            <button type="button" className="wl-btn wl-primary wl-wide wl-share" onClick={() => onDone(result(noSchool ? "hood" : "class", true))} data-testid="wl-place-share">
+            <button type="button" className="wl-btn wl-primary wl-wide wl-share" onClick={() => onDone(result("class", true))} data-testid="wl-place-share">
               <ShareIcon />
               להזמין חברים
             </button>
             <p className="wl-sheet-note">לידכם יש מקום פנוי. על כל דוכן שנפתח בהזמנתכם מקבלים 60 נקודות, והדוכן שלכם גדל.</p>
             <div className="wl-invite-actions">
-              {!noSchool && <button type="button" className="wl-btn wl-place-see" onClick={() => onDone(result("class", false))} data-testid="wl-place-see-class">לראות את הקניון</button>}
+              <button type="button" className="wl-btn wl-place-see" onClick={() => onDone(result("class", false))} data-testid="wl-place-see-class">לראות את הקניון</button>
               {!noHood && <button type="button" className="wl-btn wl-place-see" onClick={() => onDone(result("hood", false))} data-testid="wl-place-see-hood">לראות את השוק</button>}
             </div>
           </>

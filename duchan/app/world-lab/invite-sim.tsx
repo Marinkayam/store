@@ -46,7 +46,7 @@ export default function InviteSim({ inviter, com, onDone, onClose }: { inviter: 
             <div className="wl-invite-art"><EmptyPlot lod="mid" invited /></div>
             <h2>{inviter} מזמינה אתכם ל{mall.slice(1)}</h2>
             <p>יש מקום פנוי ממש ליד הדוכן שלה.</p>
-            <p className="wl-sheet-note">עוד לא רואים כאן את החנויות. קודם מצטרפים, באישור הורה.</p>
+            <p className="wl-sheet-note">עוד לא רואים כאן את הדוכנים. קודם מצטרפים, באישור הורה.</p>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" onClick={() => { setPath("store"); setStep(1); }} data-testid="wl-join-store">רוצה לפתוח דוכן</button>
               <button type="button" className="wl-btn" onClick={() => { setPath("visit"); setStep(1); }} data-testid="wl-join-visit">רק לבקר</button>

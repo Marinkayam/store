@@ -174,7 +174,6 @@ export default function World({ review }: { review?: LabStore[] }) {
     const base = COMMUNITIES[kind];
     if (!placed) return base;
     if (kind === "hood") return placed.hood ? { ...base, place: placed.hood } : base;
-    if (!placed.school || !placed.unit || !placed.grade || !placed.num) return base;
     const grades = ["ד", "ה", "ו", "ז", "ח"];
     const g = placed.grade;
     const o = grades[grades.indexOf(g) + 1] ?? grades[grades.indexOf(g) - 1];
@@ -837,7 +836,7 @@ export default function World({ review }: { review?: LabStore[] }) {
     setPlaced(r);
     go(4, myPlot.cx, myPlot.by - 24);
     if (r.invite) openShare();
-    else say(r.see === "class" ? `הדוכן שלכם ב${COMMUNITIES.class.mallOf(r.unit ?? "").slice(1)}, ${r.school}. הוא גם בשוק של השכונה.` : `הדוכן שלכם ב${COMMUNITIES.hood.mallOf(COMMUNITIES.hood.lots.h2).slice(1)}, ${r.hood}. הוא גם בקניון של הכיתה.`);
+    else say(r.see === "class" ? `הדוכן שלכם ב${COMMUNITIES.class.mallOf(r.unit).slice(1)}, ${r.school}. הוא גם בשוק של השכונה.` : `הדוכן שלכם ב${COMMUNITIES.hood.mallOf(COMMUNITIES.hood.lots.h2).slice(1)}, ${r.hood}. הוא גם בקניון של הכיתה.`);
   };
 
   // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי"),
@@ -973,7 +972,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                 tabIndex={level >= 3 ? 0 : -1}
                 aria-label={
                   st
-                    ? `${st.name}, ${TIERS[(st.tier ?? 1) - 1].name}${st.owner ? ` של ${st.owner}` : ""}${st.mine ? ", שלי" : ""}. ${level === 4 && focus?.id === p.id ? "להיכנס לחנות" : "להתקרב"}`
+                    ? `${st.name}, ${TIERS[(st.tier ?? 1) - 1].name}${st.owner ? ` של ${st.owner}` : ""}${st.mine ? ", שלי" : ""}. ${level === 4 && focus?.id === p.id ? "להיכנס לדוכן" : "להתקרב"}`
                     : `מקום פנוי${isInvited(p.id) ? ", הזמנה נשלחה" : ""}. ${level === 4 && focus?.id === p.id ? "להזמין לפתוח כאן דוכן" : "להתקרב"}`
                 }
                 style={{ ...style, ...vars }}
@@ -1112,7 +1111,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                     </button>
                   )}
                   <div className="wl-card-actions">
-                    <button type="button" className="wl-btn wl-primary" onClick={() => openStore(focusStore.id)} data-testid="wl-enter">להיכנס לחנות</button>
+                    <button type="button" className="wl-btn wl-primary" onClick={() => openStore(focusStore.id)} data-testid="wl-enter">להיכנס לדוכן</button>
                     {focusStore.mine && (
                       <button type="button" className="wl-btn" onClick={() => { setSheet("decorate"); go(4, focus.cx, focus.by + 8); }} data-testid="wl-decorate">
                         <Icon name="palette" size={20} tone="var(--lavender)" />
@@ -1266,9 +1265,9 @@ export default function World({ review }: { review?: LabStore[] }) {
                 <h2>מזמינים לפתוח דוכן</h2>
                 <div className="wl-msg">היי, זו {myName}. יש מקום פנוי ב{com.mall} של {com.unit} שלנו, ממש ליד הדוכן שלי. רוצה לפתוח שם דוכן?</div>
                 <ul className="wl-rules">
-                  <li>הקישור מיועד לחבר או חברה אחת, ותקף לשבוע.</li>
-                  <li>מי שפותח אותו רואה רק מי הזמין ולאן. לא את החנויות.</li>
-                  <li>מצטרפים רק אחרי שהורה אישר.</li>
+                  <li>הקישור מיועד לחבר או חברה אחת, ותקף לשבוע. שולחים בפרטי, לא בקבוצה.</li>
+                  <li>מי שפותח אותו רואה רק מי הזמין ולאן. לא את הדוכנים.</li>
+                  <li>מצטרפים רק אחרי שההורה שלהם אישר.</li>
                   <li>אפשר להצטרף גם רק כדי לבקר, בלי לפתוח דוכן.</li>
                 </ul>
                 <button

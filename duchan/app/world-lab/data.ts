@@ -132,7 +132,7 @@ export const COMMUNITIES: Record<CommunityKind, Community> = {
     garden: "הגינה של הכיתה",
     board: "לוח המודעות של הכיתה",
     bell: { label: "הפעמון של בית הספר", text: "צלצול! ההפסקה הגדולה התחילה, והקניונים של הכיתות נפתחים." },
-    marketName: "יריד כיתתי",
+    marketName: "יום שוק כיתתי",
     marketWhen: "יום שישי, בהפסקה הגדולה",
   },
   hood: {
@@ -532,7 +532,7 @@ export const SURPRISES: Surprise[] = [
 ];
 
 export const NOTICES = [
-  "יריד כיתתי ביום שישי, בהפסקה הגדולה.",
+  "יום שוק כיתתי ביום שישי, בהפסקה הגדולה.",
   "סמטת הפנסים מחפשת דוכנים חדשים.",
   "תודה לכל מי שהשקה את הגינה השבוע.",
 ];
