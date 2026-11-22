@@ -550,6 +550,119 @@ await ctx.close();
   await nctx.close();
 }
 
+/* ── 13ג. "איפה הדוכן": עיר, בית ספר וכיתה או שכונה, אישור הורה, וכפתור שיתוף ── */
+{
+  const wctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const w = await wctx.newPage();
+  const werr = [];
+  w.on("pageerror", (e) => werr.push(e.message));
+  await w.addInitScript(() => { try { localStorage.setItem("duchan-cookies-ok", "1"); localStorage.setItem("wl-whatsnew-seen", "1"); } catch {} });
+  await w.goto(URL, { waitUntil: "networkidle" });
+  await w.waitForTimeout(600);
+  const txt = async (sel) => ((await w.textContent(sel)) ?? "").trim();
+  const still = () => w.waitForFunction(() => document.querySelector("[data-testid=wl-root]").getAttribute("data-moving") === "0", null, { timeout: 8000 });
+  const waxe = async (label) => {
+    await w.waitForTimeout(450);
+    const r = await new AxeBuilder({ page: w }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).include(".wl-place").analyze();
+    const bad = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    check(`איפה הדוכן: נגישות, ${label}`, bad.length === 0, bad.map((v) => `${v.id}×${v.nodes.length} ${v.nodes[0]?.target?.join(" ")}`).join(" | "));
+  };
+  const open = async () => { await w.click("[data-testid=wl-lab]"); await w.click("[data-testid=wl-place-open]"); await w.waitForSelector("[data-testid=wl-where]"); };
+  if ((await w.locator(".wl-store[data-open='1']").count()) === 1) { await w.click("[data-testid=wl-exit]"); await still(); await w.waitForTimeout(400); }
+
+  // כפתור השיתוף בכרטיס של הדוכן שלי
+  check("בכרטיס של הדוכן שלי יש כפתור 'להזמין'", (await w.locator("[data-testid=wl-card] [data-testid=wl-share]").count()) === 1 && (await txt("[data-testid=wl-share]")) === "להזמין");
+  await w.click("[data-testid=wl-share]");
+  check("הוא פותח את ההזמנה למקום פנוי", (await w.locator("[data-testid=wl-invite-send]").count()) === 1);
+  await w.keyboard.press("Escape");
+  await w.waitForTimeout(350);
+
+  // מסלול הכיתה
+  await open();
+  check("מסך ראשון: שתי אפשרויות, ואפשר להישאר רק עם הלינק", (await txt("[data-testid=wl-where] h2")) === "איפה הדוכן שלכם יעמוד?" &&
+    (await txt("[data-testid=wl-place-class]")).includes("בקניון של הכיתה") && (await txt("[data-testid=wl-place-hood]")).includes("בשוק של השכונה") && (await w.locator("[data-testid=wl-place-link]").count()) === 1);
+  await waxe("בחירת מקום");
+  await w.click("[data-testid=wl-place-class]");
+  check("עיר: אי אפשר להמשיך בלי לבחור", await w.locator("[data-testid=wl-place-next]").isDisabled());
+  await w.fill("[data-testid=wl-place-q]", "זזז");
+  check("עיר: חיפוש בלי תוצאות אומר מה לעשות", (await txt("[data-testid=wl-city-none]")).includes("אפשר לנסות שם אחר"));
+  await w.fill("[data-testid=wl-place-q]", "יב");
+  check("עיר: החיפוש מסנן את הרשימה", (await w.locator("[data-testid=wl-where] [role=radio]").count()) === 1);
+  await w.click("[data-testid=wl-city-0]");
+  await waxe("עיר");
+  await w.click("[data-testid=wl-place-next]");
+  check("בית ספר: בוחרים מרשימה, בלי שדה טקסט", (await txt("[data-testid=wl-where] h2")) === "באיזה בית ספר?" && (await w.locator("[data-testid=wl-where] input").count()) === 0 &&
+    (await txt("[data-testid=wl-spot-0]")).includes("יבנה"));
+  await w.click("[data-testid=wl-spot-3]");
+  await w.click("[data-testid=wl-place-next]");
+  await w.click("[data-testid=wl-grade-ו]");
+  check("כיתה: צריך גם שכבה וגם מספר", await w.locator("[data-testid=wl-place-next]").isDisabled());
+  await w.click("[data-testid=wl-num-4]");
+  check("כיתה: רואים מה נבחר", (await txt("[data-testid=wl-place-unit]")).includes("ו׳4") && (await txt("[data-testid=wl-place-unit]")).includes("בית ספר התמר"));
+  await waxe("כיתה");
+  await w.click("[data-testid=wl-place-back]");
+  check("חזרה שומרת את מה שנבחר", (await w.getAttribute("[data-testid=wl-spot-3]", "aria-checked")) === "true");
+  await w.click("[data-testid=wl-place-next]");
+  await w.click("[data-testid=wl-place-next]");
+  const parent = await txt("[data-testid=wl-place-parent]");
+  check("ההורה רואה לאן, מי יראה, ומה לא נחשף", parent.includes("קניון של ו׳4, בית ספר התמר, יבנה") && parent.includes("רק הכיתה") && parent.includes("בלי שם משפחה, בלי טלפון ובלי כתובת") && parent.includes("אפשר להוציא את הדוכן מהעיר"));
+  await waxe("אישור הורה");
+  await w.click("[data-testid=wl-place-yes]");
+  check("סיום: הדוכן שלה, מקום פנוי לידו, וכפתור שיתוף אחד", (await txt("[data-testid=wl-place-title]")) === "הדוכן שלכם בקניון של ו׳4" && (await txt("[data-testid=wl-place-art]")).includes("סקווישי נוני") &&
+    (await w.locator("[data-testid=wl-place-art] .wl-new-stall").count()) === 3 && (await txt("[data-testid=wl-place-share]")) === "להזמין חברים מהכיתה");
+  await waxe("סיום");
+  await w.click("[data-testid=wl-place-share]");
+  await w.waitForSelector("[data-testid=wl-invite-send]");
+  check("כפתור השיתוף פותח את ההזמנה למקום הפנוי", (await w.locator("[data-testid=wl-where]").count()) === 0 && (await w.locator("[data-testid=wl-invite-send]").count()) === 1);
+  await w.keyboard.press("Escape");
+  await still();
+  await w.click("[data-testid=wl-level-2]");
+  await still();
+  await w.waitForTimeout(300);
+  check("בעולם: הקניון נקרא על שם הכיתה שנבחרה", (await txt("[data-testid=wl-place]")) === "הקניון של ו׳4", await txt("[data-testid=wl-place]"));
+  await w.click("[data-testid=wl-level-1]");
+  await still();
+  await w.waitForTimeout(300);
+  check("ובית הספר על שם מה שנבחר", (await txt("[data-testid=wl-place]")) === "בית ספר התמר", await txt("[data-testid=wl-place]"));
+
+  // מסלול השכונה: בלי כיתה, בלי רחוב
+  await open();
+  await w.click("[data-testid=wl-place-hood]");
+  await w.click("[data-testid=wl-city-1]");
+  await w.click("[data-testid=wl-place-next]");
+  check("שכונה: שואלים רק שכונה, ואומרים שלא שואלים רחוב", (await txt("[data-testid=wl-where] h2")) === "באיזו שכונה?" && (await txt("[data-testid=wl-where]")).includes("לא שואלים רחוב או בית"));
+  await w.click("[data-testid=wl-spot-2]");
+  await w.click("[data-testid=wl-place-next]");
+  check("שכונה: ישר לאישור הורה, בלי מסך כיתה", (await w.getAttribute("[data-testid=wl-where]", "data-step")) === "parent" && (await txt("[data-testid=wl-place-parent]")).includes("שכונת נווה אילן, רחובות"));
+  await w.click("[data-testid=wl-place-yes]");
+  check("שכונה: הסיום מדבר על שכנים ועל שוק", (await txt("[data-testid=wl-place-share]")) === "להזמין שכנים" && (await txt("[data-testid=wl-place-title]")).includes("בשוק של"));
+  await w.click("[data-testid=wl-place-see]");
+  await still();
+  await w.waitForTimeout(300);
+  check("'לראות את השוק' מוציא אל הדוכן שלה, בעולם של שכונה", (await w.locator("[data-testid=wl-where]").count()) === 0 && (await w.getAttribute("[data-testid=wl-root]", "data-level")) === "4" &&
+    (await txt("[data-testid=wl-level-1]")).includes("שכונה"));
+
+  // לא ברשימה, הורה שלא מאשר, ורק לינק
+  await open();
+  await w.click("[data-testid=wl-place-class]");
+  await w.click("[data-testid=wl-city-0]");
+  await w.click("[data-testid=wl-place-next]");
+  await w.click("[data-testid=wl-spot-other]");
+  check("בית ספר שלא ברשימה: מסבירים מה יקרה", (await txt("[data-testid=wl-spot-other-note]")).includes("ההורה יכתוב לנו את השם"));
+  await w.click("[data-testid=wl-place-next]");
+  check("ואז מדלגים על הכיתה, וההורה מתבקש לכתוב את השם", (await w.getAttribute("[data-testid=wl-where]", "data-step")) === "parent" && (await txt("[data-testid=wl-place-parent]")).includes("כתבו לנו את שמו"));
+  await w.click("[data-testid=wl-place-no]");
+  check("הורה שלא מאשר: הדוכן נשאר רק עם הלינק, בלי לחץ", (await txt("[data-testid=wl-where] h2")) === "הדוכן נשאר רק עם הלינק" && (await txt("[data-testid=wl-where]")).includes("שום דבר לא מופיע בעיר"));
+  await w.click("[data-testid=wl-place-ok]");
+  check("וסוגרים", (await w.locator("[data-testid=wl-where]").count()) === 0);
+  await open();
+  await w.click("[data-testid=wl-place-link]");
+  check("'להישאר רק עם הלינק' הוא בחירה אמיתית, ואפשר להתחרט", (await txt("[data-testid=wl-where]")).includes("רק מי שקיבל מכם את הלינק") && (await w.locator("[data-testid=wl-place-again]").count()) === 1);
+  await w.click("[data-testid=wl-place-x]");
+  check("איפה הדוכן: בלי שגיאות בדף", werr.length === 0, werr.slice(0, 2).join(" | "));
+  await wctx.close();
+}
+
 try {
   /* ── 14. באתר החי הדף לא קיים ── */
   const prod = spawn("npx", ["next", "start", "-p", "3991"], { cwd: ROOT, env: { ...process.env, VERCEL_ENV: "production" }, stdio: "ignore", detached: true });

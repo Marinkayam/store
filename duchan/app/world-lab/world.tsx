@@ -6,9 +6,11 @@ import {
   AWNINGS, CAMPUS, CITY_K, CLASSES, COMMUNITIES, GRADE_ROWS, LEVEL_NAMES, LOT_STORES, MALL, MARKET_IN, MY_START_COUNTS, NOTICES, POINT_SOURCES, TIERS,
   STAGES, STALL, STORES, SURPRISES, WORLD, ZONES,
   alleyOpen, cityPt, layout, isNightAt, lotSize, pointsOf, tierOf, type ClassSize, type CommunityKind, type PointKey, type Deco, type LabStore, type Level, type Plot,
+  type Community,
 } from "./data";
 import WhatsNew from "./whats-new";
 import InviteSim, { type InviteResult } from "./invite-sim";
+import PlaceSim, { ShareIcon, type PlaceResult } from "./place-sim";
 import { Foreground, Scenery } from "./scenery";
 import { EmptyPlot, GardenPlot, WorldStall, type Lod } from "./stalls";
 import StoreSim from "./store-sim";
@@ -165,7 +167,23 @@ export default function World({ review }: { review?: LabStore[] }) {
   const myTier = tierOf(points);
   /** סוג הקהילה: כיתה בבית ספר, או כיכר בשכונה. אותו עולם, שמות אחרים. */
   const [kind, setKind] = useState<CommunityKind>("class");
-  const com = COMMUNITIES[kind];
+  /** המקום שנבחר ב"איפה הדוכן": שם בית הספר או השכונה, והכיתה. מחליף את שמות ברירת המחדל. */
+  const [placed, setPlaced] = useState<Exclude<PlaceResult, { kind: "link" }> | null>(null);
+  const [placeOpen, setPlaceOpen] = useState(false);
+  const com = useMemo((): Community => {
+    const base = COMMUNITIES[kind];
+    if (!placed || placed.kind !== kind) return base;
+    if (kind === "hood" || !placed.grade || !placed.num) return { ...base, place: placed.place };
+    const grades = ["ד", "ה", "ו", "ז", "ח"];
+    const g = placed.grade;
+    const o = grades[grades.indexOf(g) + 1] ?? grades[grades.indexOf(g) - 1];
+    const near = [1, 2, 3].filter((n) => n !== placed.num);
+    return {
+      ...base, place: placed.place, sign: placed.place,
+      rows: [`שכבת ${g}׳`, `שכבת ${o}׳`],
+      lots: { h1: `${g}׳${near[0]}`, h2: placed.unit, h3: `${g}׳${near[1]}`, v1: `${o}׳1`, v2: `${o}׳2`, v3: `${o}׳3` },
+    };
+  }, [kind, placed]);
   /** המתחם שנמצאים בו עכשיו. "h2" הוא שלי; כל אחר הוא ביקור אצל אחרים. */
   const [here, setHere] = useState(HOME);
   const visiting = here !== HOME;
@@ -803,6 +821,24 @@ export default function World({ review }: { review?: LabStore[] }) {
     say(`ל${r.owner} יש עכשיו דוכן לידכם. ${earn("join_store").msg}`);
   };
 
+  /** מקום פנוי אצלי שעוד לא נשלחה אליו הזמנה */
+  const freePlot = () => homePlots.find((p) => p.kind === "empty" && !invited.includes(p.id));
+  const openShare = () => {
+    const p = freePlot();
+    if (!p) return say("כל המקומות ליד הדוכן כבר תפוסים או מוזמנים.");
+    setInvitePlot(p.id);
+    setSheet("invite");
+  };
+  const finishPlace = (r: PlaceResult) => {
+    setPlaceOpen(false);
+    if (r.kind === "link") return say("הדוכן נשאר בינתיים רק עם הלינק. שום דבר לא מופיע בעיר.");
+    setKind(r.kind);
+    setPlaced(r);
+    go(4, myPlot.cx, myPlot.by - 24);
+    if (r.invite) openShare();
+    else say(`הדוכן שלכם ב${COMMUNITIES[r.kind].mallOf(r.unit).slice(1)}, ${r.place}.`);
+  };
+
   // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי"),
   // ורק אצלי: מי שמבקר במתחם אחר רואה דוכנים, לא שמות.
   const showOwner = (st: LabStore) => !visiting && !!st.owner && !st.name.includes(st.owner);
@@ -832,7 +868,7 @@ export default function World({ review }: { review?: LabStore[] }) {
     setNews(false);
     try { localStorage.setItem("wl-whatsnew-seen", "1"); } catch {}
   };
-  const worldBusy = !!storeOpen || !!sheet || !!inviteView || news;
+  const worldBusy = !!storeOpen || !!sheet || !!inviteView || news || placeOpen;
   const isInvited = (id: string) => invited.includes(id);
 
   return (
@@ -1082,6 +1118,12 @@ export default function World({ review }: { review?: LabStore[] }) {
                         לעצב
                       </button>
                     )}
+                    {focusStore.mine && !review && !visiting && (
+                      <button type="button" className="wl-btn" onClick={openShare} data-testid="wl-share">
+                        <ShareIcon />
+                        להזמין
+                      </button>
+                    )}
                   </div>
                   {focusStore.mine && !review && market !== "off" && (
                     marketIn
@@ -1281,6 +1323,9 @@ export default function World({ review }: { review?: LabStore[] }) {
                     </div>
                   </div>
                 )}
+                {!review && !visiting && (
+                  <button type="button" className="wl-btn wl-wide" onClick={() => { setSheet(null); setPlaceOpen(true); }} data-testid="wl-place-open">לבחור איפה הדוכן יעמוד</button>
+                )}
                 {!review && (
                   <div className="wl-field">
                     <span className="wl-field-label">סוג הקהילה</span>
@@ -1326,7 +1371,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                       חידוד מקרוב
                     </button>
                     <button type="button" className="wl-btn wl-toggle" onClick={() => { setSheet(null); setNews(true); }} data-testid="wl-news-again">להציג את ״מה חדש״</button>
-                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); setCounts(MY_START_COUNTS); setGrew(0); setMarketIn(false); }}>לאפס הפתעות, הזמנות ונקודות</button>
+                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); setPlaced(null); setCounts(MY_START_COUNTS); setGrew(0); setMarketIn(false); }}>לאפס הפתעות, הזמנות ונקודות</button>
                   </div>
                 </div>
                 <p className="wl-sheet-note">"חידוד מקרוב" נדלק לבד באייפון. אם התמונה מטושטשת כשמתקרבים, או שמשהו זז ממקומו, כדאי להחליף את ההגדרה הזו.</p>
@@ -1338,6 +1383,15 @@ export default function World({ review }: { review?: LabStore[] }) {
       )}
 
       {inviteView && <InviteSim inviter={myName} com={com} onDone={finishInvite} onClose={() => setInviteView(null)} />}
+
+      {placeOpen && (
+        <PlaceSim
+          store={homeStores.find((x) => x.mine) ?? homeStores[0]}
+          neighbor={homeStores.find((x) => !x.mine) ?? homeStores[0]}
+          onDone={finishPlace}
+          onClose={() => setPlaceOpen(false)}
+        />
+      )}
 
       {news && (
         <WhatsNew

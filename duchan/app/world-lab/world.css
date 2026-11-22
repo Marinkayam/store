@@ -510,3 +510,21 @@
   .wl-plane :is(.wl-near, .wl-splash, .wl-hop, .wl-cat-jump) { animation: none !important; }
   .wl-store, .wl-sheet, .wl-card, .wl-bubble { transition: none; animation: none; }
 }
+
+/* ── "איפה הדוכן": בחירת עיר, בית ספר וכיתה או שכונה ── */
+.wl-place-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wl-place-opt {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  min-height: 150px; padding: 18px 10px 14px;
+  background: var(--white); color: var(--ink); border: 1.5px solid var(--ink); border-radius: 0;
+  font: inherit; font-size: 13.5px; font-weight: 300; text-align: center; line-height: 1.35; cursor: pointer;
+}
+.wl-place-opt b { display: block; font-size: 16px; font-weight: 500; margin-bottom: 2px; }
+.wl-place-opt svg { color: var(--lavender, #7c64a8); }
+.wl-place-opt:focus-visible { outline: 3px solid #4a3a66; outline-offset: 2px; }
+.wl-place-list { display: flex; flex-direction: column; }
+.wl-place-row { justify-content: space-between; min-height: 52px; font-size: 15.5px; margin-top: -1.5px; }
+.wl-place-row:first-child { margin-top: 0; }
+.wl-place-city { font-size: 12.5px; font-weight: 300; opacity: 0.75; }
+.wl-place-row-art { margin: 6px 0 2px; }
+.wl-share { min-height: 52px; font-size: 16px; }
