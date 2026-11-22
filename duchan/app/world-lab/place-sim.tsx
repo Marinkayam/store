@@ -79,7 +79,7 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
     isClass ? { kind, city, place, unit, grade, num, invite } : { kind, city, place, unit, invite };
 
   return (
-    <div className="wl-invite wl-place" role="dialog" aria-modal="true" aria-label="איפה הדוכן שלכם יעמוד" data-testid="wl-where" data-step={step}>
+    <div className="wl-invite wl-where" role="dialog" aria-modal="true" aria-label="איפה הדוכן שלכם יעמוד" data-testid="wl-where" data-step={step}>
       <div className="wl-invite-bar">
         {back ? (
           <button type="button" className="wl-btn wl-chip" onClick={() => setStep(back)} data-testid="wl-place-back">חזרה</button>

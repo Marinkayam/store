@@ -563,7 +563,7 @@ await ctx.close();
   const still = () => w.waitForFunction(() => document.querySelector("[data-testid=wl-root]").getAttribute("data-moving") === "0", null, { timeout: 8000 });
   const waxe = async (label) => {
     await w.waitForTimeout(450);
-    const r = await new AxeBuilder({ page: w }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).include(".wl-place").analyze();
+    const r = await new AxeBuilder({ page: w }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).include(".wl-where").analyze();
     const bad = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
     check(`איפה הדוכן: נגישות, ${label}`, bad.length === 0, bad.map((v) => `${v.id}×${v.nodes.length} ${v.nodes[0]?.target?.join(" ")}`).join(" | "));
   };
@@ -586,7 +586,7 @@ await ctx.close();
   check("עיר: אי אפשר להמשיך בלי לבחור", await w.locator("[data-testid=wl-place-next]").isDisabled());
   await w.fill("[data-testid=wl-place-q]", "זזז");
   check("עיר: חיפוש בלי תוצאות אומר מה לעשות", (await txt("[data-testid=wl-city-none]")).includes("אפשר לנסות שם אחר"));
-  await w.fill("[data-testid=wl-place-q]", "יב");
+  await w.fill("[data-testid=wl-place-q]", "יבנ");
   check("עיר: החיפוש מסנן את הרשימה", (await w.locator("[data-testid=wl-where] [role=radio]").count()) === 1);
   await w.click("[data-testid=wl-city-0]");
   await waxe("עיר");
