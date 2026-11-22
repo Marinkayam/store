@@ -167,19 +167,20 @@ export default function World({ review }: { review?: LabStore[] }) {
   const myTier = tierOf(points);
   /** סוג הקהילה: כיתה בבית ספר, או כיכר בשכונה. אותו עולם, שמות אחרים. */
   const [kind, setKind] = useState<CommunityKind>("class");
-  /** המקום שנבחר ב"איפה הדוכן": שם בית הספר או השכונה, והכיתה. מחליף את שמות ברירת המחדל. */
-  const [placed, setPlaced] = useState<Exclude<PlaceResult, { kind: "link" }> | null>(null);
+  /** מה שנבחר ב"הדוכן נכנס לעיר": בית הספר והכיתה, והשכונה. הדוכן מופיע בשניהם; כאן רואים אחד בכל פעם. */
+  const [placed, setPlaced] = useState<Extract<PlaceResult, { kind: "placed" }> | null>(null);
   const [placeOpen, setPlaceOpen] = useState(false);
   const com = useMemo((): Community => {
     const base = COMMUNITIES[kind];
-    if (!placed || placed.kind !== kind) return base;
-    if (kind === "hood" || !placed.grade || !placed.num) return { ...base, place: placed.place };
+    if (!placed) return base;
+    if (kind === "hood") return placed.hood ? { ...base, place: placed.hood } : base;
+    if (!placed.school || !placed.unit || !placed.grade || !placed.num) return base;
     const grades = ["ד", "ה", "ו", "ז", "ח"];
     const g = placed.grade;
     const o = grades[grades.indexOf(g) + 1] ?? grades[grades.indexOf(g) - 1];
     const near = [1, 2, 3].filter((n) => n !== placed.num);
     return {
-      ...base, place: placed.place, sign: placed.place,
+      ...base, place: placed.school, sign: placed.school,
       rows: [`שכבת ${g}׳`, `שכבת ${o}׳`],
       lots: { h1: `${g}׳${near[0]}`, h2: placed.unit, h3: `${g}׳${near[1]}`, v1: `${o}׳1`, v2: `${o}׳2`, v3: `${o}׳3` },
     };
@@ -832,11 +833,11 @@ export default function World({ review }: { review?: LabStore[] }) {
   const finishPlace = (r: PlaceResult) => {
     setPlaceOpen(false);
     if (r.kind === "link") return say("הדוכן נשאר בינתיים רק עם הלינק. שום דבר לא מופיע בעיר.");
-    setKind(r.kind);
+    setKind(r.see);
     setPlaced(r);
     go(4, myPlot.cx, myPlot.by - 24);
     if (r.invite) openShare();
-    else say(`הדוכן שלכם ב${COMMUNITIES[r.kind].mallOf(r.unit).slice(1)}, ${r.place}.`);
+    else say(r.see === "class" ? `הדוכן שלכם ב${COMMUNITIES.class.mallOf(r.unit ?? "").slice(1)}, ${r.school}. הוא גם בשוק של השכונה.` : `הדוכן שלכם ב${COMMUNITIES.hood.mallOf(COMMUNITIES.hood.lots.h2).slice(1)}, ${r.hood}. הוא גם בקניון של הכיתה.`);
   };
 
   // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי"),
@@ -1324,7 +1325,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                   </div>
                 )}
                 {!review && !visiting && (
-                  <button type="button" className="wl-btn wl-wide" onClick={() => { setSheet(null); setPlaceOpen(true); }} data-testid="wl-place-open">לבחור איפה הדוכן יעמוד</button>
+                  <button type="button" className="wl-btn wl-wide" onClick={() => { setSheet(null); setPlaceOpen(true); }} data-testid="wl-place-open">להכניס את הדוכן לעיר</button>
                 )}
                 {!review && (
                   <div className="wl-field">
