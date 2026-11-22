@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import { randomPassword } from "@/lib/otp";
 import { logLoginEvent } from "@/lib/login-events";
+import { STALL_SVG, EMPTY_STALL_SVG } from "./stall-svg";
 
 // /enter/[token] — כניסה בקישור חד-פעמי, בלי סמס.
 //
@@ -22,8 +23,50 @@ import { logLoginEvent } from "@/lib/login-events";
 
 const syntheticEmail = (phone: string) => `${phone}@phone.duchan.app`;
 
+/* ── מסכי הדוכן (?to=store) בשפה של דוכן ──
+   מרינה, 11.2026, על המסך הקודם (אימוג'י שקית ועיגול סגול): "תעצב את זה
+   בסגנון של הדוכן יפה עם הוראות". האיור הוא הדוכן של מסך הפתיחה, הכפתור
+   מרובע ושחור כמו בכל האפליקציה, ומתחתיו שלושה צעדים קצרים: ילדה שנכנסת
+   בקישור הזה היא בדרך כלל ילדה שהסמס לא הגיע אליה, ושנתקעה פעם. */
+
+function storeShell(title: string, inner: string, status = 200) {
+  return new NextResponse(
+    `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><title>${title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{font-family:Heebo,system-ui,sans-serif;background:#fbf8f3;color:#262626;margin:0;min-height:100vh;display:flex;justify-content:center}
+.c{width:100%;max-width:24rem;padding:20px 20px 32px;display:flex;flex-direction:column;align-items:stretch}
+.art{display:block;width:100%;max-width:300px;margin:8px auto 0}
+h1{font-size:1.6rem;font-weight:500;letter-spacing:-.01em;margin:6px 0 6px;text-align:center}
+.sub{font-weight:300;color:#5b564e;line-height:1.6;margin:0 0 22px;text-align:center;font-size:1.05rem}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;width:100%;border:0;border-radius:0;
+background:#262626;color:#fff;font:inherit;font-weight:500;font-size:1.05rem;cursor:pointer;text-decoration:none}
+.btn:active{transform:translateY(1px)}.btn[disabled]{opacity:.55}
+.btn:focus-visible{outline:3px solid #4a3a66;outline-offset:2px}
+ol{list-style:none;counter-reset:s;margin:26px 0 0;padding:0;border-top:1.5px solid #262626}
+li{counter-increment:s;display:flex;gap:12px;align-items:baseline;padding:13px 0;border-bottom:1px solid #e4ddd2;font-weight:300;line-height:1.55;font-size:.98rem}
+li::before{content:counter(s);flex:none;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;background:#b89ac8;color:#262626;font-weight:500;font-size:.9rem}
+li b{font-weight:500}
+.note{font-weight:300;color:#5b564e;font-size:.88rem;line-height:1.55;margin:16px 0 0;text-align:center}
+</style></head>
+<body><main class="c">${inner}</main></body></html>`,
+    { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } }
+  );
+}
+
 /** מסך כישלון קטן: מה קרה ומה עושים, בלי ז'רגון. */
-function failPage(title: string, body: string) {
+function failPage(store: boolean, title: string, body: string) {
+  if (store) {
+    return storeShell(
+      title,
+      `${EMPTY_STALL_SVG}<h1>${title}</h1><p class="sub">${body}</p><a class="btn" href="/login">לכניסה עם קוד</a>`,
+      410
+    );
+  }
   return new NextResponse(
     `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,6 +90,24 @@ const forStore = (req: NextRequest) => req.nextUrl.searchParams.get("to") === "s
 
 /** מסך הכניסה: כפתור אחד. קיים כדי שרק לחיצה אנושית תשרוף את הטוקן. */
 function welcomePage(token: string, store = false) {
+  /* הטופס ננעל אחרי לחיצה: לחיצה כפולה שרפה פעם את הקישור, והילדה ראתה
+     "הקישור כבר נוצל" למרות שנכנסה. */
+  const once = `onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='נכנסים…'"`;
+  if (store) {
+    return storeShell(
+      "דוכן",
+      `${STALL_SVG}
+<h1>הקישור שלכם מוכן</h1>
+<p class="sub">נכנסים בלי קוד ובלי סיסמה.</p>
+<form method="post" ${once}><button class="btn" type="submit">להיכנס ←</button></form>
+<ol>
+<li><span>לוחצים <b>להיכנס</b>, פעם אחת, ומחכים רגע.</span></li>
+<li><span>אין לכם עוד דוכן? כותבים לו שם, מוסיפים מוצר ובוחרים צבע.</span></li>
+<li><span>בסוף לוחצים <b>לפתוח את הדוכן</b>. לא צריך קוד.</span></li>
+</ol>
+<p class="note">הקישור עובד פעם אחת, ותקף 24 שעות.</p>`
+    );
+  }
   return new NextResponse(
     `<!doctype html><html dir="rtl" lang="he"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -60,7 +121,7 @@ border-radius:999px;background:#756192;color:#fff;border:0;font:inherit;font-wei
 button:active{transform:translateY(1px)}</style></head>
 <body><div class="c"><div class="m">${store ? "🛍️" : "🧸"}</div><h1>הקישור שלכם מוכן</h1>
 <p>לוחצים פעם אחת — ונכנסים. בלי קוד ובלי סיסמה.</p>
-<form method="post"><button type="submit">להיכנס ←</button></form></div></body></html>`,
+<form method="post" ${once}><button type="submit">להיכנס ←</button></form></div></body></html>`,
     { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } }
   );
 }
@@ -71,7 +132,7 @@ export async function GET(
 ) {
   const { token } = await params;
   if (!token || token.length < 16) {
-    return failPage("הקישור לא תקין", "נראה שהקישור הגיע חתוך. אפשר לבקש קישור חדש ממי ששלח אותו.");
+    return failPage(forStore(_req), "הקישור לא תקין", "נראה שהקישור הגיע חתוך. אפשר לבקש קישור חדש ממי ששלח אותו.");
   }
 
   /* קריאה בלבד — תצוגה מקדימה של וואטסאפ מגיעה לכאן ולא שורפת כלום */
@@ -82,7 +143,7 @@ export async function GET(
     .eq("token", token)
     .maybeSingle();
   if (!peek || peek.used_at || new Date(peek.expires_at).getTime() < Date.now()) {
-    return failPage(
+    return failPage(forStore(_req), 
       "הקישור כבר נוצל או שפג תוקפו",
       "קישור כניסה עובד פעם אחת בלבד, ותקף 24 שעות. אפשר לבקש חדש ממי ששלח אותו."
     );
@@ -96,7 +157,7 @@ export async function POST(
 ) {
   const { token } = await params;
   if (!token || token.length < 16) {
-    return failPage("הקישור לא תקין", "נראה שהקישור הגיע חתוך. אפשר לבקש קישור חדש ממי ששלח אותו.");
+    return failPage(forStore(_req), "הקישור לא תקין", "נראה שהקישור הגיע חתוך. אפשר לבקש קישור חדש ממי ששלח אותו.");
   }
 
   const db = supabaseAdmin();
@@ -117,7 +178,7 @@ export async function POST(
     if (known?.phone) {
       await logLoginEvent(_req, { phone: known.phone, kind: "link_failed", detail: known.used_at ? "הקישור כבר נוצל" : "הקישור פג תוקף" });
     }
-    return failPage(
+    return failPage(forStore(_req), 
       "הקישור כבר נוצל או שפג תוקפו",
       "קישור כניסה עובד פעם אחת בלבד, ותקף 24 שעות. אפשר לבקש חדש ממי ששלח אותו."
     );
@@ -127,7 +188,7 @@ export async function POST(
      אחרת היא תראה "קישור שנוצל" ותחשוב שהיא נכנסה. */
   const failAfter = async (step: string) => {
     await logLoginEvent(_req, { phone, kind: "link_failed", detail: step });
-    return failPage("הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע, או לבקש קישור חדש.");
+    return failPage(forStore(_req), "הכניסה לא הצליחה", "אפשר לנסות שוב בעוד רגע, או לבקש קישור חדש.");
   };
   await logLoginEvent(_req, { phone, kind: "link_used" });
 
