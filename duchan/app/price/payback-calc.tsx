@@ -92,11 +92,11 @@ export default function PaybackCalc() {
                 <Icon name={icon} size={20} tone={i < back ? "var(--wood)" : "var(--olive)"} />
               </span>
             ))}
-            {sold === 0 && <span className="text-[13px] text-[var(--muted)] py-2">עוד לא מכרת כלום. לוחצים על + ←</span>}
+            {sold === 0 && <span className="text-[13px] text-[var(--muted)] py-2">עוד לא מכרתם כלום. לוחצים על + ←</span>}
           </div>
           <div className="flex gap-4 mt-2 text-[12px] text-[var(--muted)]">
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[var(--cream)] border border-[var(--wood)]" />מחזיר את הדוכן</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[var(--ok-bg)] border border-[var(--ok-line)]" />רווח שלך</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[var(--ok-bg)] border border-[var(--ok-line)]" />רווח שלכם</span>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function PaybackCalc() {
             <>עוד <L>₪{-profit}</L> והדוכן החזיר את עצמו. עוד {Math.ceil(-profit / unit) === 1 ? "מכירה אחת" : `${Math.ceil(-profit / unit)} מכירות`}!</>
           )}
         </p>
-        <p className="text-[12px] text-[var(--muted)] text-center -mt-2">אנחנו לא נוגעים בכסף ולא לוקחים עמלה. מה שמרוויחים נשאר אצלך.</p>
+        <p className="text-[12px] text-[var(--muted)] text-center -mt-2">אנחנו לא נוגעים בכסף ולא לוקחים עמלה. מה שמרוויחים נשאר אצלכם.</p>
       </div>
     </section>
   );

@@ -124,14 +124,14 @@ await buyer.goto(fresh(), { waitUntil: "networkidle" });
 await buyer.click("button[aria-label='הוספה מהירה, מחזיק מפתחות']");
 await buyer.waitForTimeout(600);
 await buyer.click("[data-testid=cart-bar]");
-await buyer.waitForSelector("text=ההזמנה שלך", { timeout: 10000 });
+await buyer.waitForSelector("text=ההזמנה שלכם", { timeout: 10000 });
 // בוחרים פייבוקס — בקופה כתוב שהכפתור יופיע אחרי השליחה; הכפתור עצמו
 // במסך התשלום, אחרי שההזמנה נשמרה (לא משלמים לפני שהזמינו)
 await buyer.click("button[aria-label='תשלום בפייבוקס']");
 await buyer.waitForTimeout(400);
 check("before sending, the checkout says a payment button comes next",
   ((await buyer.textContent("[data-testid=pay-next]")) ?? "").includes("יופיע כפתור"));
-await buyer.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "רוני");
+await buyer.fill("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", "רוני");
 await buyer.fill("input[aria-label='מספר טלפון']", "0523334455");
 const pickup1 = buyer.locator("button:has-text('איסוף מהדוכן')");
 if (await pickup1.count()) await pickup1.click();
@@ -166,8 +166,8 @@ await buyer3.goto(`${BASE}/s/${store.slug}?t=${Date.now()}`, { waitUntil: "netwo
 await buyer3.click("button[aria-label='הוספה מהירה, מחזיק מפתחות']");
 await buyer3.waitForTimeout(600);
 await buyer3.click("[data-testid=cart-bar]");
-await buyer3.waitForSelector("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
-await buyer3.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "דנה");
+await buyer3.waitForSelector("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
+await buyer3.fill("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", "דנה");
 await buyer3.fill("input[aria-label='מספר טלפון']", "0529998877");
 const pickup3 = buyer3.locator("button:has-text('איסוף מהדוכן')");
 if (await pickup3.count()) await pickup3.click();
@@ -190,8 +190,8 @@ await buyer4.goto(`${BASE}/s/${store.slug}?t=${Date.now()}`, { waitUntil: "netwo
 await buyer4.click("button[aria-label='הוספה מהירה, מחזיק מפתחות']");
 await buyer4.waitForTimeout(600);
 await buyer4.click("[data-testid=cart-bar]");
-await buyer4.waitForSelector("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
-await buyer4.fill("input[aria-label='השם שלך'], input[aria-label='שם ושם משפחה']", "מיה");
+await buyer4.waitForSelector("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", { timeout: 15000 });
+await buyer4.fill("input[aria-label='השם שלכם'], input[aria-label='שם ושם משפחה']", "מיה");
 await buyer4.fill("input[aria-label='מספר טלפון']", "0521114444");
 const pickup4 = buyer4.locator("button:has-text('איסוף מהדוכן')");
 if (await pickup4.count()) await pickup4.click();

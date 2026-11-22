@@ -132,11 +132,11 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
       >
         <Icon name="stall" size={40} tone="var(--cream)" className="text-[var(--wood)] mx-auto" />
         <h2 id="open-own-title" className="text-[20px] font-extrabold mt-2 leading-tight">
-          רוצה גם דוכן כזה?
+          רוצים גם דוכן כזה?
         </h2>
         <p className="text-[13.5px] text-[var(--muted)] mt-2 leading-relaxed max-w-[19rem] mx-auto">
           מוכרים מה שכבר לא צריכים: סקווישים, צמידים ועוד.
-          דוכן משלך מוכן בכמה דקות, מהטלפון.
+          דוכן משלכם מוכן בכמה דקות, מהטלפון.
         </p>
 
         {IS_LAUNCH && (
@@ -167,7 +167,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
           href={`https://wa.me/${sales}?text=${encodeURIComponent(msg)}`}
           className="inline-block mt-3 py-1 text-[12.5px] text-[var(--muted)] underline"
         >
-          יש לך שאלות? אפשר לשאול אותנו בוואטסאפ
+          יש לכם שאלות? אפשר לשאול אותנו בוואטסאפ
         </a>
       </section>
     </div>

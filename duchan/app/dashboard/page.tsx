@@ -262,7 +262,7 @@ export default function OrdersPage() {
         !store.tagline?.trim() && {
           key: "about",
           title: "משפט על הדוכן",
-          why: "מי את ומה מיוחד בדוכן. קונים אוהבים לדעת ממי הם קונים.",
+          why: "מי אתם ומה מיוחד בדוכן. קונים אוהבים לדעת ממי הם קונים.",
           cta: "לכתוב משפט",
           href: "/dashboard/settings#design",
         },
@@ -273,7 +273,7 @@ export default function OrdersPage() {
   if (!store)
     return (
       <div className="p-8 text-center text-sm text-[var(--muted)] leading-relaxed">
-        עוד אין לך דוכן.
+        עוד אין לכם דוכן.
         <br />
         <a href="/onboarding" className="underline text-[var(--ink)]">לפתוח דוכן ←</a>
       </div>
@@ -315,7 +315,7 @@ export default function OrdersPage() {
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <div className="text-[13.5px] font-bold">
-                <span data-testid="store-state-banner">{store.payment_claimed_at ? "התשלום בבדיקה" : "הדוכן שלך בתצוגה מקדימה"}</span>
+                <span data-testid="store-state-banner">{store.payment_claimed_at ? "התשלום בבדיקה" : "הדוכן שלכם בתצוגה מקדימה"}</span>
               </div>
               <div className="text-[12.5px] opacity-70 leading-relaxed">
                 {store.payment_claimed_at
@@ -627,7 +627,7 @@ export default function OrdersPage() {
                   <input
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="רק את רואה את זה. למשל: לארוז בוורוד"
+                    placeholder="רק אתם רואים את זה. למשל: לארוז בוורוד"
                     maxLength={120}
                     autoFocus
                     className="flex-1 border border-[var(--line)] px-2.5 py-1.5 text-[12px]"

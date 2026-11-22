@@ -82,7 +82,7 @@ export default function FirstSteps({
   ];
 
   const card: Record<StepKey, { title: React.ReactNode; line: string; body?: React.ReactNode }> = {
-    open: { title: "פתחת דוכן", line: "" },
+    open: { title: "פתחתם דוכן", line: "" },
     product: {
       title: "מוסיפים מוצר ראשון",
       line: "תמונה, שם ומחיר. לוקח דקה.",

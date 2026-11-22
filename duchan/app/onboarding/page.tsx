@@ -369,7 +369,7 @@ export default function Onboarding() {
             <div className="px-4 pb-4 -mt-3">
               <div className="text-center font-bold text-[16px]">{draft.displayName}</div>
               <div className="grid grid-cols-2 gap-2 mt-3">
-                {(draft.products.length ? draft.products : [{ name: "המוצר שלך", price: "15", imageData: null }]).slice(0, 2).map((pr, i) => (
+                {(draft.products.length ? draft.products : [{ name: "המוצר שלכם", price: "15", imageData: null }]).slice(0, 2).map((pr, i) => (
                   <div key={i} style={{ background: th.surface, border: th.border }}>
                     <div className="h-20 flex items-center justify-center overflow-hidden" style={{ background: th.thumb }}>
                       {pr.imageData
@@ -422,9 +422,9 @@ export default function Onboarding() {
           <div className="text-center">
             <h1 className="t-title">ההורים יודעים?</h1>
             <p className="t-sub mt-2 leading-relaxed">
-              בדוכן אנשים אמיתיים מזמינים ממך וכותבים לך בוואטסאפ.
+              בדוכן אנשים אמיתיים מזמינים מכם וכותבים לכם בוואטסאפ.
               <br />
-              לכן ההורים צריכים לדעת שפתחת דוכן.
+              לכן ההורים צריכים לדעת שפתחתם דוכן.
             </p>
           </div>
           <label
@@ -463,7 +463,7 @@ export default function Onboarding() {
             </button>
           ) : (
             <PhoneVerify
-              title="המספר שלך"
+              title="המספר שלכם"
               subtitle="לכאן יגיעו ההזמנות בוואטסאפ. נשלח אליו קוד ב-SMS."
               cta="לשלוח לי קוד"
               onVerified={save}

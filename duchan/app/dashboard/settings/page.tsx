@@ -50,9 +50,9 @@ const SECTIONS = {
   coupons: { icon: "gift", title: "קופונים", intro: "יוצרים כאן קוד הנחה, ושולחים אותו לחברים." },
   payment: { icon: "coins", title: "איך משלמים לי", intro: "ביט, פייבוקס או מזומן — ולאן מעבירים." },
   shipping: { icon: "box", title: "משלוחים", intro: "רק מסירה ביד, או גם משלוח — ובכמה." },
-  order: { icon: "chat", title: "איך מגיעה הזמנה", intro: "ככה נראית הזמנה שמגיעה אלייך בוואטסאפ. אין כאן מה למלא." },
-  app: { icon: "bell", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית, עם הוראות שמתאימות לטלפון שלך." },
-  details: { icon: "phone", title: "הפרטים שלי", intro: "הטלפון שקונים כותבים אליו, וקצת עלייך. בלי כתובת מגורים." },
+  order: { icon: "chat", title: "איך מגיעה הזמנה", intro: "ככה נראית הזמנה שמגיעה אליכם בוואטסאפ. אין כאן מה למלא." },
+  app: { icon: "bell", title: "אפליקציה בטלפון", intro: "הדוכן כאייקון במסך הבית, עם הוראות שמתאימות לטלפון שלכם." },
+  details: { icon: "phone", title: "הפרטים שלי", intro: "הטלפון שקונים כותבים אליו, וקצת עליכם. בלי כתובת מגורים." },
   team: { icon: "heart", title: "לנהל ביחד", intro: "לא חובה. אפשר לנהל יחד עם חברים, אח או אחות, וכל אחד נכנס עם הטלפון שלו." },
 } as const;
 type SectionKey = keyof typeof SECTIONS;
@@ -584,7 +584,7 @@ export default function SettingsPage() {
           className={previewBg ? "mt-2 px-3 py-2 w-fit mx-auto" : "mt-1"}
           style={previewBg ? { ...readablePlate(t), borderRadius: lk.radius } : undefined}
         >
-          <div className="text-[19px] font-bold leading-tight">{name || "הדוכן שלך"}</div>
+          <div className="text-[19px] font-bold leading-tight">{name || "הדוכן שלכם"}</div>
           <span
             className="inline-block mt-1.5 text-[11.5px] font-bold px-2.5 py-1"
             style={{ background: statusChip.bg, color: statusChip.fg, fontFamily: "var(--font-body)" }}
@@ -732,8 +732,8 @@ export default function SettingsPage() {
                 </span>
                 <span className="block text-[12px] text-[var(--muted)] mt-0.5 leading-snug">
                   {isPartner
-                    ? "את שותפה בדוכן הזה · מה אפשר לעשות, ומי בצוות"
-                    : "אפשר להזמין חברים, אח או אחות לנהל איתך את הדוכן"}
+                    ? "אתם שותפים בדוכן הזה · מה אפשר לעשות, ומי בצוות"
+                    : "אפשר להזמין חברים, אח או אחות לנהל איתכם את הדוכן"}
                 </span>
               </span>
               <Chevron className="text-[var(--faint)]" />
@@ -754,7 +754,7 @@ export default function SettingsPage() {
                   </div>
                   {store.payment_claimed_at ? (
                     <div className="text-[12px] opacity-80 leading-relaxed mt-1">
-                      סימנת שהתשלום נשלח. ברגע שנראה שהכסף הגיע, הדוכן יתחיל לקבל הזמנות.
+                      סימנתם שהתשלום נשלח. ברגע שנראה שהכסף הגיע, הדוכן יתחיל לקבל הזמנות.
                     </div>
                   ) : (
                     <div className="text-[12.5px] opacity-80 leading-relaxed mt-1">
@@ -869,7 +869,7 @@ export default function SettingsPage() {
                   value={name}
                   maxLength={40}
                   aria-label="שם הדוכן"
-                  placeholder="שם הדוכן שלך"
+                  placeholder="שם הדוכן שלכם"
                   onChange={(e) => { setName(e.target.value); setDirty(true); }}
                   className="editable editable-quiet block w-full text-center font-bold text-[15px] pe-6"
                   style={{ color: t.ink }}
@@ -1110,7 +1110,7 @@ export default function SettingsPage() {
                 aria-label="העלאת תמונת רקע"
                 className="w-full mt-1.5 min-h-12 border-2 border-dashed border-[var(--line)] bg-white flex items-center justify-center gap-2 text-[13px] font-semibold"
               >
-                <span aria-hidden>📷</span> להעלות רקע משלך
+                <span aria-hidden>📷</span> להעלות רקע משלכם
               </button>
             )}
 
@@ -1336,7 +1336,7 @@ export default function SettingsPage() {
           ) : (
             promo.promo_text.trim() && (
               <p className="text-[12px] text-[var(--muted)] mt-2.5" data-testid="promo-saved-note">
-                יש לך הודעה שמורה. בוחרים &quot;מופיעה בדוכן&quot; כדי לראות ולערוך אותה.
+                יש לכם הודעה שמורה. בוחרים &quot;מופיעה בדוכן&quot; כדי לראות ולערוך אותה.
               </p>
             )
           )}
@@ -1351,7 +1351,7 @@ export default function SettingsPage() {
               <div className="bg-white border border-[var(--line)] p-4 text-center">
                 <div className="text-3xl" aria-hidden>🔒</div>
                 <div className="text-[15px] font-bold mt-1">את זה משנה רק ראש הדוכן</div>
-                <p className="text-[12.5px] text-[var(--muted)] mt-1">מה את יכולה לעשות בדוכן:</p>
+                <p className="text-[12.5px] text-[var(--muted)] mt-1">מה אתם יכולים לעשות בדוכן:</p>
               </div>
               <RoleGuide who="partner" />
             </div>
@@ -1366,10 +1366,10 @@ export default function SettingsPage() {
             <>
         {/* איך משלמים לי — הכסף של הילדה. לא קשור לתשלום ההקמה לדוכן. */}
         <div id="payment" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
-          <div className="text-[13px] font-bold">איך אפשר לשלם לך?</div>
+          <div className="text-[13px] font-bold">איך אפשר לשלם לכם?</div>
           <p className="text-[12px] text-[var(--muted)] leading-relaxed mt-0.5">
             מה שמסומן מופיע לקונים לפני ההזמנה וגם בהודעה. הכסף עובר ישירות
-            אלייך — דוכן לא נוגע בו ולא לוקח עמלה.
+            אליכם — דוכן לא נוגע בו ולא לוקח עמלה.
           </p>
           {/* כל אמצעי בשורה משלו. מסמנים ✓ — ומתחתיו נפתח "לאן מעבירים?".
               מה שלא סומן לא מציג שדות (מרינה: "אם לוחצים על הצ'ק בוקס אז
@@ -1497,7 +1497,7 @@ export default function SettingsPage() {
             <span className="flex-1">
               <span className="block text-[13px] font-medium">💬 לסגור תשלום בוואטסאפ</span>
               <span className="block text-[12px] text-[var(--muted)] mt-0.5">
-                הקונים יקבלו כפתור שפותח איתך שיחה, ותסכמו ביחד איך משלמים.
+                הקונים יקבלו כפתור שפותח איתכם שיחה, ותסכמו ביחד איך משלמים.
               </span>
             </span>
           </button>
@@ -1507,7 +1507,7 @@ export default function SettingsPage() {
               בדיוק מה שאסור שיישב בהודעה. */}
           {!payout.payout_bit && !payout.payout_paybox && !payout.payout_cash && (
             <p className="text-[12px] text-[var(--warn-ink)] mt-1.5">
-              לא סומן כלום, הקונים יצטרכו לשאול אותך בוואטסאפ איך לשלם.
+              לא סומן כלום, הקונים יצטרכו לשאול אתכם בוואטסאפ איך לשלם.
             </p>
           )}
         </div>
@@ -1567,8 +1567,8 @@ export default function SettingsPage() {
         <div id="order-msg" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <ol className="text-[12.5px] text-[var(--muted)] leading-relaxed flex flex-col gap-1">
             <li>1. הקונים בוחרים מוצרים בדוכן ולוחצים "שליחת ההזמנה".</li>
-            <li>2. ההזמנה מופיעה אצלך בלשונית "הזמנות".</li>
-            <li>3. אם הם רוצים לדבר איתך, הם לוחצים על כפתור הוואטסאפ, וההודעה כבר כתובה בשבילם.</li>
+            <li>2. ההזמנה מופיעה אצלכם בלשונית "הזמנות".</li>
+            <li>3. אם הם רוצים לדבר איתכם, הם לוחצים על כפתור הוואטסאפ, וההודעה כבר כתובה בשבילם.</li>
           </ol>
           <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-2">
             ככה נראית ההודעה. שם הקונה ומספר ההזמנה בשורה הראשונה, כך שכבר
@@ -1587,8 +1587,8 @@ export default function SettingsPage() {
           </div>
           <p className="text-[12px] text-[var(--muted)] mt-2 leading-relaxed">
             {payLabels.length
-              ? `בהזמנה הקונים בוחרים מתוך מה שסימנת ב"איך משלמים לי" (${payLabels.join(" / ")}), ומה שנבחר מופיע בהודעה.`
-              : "עוד לא סומן איך משלמים לך, אז אין שורת תשלום בהודעה."}
+              ? `בהזמנה הקונים בוחרים מתוך מה שסימנתם ב"איך משלמים לי" (${payLabels.join(" / ")}), ומה שנבחר מופיע בהודעה.`
+              : "עוד לא סומן איך משלמים לכם, אז אין שורת תשלום בהודעה."}
           </p>
         </div>
 
@@ -1602,7 +1602,7 @@ export default function SettingsPage() {
             התיבות קשורות לאותו ערך — מה שמקלידים בזו מתעדכן בזו. */}
         <div id="about" className="scroll-mt-14 bg-white border border-[var(--line)] p-3">
           <label className="block text-[12px] text-[var(--muted)] mb-1">
-            הטלפון שלך בוואטסאפ, לשם קונים כותבים על הזמנות
+            הטלפון שלכם בוואטסאפ, לשם קונים כותבים על הזמנות
           </label>
           <input
             value={phone}
@@ -1716,9 +1716,9 @@ function PayDetailsMissing({
   if (!show) return null;
   return (
     <div className="mt-2 border-[1.5px] border-[var(--warn-line)] bg-[var(--warn-bg)] text-[var(--warn-ink)] px-3 py-2.5" data-testid={testid}>
-      <p className="text-[12.5px] font-bold leading-snug">⚠️ עוד לא כתבת לאן מעבירים</p>
+      <p className="text-[12.5px] font-bold leading-snug">⚠️ עוד לא כתבתם לאן מעבירים</p>
       <p className="text-[12px] mt-1 leading-relaxed">
-        בלי מספר או לינק, קונים שבוחרים {method} לא יוכלו לשלם ישר, ויצטרכו לשאול אותך בוואטסאפ.
+        בלי מספר או לינק, קונים שבוחרים {method} לא יוכלו לשלם ישר, ויצטרכו לשאול אתכם בוואטסאפ.
       </p>
       {myPhone && (
         <button

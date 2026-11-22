@@ -82,7 +82,7 @@ export default function Landing() {
         >
           <span className="text-xl">{mine.emoji}</span>
           <span className="flex-1 t-small leading-snug">
-            <span className="text-[var(--muted)]">כבר יש לך דוכן</span>
+            <span className="text-[var(--muted)]">כבר יש לכם דוכן</span>
             <br />
             <b>{mine.name}</b>
           </span>
@@ -92,7 +92,7 @@ export default function Landing() {
 
       {from && (
         <div data-testid="referred-from" className="card px-4 py-3 t-small text-center max-w-sm">
-          {from.emoji} הגעת מ<span className="font-bold">{from.name}</span>, עכשיו תורך
+          {from.emoji} הגעתם מ<span className="font-bold">{from.name}</span>, עכשיו תורכם
         </div>
       )}
 
@@ -103,7 +103,7 @@ export default function Landing() {
         {/* "דוכן" כבר כתוב על השלט באיור. הכותרת נשארת לקוראי מסך. */}
         <h1 className="sr-only">דוכן</h1>
         <p className="text-[17px] leading-relaxed max-w-[19rem] text-[var(--ink)]">
-          יש לך דברים שכבר לא צריך?
+          יש לכם דברים שכבר לא צריך?
           <br />
           <span className="font-medium">פותחים דוכן ומוכרים לחברים.</span>
         </p>
@@ -123,7 +123,7 @@ export default function Landing() {
 
       {checked && !mine && (
         <a href="/login" className="t-small text-[var(--ink)] -mt-3 py-2">
-          כבר פתחת דוכן? <span className="underline font-medium">כניסה</span>
+          כבר פתחתם דוכן? <span className="underline font-medium">כניסה</span>
         </a>
       )}
 

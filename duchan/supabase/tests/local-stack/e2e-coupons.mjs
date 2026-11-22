@@ -90,7 +90,7 @@ async function openCheckout(page) {
 /* ── 1. בלי קופון חי — אין שדה ── */
 const buyer = await phone();
 await openCheckout(buyer);
-check("בדוכן בלי קופונים — אין 'יש לך קוד קופון?'", (await buyer.locator("[data-testid=coupon-box]").count()) === 0);
+check("בדוכן בלי קופונים — אין 'יש לכם קוד קופון?'", (await buyer.locator("[data-testid=coupon-box]").count()) === 0);
 
 /* ── 2. המוכרת יוצרת קופון ── */
 const girl = await phone();
@@ -162,7 +162,7 @@ check("קונה (anon) לא יכולה לקרוא את טבלת הקופונים
 
 /* ── 3. הקונה מחילה את הקוד ומזמינה ── */
 await openCheckout(buyer);
-check("עכשיו יש 'יש לך קוד קופון?'", (await buyer.locator("[data-testid=coupon-open]").count()) === 1);
+check("עכשיו יש 'יש לכם קוד קופון?'", (await buyer.locator("[data-testid=coupon-open]").count()) === 1);
 await buyer.click("[data-testid=coupon-open]");
 await buyer.fill("input[aria-label='קוד קופון']", "nope");
 await buyer.click("[data-testid=coupon-apply]");
@@ -173,7 +173,7 @@ await buyer.click("[data-testid=coupon-apply]");
 await buyer.waitForSelector("[data-testid=coupon-applied]", { timeout: 8000 });
 const applied = (await buyer.textContent("[data-testid=coupon-applied]")) ?? "";
 check("הקוד הוחל (גם באותיות קטנות) עם 10% הנחה", applied.includes("SALE10") && applied.includes("10% הנחה"), applied);
-check("חסכת ₪4 על ₪40", applied.includes("₪4"), applied);
+check("חסכתם ₪4 על ₪40", applied.includes("₪4"), applied);
 check("הסה״כ לתשלום ₪36", ((await buyer.textContent("[data-testid=order-total]")) ?? "").includes("₪36"));
 check("פירוט: סכום המוצרים וקופון", ((await buyer.textContent("[data-testid=coupon-summary]")) ?? "").includes("₪40"));
 await buyer.screenshot({ path: "/tmp/coupon-checkout.png" });

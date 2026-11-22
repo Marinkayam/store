@@ -160,7 +160,7 @@ export default function StoryPage() {
             >
               <span className="text-xl">{mine.emoji}</span>
               <span className="flex-1 t-small leading-snug">
-                <span className="text-[var(--muted)]">כבר יש לך דוכן</span>
+                <span className="text-[var(--muted)]">כבר יש לכם דוכן</span>
                 <br />
                 <b>{mine.name}</b>
               </span>
@@ -169,7 +169,7 @@ export default function StoryPage() {
           )}
           {from && (
             <div data-testid="referred-from" className="card px-4 py-3 t-small text-center max-w-sm">
-              {from.emoji} הגעת מ<span className="font-medium">{from.name}</span>, עכשיו תורך
+              {from.emoji} הגעתם מ<span className="font-medium">{from.name}</span>, עכשיו תורכם
             </div>
           )}
         </div>
@@ -190,10 +190,10 @@ export default function StoryPage() {
       <section ref={endRef} className="pt-20 pb-28 flex flex-col items-center gap-6 bg-[var(--canvas)]" aria-labelledby="end-title" data-testid="home-end">
         <div className="text-center px-gutter">
           <h2 id="end-title" className="home-display">
-            עכשיו תורך.
+            עכשיו תורכם.
           </h2>
           <p className="text-[15.5px] leading-relaxed mt-3 max-w-[22rem] mx-auto">
-            גם למגירה שלך יש מה למכור.
+            גם למגירה שלכם יש מה למכור.
           </p>
         </div>
         <EndStall />
@@ -219,7 +219,7 @@ export default function StoryPage() {
             href="/login"
             className="w-[calc(100%-2*var(--spacing-gutter))] max-w-sm border-[1.5px] border-[var(--line)] bg-white px-4 py-3 flex items-center justify-between t-small"
           >
-            <span>כבר פתחת דוכן?</span>
+            <span>כבר פתחתם דוכן?</span>
             <span className="font-medium text-[var(--ink)]">כניסה לדוכן שלי ←</span>
           </a>
         )}
@@ -256,7 +256,7 @@ function EndStall() {
   const { ref, seen } = useInView<HTMLDivElement>(0.4);
   return (
     <div ref={ref} className="w-full max-w-md px-gutter">
-      <HomeStall key={seen ? "on" : "off"} name="הדוכן שלך" celebrate={seen} className="w-full block" />
+      <HomeStall key={seen ? "on" : "off"} name="הדוכן שלכם" celebrate={seen} className="w-full block" />
     </div>
   );
 }

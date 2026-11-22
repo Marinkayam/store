@@ -42,7 +42,7 @@ const LEARNS: { icon: IconName; title: string; line: string }[] = [
 ];
 
 const RIDDLE = {
-  q: "מכרת ב-₪50 והוצאת ₪20 על חומרים. כמה הרווחת?",
+  q: "מכרתם ב-₪50 והוצאתם ₪20 על חומרים. כמה הרווחתם?",
   opts: ["₪50", "₪30", "₪70"],
   a: 1,
   why: "הכנסה ₪50, רווח ₪30. רווח = מה שנשאר אחרי ההוצאות.",
@@ -102,7 +102,7 @@ export function LearnSection() {
             })}
           </div>
           <p className="text-[14px] leading-relaxed mt-3 min-h-[44px]" aria-live="polite" data-testid="home-riddle-answer">
-            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! קיבלת כוכב.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
+            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! קיבלתם כוכב.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
           </p>
         </div>
       </Reveal>
@@ -226,7 +226,7 @@ export function PriceSection() {
           <bdi className="text-[96px] font-extralight leading-none">₪{ACTIVATION_PRICE}</bdi>
           {IS_LAUNCH && <bdi className="text-[28px] text-[var(--muted)] line-through mb-3">₪{FULL_PRICE}</bdi>}
         </div>
-        <div className="text-[17px] font-medium mt-2">פעם אחת. הדוכן שלך לתמיד.</div>
+        <div className="text-[17px] font-medium mt-2">פעם אחת. הדוכן שלכם לתמיד.</div>
         <p className="text-[14px] text-[var(--muted)] mt-1">בלי מנוי, בלי חיוב חודשי ובלי עמלה על מכירות.</p>
         {FUND_LINE && <p className="text-[14px] mt-3 max-w-[34ch] mx-auto leading-relaxed" data-testid="home-fund">{FUND_LINE}</p>}
         {/* איך משלמים — הדף האישי להורה (/parent) */}
@@ -572,7 +572,7 @@ export function MonthSection() {
             })}
           </div>
           <p className="text-[14px] leading-relaxed mt-3 min-h-[44px]" aria-live="polite" data-testid="home-riddle-answer">
-            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! קיבלת כוכב.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
+            {pick === null ? "" : right ? <><b className="text-[var(--ok-ink)]">נכון! קיבלתם כוכב.</b> {RIDDLE.why}</> : "כמעט! עוד ניסיון?"}
           </p>
         </div>
         <ParentNote className="mt-8">
