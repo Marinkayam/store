@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import StallHero from "./stall-hero";
+import StallStreet from "./stall-street";
 import HelpButton from "./help-button";
 import LegalLinks from "./legal-links";
 
@@ -97,7 +97,7 @@ export default function Landing() {
       )}
 
       <div className="self-stretch -mx-gutter">
-        <StallHero name="דוכן" still />
+        <StallStreet name="דוכן" />
       </div>
       <div className="text-center -mt-2">
         {/* "דוכן" כבר כתוב על השלט באיור. הכותרת נשארת לקוראי מסך. */}
