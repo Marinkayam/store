@@ -1399,7 +1399,7 @@ export default function World({ review }: { review?: LabStore[] }) {
           store={homeStores.find((x) => x.mine) ?? homeStores[0]}
           neighbor={homeStores.find((x) => !x.mine) ?? homeStores[0]}
           onClose={closeNews}
-          onGo={() => { closeNews(); if (storeOpen) closeStore(); }}
+          onGo={() => { closeNews(); if (storeOpen) closeStore(); setPlaceOpen(true); }}
         />
       )}
 

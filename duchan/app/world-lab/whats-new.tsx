@@ -6,9 +6,10 @@ import { TIERS, type LabStore, type Tier } from "./data";
 import { EmptyPlot, WorldStall } from "./stalls";
 
 /**
- * "מה חדש": מה שרואה מי שכבר יש לה דוכן, בפעם הראשונה שהיא נכנסת אחרי
- * שהעולם עולה. שלושה צעדים קצרים, כל אחד עם הדוכן *שלה* (אותו איור, אותו
- * שלט, אותם מוצרים), סרטון של חצי דקה, וכפתור אחד שמוציא אותה אל העיר.
+ * "פתחנו לכם משחק": מה שרואה מי שכבר יש לה דוכן, בפעם הראשונה שהיא נכנסת
+ * אחרי שהעולם עולה. המשחק הוא לבנות עיר, והדוכן שלה עומד בתוכה. שלושה
+ * צעדים קצרים, כל אחד עם הדוכן *שלה* (אותו איור, אותו שלט, אותם מוצרים),
+ * סרטון של חצי דקה, וכפתור אחד: להכניס את הדוכן לעיר (עיר, בית ספר, שכונה).
  *
  * מה שאפשר לגעת בו: בצעד השני גוררים מחוון, והדוכן גדל מול העיניים.
  *
@@ -16,8 +17,8 @@ import { EmptyPlot, WorldStall } from "./stalls";
  * קול). הוא לא נטען עד שלוחצים עליו.
  */
 const STEPS = [
-  { title: "הדוכן שלכם יוצא לעיר", body: "יש לו מקום ברחוב, ליד החברים מהכיתה. יותר אנשים רואים אותו, ואפשר למכור יותר." },
-  { title: "מזמינים חברים, והדוכן גדל", body: "על כל מי שמגיע דרככם מקבלים נקודות. גררו, ותראו לאן אפשר להגיע." },
+  { title: "פתחנו לכם משחק", body: "בונים יחד עיר של דוכנים, והדוכן שלכם עומד בה. יותר אנשים רואים אותו, ואפשר למכור יותר." },
+  { title: "מזמינים חברים, והעיר גדלה", body: "כל דוכן חדש מוסיף לעיר עוד רחוב, והדוכן שלכם גדל איתה. גררו, ותראו לאן אפשר להגיע." },
   { title: "יום שוק, וטיול בעיר", body: "כולם פותחים יחד, עם בלונים. ואפשר לראות מה מוכרים בכיתות אחרות." },
 ];
 
@@ -52,12 +53,11 @@ export default function WhatsNew({ store, neighbor, onGo, onClose }: { store: La
   }
 
   return (
-    <div className="wl-new" role="dialog" aria-modal="true" aria-label="מה חדש בדוכן" data-testid="wl-new" data-step={step}>
+    <div className="wl-new" role="dialog" aria-modal="true" aria-label="פתחנו לכם משחק" data-testid="wl-new" data-step={step}>
       <div className="wl-new-card">
         <button type="button" className="wl-x wl-new-x" onClick={onClose} aria-label="לסגור" data-testid="wl-new-x">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
         </button>
-        <div className="wl-new-tag">חדש בדוכן</div>
 
         <div className="wl-new-stage" data-testid="wl-new-stage">
           {playing ? (
@@ -110,7 +110,7 @@ export default function WhatsNew({ store, neighbor, onGo, onClose }: { store: La
             </button>
           )}
           {last || playing ? (
-            <button type="button" className="wl-btn wl-primary" onClick={onGo} data-testid="wl-new-go">לצאת לעיר</button>
+            <button type="button" className="wl-btn wl-primary" onClick={onGo} data-testid="wl-new-go">להכניס את הדוכן לעיר</button>
           ) : (
             <button type="button" className="wl-btn wl-primary" onClick={() => setStep(step + 1)} data-testid="wl-new-next">הבא</button>
           )}
