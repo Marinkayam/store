@@ -514,7 +514,7 @@
 .wl-combo-list { display: flex; flex-direction: column; margin-top: -9.5px; border: 1.5px solid var(--ink); background: var(--white); max-height: 300px; overflow-y: auto; }
 .wl-combo-opt { min-height: 48px; padding: 0 12px; background: var(--white); color: var(--ink); border: 0; border-top: 1px solid var(--stone, #d6cfc4); border-radius: 0; font: inherit; font-size: 16px; font-weight: 400; text-align: start; cursor: pointer; }
 .wl-combo-opt:first-child { border-top: 0; }
-.wl-combo-opt { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.wl-combo-opt { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .wl-combo-town { font-size: 13px; font-weight: 300; color: var(--muted, #6a6257); }
 .wl-combo-opt:focus-visible { outline: 3px solid #4a3a66; outline-offset: -3px; }
 .wl-place-where { margin: 8px 0; padding: 0 18px 0 0; display: flex; flex-direction: column; gap: 4px; }
