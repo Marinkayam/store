@@ -1,4 +1,4 @@
-import { CAMPUS, CITY_K, CLASSES, CLASS_NAME, MALL, OTHER_SCHOOL, SCHOOL_NAME, WORLD, type ClassLot, type ClassSize } from "./data";
+import { CAMPUS, CITY_K, CLASSES, MALL, WORLD, type ClassLot, type ClassSize } from "./data";
 
 /**
  * הסביבה של עולם דוכן: עיר קטנה ליד הים, ובמרכזה הקניון של הכיתה.
@@ -301,34 +301,45 @@ function OtherClass({ c, open }: { c: ClassLot; open: boolean }) {
   );
 }
 
-function Campus({ others }: { others: boolean }) {
+function Campus({ others, live, homeCount, hood, sign }: { others: boolean; live: string; homeCount: number; hood: boolean; sign: string }) {
   const cx = CAMPUS.x + CAMPUS.w / 2;
   const by = CAMPUS.y + 110; // ראש הבניין
+  // בית ספר: בניין ארוך אחד. שכונה: מרכז קהילתי קטן, ובתים משני הצדדים.
+  const half = hood ? 420 : 1250;
+  const cols = hood ? [5, 8] : [0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13];
+  const flagX = cx + (hood ? 330 : 1120);
+  const bellX = cx - (hood ? 360 : 1150);
   return (
     <g className="wl-campus">
       <rect x={CAMPUS.x} y={CAMPUS.y} width={CAMPUS.w} height={CAMPUS.h} rx="90" fill="var(--wl-pave2)" />
       <rect x={CAMPUS.x + 14} y={CAMPUS.y + 14} width={CAMPUS.w - 28} height={CAMPUS.h - 28} rx="78" fill="none" stroke="var(--wl-hedge)" strokeWidth={28} />
       <rect x={cx - 260} y={CAMPUS.y + CAMPUS.h - 40} width="520" height="60" fill="var(--wl-pave2)" />
 
+      {hood && [-1300, -860, 440, 880].map((dx, i) => (
+        <g key={dx} transform={`translate(${cx + dx} ${by + 103}) scale(3.9)`}>
+          <House x={0} y={0} i={i} />
+        </g>
+      ))}
+
       {/* הבניין */}
-      <g data-surprise-art="bell">
-        <rect x={cx - 1250} y={by + 70} width="2500" height="470" fill="var(--wl-wall)" {...school} />
-        <rect x={cx - 1280} y={by} width="2560" height="90" fill="var(--wl-roof2)" {...school} />
-        {Array.from({ length: 28 }, (_, i) => {
-          const col = i % 14;
-          if (col === 6 || col === 7) return null;
-          return <rect key={i} x={cx - 1180 + col * 172} y={by + 130 + Math.floor(i / 14) * 170} width="110" height="110" className="wl-window" fill="var(--wl-window)" {...school} strokeWidth={4} />;
-        })}
+      <g data-surprise-art="bell" data-place={hood ? "hood" : "school"}>
+        <rect x={cx - half} y={by + 70} width={half * 2} height="470" fill="var(--wl-wall)" {...school} />
+        <rect x={cx - half - 30} y={by} width={half * 2 + 60} height="90" fill="var(--wl-roof2)" {...school} />
+        {[0, 1].flatMap((row) =>
+          cols.map((col) => (
+            <rect key={`${row}-${col}`} x={cx - 1180 + col * 172} y={by + 130 + row * 170} width="110" height="110" className="wl-window" fill="var(--wl-window)" {...school} strokeWidth={4} />
+          ))
+        )}
         <rect x={cx - 140} y={by + 300} width="280" height="240" fill="var(--wl-trunk)" {...school} />
         <rect x={cx - 330} y={by + 120} width="660" height="130" fill="var(--canvas)" {...school} />
         <text x={cx} y={by + 212} textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={700} fontSize="86" fill="#6f4b28">
-          {SCHOOL_NAME}
+          {sign}
         </text>
-        <path d={`M${cx + 1120} ${by} v-190`} stroke={L} strokeWidth={8} />
-        <path className="wl-sway" style={{ transformOrigin: `${cx + 1120}px ${by - 150}px` }} d={`M${cx + 1120} ${by - 190} l150 40 l-150 40 z`} fill="var(--wl-wall3)" {...school} />
+        <path d={`M${flagX} ${by} v-190`} stroke={L} strokeWidth={8} />
+        <path className="wl-sway" style={{ transformOrigin: `${flagX}px ${by - 150}px` }} d={`M${flagX} ${by - 190} l150 40 l-150 40 z`} fill="var(--wl-wall3)" {...school} />
         {/* פעמון */}
-        <path d={`M${cx - 1150} ${by - 20} h120 M${cx - 1090} ${by - 20} v-70`} stroke={L} strokeWidth={8} />
-        <path d={`M${cx - 1150} ${by - 90} q60 -90 120 0 z`} fill="var(--warning)" {...school} />
+        <path d={`M${bellX} ${by - 20} h120 M${bellX + 60} ${by - 20} v-70`} stroke={L} strokeWidth={8} />
+        <path d={`M${bellX} ${by - 90} q60 -90 120 0 z`} fill="var(--warning)" {...school} />
       </g>
 
       {/* החצר התחתונה: מגרש, ספסלים ועצים */}
@@ -344,8 +355,9 @@ function Campus({ others }: { others: boolean }) {
         ))}
       </g>
 
-      {CLASSES.filter((c) => !c.mine).map((c) => (
-        <OtherClass key={c.id} c={c} open={others} />
+      {/* כל מתחם חוץ מזה שנמצאים בו עכשיו מצויר מבחוץ. גם שלי, כשאני בביקור אצל אחרים. */}
+      {CLASSES.filter((c) => c.id !== live).map((c) => (
+        <OtherClass key={c.id} c={c.mine ? { ...c, stalls: homeCount } : c} open={others || !!c.mine} />
       ))}
     </g>
   );
@@ -450,10 +462,10 @@ function Flower({ x, y, c }: { x: number; y: number; c: string }) {
 
 const GARDEN_COLORS = ["var(--blush)", "var(--warning)", "var(--lavender)", "var(--canvas)"];
 
-function Mall({ size, flowers, alley, splash, hop }: { size: ClassSize; flowers: number; alley: boolean; splash: number; hop: number }) {
+function Mall({ size, flowers, alley, splash, hop, at, gate, market }: { size: ClassSize; flowers: number; alley: boolean; splash: number; hop: number; at: { x: number; y: number }; gate: string; market: boolean }) {
   const W = MALL.w;
   return (
-    <g className="wl-mall" transform={`translate(${MALL.x} ${MALL.y})`}>
+    <g className="wl-mall" transform={`translate(${at.x} ${at.y})`}>
       {/* המתחם: ריצוף, וגדר חיה מסביב */}
       <rect x="0" y="0" width={W} height={MALL.h} rx="34" fill="var(--wl-pave)" />
       <rect x="9" y="9" width={W - 18} height={MALL.h - 18} rx="27" fill="none" stroke="var(--wl-hedge)" strokeWidth={18} />
@@ -619,15 +631,34 @@ function Mall({ size, flowers, alley, splash, hop }: { size: ClassSize; flowers:
         <rect x="648" y="1404" width="22" height="70" fill="var(--wl-wall)" {...mall} strokeWidth={1.4} />
         <path d="M424 1408 Q550 1340 676 1408 v-18 Q550 1322 424 1390 z" fill="var(--wl-roof2)" {...mall} strokeWidth={1.4} />
         <rect x="456" y="1392" width="188" height="44" fill="var(--canvas)" {...mall} strokeWidth={1.4} />
-        <text x="550" y="1424" textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={700} fontSize="24" fill="#6f4b28">
-          הקניון של {CLASS_NAME}
+        <text x="550" y={gate.length > 13 ? 1421 : 1424} textAnchor="middle" fontFamily="Heebo, system-ui, sans-serif" fontWeight={700} fontSize={gate.length > 13 ? 18 : 24} fill="#6f4b28">
+          {gate}
         </text>
       </g>
+
+      {/* יום שוק: דגלונים מעל הכיכר ובלונים בשער */}
+      {market && (
+        <g data-market-art="1">
+          <Bunting x1={70} x2={1030} y={458} sag={34} n={26} />
+          <Bunting x1={70} x2={1030} y={934} sag={34} n={26} />
+          {[[441, "var(--blush)"], [432, "var(--warning)"], [659, "var(--lavender)"], [668, "var(--blush)"]].map(([x, c], i) => (
+            <g key={i} className="wl-bob" style={{ animationDelay: `${i * 0.4}s` }}>
+              <path d={`M${x} 1404 q${i % 2 ? 6 : -6} -30 0 -58`} fill="none" stroke="var(--wl-line)" strokeWidth={0.8} />
+              <ellipse cx={x as number} cy={1332} rx="11" ry="14" fill={c as string} {...mall} strokeWidth={1.2} />
+            </g>
+          ))}
+        </g>
+      )}
     </g>
   );
 }
 
-export function Scenery({ size, flowers, alley, splash, hop, others, second }: { size: ClassSize; flowers: number; alley: boolean; splash: number; hop: number; others: boolean; second: boolean }) {
+export function Scenery({ size, flowers, alley, splash, hop, others, second, live, homeCount, hood, sign, gate, market }: {
+  size: ClassSize; flowers: number; alley: boolean; splash: number; hop: number; others: boolean; second: boolean;
+  /** המתחם שנמצאים בו: הקניון החי מצויר עליו */
+  live: string; homeCount: number; hood: boolean; sign: string; gate: string; market: boolean;
+}) {
+  const at = CLASSES.find((c) => c.id === live) ?? MALL;
   return (
     <svg className="wl-scenery" viewBox={`0 0 ${WORLD.w} ${WORLD.h}`} width={WORLD.w} height={WORLD.h} aria-hidden>
       <defs>
@@ -650,8 +681,8 @@ export function Scenery({ size, flowers, alley, splash, hop, others, second }: {
       <g transform={`scale(${CITY_K})`}>
         <City second={second} />
       </g>
-      <Campus others={others} />
-      <Mall size={size} flowers={flowers} alley={alley} splash={splash} hop={hop} />
+      <Campus others={others} live={live} homeCount={homeCount} hood={hood} sign={sign} />
+      <Mall size={size} flowers={flowers} alley={alley} splash={splash} hop={hop} at={at} gate={gate} market={market} />
     </svg>
   );
 }
@@ -674,10 +705,11 @@ function Walker({ c, cls, y }: { c: string; cls: string; y: number }) {
   );
 }
 
-export function Foreground({ catJump }: { catJump: number }) {
+export function Foreground({ catJump, live, market }: { catJump: number; live: string; market: boolean }) {
+  const at = CLASSES.find((c) => c.id === live) ?? MALL;
   return (
     <svg className="wl-front" viewBox={`0 0 ${WORLD.w} ${WORLD.h}`} width={WORLD.w} height={WORLD.h} aria-hidden>
-      <g transform={`translate(${MALL.x} ${MALL.y})`} className="wl-mall-life">
+      <g transform={`translate(${at.x} ${at.y})`} className="wl-mall-life">
         {/* פנסי רחוב בין הדוכנים */}
         {[144, 492, 840].map((x) => (
           <g key={x}>
@@ -691,6 +723,14 @@ export function Foreground({ catJump }: { catJump: number }) {
         <Walker c="var(--lavender)" cls="wl-walk-a" y={392} />
         <Walker c="var(--olive)" cls="wl-walk-b" y={410} />
         <Walker c="var(--blush)" cls="wl-walk-c" y={1186} />
+        {/* יום שוק: עוד מבקרים בכיכר */}
+        {market && (
+          <g data-market-crowd="1">
+            <Walker c="var(--warning)" cls="wl-walk-b" y={560} />
+            <Walker c="var(--olive)" cls="wl-walk-a" y={742} />
+            <Walker c="var(--lavender)" cls="wl-walk-c" y={840} />
+          </g>
+        )}
         {/* החתול של הקניון */}
         <g data-surprise-art="cat" key={catJump} className={catJump ? "wl-cat-jump" : undefined}>
           <path className="wl-sway" style={{ transformOrigin: "624px 898px" }} d="M624 898 q14 -2 11 -18" fill="none" stroke="#3a3a3a" strokeWidth={3} strokeLinecap="round" />

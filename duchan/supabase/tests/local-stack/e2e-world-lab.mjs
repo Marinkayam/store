@@ -10,8 +10,10 @@
 //   6. הזמנת חברים: הקישור לא חושף חנויות, מצטרפים רק באישור הורה, ואפשר
 //      להצטרף כדי לפתוח דוכן או רק כדי לבקר. הורה שלא אישר: שום דבר לא משתנה.
 //   7. העולם גדל בשלבים: רמה שעוד אין בה מה לראות נעולה, ומסבירה מתי תיפתח.
-//   8. הדף לא פונה לשרת או למסד, ובסביבת הפקה הוא לא קיים (404).
-//   9. מקלדת, "פחות תנועה" ובדיקת נגישות אוטומטית.
+//   8. קניונים של כיתות אחרות פתוחים לביקור: רואים דוכנים ומוצרים, לא שמות פרטיים.
+//   9. אותו עולם מחזיק גם שכונה (כיכרות ושווקים) ולא רק בית ספר, ויש בו יום שוק.
+//  10. הדף לא פונה לשרת או למסד, ובסביבת הפקה הוא לא קיים (404).
+//  11. מקלדת, "פחות תנועה" ובדיקת נגישות אוטומטית.
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { spawn } from "node:child_process";
@@ -51,6 +53,12 @@ const settle = async () => {
   await p.waitForFunction(() => document.querySelector("[data-testid=wl-root]")?.getAttribute("data-moving") === "0", null, { timeout: 8000 });
   await p.waitForTimeout(120);
 };
+const toLevel = async (n) => {
+  await p.click(`[data-testid=wl-level-${n}]`);
+  await p.waitForFunction((want) => document.querySelector("[data-testid=wl-root]")?.getAttribute("data-level") === String(want), n, { timeout: 15000 });
+  for (let quiet = 0; quiet < 3;) { await p.waitForTimeout(260); quiet = (await root().getAttribute("data-moving")) === "0" && (await level()) === n ? quiet + 1 : 0; }
+};
+const lab = async (id) => { await p.click("[data-testid=wl-lab]"); await p.click(`[data-testid=${id}]`); await p.keyboard.press("Escape"); await p.waitForTimeout(350); };
 const place = async () => ((await p.textContent("[data-testid=wl-place]")) ?? "").trim();
 const bubble = async () => ((await p.locator("[data-testid=wl-bubble]").first().textContent().catch(() => "")) ?? "").trim();
 const text = async (sel) => ((await p.textContent(sel)) ?? "").trim();
@@ -79,6 +87,9 @@ const axe = async (label) => {
 };
 /** מקום פנוי → הזמנה → הצד של מי שקיבל את הקישור */
 const inviteTo = async (plot) => {
+  // אם המקום מחוץ למסך, מיקוד מזיז אליו את המצלמה (כמו במקלדת)
+  await p.locator(`[data-testid=wl-plot-${plot}]`).focus();
+  await settle();
   await p.click(`[data-testid=wl-plot-${plot}]`);
   await settle();
   await p.waitForSelector("[data-testid=wl-invite]");
@@ -144,7 +155,7 @@ const inviteTo = async (plot) => {
   await p.click("[data-testid=wl-points]");
   await p.waitForTimeout(450);
   const growText = await text("[data-testid=wl-sheet-grow]");
-  ck("ההסבר: ארבע דרגות, חמישה מקורות נקודות, ומכירות לא נספרות", (await p.locator(".wl-tiers li").count()) === 4 && (await p.locator(".wl-sources li").count()) === 5 && growText.includes("מכירות לא נספרות"));
+  ck("ההסבר: ארבע דרגות, שישה מקורות נקודות, ומכירות לא נספרות", (await p.locator(".wl-tiers li").count()) === 4 && (await p.locator(".wl-sources li").count()) === 6 && growText.includes("מכירות לא נספרות"));
   ck("רואים מאיפה הנקודות שלי: שלושה שבועות ושלושה מוצרים", (await text("[data-testid=wl-src-week]")).includes("3 × 10") && (await text("[data-testid=wl-src-product]")).includes("3 × 10") && (await text("[data-testid=wl-grow-now]")).includes("60"));
   await axe("גיליון הצמיחה");
   await p.click("[data-testid=wl-sim-visits]");
@@ -193,6 +204,21 @@ const inviteTo = async (plot) => {
     const pitch = r[1] - r[0];
     return { pitch, widest: Math.max(...[...document.querySelectorAll(".wl-plate")].map((el) => el.getBoundingClientRect().width)) };
   });
+  // מקלדת: דוכן שמחוץ למסך מקבל מיקוד. העולם לא נגלל; המצלמה זזה אליו.
+  await p.locator("[data-testid=wl-plot-A0]").focus();
+  await settle();
+  const focused = await p.evaluate(() => {
+    const v = document.querySelector(".wl-view");
+    const r = document.querySelector("[data-testid=wl-plot-A0]").getBoundingClientRect();
+    return { sx: v.scrollLeft, sy: v.scrollTop, inView: r.left >= 0 && r.right <= innerWidth };
+  });
+  ck("דוכן מחוץ למסך שמקבל מיקוד: העולם לא נגלל, והמצלמה זזה אליו", focused.sx === 0 && focused.sy === 0 && focused.inView, JSON.stringify(focused));
+  await p.click("[data-testid=wl-home]");
+  await p.waitForSelector(".wl-store[data-open='1']", { timeout: 15000 });
+  await p.click("[data-testid=wl-exit]");
+  await settle();
+  await p.click("[data-testid=wl-out]");
+  await settle();
   ck("לוחיות של דוכנים שכנים לא עולות זו על זו", fit.widest <= fit.pitch, JSON.stringify(fit));
   const tiers = await p.locator(".wl-plot[data-kind=stall]").evaluateAll((els) => els.map((el) => el.getAttribute("data-tier")));
   ck("בכיתה יש מבנים בכל הגדלים, מדוכן ועד חנות גדולה", ["1", "2", "3", "4"].every((t) => tiers.includes(t)), tiers.join(","));
@@ -211,9 +237,40 @@ const inviteTo = async (plot) => {
   ck("בית ספר: הקניון של הכיתה הוא אחד מכמה", (await level()) === 1 && (await place()) === "בית ספר הדקל" && (await p.evaluate(() => location.hash)) === "#school", await place());
   ck("שתי שכבות ושש כיתות", (await p.locator(".wl-grade").count()) === 2 && (await p.locator("[data-testid^='wl-hit-class-']").count()) === 6);
   ck("הכיתה שלי מסומנת, עם מספר הדוכנים שלה", (await p.locator(".wl-class[data-mine='1']").count()) === 1 && (await text(".wl-class[data-mine='1']")).includes("11 דוכנים"), await text(".wl-class[data-mine='1']"));
+  /* ── 4ב. ביקור בקניון של כיתה אחרת ── */
   await p.click("[data-testid=wl-hit-class-h1]");
-  await p.waitForSelector("[data-testid=wl-bubble]");
-  ck("קניון של כיתה אחרת סגור למי שאינו מהכיתה", (await level()) === 1 && (await bubble()).includes("רק לילדים ולהורים מהכיתה"), await bubble());
+  await settle();
+  l = await lods();
+  ck("נוגעים בכיתה אחרת ונכנסים לקניון שלה", (await level()) === 2 && (await place()) === "הקניון של ה׳1" && l.stall === 5, `${await place()} ${JSON.stringify(l)}`);
+  ck("הדוכן שלי לא נמצא שם", (await p.locator(".wl-plot[data-mine='1']").count()) === 0);
+  await p.click("[data-testid=wl-hit-zone-A]");
+  await settle();
+  const visitPlates = await p.locator(".wl-plate").allTextContents();
+  ck("בביקור רואים שמות של דוכנים, לא שמות פרטיים של ילדים", visitPlates.length === 5 && (await p.locator(".wl-plate i").count()) === 0 && !visitPlates.some((t) => t.includes("שלי")), visitPlates.join(" | "));
+  await p.click("[data-testid=wl-plot-A3]");
+  await settle();
+  await p.waitForSelector("[data-testid=wl-enter]");
+  ck("בכרטיס של דוכן בכיתה אחרת: נכנסים לחנות, בלי נקודות ובלי עיצוב", (await p.locator("[data-testid=wl-points]").count()) === 0 && (await p.locator("[data-testid=wl-decorate]").count()) === 0);
+  const visitName = await place();
+  await p.click("[data-testid=wl-enter]");
+  await p.waitForSelector(".wl-store[data-open='1']", { timeout: 15000 });
+  ck("אפשר להיכנס לחנות ולראות מה מוכרים", (await p.locator("[data-testid=wl-store] h1").textContent()) === visitName && (await p.locator("[data-testid=wl-store] button").count()) >= 3, visitName);
+  await p.click("[data-testid=wl-exit]");
+  await settle();
+  await p.click("[data-testid=wl-out]");
+  await settle();
+  await p.click("[data-testid=wl-plot-A4]");
+  await settle();
+  await p.waitForSelector("[data-testid=wl-card]");
+  ck("מקום פנוי בכיתה אחרת: אי אפשר להזמין אליו", (await p.locator("[data-testid=wl-plot-A4]").getAttribute("data-kind")) === "empty" && (await p.locator("[data-testid=wl-invite]").count()) === 0);
+  await axe("ביקור בכיתה אחרת");
+  await p.click("[data-testid=wl-home]");
+  await p.waitForSelector(".wl-store[data-open='1']", { timeout: 20000 });
+  ck("'הדוכן שלי' מחזיר מהביקור הביתה", (await p.locator("[data-testid=wl-store] h1").textContent()) === MY_STORE);
+  await p.click("[data-testid=wl-exit]");
+  await settle();
+  ck("וחזרנו לקניון של הכיתה שלי", (await place()) === MY_STORE && (await p.locator(".wl-plot[data-mine='1']").count()) === 1);
+  await toLevel(1);
   await p.click("[data-testid=wl-hit-class-h3]");
   await p.waitForFunction(() => document.querySelector("[data-testid=wl-bubble]")?.textContent.includes("עוד אין דוכנים"));
   ck("כיתה בלי דוכנים היא מגרש ריק, לא קניון מדומה", (await text("[data-testid=wl-class-h3]")).includes("מקום פנוי"));
@@ -280,7 +337,7 @@ const inviteTo = async (plot) => {
   await p.fill("#wl-invitee-name", "גלי");
   await p.click("[data-testid=wl-join-next]");
   const parent = await text("[data-testid=wl-parent-view]");
-  ck("ההורה רואה מה ייחשף ולמי לפני שהוא מאשר", parent.includes("גלי") && parent.includes("רוצה לפתוח דוכן") && parent.includes("בלי שם משפחה") && parent.includes("רק ילדים והורים מהכיתה"), parent);
+  ck("ההורה רואה מה ייחשף ולמי לפני שהוא מאשר", parent.includes("גלי") && parent.includes("רוצה לפתוח דוכן") && parent.includes("בלי שם משפחה") && parent.includes("ילדים והורים מבית הספר") && parent.includes("רק הכיתה") && parent.includes("לא רואה כלום"), parent);
   ck("עד שההורה אישר, לא נפתח דוכן", (await p.locator("[data-testid=wl-plot-A4]").getAttribute("data-kind")) === "empty");
   await p.click("[data-testid=wl-parent-yes]");
   await p.fill("#wl-invitee-store", "הצמידים של גלי");
@@ -307,7 +364,7 @@ const inviteTo = async (plot) => {
   await p.click("[data-testid=wl-invite-view]");
   await p.click("[data-testid=wl-join-visit]");
   await p.click("[data-testid=wl-join-next]");
-  ck("מסלול ביקור: ההורה מתבקש לאשר ביקור, לא דוכן", (await text("[data-testid=wl-parent-view]")).includes("רוצה לבקר") && !(await text("[data-testid=wl-parent-view]")).includes("שם הדוכן"));
+  ck("מסלול ביקור: ההורה מתבקש לאשר ביקור, לא דוכן", (await text("[data-testid=wl-parent-view]")).includes("רוצה לבקר") && !(await text("[data-testid=wl-parent-view]")).includes("את הדוכן והמוצרים"));
   await p.click("[data-testid=wl-parent-no]");
   await p.waitForFunction(() => document.querySelector("[data-testid=wl-bubble]")?.textContent.includes("לא אישר"));
   ck("הורה לא אישר: שום דבר לא נפתח, והמקום חוזר להיות פנוי",
@@ -323,6 +380,49 @@ const inviteTo = async (plot) => {
   await p.waitForFunction(() => document.querySelector("[data-testid=wl-bubble]")?.textContent.includes("מבקרת"));
   ck("גם על משפחה שהצטרפה לבקר מקבלים נקודות", (await bubble()).includes("קיבלת 20 נקודות"), await bubble());
   ck("משפחה בלי חנות מצטרפת כמבקרת, והמקום נשאר פנוי", (await lods()).stall === stallsBefore && (await p.locator("[data-testid=wl-plot-B0]").getAttribute("data-kind")) === "empty");
+
+  /* ── 9ב. יום שוק ── */
+  const myPoints = async () => parseInt(await text("[data-testid=wl-points]"), 10);
+  await toLevel(2);
+  ck("יום שוק בקרוב: שלט בכיכר עם השם והמועד", (await text("[data-testid=wl-market-label]")).includes("יריד כיתתי") && (await text("[data-testid=wl-market-label]")).includes("יום שישי"), await text("[data-testid=wl-market-label]"));
+  await p.click("[data-testid=wl-home]");
+  await p.waitForSelector(".wl-store[data-open='1']", { timeout: 20000 });
+  await p.click("[data-testid=wl-exit]");
+  await settle();
+  ck("מהדוכן שלי אפשר להירשם ליום השוק", (await p.locator("[data-testid=wl-market-join]").count()) === 1 && (await p.locator(".wl-plot[data-mine='1']").getAttribute("data-fest")) === null);
+  await p.click("[data-testid=wl-market-join]");
+  ck("אחרי ההרשמה יש בלונים על הדוכן שלי", (await p.locator(".wl-plot[data-mine='1']").getAttribute("data-fest")) === "1" && (await p.locator(".wl-plot[data-mine='1'] .wl-fest").count()) === 1 && (await p.locator("[data-testid=wl-market-in]").count()) === 1);
+  const ptsBefore = await myPoints();
+  await lab("wl-market-on");
+  await p.waitForFunction(() => document.querySelector("[data-testid=wl-bubble]")?.textContent.includes("30 נקודות"));
+  ck("ביום השוק עצמו מקבלים 30 נקודות", (await myPoints()) === ptsBefore + 30, `${ptsBefore} → ${await myPoints()}`);
+  await lab("wl-market-soon");
+  await lab("wl-market-on");
+  ck("והנקודות ניתנות פעם אחת", (await myPoints()) === ptsBefore + 30);
+  await toLevel(2);
+  const fest = await p.locator(".wl-plot[data-fest='1']").count();
+  ck("יום שוק היום: הכיכר מקושטת, ויש בה עוד מבקרים", (await text("[data-testid=wl-market-label]")).includes("היום") && (await p.locator("[data-market-art]").count()) === 1 && (await p.locator("[data-market-crowd]").count()) === 1);
+  ck("משתתפים רק הדוכנים שנרשמו", fest >= 2 && fest < (await lods()).stall, String(fest));
+  await lab("wl-market-off");
+  ck("בלי יום שוק: אין שלט ואין בלונים", (await p.locator("[data-testid=wl-market-label]").count()) === 0 && (await p.locator(".wl-plot[data-fest='1']").count()) === 0 && (await p.locator("[data-market-art]").count()) === 0);
+
+  /* ── 9ג. אותו עולם כשכונה ── */
+  await lab("wl-kind-hood");
+  const ladder = (await p.locator("[data-testid^='wl-level-']").allTextContents()).map((t) => t.trim());
+  ck("שכונה: הסולם הוא עיר, שכונה, שוק, רחוב, דוכן", ladder.join(",") === "עיר,שכונה,שוק,רחוב,דוכן", ladder.join(","));
+  ck("הקניון של הכיתה הוא עכשיו השוק של הכיכר", (await place()) === "השוק של כיכר התמר", await place());
+  await toLevel(1);
+  ck("במקום בית ספר: שכונה עם כיכרות, בתים ומרכז קהילתי", (await place()) === "שכונת הדקלים" && (await text("[data-testid=wl-class-h1]")).includes("כיכר הרימון") && (await p.locator("[data-place=hood]").count()) === 1 && (await p.locator(".wl-grade").count()) === 0, await text("[data-testid=wl-class-h1]"));
+  await p.click("[data-testid=wl-hit-class-v3]");
+  await settle();
+  ck("גם בשכונה מבקרים בשוק של כיכר אחרת", (await place()) === "השוק של כיכר השקד" && (await lods()).stall === 3, await place());
+  await p.click("[data-testid=wl-home]");
+  await p.waitForSelector(".wl-store[data-open='1']", { timeout: 20000 });
+  await p.click("[data-testid=wl-exit]");
+  await settle();
+  ck("אותו דוכן, אותה חזית, גם בשכונה", (await place()) === MY_STORE && ((await p.locator(".wl-plot[data-mine='1'] svg.wl-near").textContent()) ?? "").includes("סקווישי נוני"));
+  await lab("wl-kind-class");
+  ck("חוזרים לכיתה: הסולם חוזר לבית ספר ולקניון", (await p.locator("[data-testid^='wl-level-']").allTextContents()).map((t) => t.trim()).join(",") === "עיר,בית ספר,קניון,רחוב,דוכן");
 
   /* ── 10. העולם גדל בשלבים ── */
   await stage(1);

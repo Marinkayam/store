@@ -224,13 +224,27 @@ function StallFar() {
   );
 }
 
+/** יום שוק: בלונים על דוכן שמשתתף. מרחוק: שני כתמי צבע. */
+function FestMark({ flat }: { flat?: boolean }) {
+  return (
+    <svg viewBox="0 0 240 176" className="wl-shop-back wl-fest" aria-hidden data-fest="1">
+      {!flat && <path d="M206 96 q10 -30 4 -62 M206 96 q20 -22 22 -46" fill="none" stroke={INK} strokeWidth={0.9} />}
+      <g className={flat ? undefined : "wl-bob"}>
+        <ellipse cx="210" cy="22" rx="11" ry="14" fill="var(--blush)" stroke={flat ? "none" : INK} strokeWidth={1.2} />
+        <ellipse cx="229" cy="38" rx="10" ry="13" fill="var(--warning)" stroke={flat ? "none" : INK} strokeWidth={1.2} />
+      </g>
+    </svg>
+  );
+}
+
 export type Lod = "near" | "mid" | "far";
 
-export function WorldStall({ store, lod, grew }: { store: LabStore; lod: Lod; grew?: boolean }) {
+export function WorldStall({ store, lod, grew, fest }: { store: LabStore; lod: Lod; grew?: boolean; fest?: boolean }) {
   const tier = store.tier ?? 1;
   const back = tier >= 3 ? <ShopBack tier={tier} flat={lod === "far"} grew={grew} /> : null;
-  if (lod === "far") return <>{back}<StallFar /></>;
-  if (lod === "mid") return <>{back}<StallMid store={store} /></>;
+  const mark = fest ? <FestMark flat={lod === "far"} /> : null;
+  if (lod === "far") return <>{back}<StallFar />{mark}</>;
+  if (lod === "mid") return <>{back}<StallMid store={store} />{mark}</>;
   return (
     <>
       {back}
@@ -242,6 +256,7 @@ export function WorldStall({ store, lod, grew }: { store: LabStore; lod: Lod; gr
         shelf={<ProductShelf store={store} />}
         className="wl-stall-svg wl-near"
       />
+      {mark}
     </>
   );
 }

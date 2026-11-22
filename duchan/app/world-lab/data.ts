@@ -59,6 +59,115 @@ export const GRADE_ROWS = [
   { name: "שכבת ו׳", y: CAMPUS.y + LOT.top + LOT.h + LOT.between - 70 },
 ];
 
+/**
+ * סוג הקהילה. אותה עיר, אותם רחובות ואותם דוכנים; מה שמשתנה הוא מי השכנים:
+ * כיתה בבית ספר, או כיכר בשכונה. כל מה שתלוי בסוג יושב כאן, כדי שהעולם עצמו
+ * לא יידע אם הוא בית ספר או שכונה.
+ */
+export type CommunityKind = "class" | "hood";
+export interface Community {
+  kind: CommunityKind;
+  /** שמות הרמות בסולם */
+  levels: string[];
+  /** המקום שמעל הקהילה: בית הספר או השכונה */
+  place: string;
+  otherPlace: string;
+  emptyPlace: string;
+  /** השלט על הבניין שבראש המתחם */
+  sign: string;
+  /** שם לכל מתחם, לפי המזהה שלו */
+  lots: Record<string, string>;
+  rows: [string, string];
+  /** "הקניון של ה׳2" / "השוק של כיכר התמר" */
+  mallOf: (lot: string) => string;
+  /** "קניון" / "שוק" */
+  mall: string;
+  /** "הכיתה" / "הכיכר" */
+  unit: string;
+  /** "כיתה" / "כיכר" */
+  unitWord: string;
+  /** מה רואה מי שלא שייך */
+  outsiders: string;
+  /** מי רואה את הדוכנים, ומי רואה גם שמות פרטיים */
+  seenBy: string;
+  namesBy: string;
+  neighbor: string;
+  hint0: string;
+  hint1: string;
+  locked: Record<number, string>;
+  stages: string[];
+  garden: string;
+  board: string;
+  bell: { label: string; text: string };
+  marketName: string;
+  marketWhen: string;
+}
+
+export const COMMUNITIES: Record<CommunityKind, Community> = {
+  class: {
+    kind: "class",
+    levels: ["עיר", "בית ספר", "קניון", "רחוב", "דוכן"],
+    place: "בית ספר הדקל",
+    otherPlace: "בית ספר הגפן",
+    emptyPlace: "מקום פנוי לבית ספר נוסף",
+    sign: "בית ספר הדקל",
+    lots: { h1: "ה׳1", h2: "ה׳2", h3: "ה׳3", v1: "ו׳1", v2: "ו׳2", v3: "ו׳3" },
+    rows: ["שכבת ה׳", "שכבת ו׳"],
+    mallOf: (lot) => `הקניון של ${lot}`,
+    mall: "קניון",
+    unit: "הכיתה",
+    unitWord: "כיתה",
+    outsiders: "מי שלא אושר לבית הספר לא רואה כלום.",
+    seenBy: "ילדים והורים מבית הספר",
+    namesBy: "רק הכיתה",
+    neighbor: "חברה או חבר מהכיתה",
+    hint0: "נוגעים בבית הספר כדי להתקרב",
+    hint1: "נוגעים בכיתה כדי להיכנס לקניון שלה",
+    locked: {
+      2: "הקניון של הכיתה ייפתח כשיהיו בו 3 דוכנים. אפשר להזמין חברים למקומות הפנויים.",
+      1: "בית הספר ייפתח כשתהיה עוד כיתה עם דוכנים.",
+      0: "העיר תיפתח כשיהיה בה עוד בית ספר עם דוכנים.",
+    },
+    stages: ["דוכן אחד", "3 דוכנים בכיתה", "8 דוכנים בכיתה", "11 דוכנים בכיתה", "עוד כיתות בבית הספר", "עוד בית ספר בעיר"],
+    garden: "הגינה של הכיתה",
+    board: "לוח המודעות של הכיתה",
+    bell: { label: "הפעמון של בית הספר", text: "צלצול! ההפסקה הגדולה התחילה, והקניונים של הכיתות נפתחים." },
+    marketName: "יריד כיתתי",
+    marketWhen: "יום שישי, בהפסקה הגדולה",
+  },
+  hood: {
+    kind: "hood",
+    levels: ["עיר", "שכונה", "שוק", "רחוב", "דוכן"],
+    place: "שכונת הדקלים",
+    otherPlace: "שכונת הגפן",
+    emptyPlace: "מקום פנוי לשכונה נוספת",
+    sign: "מרכז קהילתי",
+    lots: { h1: "כיכר הרימון", h2: "כיכר התמר", h3: "כיכר הזית", v1: "כיכר התאנה", v2: "כיכר החרוב", v3: "כיכר השקד" },
+    rows: ["", ""],
+    mallOf: (lot) => `השוק של ${lot}`,
+    mall: "שוק",
+    unit: "הכיכר",
+    unitWord: "כיכר",
+    outsiders: "מי שלא אושר לשכונה לא רואה כלום.",
+    seenBy: "משפחות מהשכונה",
+    namesBy: "רק הכיכר",
+    neighbor: "שכנה או שכן מהכיכר",
+    hint0: "נוגעים בשכונה כדי להתקרב",
+    hint1: "נוגעים בכיכר כדי להיכנס לשוק שלה",
+    locked: {
+      2: "השוק של הכיכר ייפתח כשיהיו בו 3 דוכנים. אפשר להזמין שכנים למקומות הפנויים.",
+      1: "השכונה תיפתח כשתהיה עוד כיכר עם דוכנים.",
+      0: "העיר תיפתח כשתהיה בה עוד שכונה עם דוכנים.",
+    },
+    stages: ["דוכן אחד", "3 דוכנים בכיכר", "8 דוכנים בכיכר", "11 דוכנים בכיכר", "עוד כיכרות בשכונה", "עוד שכונה בעיר"],
+    garden: "הגינה של הכיכר",
+    board: "לוח המודעות של הכיכר",
+    bell: { label: "הפעמון של המרכז הקהילתי", text: "צלצול! השווקים של הכיכרות נפתחים." },
+    marketName: "יום שוק שכונתי",
+    marketWhen: "יום שישי בבוקר",
+  },
+};
+
 /** דוכן בעולם: רוחב 100 יחידות, מצויר במרחב 240×176 של KupaStall */
 export const STALL = { w: 100, h: (100 * 176) / 240, ground: (100 * 150) / 240 };
 export const PITCH = 116;
@@ -112,16 +221,17 @@ export const tierOf = (points: number): Tier => TIERS.reduce<number>((t, x, i) =
  * רוצים לתגמל הצפה. ותיקות ומוצרים נספרים לפי המצב (כמה שבועות, כמה מוצרים
  * יש עכשיו), ולכן מחיקה והוספה מחדש לא מוסיפות כלום.
  */
-export type PointKey = "week" | "product" | "visit" | "join_visit" | "join_store";
+export type PointKey = "week" | "product" | "visit" | "join_visit" | "join_store" | "market";
 export const POINT_SOURCES: { key: PointKey; label: string; points: number; cap?: string; max?: number }[] = [
   { key: "week", label: "שבוע שהדוכן פעיל", points: 10 },
   { key: "product", label: "מוצר עם תמונה בדוכן", points: 10, cap: "עד 10 מוצרים", max: 10 },
   { key: "visit", label: "מישהו נכנס לדוכן מהקישור שלך", points: 5, cap: "עד 30 ביום" },
   { key: "join_visit", label: "משפחה הצטרפה לקניון בהזמנתך", points: 20 },
   { key: "join_store", label: "נפתח דוכן בהזמנתך", points: 60 },
+  { key: "market", label: "השתתפות ביום שוק", points: 30 },
 ];
 /** הדוכן שלי בתחילת ההדמיה: שלושה שבועות ושלושה מוצרים */
-export const MY_START_COUNTS: Record<PointKey, number> = { week: 3, product: 3, visit: 0, join_visit: 0, join_store: 0 };
+export const MY_START_COUNTS: Record<PointKey, number> = { week: 3, product: 3, visit: 0, join_visit: 0, join_store: 0, market: 0 };
 export const pointsOf = (counts: Record<PointKey, number>) => POINT_SOURCES.reduce((sum, x) => sum + (counts[x.key] ?? 0) * x.points, 0);
 
 /** שעת השקיעה בקירוב לכל חודש בישראל. מהשעה הזאת ועד שש בבוקר העולם בלילה. */
@@ -315,6 +425,44 @@ export const ZONES = {
 } as const;
 
 const byId = (id: string) => STORES.find((s) => s.id === id)!;
+
+/**
+ * הדוכנים של המתחמים האחרים. מי שמבקר במתחם שאינו שלו רואה את הדוכן ואת
+ * המוצרים, אבל לא שמות פרטיים, ולכן לדוכנים האלה אין כאן בעלים בכלל.
+ */
+type Row = [id: string, name: string, sign: string, tagline: string, theme: ThemeKey, awning: string, emblem: Emblem, tier: Tier, arts: [ArtName, string, number][]];
+const mk = ([id, name, sign, tagline, theme, awning, emblem, tier, arts]: Row): LabStore => ({
+  id, name, sign, tagline, theme, awning, emblem, tier, short: name.split(" ")[0],
+  products: arts.map(([art, n, price]) => ({ art, name: n, price })),
+  deco: { flowers: tier >= 2, openSign: tier >= 3, cat: false },
+});
+export const LOT_STORES: Record<string, LabStore[]> = {
+  h1: ([
+    ["h1a", "סטודיו חימר", "סטודיו חימר", "ספלים וציורים בעבודת יד", "candy", "#A65330", "sun", 2, [["mug", "ספל מנוקד", 22], ["painting", "ציור קטן", 14], ["mug", "ספל פסים", 22]]],
+    ["h1b", "גלגלים", "גלגלים", "מכוניות וכדורים", "slush", "#2563A8", "star", 1, [["car", "מכונית מרוץ", 9], ["ball", "כדור קופץ", 5], ["car", "ג׳יפ קטן", 11]]],
+    ["h1c", "צמידי חברות", "צמידי חברות", "צמידים ושרשראות", "bubble", "#C23B6E", "flower", 3, [["bracelets", "צמיד חוטים", 8], ["necklace", "שרשרת חרוזים", 16], ["bracelets", "צמיד כפול", 12]]],
+    ["h1d", "פינת הדובים", "פינת הדובים", "בובות רכות", "lemon", "#E3B93A", "moon", 1, [["teddy", "דובי חום", 18], ["squishy", "סקוויש ענן", 10], ["teddy", "דובי לבן", 18]]],
+    ["h1e", "סליים וצבע", "סליים וצבע", "סליים בכל הצבעים", "mint", "#23785A", "drop", 2, [["slime", "סליים ירוק", 12], ["slime", "סליים נצנצים", 15], ["painting", "ציור מופשט", 14]]],
+  ] as Row[]).map(mk),
+  v1: ([
+    ["v1a", "הגלריה הקטנה", "הגלריה הקטנה", "ציורים על קנבס קטן", "pastel", "#8858A2", "leaf", 3, [["painting", "נוף ים", 20], ["painting", "חתול ישן", 18], ["mug", "ספל מצויר", 24]]],
+    ["v1b", "כדורים ועוד", "כדורים ועוד", "כדורים קופצים ומכוניות", "melon", "#C9403A", "sun", 1, [["ball", "כדור זוהר", 7], ["car", "מכונית כיס", 8], ["ball", "כדור ענק", 9]]],
+    ["v1c", "תכשיטי ים", "תכשיטי ים", "שרשראות עם צדפים", "slush", "#2563A8", "gem", 4, [["necklace", "שרשרת צדף", 20], ["bracelets", "צמיד גלים", 10], ["necklace", "שרשרת כוכב", 18]]],
+    ["v1d", "רך ונעים", "רך ונעים", "בובות וסקווישים", "bubble", "#C23B6E", "heart", 2, [["teddy", "ארנב רך", 20], ["squishy", "סקוויש תות", 11], ["squishy", "סקוויש אבוקדו", 11]]],
+    ["v1e", "מעבדת הסליים", "מעבדת הסליים", "סליים שמכינים בבית", "mint", "#23785A", "drop", 1, [["slime", "סליים שקוף", 13], ["slime", "סליים קצף", 13], ["ball", "כדור לחיץ", 6]]],
+    ["v1f", "ספל טוב", "ספל טוב", "ספל לכל בוקר", "lemon", "#E3B93A", "star", 2, [["mug", "ספל שמש", 22], ["mug", "ספל לב", 22], ["painting", "תחתית מצוירת", 9]]],
+  ] as Row[]).map(mk),
+  v3: ([
+    ["v3a", "קופסת ההפתעות", "קופסת הפתעות", "דברים קטנים ושמחים", "candy", "#A65330", "star", 1, [["squishy", "סקוויש הפתעה", 9], ["ball", "כדור קופץ", 5], ["car", "מכונית קטנה", 8]]],
+    ["v3b", "חרוז וחוט", "חרוז וחוט", "צמידים בהזמנה", "berry", "#8858A2", "gem", 2, [["bracelets", "צמיד שם", 14], ["necklace", "שרשרת חוט", 12], ["bracelets", "צמיד קשת", 10]]],
+    ["v3c", "צבעי מים", "צבעי מים", "ציורים וספלים", "slush", "#2563A8", "drop", 1, [["painting", "ציור פרחים", 15], ["mug", "ספל כחול", 22], ["painting", "ציור ים", 15]]],
+  ] as Row[]).map(mk),
+};
+/** באיזה גודל מסדרים מתחם אחר, לפי מספר הדוכנים שבו */
+export const lotSize = (n: number): ClassSize => (n <= 3 ? 3 : n <= 8 ? 8 : 11);
+
+/** מי מהדוכנים בכיתה שלי נרשם ליום השוק */
+export const MARKET_IN = ["maya", "beads", "slime", "mugs", "rainbow", "tamar"];
 
 /** סדר החנויות הבדויות: שמונה לרחוב הסוככים, ושלוש לסמטה */
 const FICTION = ["maya", "itai", "beads", "noa", "teddy", "slime", "mugs", "balls", "rainbow", "tamar", "stars"];

@@ -3,9 +3,9 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/app/icons";
 import {
-  AWNINGS, CAMPUS, CITY_K, CLASSES, CLASS_NAME, GRADE_ROWS, LEVEL_LABELS, LEVEL_NAMES, LOCKED_REASON, MALL, MY_START_COUNTS, NOTICES, OTHER_SCHOOL, POINT_SOURCES, TIERS,
-  SCHOOL_NAME, STAGES, STALL, STORES, SURPRISES, WORLD, ZONES,
-  alleyOpen, cityPt, layout, isNightAt, pointsOf, tierOf, type ClassSize, type PointKey, type Deco, type LabStore, type Level, type Plot,
+  AWNINGS, CAMPUS, CITY_K, CLASSES, COMMUNITIES, GRADE_ROWS, LEVEL_NAMES, LOT_STORES, MALL, MARKET_IN, MY_START_COUNTS, NOTICES, POINT_SOURCES, TIERS,
+  STAGES, STALL, STORES, SURPRISES, WORLD, ZONES,
+  alleyOpen, cityPt, layout, isNightAt, lotSize, pointsOf, tierOf, type ClassSize, type CommunityKind, type PointKey, type Deco, type LabStore, type Level, type Plot,
 } from "./data";
 import InviteSim, { type InviteResult } from "./invite-sim";
 import { Foreground, Scenery } from "./scenery";
@@ -76,6 +76,9 @@ const nearestRow = (y: number) => ROWS.reduce((a, b) => (Math.abs(b - y) < Math.
 const SceneryMemo = memo(Scenery);
 const ForegroundMemo = memo(Foreground);
 
+/** המתחם שלי */
+const HOME = "h2";
+
 const XIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
 );
@@ -113,6 +116,8 @@ export default function World({ review }: { review?: LabStore[] }) {
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chain = useRef(0);
   const selfHash = useRef(false);
+  /** ההזזה של שכבת הקניון (ביקור במתחם אחר). המצלמה נשארת במערכת של המתחם שלי. */
+  const offRef = useRef({ x: 0, y: 0 });
   /** כמה להרחיק ולהרים את המצלמה מול מבנה גבוה. מתעדכן בכל ציור (ראה למטה). */
   const frameFor = useRef<(x: number, y: number) => { k: number; up: number }>(() => ({ k: 1, up: 0 }));
 
@@ -157,21 +162,39 @@ export default function World({ review }: { review?: LabStore[] }) {
   /** הכרטיס שנסגר באיקס: מזהה המקום. נפתח שוב כשעוברים למקום אחר. */
   const [cardOff, setCardOff] = useState<string | null>(null);
   const myTier = tierOf(points);
+  /** סוג הקהילה: כיתה בבית ספר, או כיכר בשכונה. אותו עולם, שמות אחרים. */
+  const [kind, setKind] = useState<CommunityKind>("class");
+  const com = COMMUNITIES[kind];
+  /** המתחם שנמצאים בו עכשיו. "h2" הוא שלי; כל אחר הוא ביקור אצל אחרים. */
+  const [here, setHere] = useState(HOME);
+  const visiting = here !== HOME;
+  const [homeAfter, setHomeAfter] = useState(false);
+  /** יום שוק: אין, בקרוב, או היום. והאם הדוכן שלי נרשם. */
+  const [market, setMarket] = useState<"off" | "soon" | "on">("soon");
+  const [marketIn, setMarketIn] = useState(false);
   const [found, setFound] = useState<string[]>([]);
   const [bubble, setBubble] = useState<{ text: string; k: number } | null>(null);
   const [fx, setFx] = useState({ splash: 0, hop: 0, cat: 0, watered: 0 });
 
-  const plots = useMemo(
+  const homePlots = useMemo(
     () =>
       layout(size, review ? review.slice(group * 11, group * 11 + 11) : undefined).map((p) =>
         p.kind === "empty" && joined[p.id] ? { ...p, kind: "stall" as const, store: joined[p.id] } : p
       ),
     [group, joined, review, size]
   );
-  const stores = useMemo(
+  const homeStores = useMemo(
     () => review ?? [...STORES.map((s) => (s.mine ? { ...s, awning: mine.awning, deco: mine.deco, tier: myTier } : s)), ...Object.values(joined)],
     [joined, mine, myTier, review]
   );
+  // בביקור: הדוכנים של המתחם האחר, מסודרים באותה צורה. את הדוכן שלי לא רואים שם.
+  const lotList = visiting ? LOT_STORES[here] ?? [] : null;
+  const liveSize: ClassSize = lotList ? lotSize(lotList.length) : size;
+  const plots = useMemo(() => (lotList ? layout(lotSize(lotList.length), lotList) : homePlots), [homePlots, lotList]);
+  const stores = lotList ?? homeStores;
+  /** כמה להזיז את שכבת הקניון כדי שתשב על המתחם שמבקרים בו */
+  const lot = CLASSES.find((cl) => cl.id === here) ?? CLASSES.find((cl) => cl.mine)!;
+  const off = { x: lot.x - MALL.x, y: lot.y - MALL.y };
   const storeOf = useCallback((id: string | undefined) => stores.find((s) => s.id === id), [stores]);
   frameFor.current = (x, y) => {
     let tier = 1;
@@ -183,8 +206,9 @@ export default function World({ review }: { review?: LabStore[] }) {
     }
     return tier >= 4 ? { k: 0.64, up: 34 } : tier === 3 ? { k: 0.86, up: 15 } : { k: 1, up: 0 };
   };
-  const myPlot = useMemo(() => plots.find((p) => p.store?.mine) ?? plots.find((p) => p.kind === "stall") ?? plots[0], [plots]);
+  const myPlot = useMemo(() => homePlots.find((p) => p.store?.mine) ?? homePlots.find((p) => p.kind === "stall") ?? homePlots[0], [homePlots]);
   const stallCount = plots.filter((p) => p.kind === "stall").length;
+  const homeCount = homePlots.filter((p) => p.kind === "stall").length;
 
   /* ── מצלמה ── */
 
@@ -205,8 +229,9 @@ export default function World({ review }: { review?: LabStore[] }) {
     if (!el || !rig) return;
     const { w, h } = vp.current;
     const i = insets(c.lv, h);
-    const tx = (w - i.r) / 2 - c.x * c.s;
-    const ty = i.t + (h - i.t - i.b) / 2 - c.y * c.s;
+    const o = c.lv >= 2 ? offRef.current : { x: 0, y: 0 };
+    const tx = (w - i.r) / 2 - (c.x + o.x) * c.s;
+    const ty = i.t + (h - i.t - i.b) / 2 - (c.y + o.y) * c.s;
     const tr = animate ? `transform ${DUR}ms cubic-bezier(.33,.02,.18,1)` : "none";
     el.style.setProperty("--s", String(c.s));
     if (!sharpRef.current) {
@@ -333,7 +358,7 @@ export default function World({ review }: { review?: LabStore[] }) {
 
   const goLevel = useCallback(
     (t: Level) => {
-      if (t < far) return say(LOCKED_REASON[t] ?? "");
+      if (t < far) return say(com.locked[t] ?? "");
       if (t === level) return;
       const c = camRef.current;
       if (t < level) {
@@ -350,6 +375,7 @@ export default function World({ review }: { review?: LabStore[] }) {
 
   /* כשעוברים לשלב צמיחה מוקדם יותר, רמה רחוקה נסגרת: מתקרבים עד הרמה הפתוחה */
   useEffect(() => {
+    if (far > 1 && here !== HOME) { offRef.current = { x: 0, y: 0 }; setHere(HOME); }
     if (level < far) {
       if (far === 3) go(3, myPlot.cx, ROWS[0]);
       else if (far === 2) go(2, MALL_C.x, MALL_C.y);
@@ -413,12 +439,43 @@ export default function World({ review }: { review?: LabStore[] }) {
     setSheet(null);
     const id = myPlot.store?.id;
     if (!id) return;
+    if (here !== HOME) {
+      // חוזרים מביקור: קודם מתרחקים, ואז המתחם שלי חוזר להיות החי
+      const run = ++chain.current;
+      if (storeOpen) closeStore();
+      go(1, SCHOOL_C.x, SCHOOL_C.y);
+      setTimeout(() => {
+        if (chain.current !== run) return;
+        offRef.current = { x: 0, y: 0 };
+        setHere(HOME);
+        setHomeAfter(true);
+      }, calm ? 60 : DUR + 80);
+      return;
+    }
     if (storeOpen) {
       if (storeOpen === id) return;
       closeStore();
     }
     void flyTo(4, myPlot.cx, myPlot.by - 24, () => openStore(id));
-  }, [closeStore, flyTo, myPlot, openStore, storeOpen]);
+  }, [calm, closeStore, flyTo, go, here, myPlot, openStore, storeOpen]);
+
+  // המשך החזרה הביתה, אחרי שהמתחם שלי כבר מצויר
+  useEffect(() => {
+    if (!homeAfter || here !== HOME) return;
+    setHomeAfter(false);
+    const id = myPlot.store?.id;
+    if (id) void flyTo(4, myPlot.cx, myPlot.by - 24, () => openStore(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [homeAfter, here]);
+
+  /** נכנסים למתחם: שלי, או ביקור אצל אחרים */
+  const enter = (id: string) => {
+    chain.current++;
+    const l = CLASSES.find((cl) => cl.id === id)!;
+    offRef.current = { x: l.x - MALL.x, y: l.y - MALL.y };
+    setHere(id);
+    go(2, MALL_C.x, MALL_C.y);
+  };
 
   /* ── התחלה, שינוי גודל מסך ── */
 
@@ -637,7 +694,7 @@ export default function World({ review }: { review?: LabStore[] }) {
   }, [bubble]);
 
   const trigger = (id: string) => {
-    const s = SURPRISES.find((x) => x.id === id)!;
+    const s = surpriseOf(SURPRISES.find((x) => x.id === id)!);
     const isNew = !found.includes(id);
     const next = isNew ? [...found, id] : found;
     if (isNew) setFound(next);
@@ -663,8 +720,8 @@ export default function World({ review }: { review?: LabStore[] }) {
 
   const place = (() => {
     if (level === 0) return "העיר";
-    if (level === 1) return SCHOOL_NAME;
-    if (level === 2) return `הקניון של ${CLASS_NAME}`;
+    if (level === 1) return com.place;
+    if (level === 2) return com.mallOf(com.lots[here]);
     const ly = c.y - MALL.y;
     const zone = ly < 580 ? ZONES.A.name : ly < 960 ? "כיכר המזרקה" : ly < 1235 ? ZONES.B.name : "שטח לרחוב חדש";
     if (level === 4 && focus) return focus.kind === "stall" ? focusStore?.name ?? zone : "מקום פנוי";
@@ -672,8 +729,8 @@ export default function World({ review }: { review?: LabStore[] }) {
   })();
 
   const hint =
-    level === 0 ? "נוגעים בבית הספר כדי להתקרב"
-    : level === 1 ? "נוגעים בכיתה כדי להיכנס לקניון שלה"
+    level === 0 ? com.hint0
+    : level === 1 ? com.hint1
     : level === 2 ? "נוגעים ברחוב כדי להיכנס אליו"
     : level === 3 ? "נוגעים בדוכן כדי להתקרב אליו"
     : focus ? "" : "גוררים כדי להסתכל מסביב";
@@ -681,11 +738,11 @@ export default function World({ review }: { review?: LabStore[] }) {
   const tapPlot = (p: Plot) => {
     if (level === 3 || focus?.id !== p.id) return go(4, p.cx, p.by - 24);
     if (p.kind === "stall") return openStore(p.store!.id);
-    if (p.kind === "empty") { setInvitePlot(p.id); setSheet("invite"); }
+    if (p.kind === "empty" && !visiting) { setInvitePlot(p.id); setSheet("invite"); }
   };
 
   const othersOpen = far <= 1;
-  const myName = stores.find((x) => x.mine)?.owner ?? "נועה";
+  const myName = homeStores.find((x) => x.mine)?.owner ?? "נועה";
 
   /** מה קרה בצד השני של ההזמנה */
   /** מוסיפים נקודות, ואם עברו סף, הדוכן גדל. מחזיר משפט קצר על מה שקרה, והאם הדוכן גדל. */
@@ -707,6 +764,17 @@ export default function World({ review }: { review?: LabStore[] }) {
     if (r.up) { setSheet(null); setGrowMsg(""); say(`${what} ${r.msg}`); } else setGrowMsg(`${what} ${r.msg}`);
   };
 
+  /** נרשמים ליום השוק. הנקודות מגיעות ביום עצמו, פעם אחת לכל יום שוק. */
+  const joinMarket = () => {
+    setMarketIn(true);
+    if (market === "on" && !counts.market) say(`נרשמת ל${com.marketName}, והוא כבר התחיל. ${earn("market").msg}`);
+    else say(`הבלונים על הדוכן מסמנים שאת משתתפת. ביום עצמו תקבלי 30 נקודות.`);
+  };
+  useEffect(() => {
+    if (market === "on" && marketIn && !counts.market) say(`${com.marketName} התחיל, והדוכן שלך משתתף. ${earn("market").msg}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [market]);
+
   const finishInvite = (r: InviteResult) => {
     const id = inviteView;
     setInviteView(null);
@@ -714,12 +782,12 @@ export default function World({ review }: { review?: LabStore[] }) {
     const plot = plots.find((p) => p.id === id);
     setInvited((v) => v.filter((x) => x !== id));
     if (r.kind === "declined") return say("ההורה לא אישר. שום דבר לא נחשף, והמקום נשאר פנוי.");
-    if (r.kind === "visit") return say(`המשפחה של ${r.owner} הצטרפה לקניון כמבקרת. ${earn("join_visit").msg}`);
+    if (r.kind === "visit") return say(`המשפחה של ${r.owner} הצטרפה ל${com.mall} כמבקרת. ${earn("join_visit").msg}`);
     setJoined((j) => ({
       ...j,
       [id]: {
         id: `new-${id}`, name: r.name, short: r.owner, sign: r.name.slice(0, 14), owner: r.owner, fresh: true,
-        tagline: "דוכן חדש בקניון", theme: "mint", awning: r.awning, emblem: "star",
+        tagline: `דוכן חדש ב${com.mall}`, theme: "mint", awning: r.awning, emblem: "star",
         products: [{ art: "squishy", name: "מוצר ראשון", price: 10 }],
         deco: { flowers: false, openSign: true, cat: false },
       },
@@ -728,8 +796,19 @@ export default function World({ review }: { review?: LabStore[] }) {
     say(`ל${r.owner} יש עכשיו דוכן לידך. ${earn("join_store").msg}`);
   };
 
-  // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי").
-  const showOwner = (st: LabStore) => !!st.owner && !st.name.includes(st.owner);
+  // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי"),
+  // ורק אצלי: מי שמבקר במתחם אחר רואה דוכנים, לא שמות.
+  const showOwner = (st: LabStore) => !visiting && !!st.owner && !st.name.includes(st.owner);
+  /** מי משתתף ביום השוק. אצלי: מי שנרשם. בביקור: דוכן כן, דוכן לא. */
+  const festOf = (st: LabStore) =>
+    market !== "off" && (st.mine ? marketIn : visiting ? stores.indexOf(st) % 2 === 0 : MARKET_IN.includes(st.id) || !!st.fresh);
+  /** ההפתעות של המתחם מדברות בשפה של הקהילה */
+  const surpriseOf = (x: (typeof SURPRISES)[number]) =>
+    x.id === "bell" ? { ...x, ...com.bell }
+    : x.id === "board" ? { ...x, label: com.board, text: `${com.board}. כאן מספרים מה חדש ב${com.mall}.` }
+    : x.id === "garden" ? { ...x, label: com.garden, text: `השקית את הגינה. פרח חדש לכל דוכן שנפתח ב${com.unitWord}.` }
+    : x.id === "cat" ? { ...x, label: `החתול של ה${com.mall}`, text: `מיאו. החתול של ה${com.mall} אוהב לנמנם ליד המזרקה.` }
+    : x;
   // הדוכן שלי גדל בזמן שמסתכלים עליו: המצלמה מתרחקת כדי שהמבנה החדש ייכנס כולו
   useEffect(() => {
     if (grew && camRef.current.lv === 4 && !storeOpen) go(4, myPlot.cx, myPlot.by - 24);
@@ -768,16 +847,18 @@ export default function World({ review }: { review?: LabStore[] }) {
         onPointerCancel={onPointerUp}
         onClickCapture={onClickCapture}
         onWheel={onWheel}
+        onScroll={(e) => { e.currentTarget.scrollTop = 0; e.currentTarget.scrollLeft = 0; }}
         inert={worldBusy}
       >
         <div ref={rigRef} className="wl-rig">
         <div ref={planeRef} className="wl-plane" style={{ width: WORLD.w, height: WORLD.h }}>
-          <SceneryMemo size={size} flowers={stallCount + fx.watered} alley={alleyOpen(size)} splash={fx.splash} hop={fx.hop} others={othersOpen} second={far === 0} />
+          <SceneryMemo size={liveSize} flowers={stallCount + fx.watered} alley={alleyOpen(liveSize)} splash={fx.splash} hop={fx.hop} others={othersOpen} second={far === 0}
+            live={here} homeCount={homeCount} hood={kind === "hood"} sign={com.sign} gate={com.mallOf(com.lots[here])} market={market === "on"} />
 
           {/* אזורי נגיעה: בית הספר (מהעיר), הכיתות (מבית הספר), הרחובות (מהקניון) */}
           <button
             type="button" className="wl-hit" data-lv="0" tabIndex={level === 0 ? 0 : -1}
-            aria-label={`להתקרב אל ${SCHOOL_NAME}`}
+            aria-label={`להתקרב אל ${com.place}`}
             style={{ left: CAMPUS.x, top: CAMPUS.y, width: CAMPUS.w, height: CAMPUS.h }}
             onClick={() => go(1, SCHOOL_C.x, SCHOOL_C.y)}
             data-testid="wl-hit-school"
@@ -787,16 +868,17 @@ export default function World({ review }: { review?: LabStore[] }) {
             return (
               <button
                 key={cl.id} type="button" className="wl-hit" data-lv="1" tabIndex={level === 1 ? 0 : -1}
-                aria-label={cl.mine ? `להיכנס לקניון של ${cl.name}, הכיתה שלי` : has ? `הקניון של ${cl.name}, סגור למי שאינו מהכיתה` : `${cl.name}, עוד אין דוכנים`}
+                aria-label={cl.mine ? `להיכנס אל ${com.mallOf(com.lots[cl.id])}, ${com.unit} שלי` : has ? `לבקר ב${com.mallOf(com.lots[cl.id]).slice(1)}` : `${com.lots[cl.id]}, עוד אין דוכנים`}
                 style={{ left: cl.x, top: cl.y, width: cl.w, height: cl.h }}
                 onClick={() =>
-                  cl.mine ? go(2, MALL_C.x, MALL_C.y)
-                  : say(has ? `הקניון של ${cl.name} פתוח רק לילדים ולהורים מהכיתה.` : `ב${cl.name} עוד אין דוכנים. כשייפתח שם דוכן ראשון, יקום כאן קניון.`)
+                  has ? enter(cl.id)
+                  : say(`ב${com.lots[cl.id]} עוד אין דוכנים. כשייפתח שם דוכן ראשון, יקום כאן ${com.mall}.`)
                 }
                 data-testid={`wl-hit-class-${cl.id}`}
               />
             );
           })}
+          <div className="wl-mall-layer" style={{ transform: `translate(${off.x}px, ${off.y}px)` }}>
           {[
             { id: "A", label: ZONES.A.name, x: MALL.x + 20, y: MALL.y + 150, w: 1060, h: 290, row: ROWS[0] },
             { id: "P", label: "כיכר המזרקה", x: MALL.x + 60, y: MALL.y + 452, w: 980, h: 476, row: ROWS[1] },
@@ -837,6 +919,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                 data-lod={lod}
                 data-mine={st?.mine ? "1" : undefined}
                 data-tier={st ? st.tier ?? 1 : undefined}
+                data-fest={st && festOf(st) ? "1" : undefined}
                 data-lv="3 4"
                 data-testid={`wl-plot-${p.id}`}
                 tabIndex={level >= 3 ? 0 : -1}
@@ -847,15 +930,24 @@ export default function World({ review }: { review?: LabStore[] }) {
                 }
                 style={{ ...style, ...vars }}
                 onClick={() => tapPlot(p)}
+                onFocus={() => {
+                  // מקלדת: דוכן שמקבל מיקוד מחוץ למסך. המצלמה זזה אליו, במקום שהדפדפן יגלול את העולם.
+                  const cam = camRef.current;
+                  if (cam.lv >= 3 && Math.abs(p.cx - cam.x) * cam.s > vp.current.w / 2 - 40) go(3, p.cx, nearestRow(p.by));
+                }}
               >
-                {st ? <WorldStall store={st} lod={lod} grew={st.mine && grew === st.tier} /> : <EmptyPlot lod={lod} invited={isInvited(p.id)} />}
+                {st ? <WorldStall store={st} lod={lod} grew={st.mine && grew === st.tier} fest={festOf(st)} /> : <EmptyPlot lod={lod} invited={isInvited(p.id)} />}
               </button>
             );
           })}
 
-          <ForegroundMemo catJump={fx.cat} />
+          </div>
 
-          {SURPRISES.map((s) => (
+          <ForegroundMemo catJump={fx.cat} live={here} market={market === "on"} />
+
+          {[false, true].map((inMall) => (
+            <div key={String(inMall)} className={inMall ? "wl-mall-layer" : undefined} style={inMall ? { transform: `translate(${off.x}px, ${off.y}px)` } : { display: "contents" }}>
+              {SURPRISES.filter((s) => (s.from >= 3) === inMall).map((s) => (
             <button
               key={s.id}
               type="button"
@@ -863,34 +955,37 @@ export default function World({ review }: { review?: LabStore[] }) {
               data-lv={Array.from({ length: s.to - s.from + 1 }, (_, i) => s.from + i).join(" ")}
               data-found={found.includes(s.id) ? "1" : undefined}
               tabIndex={level >= s.from && level <= s.to ? 0 : -1}
-              aria-label={s.label}
+              aria-label={surpriseOf(s).label}
               style={{ left: s.x - s.r, top: s.y - s.r, width: s.r * 2, height: s.r * 2 }}
               onClick={() => trigger(s.id)}
               data-testid={`wl-surprise-${s.id}`}
             />
+              ))}
+            </div>
           ))}
 
           {/* תוויות. גודל קבוע על המסך, בלי קשר לזום. */}
-          <span className="wl-label wl-label-pin" data-lv="0" style={{ left: SCHOOL_C.x, top: CAMPUS.y - 30 }}>{SCHOOL_NAME}</span>
+          <span className="wl-label wl-label-pin" data-lv="0" style={{ left: SCHOOL_C.x, top: CAMPUS.y - 30 }}>{com.place}</span>
           <span className="wl-label" data-lv="0" style={{ left: cityPt(2110, 0).x, top: cityPt(0, 925).y }}>הספרייה</span>
           <span className="wl-label" data-lv="0" style={{ left: cityPt(300, 0).x, top: cityPt(0, 1620).y }}>הפארק</span>
-          <span className="wl-label" data-lv="0" style={{ left: cityPt(1200, 0).x, top: cityPt(0, 3380).y }}>{far === 0 ? OTHER_SCHOOL : "מקום פנוי לבית ספר נוסף"}</span>
+          <span className="wl-label" data-lv="0" style={{ left: cityPt(1200, 0).x, top: cityPt(0, 3380).y }}>{far === 0 ? com.otherPlace : com.emptyPlace}</span>
           <span className="wl-label" data-lv="0" style={{ left: cityPt(1200, 0).x, top: cityPt(0, 4000).y }}>הים</span>
-          {GRADE_ROWS.map((g) => (
-            <span key={g.name} className="wl-label wl-grade" data-lv="1" style={{ left: CAMPUS.x + CAMPUS.w - 250, top: g.y }}>{g.name}</span>
+          {GRADE_ROWS.map((g, i) => com.rows[i] && (
+            <span key={g.name} className="wl-label wl-grade" data-lv="1" style={{ left: CAMPUS.x + CAMPUS.w - 250, top: g.y }}>{com.rows[i]}</span>
           ))}
           {CLASSES.map((cl) => {
-            const n = cl.mine ? stallCount : othersOpen ? cl.stalls : 0;
+            const n = cl.mine ? homeCount : othersOpen ? cl.stalls : 0;
             return (
               <span key={cl.id} className="wl-label wl-class" data-lv="1" data-mine={cl.mine ? "1" : undefined} style={{ left: cl.x + cl.w / 2, top: cl.y + cl.h / 2 - 60 }} data-testid={`wl-class-${cl.id}`}>
-                <b>{cl.name}</b>
+                <b>{com.lots[cl.id]}</b>
                 <span>{n > 0 ? `${n} דוכנים` : "מקום פנוי"}</span>
               </span>
             );
           })}
+          <div className="wl-mall-layer" style={{ transform: `translate(${off.x}px, ${off.y}px)` }}>
           <span className="wl-label" data-lv="2" style={{ left: MALL_C.x, top: MALL.y + 345 }}>{ZONES.A.name}</span>
           <span className="wl-label" data-lv="2" style={{ left: MALL_C.x, top: MALL.y + 760 }}>כיכר המזרקה</span>
-          <span className="wl-label" data-lv="2" style={{ left: MALL_C.x, top: MALL.y + 1140 }}>{ZONES.B.name}{alleyOpen(size) ? "" : " · נפתחת ב־8 דוכנים"}</span>
+          <span className="wl-label" data-lv="2" style={{ left: MALL_C.x, top: MALL.y + 1140 }}>{ZONES.B.name}{alleyOpen(liveSize) ? "" : " · נפתחת ב־8 דוכנים"}</span>
           {plots.filter((p) => p.kind === "stall").map((p) => {
             const st = storeOf(p.store!.id)!;
             return (
@@ -906,7 +1001,13 @@ export default function World({ review }: { review?: LabStore[] }) {
               </span>
             );
           })}
-          <span className="wl-label" data-lv="3" style={{ left: MALL.x + 205, top: MALL.y + 884 }}>הגינה של הכיתה</span>
+          <span className="wl-label" data-lv="3" style={{ left: MALL.x + 205, top: MALL.y + 884 }}>{com.garden}</span>
+          {market !== "off" && (
+            <span className="wl-label wl-market" data-lv={level === 3 ? "3" : "2"} data-on={market === "on" ? "1" : undefined} style={{ left: MALL_C.x, top: MALL.y + 520 }} data-testid="wl-market-label">
+              {market === "on" ? `${com.marketName} היום` : `${com.marketName}: ${com.marketWhen}`}
+            </span>
+          )}
+          </div>
         </div>
         </div>
       </div>
@@ -929,7 +1030,7 @@ export default function World({ review }: { review?: LabStore[] }) {
         </div>
 
         <nav className="wl-ladder" aria-label="כמה קרוב מסתכלים">
-          {LEVEL_LABELS.map((label, i) => {
+          {com.levels.map((label, i) => {
             if (review && i < far) return null;
             const locked = i < far;
             return (
@@ -953,7 +1054,7 @@ export default function World({ review }: { review?: LabStore[] }) {
               {focusStore ? (
                 <>
                   <div className="wl-card-title">{focusStore.name}</div>
-                  <div className="wl-card-sub">{focusStore.owner ? `${TIERS[(focusStore.tier ?? 1) - 1].name} של ${focusStore.owner}. ` : ""}{focusStore.tagline}</div>
+                  <div className="wl-card-sub">{TIERS[(focusStore.tier ?? 1) - 1].name}{!visiting && focusStore.owner ? ` של ${focusStore.owner}` : ""}. {focusStore.tagline}</div>
                   {focusStore.mine && !review && (
                     <button type="button" className="wl-points" onClick={() => { setGrowMsg(""); setSheet("grow"); }} data-testid="wl-points" aria-label={`${points} נקודות. ${nextTier ? `עוד ${nextTier.at - points} עד ${nextTier.name}` : "הגעת לחנות הגדולה"}. איך גדלים`}>
                       <span className="wl-points-bar" aria-hidden><i style={{ width: `${Math.round(tierProgress * 100)}%` }} /></span>
@@ -971,15 +1072,21 @@ export default function World({ review }: { review?: LabStore[] }) {
                       </button>
                     )}
                   </div>
+                  {focusStore.mine && !review && market !== "off" && (
+                    marketIn
+                      ? <div className="wl-card-note" data-testid="wl-market-in">נרשמת ל{com.marketName}.</div>
+                      : <button type="button" className="wl-btn wl-wide" onClick={joinMarket} data-testid="wl-market-join">להירשם ל{com.marketName}</button>
+                  )}
                 </>
               ) : (
                 <>
                   <div className="wl-card-title">{isInvited(focus.id) ? "הזמנה ממתינה" : "מקום פנוי"}</div>
                   <div className="wl-card-sub">
-                    {isInvited(focus.id) ? "הקישור מיועד לחבר או חברה אחת, ותקף לשבוע." : "כאן יכול לקום דוכן של חברה או חבר מהכיתה."}
+                    {visiting ? `למקום פנוי מזמינים רק מי שהדוכן שלהם ב${com.mallOf(com.lots[here]).slice(1)}.`
+                      : isInvited(focus.id) ? "הקישור מיועד לחבר או חברה אחת, ותקף לשבוע." : `כאן יכול לקום דוכן של ${com.neighbor}.`}
                   </div>
                   <div className="wl-card-actions">
-                    {isInvited(focus.id) ? (
+                    {visiting ? null : isInvited(focus.id) ? (
                       <>
                         <button type="button" className="wl-btn wl-primary" onClick={() => setInviteView(focus.id)} data-testid="wl-invite-view">לראות את הצד השני</button>
                         <button type="button" className="wl-btn" onClick={() => setInvited((v) => v.filter((x) => x !== focus.id))} data-testid="wl-invite-cancel">לבטל</button>
@@ -1103,7 +1210,7 @@ export default function World({ review }: { review?: LabStore[] }) {
             {sheet === "invite" && (
               <>
                 <h2>מזמינים לפתוח דוכן</h2>
-                <div className="wl-msg">היי, זו {myName}. יש מקום פנוי בקניון של הכיתה שלנו, ממש ליד הדוכן שלי. רוצה לפתוח שם דוכן?</div>
+                <div className="wl-msg">היי, זו {myName}. יש מקום פנוי ב{com.mall} של {com.unit} שלנו, ממש ליד הדוכן שלי. רוצה לפתוח שם דוכן?</div>
                 <ul className="wl-rules">
                   <li>הקישור מיועד לחבר או חברה אחת, ותקף לשבוע.</li>
                   <li>מי שפותח אותו רואה רק מי הזמין ולאן. לא את החנויות.</li>
@@ -1126,8 +1233,9 @@ export default function World({ review }: { review?: LabStore[] }) {
 
             {sheet === "notices" && (
               <>
-                <h2>לוח המודעות של הכיתה</h2>
+                <h2>{com.board}</h2>
                 <ul className="wl-notices">
+                  {market !== "off" && <li data-testid="wl-notice-market">{market === "on" ? `${com.marketName} היום. מי שנרשם, הדוכן שלו מקושט.` : `${com.marketName}: ${com.marketWhen}. נרשמים מהדוכן.`}</li>}
                   {NOTICES.map((n) => <li key={n}>{n}</li>)}
                 </ul>
                 <p className="wl-sheet-note">מודעות לדוגמה.</p>
@@ -1156,8 +1264,28 @@ export default function World({ review }: { review?: LabStore[] }) {
                       {STAGES.map((st, i) => (
                         <button key={st.label} type="button" role="radio" aria-checked={stage === i} className="wl-btn wl-toggle" onClick={() => setStage(i)} data-testid={`wl-stage-${i + 1}`}>
                           <span className="wl-stage-n">{i + 1}</span>
-                          {st.label}
+                          {com.stages[i]}
                         </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!review && (
+                  <div className="wl-field">
+                    <span className="wl-field-label">סוג הקהילה</span>
+                    <div className="wl-toggles" role="radiogroup" aria-label="סוג הקהילה">
+                      {([["class", "כיתה בבית ספר"], ["hood", "כיכר בשכונה"]] as const).map(([k, label]) => (
+                        <button key={k} type="button" role="radio" aria-checked={kind === k} className="wl-btn wl-toggle" onClick={() => setKind(k)} data-testid={`wl-kind-${k}`}>{label}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!review && (
+                  <div className="wl-field">
+                    <span className="wl-field-label">יום שוק</span>
+                    <div className="wl-toggles" role="radiogroup" aria-label="יום שוק">
+                      {([["off", "אין"], ["soon", "בקרוב"], ["on", "היום"]] as const).map(([k, label]) => (
+                        <button key={k} type="button" role="radio" aria-checked={market === k} className="wl-btn wl-toggle" onClick={() => setMarket(k)} data-testid={`wl-market-${k}`}>{label}</button>
                       ))}
                     </div>
                   </div>
@@ -1186,7 +1314,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                     >
                       חידוד מקרוב
                     </button>
-                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); setCounts(MY_START_COUNTS); setGrew(0); }}>לאפס הפתעות, הזמנות ונקודות</button>
+                    <button type="button" className="wl-btn wl-toggle" onClick={() => { setFound([]); setFx({ splash: 0, hop: 0, cat: 0, watered: 0 }); setInvited([]); setJoined({}); setCounts(MY_START_COUNTS); setGrew(0); setMarketIn(false); }}>לאפס הפתעות, הזמנות ונקודות</button>
                   </div>
                 </div>
                 <p className="wl-sheet-note">"חידוד מקרוב" נדלק לבד באייפון. אם התמונה מטושטשת כשמתקרבים, או שמשהו זז ממקומו, כדאי להחליף את ההגדרה הזו.</p>
@@ -1197,7 +1325,7 @@ export default function World({ review }: { review?: LabStore[] }) {
         </div>
       )}
 
-      {inviteView && <InviteSim inviter={myName} onDone={finishInvite} onClose={() => setInviteView(null)} />}
+      {inviteView && <InviteSim inviter={myName} com={com} onDone={finishInvite} onClose={() => setInviteView(null)} />}
 
       {/* ── החנות ── */}
       <div
@@ -1206,7 +1334,7 @@ export default function World({ review }: { review?: LabStore[] }) {
         aria-hidden={storeOpen ? undefined : true}
         inert={!storeOpen}
       >
-        <StoreSim store={storeOf(storeShown) as LabStore} onExit={closeStore} fromWorld={fromWorld} />
+        <StoreSim store={(storeOf(storeShown) ?? homeStores.find((x) => x.id === storeShown) ?? homeStores[0]) as LabStore} onExit={closeStore} fromWorld={fromWorld} />
       </div>
     </div>
   );

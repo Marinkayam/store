@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AWNINGS, CLASS_NAME, SCHOOL_NAME } from "./data";
+import { AWNINGS, type Community } from "./data";
 import { EmptyPlot } from "./stalls";
 
 /**
@@ -16,7 +16,8 @@ export type InviteResult =
   | { kind: "visit"; owner: string }
   | { kind: "declined" };
 
-export default function InviteSim({ inviter, onDone, onClose }: { inviter: string; onDone: (r: InviteResult) => void; onClose: () => void }) {
+export default function InviteSim({ inviter, com, onDone, onClose }: { inviter: string; com: Community; onDone: (r: InviteResult) => void; onClose: () => void }) {
+  const mall = com.mallOf(com.lots.h2);
   const [step, setStep] = useState(0);
   const [path, setPath] = useState<"store" | "visit">("store");
   const [owner, setOwner] = useState("גלי");
@@ -43,9 +44,9 @@ export default function InviteSim({ inviter, onDone, onClose }: { inviter: strin
         {step === 0 && (
           <>
             <div className="wl-invite-art"><EmptyPlot lod="mid" invited /></div>
-            <h2>{inviter} מזמינה אותך לקניון של {CLASS_NAME}</h2>
+            <h2>{inviter} מזמינה אותך ל{mall.slice(1)}</h2>
             <p>יש מקום פנוי ממש ליד הדוכן שלה.</p>
-            <p className="wl-sheet-note">עוד לא רואים כאן את החנויות של הכיתה. קודם מצטרפים, באישור הורה.</p>
+            <p className="wl-sheet-note">עוד לא רואים כאן את החנויות. קודם מצטרפים, באישור הורה.</p>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" onClick={() => { setPath("store"); setStep(1); }} data-testid="wl-join-store">רוצה לפתוח דוכן</button>
               <button type="button" className="wl-btn" onClick={() => { setPath("visit"); setStep(1); }} data-testid="wl-join-visit">רק לבקר</button>
@@ -60,7 +61,7 @@ export default function InviteSim({ inviter, onDone, onClose }: { inviter: strin
               <span className="wl-field-label">שם פרטי בלבד</span>
               <input id="wl-invitee-name" className="wl-input" value={owner} maxLength={14} onChange={(e) => setOwner(e.target.value)} autoComplete="off" />
             </label>
-            <p className="wl-sheet-note">השם הפרטי מוצג רק לחברי הכיתה, בתוך הקניון. הוא לא מופיע בדף החנות ולא בקישורים.</p>
+            <p className="wl-sheet-note">את השם הפרטי רואה {com.namesBy}, בתוך ה{com.mall}. הוא לא מופיע בדף החנות ולא בקישורים.</p>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" onClick={() => setStep(2)} data-testid="wl-join-next">המשך</button>
             </div>
@@ -72,11 +73,11 @@ export default function InviteSim({ inviter, onDone, onClose }: { inviter: strin
             <h2>צריך אישור של הורה</h2>
             <p>שלחנו להורה קישור. ככה הוא נראה אצלו:</p>
             <div className="wl-msg" data-testid="wl-parent-view">
-              <b>{who}</b> {path === "store" ? "רוצה לפתוח דוכן" : "רוצה לבקר"} בקניון של {CLASS_NAME}, {SCHOOL_NAME}. הזמינה: {inviter}.
+              <b>{who}</b> {path === "store" ? "רוצה לפתוח דוכן" : "רוצה לבקר"} ב{mall.slice(1)}, {com.place}. הזמינה: {inviter}.
               <br />
-              מה יראו חברי הכיתה: השם הפרטי{path === "store" ? ", שם הדוכן והמוצרים" : ""}. בלי שם משפחה, בלי טלפון ובלי כתובת.
+              {path === "store" ? `את הדוכן והמוצרים יראו ${com.seenBy}. ` : ""}את השם הפרטי רואה {com.namesBy}. בלי שם משפחה, בלי טלפון ובלי כתובת.
               <br />
-              מי יראה: רק ילדים והורים מהכיתה שאושרו.
+              {com.outsiders}
             </div>
             <div className="wl-invite-actions">
               <button type="button" className="wl-btn wl-primary" onClick={() => setStep(path === "store" ? 3 : 4)} data-testid="wl-parent-yes">ההורה מאשר (הדמיה)</button>
@@ -109,7 +110,7 @@ export default function InviteSim({ inviter, onDone, onClose }: { inviter: strin
 
         {step === 4 && (
           <>
-            <h2>{path === "store" ? `${storeName} נפתח ליד ${inviter}` : `${who}, ברוכים הבאים לקניון של ${CLASS_NAME}`}</h2>
+            <h2>{path === "store" ? `${storeName} נפתח ליד ${inviter}` : `${who}, ברוכים הבאים ל${mall.slice(1)}`}</h2>
             <p>
               {path === "store"
                 ? `כשנכנסים, המצלמה נוחתת ישר על המקום החדש, והדוכן של ${inviter} מסומן "הזמינה אותך".`
