@@ -710,7 +710,7 @@ export default function World({ review }: { review?: LabStore[] }) {
     if (id === "cat") setFx((f) => ({ ...f, cat: f.cat + 1 }));
     if (id === "garden") setFx((f) => ({ ...f, watered: Math.min(5, f.watered + 1) }));
     if (id === "board") setSheet("notices");
-    say(isNew && next.length === SURPRISES.length ? `${s.text} מצאת את כל ההפתעות!` : s.text);
+    say(isNew && next.length === SURPRISES.length ? `${s.text} מצאתם את כל ההפתעות!` : s.text);
   };
 
   /* ── מה רואים עכשיו ── */
@@ -763,7 +763,7 @@ export default function World({ review }: { review?: LabStore[] }) {
     setCounts(next);
     if (after > before) setGrew(after);
     const n = add * src.points;
-    return { msg: after > before ? `קיבלת ${n} נקודות, והדוכן שלך גדל: עכשיו הוא ${TIERS[after - 1].name}.` : `קיבלת ${n} נקודות.`, up: after > before };
+    return { msg: after > before ? `קיבלתם ${n} נקודות, והדוכן שלכם גדל: עכשיו הוא ${TIERS[after - 1].name}.` : `קיבלתם ${n} נקודות.`, up: after > before };
   };
   /** לחיצת הדמיה בגיליון הצמיחה. כשהדוכן גדל, הגיליון נסגר כדי שיראו אותו גדל. */
   const simEarn = (what: string, key: PointKey, times = 1) => {
@@ -774,11 +774,11 @@ export default function World({ review }: { review?: LabStore[] }) {
   /** נרשמים ליום השוק. הנקודות מגיעות ביום עצמו, פעם אחת לכל יום שוק. */
   const joinMarket = () => {
     setMarketIn(true);
-    if (market === "on" && !counts.market) say(`נרשמת ל${com.marketName}, והוא כבר התחיל. ${earn("market").msg}`);
-    else say(`הבלונים על הדוכן מסמנים שאת משתתפת. ביום עצמו תקבלי 30 נקודות.`);
+    if (market === "on" && !counts.market) say(`נרשמתם ל${com.marketName}, והוא כבר התחיל. ${earn("market").msg}`);
+    else say(`הבלונים על הדוכן מסמנים שאתם משתתפים. ביום עצמו תקבלו 30 נקודות.`);
   };
   useEffect(() => {
-    if (market === "on" && marketIn && !counts.market) say(`${com.marketName} התחיל, והדוכן שלך משתתף. ${earn("market").msg}`);
+    if (market === "on" && marketIn && !counts.market) say(`${com.marketName} התחיל, והדוכן שלכם משתתף. ${earn("market").msg}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [market]);
 
@@ -800,7 +800,7 @@ export default function World({ review }: { review?: LabStore[] }) {
       },
     }));
     if (plot) go(4, plot.cx, plot.by - 24);
-    say(`ל${r.owner} יש עכשיו דוכן לידך. ${earn("join_store").msg}`);
+    say(`ל${r.owner} יש עכשיו דוכן לידכם. ${earn("join_store").msg}`);
   };
 
   // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי"),
@@ -813,7 +813,7 @@ export default function World({ review }: { review?: LabStore[] }) {
   const surpriseOf = (x: (typeof SURPRISES)[number]) =>
     x.id === "bell" ? { ...x, ...com.bell }
     : x.id === "board" ? { ...x, label: com.board, text: `${com.board}. כאן מספרים מה חדש ב${com.mall}.` }
-    : x.id === "garden" ? { ...x, label: com.garden, text: `השקית את הגינה. פרח חדש לכל דוכן שנפתח ב${com.unitWord}.` }
+    : x.id === "garden" ? { ...x, label: com.garden, text: `השקיתם את הגינה. פרח חדש לכל דוכן שנפתח ב${com.unitWord}.` }
     : x.id === "cat" ? { ...x, label: `החתול של ה${com.mall}`, text: `מיאו. החתול של ה${com.mall} אוהב לנמנם ליד המזרקה.` }
     : x;
   // הדוכן שלי גדל בזמן שמסתכלים עליו: המצלמה מתרחקת כדי שהמבנה החדש ייכנס כולו
@@ -1033,7 +1033,7 @@ export default function World({ review }: { review?: LabStore[] }) {
           </div>
           <div className="wl-place" aria-live="polite" data-testid="wl-place">{place}</div>
           <div className="wl-top-side wl-top-end">
-            <span className="wl-found" data-testid="wl-found" aria-label={`מצאת ${found.length} הפתעות מתוך ${SURPRISES.length}`}>
+            <span className="wl-found" data-testid="wl-found" aria-label={`מצאתם ${found.length} הפתעות מתוך ${SURPRISES.length}`}>
               <Icon name="star" size={18} tone="var(--warning)" />
               {found.length}/{SURPRISES.length}
             </span>
@@ -1085,7 +1085,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                   </div>
                   {focusStore.mine && !review && market !== "off" && (
                     marketIn
-                      ? <div className="wl-card-note" data-testid="wl-market-in">נרשמת ל{com.marketName}.</div>
+                      ? <div className="wl-card-note" data-testid="wl-market-in">נרשמתם ל{com.marketName}.</div>
                       : <button type="button" className="wl-btn wl-wide" onClick={joinMarket} data-testid="wl-market-join">להירשם ל{com.marketName}</button>
                   )}
                 </>
@@ -1211,8 +1211,8 @@ export default function World({ review }: { review?: LabStore[] }) {
                 <p className="wl-sheet-note">מכירות לא נספרות. את הנקודות רואה רק מי שהדוכן שלה, וכל השאר רואים רק את המבנה.</p>
                 <div className="wl-toggles">
                   <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("עבר עוד שבוע.", "week")} data-testid="wl-sim-week">הדמיה: עבר שבוע</button>
-                  <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("הוספת מוצר עם תמונה.", "product")} data-testid="wl-sim-product">הדמיה: מוצר חדש</button>
-                  <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("חמישה נכנסו לדוכן מהקישור שלך.", "visit", 5)} data-testid="wl-sim-visits">הדמיה: 5 נכנסו מהקישור</button>
+                  <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("הוספתם מוצר עם תמונה.", "product")} data-testid="wl-sim-product">הדמיה: מוצר חדש</button>
+                  <button type="button" className="wl-btn wl-toggle" onClick={() => simEarn("חמישה נכנסו לדוכן מהקישור שלכם.", "visit", 5)} data-testid="wl-sim-visits">הדמיה: 5 נכנסו מהקישור</button>
                 </div>
                 {growMsg && <p className="wl-grow-msg" role="status" data-testid="wl-grow-msg">{growMsg}</p>}
               </>

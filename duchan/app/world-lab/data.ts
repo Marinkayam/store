@@ -225,9 +225,9 @@ export type PointKey = "week" | "product" | "visit" | "join_visit" | "join_store
 export const POINT_SOURCES: { key: PointKey; label: string; points: number; cap?: string; max?: number }[] = [
   { key: "week", label: "שבוע שהדוכן פעיל", points: 10 },
   { key: "product", label: "מוצר עם תמונה בדוכן", points: 10, cap: "עד 10 מוצרים", max: 10 },
-  { key: "visit", label: "מישהו נכנס לדוכן מהקישור שלך", points: 5, cap: "עד 30 ביום" },
-  { key: "join_visit", label: "משפחה הצטרפה לקניון בהזמנתך", points: 20 },
-  { key: "join_store", label: "נפתח דוכן בהזמנתך", points: 60 },
+  { key: "visit", label: "מישהו נכנס לדוכן מהקישור שלכם", points: 5, cap: "עד 30 ביום" },
+  { key: "join_visit", label: "משפחה הצטרפה לקניון בהזמנתכם", points: 20 },
+  { key: "join_store", label: "נפתח דוכן בהזמנתכם", points: 60 },
   { key: "market", label: "השתתפות ביום שוק", points: 30 },
 ];
 /** הדוכן שלי בתחילת ההדמיה: שלושה שבועות ושלושה מוצרים */
@@ -520,10 +520,10 @@ export interface Surprise {
 }
 
 export const SURPRISES: Surprise[] = [
-  { id: "fountain", x: MALL.x + 550, y: MALL.y + 660, r: 74, from: 3, to: 4, label: "המזרקה", text: "זרקת מטבע למזרקה וביקשת משאלה." },
+  { id: "fountain", x: MALL.x + 550, y: MALL.y + 660, r: 74, from: 3, to: 4, label: "המזרקה", text: "זרקתם מטבע למזרקה וביקשתם משאלה." },
   { id: "board", x: MALL.x + 232, y: MALL.y + 548, r: 46, from: 3, to: 4, label: "לוח המודעות", text: "לוח המודעות של הכיתה. כאן מספרים מה חדש בקניון." },
   { id: "hopscotch", x: MALL.x + 842, y: MALL.y + 790, r: 52, from: 3, to: 4, label: "קלאס", text: "קלאס! אחת, שתיים, שלוש, קפיצה." },
-  { id: "garden", x: MALL.x + 205, y: MALL.y + 795, r: 80, from: 3, to: 4, label: "הגינה של הכיתה", text: "השקית את הגינה. פרח חדש לכל דוכן שנפתח בכיתה." },
+  { id: "garden", x: MALL.x + 205, y: MALL.y + 795, r: 80, from: 3, to: 4, label: "הגינה של הכיתה", text: "השקיתם את הגינה. פרח חדש לכל דוכן שנפתח בכיתה." },
   { id: "cat", x: MALL.x + 610, y: MALL.y + 900, r: 30, from: 3, to: 4, label: "החתול של הקניון", text: "מיאו. החתול של הקניון אוהב לנמנם ליד המזרקה." },
   { id: "bell", x: CAMPUS.x + CAMPUS.w / 2, y: CAMPUS.y + 420, r: 330, from: 1, to: 1, label: "הפעמון של בית הספר", text: "צלצול! ההפסקה הגדולה התחילה, והקניונים של הכיתות נפתחים." },
   { id: "ducks", ...cityPt(300, 1500), r: 150 * CITY_K, from: 0, to: 0, label: "הברווזים בפארק", text: "גע גע. באגם של הפארק גרים שלושה ברווזים." },

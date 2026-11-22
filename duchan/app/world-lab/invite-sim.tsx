@@ -44,7 +44,7 @@ export default function InviteSim({ inviter, com, onDone, onClose }: { inviter: 
         {step === 0 && (
           <>
             <div className="wl-invite-art"><EmptyPlot lod="mid" invited /></div>
-            <h2>{inviter} מזמינה אותך ל{mall.slice(1)}</h2>
+            <h2>{inviter} מזמינה אתכם ל{mall.slice(1)}</h2>
             <p>יש מקום פנוי ממש ליד הדוכן שלה.</p>
             <p className="wl-sheet-note">עוד לא רואים כאן את החנויות. קודם מצטרפים, באישור הורה.</p>
             <div className="wl-invite-actions">
@@ -56,7 +56,7 @@ export default function InviteSim({ inviter, com, onDone, onClose }: { inviter: 
 
         {step === 1 && (
           <>
-            <h2>איך קוראים לך?</h2>
+            <h2>איך קוראים לכם?</h2>
             <label className="wl-field" htmlFor="wl-invitee-name">
               <span className="wl-field-label">שם פרטי בלבד</span>
               <input id="wl-invitee-name" className="wl-input" value={owner} maxLength={14} onChange={(e) => setOwner(e.target.value)} autoComplete="off" />
@@ -88,7 +88,7 @@ export default function InviteSim({ inviter, com, onDone, onClose }: { inviter: 
 
         {step === 3 && (
           <>
-            <h2>הדוכן שלך</h2>
+            <h2>הדוכן שלכם</h2>
             <label className="wl-field" htmlFor="wl-invitee-store">
               <span className="wl-field-label">שם הדוכן</span>
               <input id="wl-invitee-store" className="wl-input" value={name} placeholder={`הדוכן של ${who}`} maxLength={24} onChange={(e) => setName(e.target.value)} autoComplete="off" />
@@ -113,8 +113,8 @@ export default function InviteSim({ inviter, com, onDone, onClose }: { inviter: 
             <h2>{path === "store" ? `${storeName} נפתח ליד ${inviter}` : `${who}, ברוכים הבאים ל${mall.slice(1)}`}</h2>
             <p>
               {path === "store"
-                ? `כשנכנסים, המצלמה נוחתת ישר על המקום החדש, והדוכן של ${inviter} מסומן "הזמינה אותך".`
-                : `כשנכנסים, המצלמה נוחתת ישר על הדוכן של ${inviter}, והוא מסומן "הזמינה אותך". המקום הפנוי נשאר פנוי.`}
+                ? `כשנכנסים, המצלמה נוחתת ישר על המקום החדש, והדוכן של ${inviter} מסומן "הזמינה אתכם".`
+                : `כשנכנסים, המצלמה נוחתת ישר על הדוכן של ${inviter}, והוא מסומן "הזמינה אתכם". המקום הפנוי נשאר פנוי.`}
             </p>
             <div className="wl-invite-actions">
               <button

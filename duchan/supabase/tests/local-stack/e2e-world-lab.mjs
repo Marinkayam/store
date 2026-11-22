@@ -159,7 +159,7 @@ const inviteTo = async (plot) => {
   ck("רואים מאיפה הנקודות שלי: שלושה שבועות ושלושה מוצרים", (await text("[data-testid=wl-src-week]")).includes("3 × 10") && (await text("[data-testid=wl-src-product]")).includes("3 × 10") && (await text("[data-testid=wl-grow-now]")).includes("60"));
   await axe("גיליון הצמיחה");
   await p.click("[data-testid=wl-sim-visits]");
-  ck("שיתוף בלי לעבור סף: נקודות עולות, הדוכן לא משתנה", (await myTier()) === "1" && (await text("[data-testid=wl-grow-msg]")).includes("קיבלת 25 נקודות") && (await text("[data-testid=wl-grow-now]")).includes("85"), await text("[data-testid=wl-grow-now]"));
+  ck("שיתוף בלי לעבור סף: נקודות עולות, הדוכן לא משתנה", (await myTier()) === "1" && (await text("[data-testid=wl-grow-msg]")).includes("קיבלתם 25 נקודות") && (await text("[data-testid=wl-grow-now]")).includes("85"), await text("[data-testid=wl-grow-now]"));
   await p.click("[data-testid=wl-sim-week]");
   await p.click("[data-testid=wl-sim-week]");
   await p.waitForSelector("[data-testid=wl-bubble]");
@@ -329,7 +329,7 @@ const inviteTo = async (plot) => {
   await p.click("[data-testid=wl-invite-view]");
   const landing = await text("[data-testid=wl-invite-sim]");
   const others = storeNames.filter((n) => n && n !== MY_STORE);
-  ck("מי שפתח את הקישור רואה מי הזמין ולאן", landing.includes(`${MY_NAME} מזמינה אותך`) && landing.includes("ה׳2"));
+  ck("מי שפתח את הקישור רואה מי הזמין ולאן", landing.includes(`${MY_NAME} מזמינה אתכם`) && landing.includes("ה׳2"));
   ck("הקישור לא חושף אף חנות של הכיתה", others.length >= 7 && !others.some((n) => landing.includes(n)) && !landing.includes(MY_STORE));
   await p.waitForTimeout(450); // אחרי אנימציית הפתיחה, כדי למדוד את הצבעים הסופיים
   await axe("דף ההזמנה");
@@ -346,7 +346,7 @@ const inviteTo = async (plot) => {
   await settle();
   ck("אחרי האישור נפתח דוכן אמיתי במקום הפנוי, והמצלמה נוחתת עליו",
     (await level()) === 4 && (await place()) === "הצמידים של גלי" && (await p.locator("[data-testid=wl-plot-A4]").getAttribute("data-kind")) === "stall", await place());
-  ck("על פתיחת דוכן בהזמנתי מקבלים נקודות", (await bubble()).includes("קיבלת 60 נקודות"), await bubble());
+  ck("על פתיחת דוכן בהזמנתי מקבלים נקודות", (await bubble()).includes("קיבלתם 60 נקודות"), await bubble());
   ck("הנקודות של אחרים לא מוצגות: בכרטיס של דוכן אחר אין נקודות", (await p.locator("[data-testid=wl-card]").count()) === 1 && (await p.locator("[data-testid=wl-points]").count()) === 0);
   await p.click("[data-testid=wl-out]");
   await settle();
@@ -378,7 +378,7 @@ const inviteTo = async (plot) => {
   await p.click("[data-testid=wl-parent-yes]");
   await p.click("[data-testid=wl-join-done]");
   await p.waitForFunction(() => document.querySelector("[data-testid=wl-bubble]")?.textContent.includes("מבקרת"));
-  ck("גם על משפחה שהצטרפה לבקר מקבלים נקודות", (await bubble()).includes("קיבלת 20 נקודות"), await bubble());
+  ck("גם על משפחה שהצטרפה לבקר מקבלים נקודות", (await bubble()).includes("קיבלתם 20 נקודות"), await bubble());
   ck("משפחה בלי חנות מצטרפת כמבקרת, והמקום נשאר פנוי", (await lods()).stall === stallsBefore && (await p.locator("[data-testid=wl-plot-B0]").getAttribute("data-kind")) === "empty");
 
   /* ── 9ב. יום שוק ── */
@@ -515,7 +515,7 @@ await ctx.close();
   await n.waitForSelector("[data-testid=wl-new]", { timeout: 10000 });
   await n.waitForTimeout(450);
   const txt = async (sel) => ((await n.textContent(sel)) ?? "").trim();
-  check("מה חדש: פופאפ בכניסה הראשונה, מעל דף הדוכן", (await txt("[data-testid=wl-new] h2")) === "הדוכן שלך יוצא לעיר" && (await n.locator("[data-testid=wl-new]").getAttribute("aria-modal")) === "true" && (await n.locator(".wl-store[inert]").count()) === 1);
+  check("מה חדש: פופאפ בכניסה הראשונה, מעל דף הדוכן", (await txt("[data-testid=wl-new] h2")) === "הדוכן שלכם יוצא לעיר" && (await n.locator("[data-testid=wl-new]").getAttribute("aria-modal")) === "true" && (await n.locator(".wl-store[inert]").count()) === 1);
   check("בפופאפ הדוכן שלה עצמה: אותו שלט ואותם מוצרים", (await txt("[data-testid=wl-new-stage]")).includes("סקווישי נוני") && (await n.locator("[data-testid=wl-new-stage] [data-shelf] > g").count()) === 3);
   {
     const r = await new AxeBuilder({ page: n }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).include(".wl-new").analyze();
