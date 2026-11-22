@@ -79,8 +79,38 @@ export const PAY_BIT_URL =
  * קבוצת התשלום בפייבוקס. השימוש בפייבוקס חינם, ולכן זו הדרך המומלצת —
  * נכנסים לקבוצה "הקמת דוכן" ומשלמים שם.
  */
-export const PAY_PAYBOX_URL =
+const PAYBOX_STALL_GROUP_URL =
   process.env.NEXT_PUBLIC_PAY_PAYBOX_URL ?? "https://links.payboxapp.com/4dGOrULw84b";
+
+/**
+ * לאן הולכים דמי הפתיחה. החלטת מרינה, 22.11.2026: כל ה-₪20 של פתיחת דוכן
+ * עוברים למשלחת של נבחרת הפועל עירוני יבנה, אדרנלין, שנוסעת לתחרות בפורטוגל.
+ *
+ * כמו ב"מילה": משלמים בקבוצת הפייבוקס של המשלחת, מחוץ לאפליקציה, והכסף מגיע
+ * אליה ישר. ביט נשאר כדרך שנייה: הוא מגיע למרינה, והיא מעבירה למשלחת.
+ *
+ * קבוע בקוד ולא במשתנה סביבה, מאותה סיבה כמו PROMO_PRICE: משתנה שנשכח
+ * ב-Vercel לא יכול לשלוח תשלומים לקבוצה הישנה בשקט. active: false מחזיר את
+ * הכול לקבוצת "הקמת דוכן".
+ *
+ * בכוונה לא כתוב "תרומה" באף מסך: אלה דמי הפתיחה של הדוכן, לא תרומה לעמותה,
+ * ואין עליהם קבלה לצורכי מס.
+ */
+export const TEAM_FUND = {
+  active: true,
+  team: "נבחרת האקרובטיקה של הפועל עירוני יבנה, אדרנלין",
+  short: "המשלחת של נבחרת אדרנלין",
+  payboxGroup: "נסיעה לפורטוגל נבחרת לאומית",
+  payboxUrl: "https://links.payboxapp.com/1UMNyxiuX7b",
+} as const;
+
+export const PAY_PAYBOX_URL = TEAM_FUND.active ? TEAM_FUND.payboxUrl : PAYBOX_STALL_GROUP_URL;
+/** שם הקבוצה כמו שהוא מופיע בפייבוקס */
+export const PAY_PAYBOX_GROUP = TEAM_FUND.active ? TEAM_FUND.payboxGroup : "הקמת דוכן";
+/** משפט אחד על היעד של הכסף, לכל המסכים. ריק כשאין משלחת. */
+export const FUND_LINE = TEAM_FUND.active
+  ? `כל ה-₪${ACTIVATION_PRICE} עוברים למשלחת של ${TEAM_FUND.team}, שנוסעת לתחרות בפורטוגל.`
+  : "";
 /**
  * המספר שאליו שולחים ביט, ושבו פותחים וואטסאפ עם המנהלת. E.164 בלי +.
  * ברירת המחדל היא מספר המכירות, כדי שמסך התשלום לא יישאר בלי דרך לשלם

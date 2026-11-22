@@ -10,6 +10,7 @@ import Icon from "../icons";
 import HomeStall from "../home-stall";
 import ExplainerVideo from "../explainer-video";
 import { displayPhone } from "@/lib/phone";
+import { FUND_LINE, PAY_PAYBOX_GROUP, TEAM_FUND } from "@/lib/pricing";
 
 // הפלואו: בונים בחינם → רוצים לשתף → כאן מסבירים כמה ולמה → משלמים בביט/פייבוקס
 // → מצהירים "שילמנו" → המנהלת מאשרת → החנות באוויר והלינק ניתן לשיתוף.
@@ -440,7 +441,10 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           {/* תשלום */}
           <h2 className="text-base font-bold mt-7 mb-1">איך משלמים</h2>
           <p className="text-[12.5px] text-[var(--muted)] mb-3 leading-relaxed">
-            התשלום הוא לנו, פעם אחת. הכסף שקונים משלמים על מוצרים עובר ישירות אליך, ואנחנו לא לוקחים ממנו כלום.
+            {FUND_LINE
+              ? <span data-testid="fund-line">משלמים פעם אחת. {FUND_LINE} </span>
+              : <>התשלום הוא לנו, פעם אחת. </>}
+            הכסף שקונים משלמים על מוצרים עובר ישירות אליך, ואנחנו לא לוקחים ממנו כלום.
           </p>
           <div className="flex flex-col gap-2.5">
             <div className="bg-white border-[1.5px] border-[var(--ink)] p-3.5">
@@ -451,7 +455,8 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
                 </span>
               </div>
               <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5">
-                נכנסים לקבוצת <b>&quot;הקמת דוכן&quot;</b> ומשלמים שם ₪{price}.
+                נכנסים לקבוצת <b>&quot;{PAY_PAYBOX_GROUP}&quot;</b> ומשלמים שם ₪{price}.
+                {TEAM_FUND.active && <> הכסף מגיע ישר למשלחת. בהערה כותבים את שם הדוכן.</>}
               </p>
               {payboxUrl && (
                 <a href={payboxUrl} target="_blank" rel="noreferrer" className={`${payBtn} mt-2.5`}>
@@ -464,7 +469,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
               <div className="text-[15px] font-bold">או בביט</div>
               <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mt-1.5">
                 {bitUrl
-                  ? <>לוחצים, ביט נפתח, מקלידים ₪{price} וכותבים בהערה את שם הדוכן.</>
+                  ? <>לוחצים, ביט נפתח, מקלידים ₪{price} וכותבים בהערה את שם הדוכן.{TEAM_FUND.active && <> ביט מגיע אלינו, ואנחנו מעבירים למשלחת.</>}</>
                   : <>שולחים ₪{price} למספר הזה, וכותבים בהערה את שם הדוכן.</>}
               </p>
               {bitUrl ? (

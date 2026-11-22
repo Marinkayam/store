@@ -13,7 +13,7 @@ import { displayPhone, normalizePhone } from "@/lib/phone";
 import { deliveryLine, isBitLink, isPayboxLink, isPayPhone, payMethods, payoutLabels, payoutLine } from "@/lib/payouts";
 import { COVERS, coverCss } from "@/lib/covers";
 import { lookCssVars, hasCustomBg, readablePlate, ALL_LOOK_FONTS_HREF, LOOKS, LOOK_KEYS, PATTERNS, PATTERN_KEYS, isLookKey, isPatternKey, lookOrBase, patternCss, storeBackground, type LookKey } from "@/lib/looks";
-import { ACTIVATION_PRICE } from "@/lib/pricing";
+import { ACTIVATION_PRICE, TEAM_FUND } from "@/lib/pricing";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import CategoryBar from "@/app/category-bar";
 import CategoryDesigner from "../products/category-designer";
@@ -758,7 +758,7 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <div className="text-[12.5px] opacity-80 leading-relaxed mt-1">
-                      משלמים ₪{ACTIVATION_PRICE} פעם אחת, ואנחנו פותחים את הדוכן לחברים.
+                      משלמים ₪{ACTIVATION_PRICE} פעם אחת, ואנחנו פותחים את הדוכן לחברים.{TEAM_FUND.active ? ` הכסף עובר ל${TEAM_FUND.short}.` : ""}
                     </div>
                   )}
                 </a>

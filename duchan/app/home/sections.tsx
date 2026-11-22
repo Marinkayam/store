@@ -6,7 +6,7 @@ import { Coin, KupaStall } from "../kupa-art";
 import Art from "./art";
 import { useInView } from "./use-scene";
 import { ParentNote } from "./scenes";
-import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
+import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, FUND_LINE, IS_LAUNCH } from "@/lib/pricing";
 import { BADGES } from "@/lib/badges";
 import { THEMES } from "@/lib/themes";
 
@@ -228,12 +228,13 @@ export function PriceSection() {
         </div>
         <div className="text-[17px] font-medium mt-2">פעם אחת. הדוכן שלך לתמיד.</div>
         <p className="text-[14px] text-[var(--muted)] mt-1">בלי מנוי, בלי חיוב חודשי ובלי עמלה על מכירות.</p>
+        {FUND_LINE && <p className="text-[14px] mt-3 max-w-[34ch] mx-auto leading-relaxed" data-testid="home-fund">{FUND_LINE}</p>}
         {/* איך משלמים — הדף האישי להורה (/parent) */}
         <ol className="mt-8 text-right bg-white border border-[var(--line)]" data-testid="home-parent-steps">
           {[
             ["הילדים שולחים לכם לינק", "בוואטסאפ, מתוך הדוכן שבנו."],
             ["קוראים מה זה ועל מה התשלום", "דף אחד: מה נבנה, מה לומדים, ומה בטוח."],
-            ["משלמים בביט ולוחצים \"שילמנו\"", "שלושה צעדים. אנחנו בודקים ופותחים את הדוכן."],
+            ["משלמים בפייבוקס או בביט ולוחצים \"שילמנו\"", "שלושה צעדים. אנחנו בודקים ופותחים את הדוכן."],
           ].map(([t, d], k) => (
             <li key={t} className={`flex gap-3 p-4 ${k < 2 ? "border-b border-[var(--line)]" : ""}`}>
               <span className="w-7 h-7 shrink-0 grid place-items-center bg-[var(--ink)] text-white text-[14px] font-bold" aria-hidden>{k + 1}</span>
