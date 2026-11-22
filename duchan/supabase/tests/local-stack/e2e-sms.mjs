@@ -124,6 +124,37 @@ try {
 check("logging in again lands in the existing store", backOk);
 await back.screenshot({ path: `${shots}/83-returning.png` });
 
+/* ── 5ב. מי שכבר מחוברת פותחת דוכן בלי קוד נוסף ──
+   ילדה שהסמס לא מגיע אליה נכנסת בקישור מהחמ"ל, ואז נתקעה בשלב האחרון
+   של פתיחת דוכן מול "לשלוח לי קוד" (מרינה, 11.2026). */
+{
+  const sent = (await db.query("select count(*)::int n from sms_outbox")).rows[0].n;
+  await back.goto(`${BASE}/onboarding`, { waitUntil: "networkidle" });
+  await back.evaluate(() => sessionStorage.removeItem("duchan-draft"));
+  await back.reload({ waitUntil: "networkidle" });
+  await back.waitForSelector("input[aria-label='שם הדוכן']", { timeout: 15000 });
+  await back.fill("input[aria-label='שם הדוכן']", "עוד דוכן של אורי");
+  await back.click("[data-testid=ob-next]");
+  await back.waitForTimeout(900);
+  await back.click("[data-testid=ob-skip-product]");
+  await back.waitForTimeout(600);
+  await back.click("[data-testid=ob-next]");
+  await back.waitForTimeout(1000);
+  await back.check("input[aria-label='ההורים שלי יודעים']");
+  await back.click("button:has-text('הלאה, למספר הטלפון')");
+  await back.waitForSelector("[data-testid=ob-signed-in]", { timeout: 15000 });
+  const t = await back.textContent("[data-testid=ob-signed-in]");
+  check("signed in: the last step says so and shows the verified number, with no code box",
+    t.includes("כבר מחוברים") && t.replace(/\D/g, "").includes("0521110001") && (await back.locator("input[aria-label='מספר טלפון']").count()) === 0, t);
+  await back.click("[data-testid=ob-open-signed]");
+  await back.waitForSelector("text=נפתח דוכן", { timeout: 40000 });
+  const { rows: [second] } = await db.query("select contact_phone, owner_id from stores where display_name='עוד דוכן של אורי'");
+  check("signed in: the store opens without another sms, on the verified number",
+    second?.contact_phone === E164 && second?.owner_id === acct.user_id && (await db.query("select count(*)::int n from sms_outbox")).rows[0].n === sent);
+  await back.screenshot({ path: `${shots}/83b-signed-in-open.png` });
+  await db.query("delete from stores where display_name='עוד דוכן של אורי'");
+}
+
 /* ── 6. חנות ותיקה שנרשמה במייל — אותו מספר מחבר אותה ── */
 const { rows: [tamar] } = await db.query("select * from stores where contact_phone='972501234567' limit 1");
 if (tamar) {
