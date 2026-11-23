@@ -432,7 +432,7 @@ const TOOLS: { title: string; line: string; art: ReactNode }[] = [
   },
   {
     title: "הרבה מוצרים בבת אחת",
-    line: "בוחרים עד 20 תמונות מהגלריה, נותנים לכולן מחיר אחד, וזהו.",
+    line: "בוחרים כמה תמונות שרוצים מהגלריה, נותנים לכולן מחיר אחד, וזהו.",
     art: (
       <div className="flex flex-col items-center gap-2">
         <div className="flex" aria-hidden>

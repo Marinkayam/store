@@ -82,6 +82,14 @@ try {
   const { rows: [{ n: after }] } = await db.query("select count(*)::int n from products where store_id=$1 and deleted_at is null", [store.id]);
   check("ובדיוק 3 נוספו", after === before + 3, `${before} → ${after}`);
 
+  /* ── 1ב. בלי תקרה על הכמות: 25 תמונות בבת אחת (קודם נחתך ב-20) ── */
+  await girl.goto(`${BASE}/dashboard/products`, { waitUntil: "networkidle" });
+  const many = Array.from({ length: 25 }, (_, i) => ({ name: `m${i}.png`, mimeType: "image/png", buffer: Buffer.from(pngs[i % 3], "base64") }));
+  await girl.setInputFiles("[data-testid=bulk-input]", many);
+  await girl.waitForSelector("[data-testid=bulk-add]", { timeout: 10000 });
+  const got25 = await girl.waitForFunction(() => document.querySelectorAll("[data-testid=bulk-item]").length === 25, null, { timeout: 60000 }).then(() => true, () => false);
+  check("25 תמונות → 25 כרטיסים, בלי לחתוך ב-20", got25, String(await girl.locator("[data-testid=bulk-item]").count()));
+
   /* ── 2. סידור ── */
   await girl.goto(`${BASE}/dashboard/products`, { waitUntil: "networkidle" });
   await girl.click("[data-testid=sort-toggle]");

@@ -17,7 +17,6 @@ import { displayPhone, normalizePhone } from "@/lib/phone";
 import { milestones, reachedCount } from "@/lib/milestones";
 import { payoutSummary } from "@/lib/payouts";
 import { ACTIVATION_PRICE } from "@/lib/pricing";
-import { QUOTAS } from "@/lib/quotas";
 import { formatPrice, parsePrice, typedPrice } from "@/lib/money";
 import AdminCoupons from "./admin-coupons";
 import NoSmsLogin from "./no-sms-login";
@@ -280,19 +279,6 @@ export default function AdminView({ aiConfigured = false }: { aiConfigured?: boo
     refresh();
     if (detail?.store.id === storeId) openDetail(storeId);
     showToast(smsUnlimited ? "סמס ללא הגבלה למספר הזה" : "בוטל, חוזרת למכסה הרגילה");
-  }
-
-  // הגדלת אחסון לחנות ספציפית — 50MB הם ברירת המחדל של כולן (lib/quotas.ts);
-  // חנות עם הרבה סרטונים מקבלת כאן יותר, בלי לפתוח את התקרה לכולן.
-  async function setMediaQuota(storeId: string, mediaQuotaMb: number | null) {
-    await fetch("/api/admin/stores", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storeId, mediaQuotaMb }),
-    });
-    refresh();
-    if (detail?.store.id === storeId) openDetail(storeId);
-    showToast(mediaQuotaMb ? `האחסון הוגדל ל-${mediaQuotaMb}MB 📦` : "האחסון חזר לברירת המחדל");
   }
 
   // איפוס מיידי — פותח כניסה עכשיו בלי לחכות למיגרציה. לא קבוע, רק לרגע הזה.
@@ -986,32 +972,9 @@ function SchemaWarning() {
                 <span className="text-[12px] flex-1">
                   📦 אחסון מדיה
                   <span className="text-[var(--muted)]">
-                    {" · "}{(detail.store.media_bytes / 1024 / 1024).toFixed(1)}MB מתוך{" "}
-                    {((detail.store.media_quota_bytes ?? QUOTAS.mediaBytesPerStore) / 1024 / 1024).toFixed(0)}MB
-                    {detail.store.media_quota_bytes ? " (מוגדל)" : ""}
+                    {" · "}{(detail.store.media_bytes / 1024 / 1024).toFixed(1)}MB · בלי תקרה
                   </span>
                 </span>
-                {[100, 200].map((mb) => (
-                  <button
-                    key={mb}
-                    onClick={() => setMediaQuota(detail.store.id, mb)}
-                    aria-label={`הגדלת אחסון ל-${mb} מגהבייט`}
-                    className={detail.store.media_quota_bytes === mb * 1024 * 1024
-                      ? "bg-[var(--ink)] text-white px-3 py-1.5 text-[12px] font-medium"
-                      : "border border-[var(--line)] bg-white px-2.5 py-1.5 text-[12px]"}
-                  >
-                    {mb}MB
-                  </button>
-                ))}
-                {detail.store.media_quota_bytes != null && (
-                  <button
-                    onClick={() => setMediaQuota(detail.store.id, null)}
-                    aria-label="חזרה לברירת המחדל של האחסון"
-                    className="border border-[var(--line)] bg-white px-2.5 py-1.5 text-[12px]"
-                  >
-                    ברירת מחדל
-                  </button>
-                )}
               </div>
             </div>
 
