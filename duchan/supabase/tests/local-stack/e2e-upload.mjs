@@ -42,28 +42,16 @@ check("and the refusal names the type, so a field report is diagnosable",
 const mp4 = await ask(p, "video", "video/mp4");
 check("a normalised mp4 is accepted", mp4.status === 200, `status=${mp4.status}`);
 
-/* ── 1ב. מכסה שנסתמה מרוח משתחררת לבד ──
-   media_bytes רק עלה: החלפת תמונה נספרה פעמיים ומחיקה לא פינתה.
-   מדמים את המצב של ים — מונה על התקרה בלי קבצים אמיתיים מאחוריו —
-   ומוודאים שהשרת סופר מחדש מהאחסון במקום לסרב על סמך רוח. */
-await db.query("update stores set media_bytes=$1 where id=$2", [50 * 1024 * 1024, store.id]);
-const healed = await ask(p, "image", "image/webp", 4096);
-check("a quota inflated by ghosts self-heals from storage and the upload passes",
-  healed.status === 200, `status=${healed.status}`);
-const { rows: [afterHeal] } = await db.query("select media_bytes from stores where id=$1", [store.id]);
-check("and the counter returns to the truth, well under the cap",
-  Number(afterHeal.media_bytes) < 50 * 1024 * 1024, String(afterHeal.media_bytes));
-
-/* ── 1ג. מכסה מוגדלת מהחמ"ל מכובדת ──
-   המנהלת הגדילה חנות ל-100MB; שימוש אמיתי של 60MB — מעל ברירת המחדל
-   (50MB) — חייב להמשיך לקבל העלאות בלי ספירה מחדש ובלי סירוב. */
-await db.query("update stores set media_quota_bytes=$1, media_bytes=$2 where id=$3",
-  [100 * 1024 * 1024, 60 * 1024 * 1024, store.id]);
-const overCap = await ask(p, "image", "image/webp", 4096);
-check("a store the admin raised to 100MB accepts uploads beyond the 50MB default",
-  overCap.status === 200, `status=${overCap.status}`);
-await db.query("update stores set media_quota_bytes=null, media_bytes=$1 where id=$2",
-  [Number(afterHeal.media_bytes), store.id]);
+/* ── 1ב. בלי תקרה לדוכן ──
+   מרינה, 11.2026: "אל תגביל מוכרים בכמויות של מוצרים". דוכן שכבר תופס
+   500MB (פי עשרה מהתקרה הישנה) ממשיך לקבל העלאות, והמונה ממשיך לספור. */
+const { rows: [beforeBig] } = await db.query("select media_bytes from stores where id=$1", [store.id]);
+await db.query("update stores set media_bytes=$1 where id=$2", [500 * 1024 * 1024, store.id]);
+const big = await ask(p, "image", "image/webp", 4096);
+check("a stall far past the old 50MB cap still accepts uploads", big.status === 200, `status=${big.status}`);
+const { rows: [afterBig] } = await db.query("select media_bytes from stores where id=$1", [store.id]);
+check("and the usage counter keeps counting", Number(afterBig.media_bytes) === 500 * 1024 * 1024 + 4096, String(afterBig.media_bytes));
+await db.query("update stores set media_bytes=$1 where id=$2", [Number(beforeBig.media_bytes), store.id]);
 
 /* ── 2. הלקוח ממיר לבד: אותו סרטון, דרך המסלול האמיתי ── */
 const viaClient = await p.evaluate(async (storeId) => {

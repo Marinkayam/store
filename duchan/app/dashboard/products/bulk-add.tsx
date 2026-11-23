@@ -21,8 +21,6 @@ import CloseX from "@/app/close-x";
 
 type Item = { key: string; blob: Blob; url: string; name: string; price: string; stock: number };
 
-const MAX = 20;
-
 export default function BulkAdd({
   storeId,
   startOrder,
@@ -47,13 +45,13 @@ export default function BulkAdd({
      בכל הקלדה ושחרר תמונות שעדיין מוצגות. */
   const urls = useRef<string[]>([]);
 
-  // התמונות עוברות בקנבס אחת-אחת (טלפון ישן לא אוהב עשרים במקביל)
+  // התמונות עוברות בקנבס אחת-אחת (טלפון ישן לא אוהב הרבה במקביל). בלי תקרה על הכמות
   useEffect(() => {
     let alive = true;
     (async () => {
       const out: Item[] = [];
       let bad = 0;
-      for (const f of files.slice(0, MAX)) {
+      for (const f of files) {
         try {
           const blob = await squareImage(f, 900, "cover", { x: 50, y: 50 });
           const url = URL.createObjectURL(blob);
@@ -66,7 +64,7 @@ export default function BulkAdd({
         if (!alive) return;
       }
       setItems(out);
-      setSkipped(bad + Math.max(0, files.length - MAX));
+      setSkipped(bad);
       setLoading(false);
       setTimeout(() => {
         /* לא חוטפים את המיקוד ממי שכבר התחילה להקליד בשדה אחר: המיקוד
@@ -187,7 +185,7 @@ export default function BulkAdd({
           {loading && <p className="text-center text-[13px] text-[var(--muted)] py-8">רגע, מסדרים את התמונות לריבועים…</p>}
           {skipped > 0 && !loading && (
             <p className="text-[12.5px] text-[var(--warn-ink)] bg-[var(--warn-bg)] px-3 py-2">
-              {skipped === 1 ? "תמונה אחת לא נכנסה" : `${skipped} תמונות לא נכנסו`} (עד {MAX} בכל פעם, ורק תמונות).
+              {skipped === 1 ? "תמונה אחת לא נכנסה" : `${skipped} תמונות לא נכנסו`}.
             </p>
           )}
           {items.map((it, i) => (

@@ -4,7 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { canManage } from "@/lib/team";
 import { presignedUpload } from "@/lib/r2";
-import { recountStoreMedia, recountSquishMedia } from "@/lib/media-usage";
+import { recountSquishMedia } from "@/lib/media-usage";
 import { QUOTAS } from "@/lib/quotas";
 
 // POST /api/upload  { kind: 'image'|'video'|'poster'|'cover', contentType, bytes }
@@ -183,23 +183,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "אין לכם דוכן עדיין" }, { status: 404 });
   }
 
-  /* תקרה פר-חנות כשהמנהלת הגדילה, אחרת הגלובלית */
-  const storeCap = store.media_quota_bytes ?? QUOTAS.mediaBytesPerStore;
-  const storeStored = store.media_bytes;
-  if (store.media_bytes + bytes > storeCap) {
-    /* המונה רק עולה בהעלאות — החלפת תמונה נספרה פעמיים ומחיקת מוצר לא
-       פינתה כלום, עד ש"נגמר המקום" בחנות שרובה רוח (קרה לים). לפני
-       שמסרבים, סופרים את האמת מהאחסון: רק מדיה של מוצרים חיים והקאבר. */
-    const fresh = await recountStoreMedia(db, store.id);
-    if (fresh === null || fresh + bytes > storeCap) {
-      return NextResponse.json(
-        { error: "נגמר המקום בדוכן, אפשר למחוק סרטון ישן כדי לפנות" },
-        { status: 413 }
-      );
-    }
-    store.media_bytes = fresh;
-  }
-
+  /* בלי תקרה לדוכן. מרינה, 11.2026: "אל תגביל מוכרים בכמויות של מוצרים".
+     התקרה (50MB) נגמרה אחרי כמה מאות תמונות. האחסון ב-R2 זול וה-egress
+     חינם, ונשארת רק מגבלת הגודל לקובץ אחד (maxUploadBytes). המונה
+     media_bytes ממשיך לרוץ, כדי שבחמ"ל יראו כמה כל דוכן תופס. */
   const key =
     kind === "cover"
       ? `${store.id}/cover.${EXT[contentType]}`
@@ -212,13 +199,8 @@ export async function POST(req: NextRequest) {
             ? `${store.id}/cat/${randomUUID()}.${EXT[contentType]}`
             : `${store.id}/products/${randomUUID()}.${EXT[contentType]}`;
 
-  // המקום נשמר לפני החתימה; חתימה שלא מומשה תתוקן בספירה מחדש מהאחסון
-  if (!(await reserveMedia(db, "stores", store.id, storeStored, store.media_bytes, bytes, storeCap))) {
-    return NextResponse.json(
-      { error: "נגמר המקום בדוכן, אפשר למחוק סרטון ישן כדי לפנות" },
-      { status: 413 }
-    );
-  }
+  // סופרים את המקום לפני החתימה (בלי תקרה, רק כדי לדעת כמה הדוכן תופס)
+  await reserveMedia(db, "stores", store.id, store.media_bytes, store.media_bytes, bytes, Number.POSITIVE_INFINITY);
 
   const url = await presignedUpload(key, contentType, bytes);
   return NextResponse.json({ url, key });
