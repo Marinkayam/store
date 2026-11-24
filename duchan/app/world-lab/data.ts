@@ -22,7 +22,7 @@ export const cityPt = (x: number, y: number) => ({ x: x * CITY_K, y: y * CITY_K 
 export const CAMPUS = { x: 2400, y: 3984, w: 3840, h: 5208 };
 export const SCHOOL_NAME = "בית ספר הדקל";
 export const OTHER_SCHOOL = "בית ספר הגפן";
-export const CLASS_NAME = "ה׳2";
+export const CLASS_NAME = "שכבת ה׳";
 
 const LOT = { w: 1100, h: 1480, gap: 135, top: 800, between: 260 };
 const lotAt = (row: number, col: number) => ({
@@ -32,7 +32,7 @@ const lotAt = (row: number, col: number) => ({
   h: LOT.h,
 });
 
-/** הקניון של הכיתה שלי: אחד משישה מתחמים בחצר בית הספר */
+/** הקניון של השכבה שלי: אחד משישה מתחמים בחצר בית הספר */
 export const MALL = lotAt(0, 1);
 
 export interface ClassLot {
@@ -40,20 +40,25 @@ export interface ClassLot {
   name: string;
   grade: string;
   x: number; y: number; w: number; h: number;
-  /** כמה דוכנים יש בכיתה כשבית הספר כבר גדל. 0 = מקום פנוי לכיתה. */
+  /** כמה דוכנים יש בשכבה כשבית הספר כבר גדל. 0 = מקום פנוי לשכבה. */
   stalls: number;
   mine?: boolean;
 }
 
-/** שתי שכבות, שלוש כיתות בכל אחת. רק לכיתה שלי נכנסים; האחרות נראות מבחוץ. */
+/**
+ * שש שכבות, ד׳ עד ט׳, מתחם לכל שכבה. רק לשכבה שלי נכנסים; האחרות נראות מבחוץ.
+ * מרינה, 11.2026: "עדיף לא להגביל לפי כיתה לפי מספרים אלא לפי שכבה".
+ */
 export const CLASSES: ClassLot[] = [
-  { id: "h1", name: "ה׳1", grade: "שכבת ה׳", ...lotAt(0, 0), stalls: 5 },
-  { id: "h2", name: CLASS_NAME, grade: "שכבת ה׳", ...lotAt(0, 1), stalls: 11, mine: true },
-  { id: "h3", name: "ה׳3", grade: "שכבת ה׳", ...lotAt(0, 2), stalls: 0 },
-  { id: "v1", name: "ו׳1", grade: "שכבת ו׳", ...lotAt(1, 0), stalls: 6 },
-  { id: "v2", name: "ו׳2", grade: "שכבת ו׳", ...lotAt(1, 1), stalls: 0 },
-  { id: "v3", name: "ו׳3", grade: "שכבת ו׳", ...lotAt(1, 2), stalls: 3 },
+  { id: "h1", name: "שכבת ד׳", grade: "שכבת ד׳", ...lotAt(0, 0), stalls: 5 },
+  { id: "h2", name: CLASS_NAME, grade: CLASS_NAME, ...lotAt(0, 1), stalls: 11, mine: true },
+  { id: "h3", name: "שכבת ו׳", grade: "שכבת ו׳", ...lotAt(0, 2), stalls: 0 },
+  { id: "v1", name: "שכבת ז׳", grade: "שכבת ז׳", ...lotAt(1, 0), stalls: 6 },
+  { id: "v2", name: "שכבת ח׳", grade: "שכבת ח׳", ...lotAt(1, 1), stalls: 0 },
+  { id: "v3", name: "שכבת ט׳", grade: "שכבת ט׳", ...lotAt(1, 2), stalls: 3 },
 ];
+/** כל השכבות בבית הספר, לפי הסדר */
+export const SCHOOL_GRADES = ["ד", "ה", "ו", "ז", "ח", "ט"];
 export const GRADE_ROWS = [
   { name: "שכבת ה׳", y: CAMPUS.y + LOT.top - 70 },
   { name: "שכבת ו׳", y: CAMPUS.y + LOT.top + LOT.h + LOT.between - 70 },
@@ -82,9 +87,9 @@ export interface Community {
   mallOf: (lot: string) => string;
   /** "קניון" / "שוק" */
   mall: string;
-  /** "הכיתה" / "הכיכר" */
+  /** "השכבה" / "הכיכר" */
   unit: string;
-  /** "כיתה" / "כיכר" */
+  /** "שכבה" / "כיכר" */
   unitWord: string;
   /** מה רואה מי שלא שייך */
   outsiders: string;
@@ -111,28 +116,28 @@ export const COMMUNITIES: Record<CommunityKind, Community> = {
     otherPlace: "בית ספר הגפן",
     emptyPlace: "מקום פנוי לבית ספר נוסף",
     sign: "בית ספר הדקל",
-    lots: { h1: "ה׳1", h2: "ה׳2", h3: "ה׳3", v1: "ו׳1", v2: "ו׳2", v3: "ו׳3" },
-    rows: ["שכבת ה׳", "שכבת ו׳"],
+    lots: { h1: "שכבת ד׳", h2: "שכבת ה׳", h3: "שכבת ו׳", v1: "שכבת ז׳", v2: "שכבת ח׳", v3: "שכבת ט׳" },
+    rows: ["", ""],
     mallOf: (lot) => `הקניון של ${lot}`,
     mall: "קניון",
-    unit: "הכיתה",
-    unitWord: "כיתה",
+    unit: "השכבה",
+    unitWord: "שכבה",
     outsiders: "מי שלא אושר לבית הספר לא רואה כלום.",
     seenBy: "ילדים והורים מבית הספר",
-    namesBy: "רק הכיתה",
-    neighbor: "חברה או חבר מהכיתה",
+    namesBy: "רק השכבה",
+    neighbor: "חברה או חבר מהשכבה",
     hint0: "נוגעים בבית הספר כדי להתקרב",
-    hint1: "נוגעים בכיתה כדי להיכנס לקניון שלה",
+    hint1: "נוגעים בשכבה כדי להיכנס לקניון שלה",
     locked: {
-      2: "הקניון של הכיתה ייפתח כשיהיו בו 3 דוכנים. אפשר להזמין חברים למקומות הפנויים.",
-      1: "בית הספר ייפתח כשתהיה עוד כיתה עם דוכנים.",
+      2: "הקניון של השכבה ייפתח כשיהיו בו 3 דוכנים. אפשר להזמין חברים למקומות הפנויים.",
+      1: "בית הספר ייפתח כשתהיה עוד שכבה עם דוכנים.",
       0: "העיר תיפתח כשיהיה בה עוד בית ספר עם דוכנים.",
     },
-    stages: ["דוכן אחד", "3 דוכנים בכיתה", "8 דוכנים בכיתה", "11 דוכנים בכיתה", "עוד כיתות בבית הספר", "עוד בית ספר בעיר"],
-    garden: "הגינה של הכיתה",
-    board: "לוח המודעות של הכיתה",
-    bell: { label: "הפעמון של בית הספר", text: "צלצול! ההפסקה הגדולה התחילה, והקניונים של הכיתות נפתחים." },
-    marketName: "יום שוק כיתתי",
+    stages: ["דוכן אחד", "3 דוכנים בשכבה", "8 דוכנים בשכבה", "11 דוכנים בשכבה", "עוד שכבות בבית הספר", "עוד בית ספר בעיר"],
+    garden: "הגינה של השכבה",
+    board: "לוח המודעות של השכבה",
+    bell: { label: "הפעמון של בית הספר", text: "צלצול! ההפסקה הגדולה התחילה, והקניונים של השכבות נפתחים." },
+    marketName: "יום שוק שכבתי",
     marketWhen: "יום שישי, בהפסקה הגדולה",
   },
   hood: {
@@ -191,15 +196,15 @@ export interface Stage {
 }
 export const STAGES: Stage[] = [
   { label: "דוכן אחד", size: 1, far: 3 },
-  { label: "3 דוכנים בכיתה", size: 3, far: 2 },
-  { label: "8 דוכנים בכיתה", size: 8, far: 2 },
-  { label: "11 דוכנים בכיתה", size: 11, far: 2 },
-  { label: "עוד כיתות בבית הספר", size: 11, far: 1 },
+  { label: "3 דוכנים בשכבה", size: 3, far: 2 },
+  { label: "8 דוכנים בשכבה", size: 8, far: 2 },
+  { label: "11 דוכנים בשכבה", size: 11, far: 2 },
+  { label: "עוד שכבות בבית הספר", size: 11, far: 1 },
   { label: "עוד בית ספר בעיר", size: 11, far: 0 },
 ];
 export const LOCKED_REASON: Record<number, string> = {
-  2: "הקניון של הכיתה ייפתח כשיהיו בו 3 דוכנים. אפשר להזמין חברים למקומות הפנויים.",
-  1: "בית הספר ייפתח כשתהיה עוד כיתה עם דוכנים.",
+  2: "הקניון של השכבה ייפתח כשיהיו בו 3 דוכנים. אפשר להזמין חברים למקומות הפנויים.",
+  1: "בית הספר ייפתח כשתהיה עוד שכבה עם דוכנים.",
   0: "העיר תיפתח כשיהיה בה עוד בית ספר עם דוכנים.",
 };
 
@@ -262,7 +267,7 @@ export interface LabStore {
   name: string;
   /** שם קצר, לאות שבדף החנות */
   short: string;
-  /** השם הפרטי של בעל/ת הדוכן. מוצג רק בתוך הקניון של הכיתה, לא בדף החנות. */
+  /** השם הפרטי של בעל/ת הדוכן. מוצג רק בתוך הקניון של השכבה, לא בדף החנות. */
   owner?: string;
   /** דוכן שנפתח זה עתה דרך הזמנה */
   fresh?: boolean;
@@ -461,7 +466,7 @@ export const LOT_STORES: Record<string, LabStore[]> = {
 /** באיזה גודל מסדרים מתחם אחר, לפי מספר הדוכנים שבו */
 export const lotSize = (n: number): ClassSize => (n <= 3 ? 3 : n <= 8 ? 8 : 11);
 
-/** מי מהדוכנים בכיתה שלי נרשם ליום השוק */
+/** מי מהדוכנים בשכבה שלי נרשם ליום השוק */
 export const MARKET_IN = ["maya", "beads", "slime", "mugs", "rainbow", "tamar"];
 
 /** סדר החנויות הבדויות: שמונה לרחוב הסוככים, ושלוש לסמטה */
@@ -521,18 +526,18 @@ export interface Surprise {
 
 export const SURPRISES: Surprise[] = [
   { id: "fountain", x: MALL.x + 550, y: MALL.y + 660, r: 74, from: 3, to: 4, label: "המזרקה", text: "זרקתם מטבע למזרקה וביקשתם משאלה." },
-  { id: "board", x: MALL.x + 232, y: MALL.y + 548, r: 46, from: 3, to: 4, label: "לוח המודעות", text: "לוח המודעות של הכיתה. כאן מספרים מה חדש בקניון." },
+  { id: "board", x: MALL.x + 232, y: MALL.y + 548, r: 46, from: 3, to: 4, label: "לוח המודעות", text: "לוח המודעות של השכבה. כאן מספרים מה חדש בקניון." },
   { id: "hopscotch", x: MALL.x + 842, y: MALL.y + 790, r: 52, from: 3, to: 4, label: "קלאס", text: "קלאס! אחת, שתיים, שלוש, קפיצה." },
-  { id: "garden", x: MALL.x + 205, y: MALL.y + 795, r: 80, from: 3, to: 4, label: "הגינה של הכיתה", text: "השקיתם את הגינה. פרח חדש לכל דוכן שנפתח בכיתה." },
+  { id: "garden", x: MALL.x + 205, y: MALL.y + 795, r: 80, from: 3, to: 4, label: "הגינה של השכבה", text: "השקיתם את הגינה. פרח חדש לכל דוכן שנפתח בשכבה." },
   { id: "cat", x: MALL.x + 610, y: MALL.y + 900, r: 30, from: 3, to: 4, label: "החתול של הקניון", text: "מיאו. החתול של הקניון אוהב לנמנם ליד המזרקה." },
-  { id: "bell", x: CAMPUS.x + CAMPUS.w / 2, y: CAMPUS.y + 420, r: 330, from: 1, to: 1, label: "הפעמון של בית הספר", text: "צלצול! ההפסקה הגדולה התחילה, והקניונים של הכיתות נפתחים." },
+  { id: "bell", x: CAMPUS.x + CAMPUS.w / 2, y: CAMPUS.y + 420, r: 330, from: 1, to: 1, label: "הפעמון של בית הספר", text: "צלצול! ההפסקה הגדולה התחילה, והקניונים של השכבות נפתחים." },
   { id: "ducks", ...cityPt(300, 1500), r: 150 * CITY_K, from: 0, to: 0, label: "הברווזים בפארק", text: "גע גע. באגם של הפארק גרים שלושה ברווזים." },
   { id: "tower", ...cityPt(300, 150), r: 110 * CITY_K, from: 0, to: 0, label: "מגדל המים", text: "מגדל מים. פעם כך הגיעו המים לכל הבתים בעיר." },
   { id: "boat", ...cityPt(1700, 4110), r: 120 * CITY_K, from: 0, to: 0, label: "סירת המפרש", text: "הים התיכון. בהמשך יהיה אפשר להתרחק עוד, עד למפת ישראל." },
 ];
 
 export const NOTICES = [
-  "יום שוק כיתתי ביום שישי, בהפסקה הגדולה.",
+  "יום שוק שכבתי ביום שישי, בהפסקה הגדולה.",
   "סמטת הפנסים מחפשת דוכנים חדשים.",
   "תודה לכל מי שהשקה את הגינה השבוע.",
 ];

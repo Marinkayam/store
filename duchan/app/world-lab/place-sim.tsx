@@ -21,7 +21,7 @@ import { EmptyPlot, WorldStall } from "./stalls";
  * שמות בתי הספר והשכונות מומצאים. באפליקציה הם יגיעו מרשימה רשמית.
  */
 export type PlaceResult =
-  | { kind: "placed"; school: string; unit: string; grade: string; num: number; hood?: string; see: "class" | "hood"; invite: boolean }
+  | { kind: "placed"; school: string; unit: string; grade: string; hood?: string; see: "class" | "hood"; invite: boolean }
   | { kind: "link" };
 
 const SCHOOLS: { name: string; town: string }[] = [
@@ -31,7 +31,6 @@ const SCHOOLS: { name: string; town: string }[] = [
 ].map(([n, town]) => ({ name: `בית ספר ${n}`, town }));
 const HOODS = ["הדקלים", "הגפן", "נווה אילן", "הפרחים", "רמת הים"].map((x) => `שכונת ${x}`);
 const GRADES = ["ד", "ה", "ו", "ז", "ח"];
-const NUMS = [1, 2, 3, 4, 5, 6];
 const OTHER = "other";
 
 type Step = "school" | "class" | "hood" | "parent" | "done" | "declined";
@@ -50,7 +49,6 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
   /** מספר בית הספר ברשימה; -1 עוד לא נבחר, -2 "לא ברשימה" */
   const [pick, setPick] = useState(-1);
   const [grade, setGrade] = useState("");
-  const [num, setNum] = useState(0);
   const [hood, setHood] = useState("");
 
   const cls = COMMUNITIES.class;
@@ -64,12 +62,12 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
   const typed = q.trim();
   const open = typed.length > 0 && pick === -1;
   const matches = open ? SCHOOLS.map((x, i) => ({ ...x, i })).filter((x) => `${x.name} ${x.town}`.includes(typed)).slice(0, 5) : [];
-  const unit = `${grade}׳${num}`;
+  const unit = `שכבת ${grade}׳`;
   const mall = cls.mallOf(unit);
   const order: Step[] = noSchool ? ["school", "parent", "done"] : ["school", "class", "hood", "parent", "done"];
   const at = order.indexOf(step);
   const back = at > 0 && step !== "done" ? order[at - 1] : null;
-  const result = (see: "class" | "hood", invite: boolean): PlaceResult => ({ kind: "placed", school, unit, grade, num, see, invite, ...(noHood ? {} : { hood }) });
+  const result = (see: "class" | "hood", invite: boolean): PlaceResult => ({ kind: "placed", school, unit, grade, see, invite, ...(noHood ? {} : { hood }) });
 
   return (
     <div className="wl-invite wl-where" role="dialog" aria-modal="true" aria-label="הדוכן שלכם נכנס לעיר" data-testid="wl-where" data-step={step}>
@@ -92,7 +90,7 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
         {step === "school" && (
           <>
             <h2>באיזה בית ספר אתם לומדים?</h2>
-            <p>הדוכן יעמוד בקניון של הכיתה, ליד החברים.</p>
+            <p>הדוכן יעמוד בקניון של השכבה, ליד החברים.</p>
             <div className="wl-field">
               <label className="wl-field-label" htmlFor="wl-place-q">בית ספר</label>
               <input
@@ -122,26 +120,17 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
 
         {step === "class" && (
           <>
-            <h2>באיזו כיתה?</h2>
+            <h2>באיזו שכבה?</h2>
             <div className="wl-field">
-              <span className="wl-field-label">שכבה</span>
               <div className="wl-toggles" role="radiogroup" aria-label="שכבה">
                 {GRADES.map((g) => (
                   <button key={g} type="button" role="radio" aria-checked={grade === g} className="wl-btn wl-toggle wl-sq" onClick={() => setGrade(g)} data-testid={`wl-grade-${g}`}>{g}׳</button>
                 ))}
               </div>
             </div>
-            <div className="wl-field">
-              <span className="wl-field-label">מספר הכיתה</span>
-              <div className="wl-toggles" role="radiogroup" aria-label="מספר הכיתה">
-                {NUMS.map((n) => (
-                  <button key={n} type="button" role="radio" aria-checked={num === n} className="wl-btn wl-toggle wl-sq" onClick={() => setNum(n)} data-testid={`wl-num-${n}`}>{n}</button>
-                ))}
-              </div>
-            </div>
-            <p className="wl-sheet-note">בתחילת כל שנת לימודים נשאל שוב, כי הכיתה מתחלפת.</p>
+            <p className="wl-sheet-note">בתחילת כל שנת לימודים נשאל שוב, כי עולים שכבה.</p>
             <div className="wl-invite-actions">
-              <button type="button" className="wl-btn wl-primary" disabled={!grade || !num} onClick={() => setStep("hood")} data-testid="wl-place-next">המשך</button>
+              <button type="button" className="wl-btn wl-primary" disabled={!grade} onClick={() => setStep("hood")} data-testid="wl-place-next">המשך</button>
             </div>
           </>
         )}
@@ -173,7 +162,7 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
             <div className="wl-msg" data-testid="wl-place-parent">
               {noSchool ? (
                 <>
-                  <b>{who}</b> רוצה שהדוכן ״{store.name}״ ייכנס לעיר של דוכן, ליד החברים מהכיתה ומהשכונה.
+                  <b>{who}</b> רוצה שהדוכן ״{store.name}״ ייכנס לעיר של דוכן, ליד החברים מהשכבה ומהשכונה.
                   <br />
                   בית הספר עוד לא ברשימה שלנו. כתבו לנו את שמו ואת היישוב, ונבדוק אותו לפני שמשהו מופיע.
                 </>
@@ -185,7 +174,7 @@ export default function PlaceSim({ store, neighbor, onDone, onClose }: { store: 
                     <li>{noHood ? "בשוק של השכונה, אחרי שתכתבו לנו את שם השכונה ונבדוק אותו" : `בשוק של ${hood}`}</li>
                     <li>על מפת העיר, מרחוק ובלי שם</li>
                   </ul>
-                  את הדוכן והמוצרים יראו {cls.seenBy} ו{hd.seenBy}. את השם הפרטי רואים רק ילדי הכיתה והשכנים שלידו בשוק. בלי שם משפחה, בלי טלפון ובלי כתובת.
+                  את הדוכן והמוצרים יראו {cls.seenBy} ו{hd.seenBy}. את השם הפרטי רואים רק ילדי השכבה והשכנים שלידו בשוק. בלי שם משפחה, בלי טלפון ובלי כתובת.
                   <br />
                   מי שלא אושר לבית הספר או לשכונה לא רואה כלום. ההזמנות עובדות כמו היום. אפשר להזמין חברים בקישור אישי, וגם הם מצטרפים רק באישור הורה.
                   <br />

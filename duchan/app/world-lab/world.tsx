@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/app/icons";
 import {
-  AWNINGS, CAMPUS, CITY_K, CLASSES, COMMUNITIES, GRADE_ROWS, LEVEL_NAMES, LOT_STORES, MALL, MARKET_IN, MY_START_COUNTS, NOTICES, POINT_SOURCES, TIERS,
+  AWNINGS, CAMPUS, CITY_K, CLASSES, COMMUNITIES, GRADE_ROWS, SCHOOL_GRADES, LEVEL_NAMES, LOT_STORES, MALL, MARKET_IN, MY_START_COUNTS, NOTICES, POINT_SOURCES, TIERS,
   STAGES, STALL, STORES, SURPRISES, WORLD, ZONES,
   alleyOpen, cityPt, layout, isNightAt, lotSize, pointsOf, tierOf, type ClassSize, type CommunityKind, type PointKey, type Deco, type LabStore, type Level, type Plot,
   type Community,
@@ -23,7 +23,7 @@ import StoreSim from "./store-sim";
  * גובה מצלמה, לא מסך נפרד — ולכן כשמתרחקים רואים את אותו דוכן קטן יותר
  * בתוך אותו רחוב, ולא עוברים לדף אחר.
  *
- * חמש רמות: 0 עיר · 1 בית ספר · 2 קניון של כיתה · 3 רחוב · 4 דוכן.
+ * חמש רמות: 0 עיר · 1 בית ספר · 2 קניון של שכבה · 3 רחוב · 4 דוכן.
  * רמה רחוקה נפתחת רק כשיש בה מה לראות (STAGES ב-data.ts).
  *
  * מה ששומר על זה קל בטלפון:
@@ -124,7 +124,7 @@ export default function World({ review }: { review?: LabStore[] }) {
   /** כמה להרחיק ולהרים את המצלמה מול מבנה גבוה. מתעדכן בכל ציור (ראה למטה). */
   const frameFor = useRef<(x: number, y: number) => { k: number; up: number }>(() => ({ k: 1, up: 0 }));
 
-  /** שלב הצמיחה: כמה דוכנים יש בכיתה, ועד איזו רמה אפשר להתרחק */
+  /** שלב הצמיחה: כמה דוכנים יש בשכבה, ועד איזו רמה אפשר להתרחק */
   const [stage, setStage] = useState(STAGES.length - 1);
   const size: ClassSize = review ? 11 : STAGES[stage].size;
   const far: Level = review ? 2 : STAGES[stage].far;
@@ -165,23 +165,26 @@ export default function World({ review }: { review?: LabStore[] }) {
   /** הכרטיס שנסגר באיקס: מזהה המקום. נפתח שוב כשעוברים למקום אחר. */
   const [cardOff, setCardOff] = useState<string | null>(null);
   const myTier = tierOf(points);
-  /** סוג הקהילה: כיתה בבית ספר, או כיכר בשכונה. אותו עולם, שמות אחרים. */
+  /** סוג הקהילה: שכבה בבית ספר, או כיכר בשכונה. אותו עולם, שמות אחרים. */
   const [kind, setKind] = useState<CommunityKind>("class");
-  /** מה שנבחר ב"הדוכן נכנס לעיר": בית הספר והכיתה, והשכונה. הדוכן מופיע בשניהם; כאן רואים אחד בכל פעם. */
+  /** מה שנבחר ב"הדוכן נכנס לעיר": בית הספר והשכבה, והשכונה. הדוכן מופיע בשניהם; כאן רואים אחד בכל פעם. */
   const [placed, setPlaced] = useState<Extract<PlaceResult, { kind: "placed" }> | null>(null);
   const [placeOpen, setPlaceOpen] = useState(false);
   const com = useMemo((): Community => {
     const base = COMMUNITIES[kind];
     if (!placed) return base;
     if (kind === "hood") return placed.hood ? { ...base, place: placed.hood } : base;
-    const grades = ["ד", "ה", "ו", "ז", "ח"];
+    /* המתחם שלי הוא השכבה שנבחרה. לידו שתי השכבות הקרובות, ובשורה השנייה השאר. */
     const g = placed.grade;
-    const o = grades[grades.indexOf(g) + 1] ?? grades[grades.indexOf(g) - 1];
-    const near = [1, 2, 3].filter((n) => n !== placed.num);
+    const at = SCHOOL_GRADES.indexOf(g);
+    const others = SCHOOL_GRADES.filter((x) => x !== g).sort((a, b) => Math.abs(SCHOOL_GRADES.indexOf(a) - at) - Math.abs(SCHOOL_GRADES.indexOf(b) - at));
+    const byOrder = (xs: string[]) => [...xs].sort((a, b) => SCHOOL_GRADES.indexOf(a) - SCHOOL_GRADES.indexOf(b));
+    const [n1, n3] = byOrder(others.slice(0, 2));
+    const [w1, w2, w3] = byOrder(others.slice(2, 5));
+    const L = (x: string) => `שכבת ${x}׳`;
     return {
       ...base, place: placed.school, sign: placed.school,
-      rows: [`שכבת ${g}׳`, `שכבת ${o}׳`],
-      lots: { h1: `${g}׳${near[0]}`, h2: placed.unit, h3: `${g}׳${near[1]}`, v1: `${o}׳1`, v2: `${o}׳2`, v3: `${o}׳3` },
+      lots: { h1: L(n1), h2: placed.unit, h3: L(n3), v1: L(w1), v2: L(w2), v3: L(w3) },
     };
   }, [kind, placed]);
   /** המתחם שנמצאים בו עכשיו. "h2" הוא שלי; כל אחר הוא ביקור אצל אחרים. */
@@ -836,7 +839,7 @@ export default function World({ review }: { review?: LabStore[] }) {
     setPlaced(r);
     go(4, myPlot.cx, myPlot.by - 24);
     if (r.invite) openShare();
-    else say(r.see === "class" ? `הדוכן שלכם ב${COMMUNITIES.class.mallOf(r.unit).slice(1)}, ${r.school}. הוא גם בשוק של השכונה.` : `הדוכן שלכם ב${COMMUNITIES.hood.mallOf(COMMUNITIES.hood.lots.h2).slice(1)}, ${r.hood}. הוא גם בקניון של הכיתה.`);
+    else say(r.see === "class" ? `הדוכן שלכם ב${COMMUNITIES.class.mallOf(r.unit).slice(1)}, ${r.school}. הוא גם בשוק של השכונה.` : `הדוכן שלכם ב${COMMUNITIES.hood.mallOf(COMMUNITIES.hood.lots.h2).slice(1)}, ${r.hood}. הוא גם בקניון של השכבה.`);
   };
 
   // השם הפרטי מופיע על השלט רק כשהוא לא כבר חלק משם הדוכן ("הדוכן של גלי"),
@@ -902,7 +905,7 @@ export default function World({ review }: { review?: LabStore[] }) {
           <SceneryMemo size={liveSize} flowers={stallCount + fx.watered} alley={alleyOpen(liveSize)} splash={fx.splash} hop={fx.hop} others={othersOpen} second={far === 0}
             live={here} homeCount={homeCount} hood={kind === "hood"} sign={com.sign} gate={com.mallOf(com.lots[here])} market={market === "on"} />
 
-          {/* אזורי נגיעה: בית הספר (מהעיר), הכיתות (מבית הספר), הרחובות (מהקניון) */}
+          {/* אזורי נגיעה: בית הספר (מהעיר), השכבות (מבית הספר), הרחובות (מהקניון) */}
           <button
             type="button" className="wl-hit" data-lv="0" tabIndex={level === 0 ? 0 : -1}
             aria-label={`להתקרב אל ${com.place}`}
@@ -1330,7 +1333,7 @@ export default function World({ review }: { review?: LabStore[] }) {
                   <div className="wl-field">
                     <span className="wl-field-label">סוג הקהילה</span>
                     <div className="wl-toggles" role="radiogroup" aria-label="סוג הקהילה">
-                      {([["class", "כיתה בבית ספר"], ["hood", "כיכר בשכונה"]] as const).map(([k, label]) => (
+                      {([["class", "שכבה בבית ספר"], ["hood", "כיכר בשכונה"]] as const).map(([k, label]) => (
                         <button key={k} type="button" role="radio" aria-checked={kind === k} className="wl-btn wl-toggle" onClick={() => setKind(k)} data-testid={`wl-kind-${k}`}>{label}</button>
                       ))}
                     </div>

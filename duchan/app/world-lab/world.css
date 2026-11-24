@@ -510,7 +510,7 @@
   .wl-store, .wl-sheet, .wl-card, .wl-bubble { transition: none; animation: none; }
 }
 
-/* ── "איפה הדוכן": בחירת עיר, בית ספר וכיתה או שכונה ── */
+/* ── "איפה הדוכן": בחירת עיר, בית ספר ושכבה או שכונה ── */
 .wl-combo-list { display: flex; flex-direction: column; margin-top: -9.5px; border: 1.5px solid var(--ink); background: var(--white); max-height: 300px; overflow-y: auto; }
 .wl-combo-opt { min-height: 48px; padding: 0 12px; background: var(--white); color: var(--ink); border: 0; border-top: 1px solid var(--stone, #d6cfc4); border-radius: 0; font: inherit; font-size: 16px; font-weight: 400; text-align: start; cursor: pointer; }
 .wl-combo-opt:first-child { border-top: 0; }

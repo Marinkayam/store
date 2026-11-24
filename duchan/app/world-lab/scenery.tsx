@@ -262,12 +262,12 @@ function City({ second }: { second: boolean }) {
   );
 }
 
-/* ── בית הספר: בניין, חצר, ומתחם לכל כיתה ── */
+/* ── בית הספר: בניין, חצר, ומתחם לכל שכבה ── */
 
 const school = { stroke: L, strokeWidth: 5, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
 const MINI = ["var(--wl-roof2)", "var(--wl-roof)", "var(--wl-roof3)", "var(--warning)", "var(--blush)", "var(--lavender)"];
 
-/** כיתה אחרת: רואים אותה מבחוץ. מתחם, שער, וכמה דוכנים יש בה לפי צבעי הסוככים. */
+/** שכבה אחרת: רואים אותה מבחוץ. מתחם, שער, וכמה דוכנים יש בה לפי צבעי הסוככים. */
 function OtherClass({ c, open }: { c: ClassLot; open: boolean }) {
   const n = open ? c.stalls : 0;
   return (
@@ -363,7 +363,7 @@ function Campus({ others, live, homeCount, hood, sign }: { others: boolean; live
   );
 }
 
-/* ── הקניון של הכיתה (קואורדינטות מקומיות של המתחם) ── */
+/* ── הקניון של השכבה (קואורדינטות מקומיות של המתחם) ── */
 
 function MallTree({ x, y, r = 30, alt = false }: { x: number; y: number; r?: number; alt?: boolean }) {
   return (
