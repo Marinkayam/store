@@ -13,6 +13,8 @@
  * הדוכן של הקופה (kupa-art.tsx) לא משתנה — הוא בנוי מרמות ומקישוטים שקונים.
  */
 
+import { HanukkahStall } from "./hanukkah";
+
 const INK = "#4A3B2F";
 const WOOD = "#B9875A";
 const WOOD_DARK = "#9C6E45";
@@ -153,6 +155,7 @@ export default function HomeStall({
 
         {/* שרשרת דגלים */}
         <path d={`M66 81 Q160 101 254 81`} fill="none" strokeWidth={1} />
+        <g className="hs-flagset">
         {flags.map((f, i) => (
           <path
             key={i}
@@ -163,6 +166,7 @@ export default function HomeStall({
             strokeWidth={1}
           />
         ))}
+        </g>
 
         {!empty && (
           <>
@@ -181,10 +185,12 @@ export default function HomeStall({
         <ellipse cx="115" cy="131" rx="2.4" ry="1.4" fill={PINK} stroke="none" />
         <ellipse cx="133" cy="131" rx="2.4" ry="1.4" fill={PINK} stroke="none" />
 
-        {/* שקית */}
+        {/* שקית (בחנוכה: חנוכייה במקומה) */}
+        <g className="hs-bag">
         <path d="M165 116 a8 8 0 0 1 16 0" fill="none" />
         <rect x="158" y="116" width="30" height="24" rx="2" fill={CREAM} />
         <path d="M168 129 q5 -7 10 0 q-5 7 -10 0z" fill={OLIVE} strokeWidth={1} />
+        </g>
 
         {/* צנצנת סוכריות */}
         <rect x="206" y="108" width="26" height="7" rx="2" fill={LAV} />
@@ -228,8 +234,12 @@ export default function HomeStall({
         )}
 
         {/* ארגז משמאל, עם שני סקווישים */}
-        {!empty && <circle cx="27" cy="178" r="7" fill={PINK} />}
-        {!empty && <circle cx="41" cy="179" r="6.5" fill={LAV} />}
+        {!empty && (
+          <g className="hs-crate-items">
+            <circle cx="27" cy="178" r="7" fill={PINK} />
+            <circle cx="41" cy="179" r="6.5" fill={LAV} />
+          </g>
+        )}
         <rect x="16" y="182" width="36" height="22" rx="2" fill={WOOD} />
         <line x1="16" y1="193" x2="52" y2="193" strokeWidth={1} />
 
@@ -242,6 +252,9 @@ export default function HomeStall({
         <circle cx="291.5" cy="171" r="1.7" fill={MUSTARD} stroke="none" />
         <path d="M286.5 175.5 q1.5 1.2 3 0" fill="none" stroke={PINK} strokeWidth={0.9} />
       </g>
+
+      {/* חנוכה: נדלק לבד בימי החג (app/hanukkah.tsx) */}
+      <HanukkahStall empty={empty} />
 
       {empty && (
         <g className="hs-roll" aria-hidden>
