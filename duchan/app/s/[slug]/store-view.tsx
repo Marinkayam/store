@@ -23,6 +23,7 @@ import DropCountdown from "@/app/drop-countdown";
 import MysteryBag from "@/app/mystery-bag";
 import { detectSource, type Source } from "@/lib/stats";
 import { confettiBurst } from "@/app/confetti";
+import { HanukkahGarland } from "@/app/hanukkah";
 
 interface CartLine {
   id: string;
@@ -941,6 +942,8 @@ export default function StoreView({
           style={{ background: storeBackground(theme, store.bg_pattern, bgPhoto) }}
         />
       )}
+      {/* חנוכה: שרשרת דגלים בכחול-לבן, רק בימי החג (app/hanukkah.tsx) */}
+      <HanukkahGarland />
       {/* רצועת הבעלים — נצמדת למעלה, אפור-שחור ולא בערכה של החנות, כדי שיהיה
           ברור שזו המערכת ולא הדף שהקונות רואות. קונה לא מקבלת אותה בכלל. */}
       {owner && (

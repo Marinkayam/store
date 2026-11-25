@@ -66,6 +66,30 @@ try {
     };
     requestAnimationFrame(tick);
   });
+  /* חנוכה. מרינה, 11.2026: "תעשה אווירה של חנוכה בדוכן". נדלק לבד בימי החג;
+     ?hanukkah=N מציג את הלילה ה-N גם מחוץ לחג. */
+  {
+    const hk = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+    const inHoliday = await hk.evaluate(() => {
+      const t = Date.parse(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date()) + "T00:00:00Z");
+      return ["2026-12-04", "2027-12-24", "2028-12-12", "2029-12-01", "2030-12-20"].some((f) => { const d = Math.round((t - Date.parse(f + "T00:00:00Z")) / 864e5); return d >= 0 && d <= 8; });
+    });
+    await hk.goto(BASE + "/", { waitUntil: "networkidle" });
+    await hk.waitForTimeout(400);
+    check(inHoliday ? "חנוכה: היום חג, הקישוט דולק" : "חנוכה: מחוץ לחג אין קישוט", (await hk.locator("[data-testid=hanukkah-stall]").count()) === (inHoliday ? 1 : 0));
+    await hk.goto(BASE + "/?hanukkah=3", { waitUntil: "networkidle" });
+    await hk.waitForSelector("[data-testid=hanukkah-stall]");
+    const layer = hk.locator("[data-testid=hanukkah-stall]");
+    check("חנוכה: לילה שלישי, שלושה נרות ושמש", (await layer.getAttribute("data-night")) === "3" && (await layer.locator(".hk-flame").count()) === 4);
+    check("חנוכה: הדגלים הצבעוניים והשקית מוסתרים", await hk.evaluate(() => [".hs-flagset", ".hs-bag", ".hs-crate-items"].every((q) => getComputedStyle(document.querySelector(q)).display === "none")));
+    check("חנוכה: בלי טקסט חדש מתחת לאיור", !((await hk.textContent("main")) ?? "").includes("חנוכה"));
+    await hk.goto(BASE + "/?hanukkah=8", { waitUntil: "networkidle" });
+    await hk.waitForSelector("[data-testid=hanukkah-stall]");
+    check("חנוכה: לילה שמיני, שמונה נרות ושמש", (await hk.locator("[data-testid=hanukkah-stall] .hk-flame").count()) === 9);
+    await hk.goto(BASE + "/s/" + LIVE + "?hanukkah=2", { waitUntil: "networkidle" });
+    check("חנוכה: שרשרת דגלים בראש הדוכן הציבורי", await hk.locator("[data-testid=hanukkah-garland]").isVisible());
+    await hk.context().close();
+  }
   await me.goto(BASE + "/", { waitUntil: "networkidle" });
   await me.waitForSelector("[data-testid=my-store-card]", { timeout: 15000 });
   check("עם דוכן: כרטיס 'כבר יש לך דוכן'", await me.locator("[data-testid=my-store-card]").isVisible());
