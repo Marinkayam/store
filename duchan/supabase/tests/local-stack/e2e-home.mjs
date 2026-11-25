@@ -81,7 +81,7 @@ try {
     await hk.waitForSelector("[data-testid=hanukkah-stall]");
     const layer = hk.locator("[data-testid=hanukkah-stall]");
     check("חנוכה: לילה שלישי, שלושה נרות ושמש", (await layer.getAttribute("data-night")) === "3" && (await layer.locator(".hk-flame").count()) === 4);
-    check("חנוכה: הדגלים הצבעוניים והשקית מוסתרים", await hk.evaluate(() => [".hs-flagset", ".hs-bag", ".hs-crate-items"].every((q) => getComputedStyle(document.querySelector(q)).display === "none")));
+    check("חנוכה: הדגלים הצבעוניים, השקית והצנצנת מוסתרים", await hk.evaluate(() => [".hs-flagset", ".hs-bag", ".hs-jar", ".hs-crate-items"].every((q) => getComputedStyle(document.querySelector(q)).display === "none")));
     check("חנוכה: בלי טקסט חדש מתחת לאיור", !((await hk.textContent("main")) ?? "").includes("חנוכה"));
     await hk.goto(BASE + "/?hanukkah=8", { waitUntil: "networkidle" });
     await hk.waitForSelector("[data-testid=hanukkah-stall]");
