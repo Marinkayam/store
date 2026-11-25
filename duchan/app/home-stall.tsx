@@ -192,13 +192,15 @@ export default function HomeStall({
         <path d="M168 129 q5 -7 10 0 q-5 7 -10 0z" fill={OLIVE} strokeWidth={1} />
         </g>
 
-        {/* צנצנת סוכריות */}
+        {/* צנצנת סוכריות (בחנוכה מפנה מקום לחנוכייה) */}
+        <g className="hs-jar">
         <rect x="206" y="108" width="26" height="7" rx="2" fill={LAV} />
         <rect x="204" y="115" width="30" height="25" rx="6" fill={CREAM} />
         <circle cx="213" cy="126" r="3.4" fill={PINK} strokeWidth={1} />
         <circle cx="223" cy="124" r="3.4" fill={MUSTARD} strokeWidth={1} />
         <circle cx="218" cy="133" r="3.4" fill={LAV} strokeWidth={1} />
         <circle cx="227" cy="133" r="3.4" fill={OLIVE} strokeWidth={1} />
+        </g>
 
           </>
         )}

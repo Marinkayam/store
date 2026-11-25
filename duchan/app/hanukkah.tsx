@@ -49,13 +49,15 @@ const FLAME_IN = "#FBE3A0";
 const FLAGS = [BLUE, WHITE, BLUE_PALE];
 
 /** ארבעה נרות מימין, שמש באמצע, ארבעה משמאל. מדליקים מימין לשמאל. */
-const CANDLES_RTL = [194, 189, 184, 179, 167, 162, 157, 152];
+const CX = 185; // מרכז החנוכייה, בין הפרצוף לקיר הימני
+const CANDLES_RTL = [38, 29, 20, 11, -11, -20, -29, -38].map((d) => CX + d);
 
-function Flame({ x, y, delay }: { x: number; y: number; delay: number }) {
+function Flame({ x, y, delay, s = 1.3 }: { x: number; y: number; delay: number; s?: number }) {
+  const h = 6.5 * s, w = 2.6 * s;
   return (
     <g className="hk-flame" style={{ animationDelay: `${delay}s` }}>
-      <path d={`M${x} ${y - 6.5} C${x + 2.6} ${y - 3} ${x + 2.4} ${y} ${x} ${y} C${x - 2.4} ${y} ${x - 2.6} ${y - 3} ${x} ${y - 6.5}z`} fill={FLAME} strokeWidth={0.7} />
-      <ellipse cx={x} cy={y - 1.8} rx="0.9" ry="1.6" fill={FLAME_IN} stroke="none" />
+      <path d={`M${x} ${y - h} C${x + w} ${y - h * 0.46} ${x + w * 0.92} ${y} ${x} ${y} C${x - w * 0.92} ${y} ${x - w} ${y - h * 0.46} ${x} ${y - h}z`} fill={FLAME} strokeWidth={0.8} />
+      <ellipse cx={x} cy={y - h * 0.28} rx={0.9 * s} ry={1.6 * s} fill={FLAME_IN} stroke="none" />
     </g>
   );
 }
@@ -72,7 +74,7 @@ export function HanukkahStall({ empty = false }: { empty?: boolean }) {
   return (
     <g data-testid="hanukkah-stall" data-night={night} aria-hidden stroke={INK} strokeWidth={1.1} strokeLinejoin="round" strokeLinecap="round">
       <style>{`
-        .hs-flagset${empty ? "" : ", .hs-bag, .hs-crate-items"} { display: none; }
+        .hs-flagset${empty ? "" : ", .hs-bag, .hs-jar, .hs-crate-items"} { display: none; }
         .hk-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: hk-flicker 1.4s ease-in-out infinite; }
         .hk-dreidel { transform-box: fill-box; transform-origin: 50% 100%; animation: hk-spin 2.2s ease-in-out infinite; }
         @keyframes hk-flicker { 0%, 100% { transform: scale(1, 1) rotate(0deg); } 30% { transform: scale(.92, 1.08) rotate(-4deg); } 60% { transform: scale(1.05, .94) rotate(3deg); } }
@@ -94,22 +96,22 @@ export function HanukkahStall({ empty = false }: { empty?: boolean }) {
 
       {!empty && (
         <>
-          {/* חנוכייה על הדלפק */}
-          <path d="M165 140 L181 140 L178 134 L168 134 z" fill={BRASS} />
-          <line x1="173" y1="134" x2="173" y2="119" strokeWidth={1.6} />
-          <rect x="149" y="116.5" width="48" height="3" rx="1.5" fill={BRASS} />
-          {[152, 157, 162, 167, 179, 184, 189, 194].map((x) => (
-            <rect key={x} x={x - 2} y="113.5" width="4" height="3" rx="0.8" fill={BRASS} strokeWidth={0.9} />
+          {/* חנוכייה על הדלפק, במקום השקית והצנצנת */}
+          <path d={`M${CX - 11} 140 L${CX + 11} 140 L${CX + 7} 133 L${CX - 7} 133 z`} fill={BRASS} />
+          <line x1={CX} y1="133" x2={CX} y2="122.5" strokeWidth={2.2} />
+          <rect x={CX - 41} y="119" width="82" height="3.5" rx="1.75" fill={BRASS} />
+          {CANDLES_RTL.map((x) => (
+            <rect key={x} x={x - 3} y="115.5" width="6" height="3.5" rx="1" fill={BRASS} strokeWidth={0.9} />
           ))}
-          <rect x="170.5" y="106.5" width="5" height="3" rx="0.8" fill={BRASS} strokeWidth={0.9} />
-          <line x1="173" y1="109.5" x2="173" y2="116.5" strokeWidth={1.2} />
+          <line x1={CX} y1="119" x2={CX} y2="113" strokeWidth={1.6} />
+          <rect x={CX - 3} y="109.5" width="6" height="3.5" rx="1" fill={BRASS} strokeWidth={0.9} />
           {/* השמש, גבוה באמצע */}
-          <rect x="171.6" y="98.5" width="2.8" height="8" rx="0.6" fill={WHITE} strokeWidth={0.8} />
-          <Flame x={173} y={98} delay={0} />
+          <rect x={CX - 1.8} y="99.5" width="3.6" height="10" rx="0.8" fill={WHITE} strokeWidth={0.9} />
+          <Flame x={CX} y={99} delay={0} />
           {/* הנרות של הלילה */}
           {lit.map((x, i) => (
             <g key={x}>
-              <rect x={x - 1.4} y="105.5" width="2.8" height="8" rx="0.6" fill={i % 2 ? BLUE_PALE : WHITE} strokeWidth={0.8} />
+              <rect x={x - 1.8} y="105.5" width="3.6" height="10" rx="0.8" fill={i % 2 ? BLUE_PALE : WHITE} strokeWidth={0.9} />
               <Flame x={x} y={105} delay={0.15 + i * 0.17} />
             </g>
           ))}
@@ -125,6 +127,13 @@ export function HanukkahStall({ empty = false }: { empty?: boolean }) {
           </g>
         </>
       )}
+
+      {/* החתול מחזיק סופגנייה */}
+      <ellipse cx="288" cy="193" rx="8" ry="5.6" fill="#E3A75F" />
+      <path d="M282 191.5 Q288 187.5 294 191.5" fill="none" stroke={WHITE} strokeWidth={2} />
+      <circle cx="288" cy="189.2" r="1.8" fill="#C9403A" strokeWidth={0.7} />
+      <ellipse cx="281" cy="195.5" rx="2.6" ry="2" fill="#3B3734" stroke="none" />
+      <ellipse cx="295" cy="195.5" rx="2.6" ry="2" fill="#3B3734" stroke="none" />
     </g>
   );
 }
