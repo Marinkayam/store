@@ -35,6 +35,7 @@ import CategorySort from "./category-sort";
 import { defaultDropInput, dropProblem, dropShort, dropWhen, isUpcoming, israelInputToIso, toLocalInput } from "@/lib/drop";
 import { kupaCheck } from "../kupa/use-kupa";
 import ExplainerVideo from "../../explainer-video";
+import { storePath } from "@/lib/short-link";
 
 // מוצרים: CRUD + מדיה. מחיקה היא תמיד soft delete (שחזור 30 יום).
 // טיוטת עריכה נשמרת ב-localStorage לפי מזהה מוצר — טופס לא מתנקה עד שהשרת אישר.
@@ -207,6 +208,10 @@ export default function ProductsPage() {
   const [toast, setToast] = useState("");
   // המוצר הראשון נשמר עכשיו — הרגע שבו הדוכן מפסיק להיות ריק
   const [celebrate, setCelebrate] = useState(false);
+  /* "חדש אצלי בדוכן": אחרי מוצר חדש, הצעה לספר לחברים. מרינה, 11.2026
+     ("תתחיל הכל", סעיף 6): 21 דוכנים פתוחים לא העלו מוצר בשבועיים, ומוצר
+     חדש הוא סיבה טובה לשלוח שוב את הלינק. */
+  const [justAdded, setJustAdded] = useState<{ name: string; price: string } | null>(null);
 
   // הקלטה
   const [recOpen, setRecOpen] = useState(false);
@@ -339,9 +344,11 @@ export default function ProductsPage() {
   const [autoOpened, setAutoOpened] = useState(false);
   useEffect(() => {
     if (autoOpened || !store) return;
-    if (new URLSearchParams(window.location.search).get("new") !== "1") return;
+    const qs = new URLSearchParams(window.location.search);
+    if (qs.get("new") !== "1") return;
     setAutoOpened(true);
-    const fresh = { ...EMPTY_EDIT };
+    // &name= מרעיון בצעד "מוצר ראשון" (lib/sell-ideas.ts): השם כבר כתוב, ואפשר לשנות
+    const fresh = { ...EMPTY_EDIT, name: (qs.get("name") ?? "").trim().slice(0, 40) };
     editBase.current = fresh;
     setEdit(fresh);
     window.history.replaceState({}, "", "/dashboard/products");
@@ -796,6 +803,7 @@ export default function ProductsPage() {
       // הדוכן הופך לדבר אמיתי שאפשר לשלוח, ואומרים את זה בגדול ומיד.
       const isFirst = !edit.id && products.length === 0;
       if (isFirst) setCelebrate(true);
+      else if (!edit.id && store?.activated_at && !(edit.trackStock && edit.stock === 0)) setJustAdded({ name: edit.name.trim(), price: edit.price });
       else showToast(edit.trackStock && edit.stock === 0 ? "המוצר סומן כאזל" : edit.id ? "המוצר עודכן" : "המוצר נוסף לדוכן");
       setEdit(null);
       refresh();
@@ -2048,6 +2056,34 @@ export default function ProductsPage() {
         </div>
       )}
 
+      {justAdded && store && (
+        <div
+          role="status"
+          className="fixed bottom-24 inset-x-0 mx-auto max-w-sm px-gutter z-[90]"
+          data-testid="new-product-share"
+        >
+          <div className="bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[14px] font-bold leading-snug">המוצר נוסף לדוכן! לספר לחברים?</p>
+              <CloseX onClick={() => setJustAdded(null)} label="סגירה" testid="new-product-share-close" />
+            </div>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                `חדש אצלי בדוכן: ${justAdded.name}` +
+                  (parsePrice(justAdded.price) ? ` ב-₪${formatPrice(parsePrice(justAdded.price)!)}` : "") +
+                  `\n${typeof window !== "undefined" ? window.location.origin : ""}${storePath(store.slug)}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setJustAdded(null)}
+              className="block text-center bg-[var(--whatsapp)] text-white py-3 text-[14px] font-bold"
+              data-testid="new-product-share-wa"
+            >
+              לשלוח בוואטסאפ
+            </a>
+          </div>
+        </div>
+      )}
       {toast && (
         <div className="fixed bottom-24 right-1/2 translate-x-1/2 bg-[var(--ink)] text-white px-4 py-2.5 text-[13px] z-[90]">
           {toast}
