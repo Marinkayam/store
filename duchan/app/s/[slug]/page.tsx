@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getPublicStore } from "@/lib/store-public";
 import { themeCssVars, themeOrDefault } from "@/lib/themes";
 import { lookCssVars, lookFontHref } from "@/lib/looks";
-import { ACTIVATION_PRICE, DEAL_LABEL, FULL_PRICE, IS_LAUNCH } from "@/lib/pricing";
+import { ACTIVATION_PRICE, DONATION_NOTE } from "@/lib/pricing";
 import StoreView from "./store-view";
 import Icon from "@/app/icons";
 
@@ -117,7 +117,7 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
     `היי מרינה! 👋\n` +
     `הגעתי מהדוכן "${name}" (${slug}) באתר דוכן,\n` +
     `ואני רוצה גם דוכן מכירות כזה` +
-    (IS_LAUNCH ? ` (ראיתי שיש ${DEAL_LABEL}: רק ₪${ACTIVATION_PRICE}).` : ".");
+    ` (ראיתי שזה ₪${ACTIVATION_PRICE} פעם אחת${DONATION_NOTE ? `, ${DONATION_NOTE}` : ""}).`;
 
   // כרטיס לבן ואטום, בגופן ובצבעים של דוכן ולא של הדוכן הספציפי: זו הפנייה
   // שלנו, והיא צריכה להיקרא על כל רקע — גם על תמונה (מרינה: "לא רואים את
@@ -139,14 +139,15 @@ function OpenYourOwn({ slug, name }: { slug: string; name: string }) {
           דוכן משלכם מוכן בכמה דקות, מהטלפון.
         </p>
 
-        {IS_LAUNCH && (
+        {/* מרינה, 26.11.2026: "בלי מבצע חד פעמי ולציין שהכסף עובר כתרומה" */}
+        {(
           <p
             className="fx-shine text-[13px] font-bold mt-4 text-white px-3.5 py-2"
             style={{ background: "var(--wood)" }}
             data-testid="open-own-deal"
           >
             <span className="relative z-[3]">
-              <span className="fx-wiggle inline-block align-[-2px]"><Icon name="party" size={14} tone="none" /></span> {DEAL_LABEL}: רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן, במקום <bdi className="line-through">₪{FULL_PRICE}</bdi>!
+              רק <bdi>₪{ACTIVATION_PRICE}</bdi> לפתוח דוכן{DONATION_NOTE ? `, ${DONATION_NOTE}` : ""}
             </span>
           </p>
         )}

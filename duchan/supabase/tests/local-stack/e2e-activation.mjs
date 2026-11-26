@@ -99,8 +99,15 @@ check("מסך ההפעלה מציג מחיר חד-פעמי", shown.length >= 1 &
    חוזר לבד למחיר המלא, בלי קו חתוך. הבדיקה עוקבת אחרי אותו שעון —
    ב-30.7.2026 בערב היא נפלה בדיוק בגלל שהניחה שתמיד יש מבצע. */
 const launchUntil = new Date(process.env.NEXT_PUBLIC_LAUNCH_UNTIL ?? "2026-07-30T20:59:59Z");
+/* מרינה, 26.11.2026: "בלי מבצע חד פעמי ולציין שהכסף עובר כתרומה" */
+{
+  // innerText ולא textContent: האחרון כולל גם את נתוני הדף בתוך <script>
+  const body = await girl.evaluate(() => document.body.innerText);
+  check("בלי 'מבצע חד-פעמי' ובלי מחיר מלא חתוך", !body.includes("מבצע חד-פעמי") && shown.length === 1, priceText);
+  check("ליד המחיר כתוב שהכסף עובר כתרומה", (await girl.locator("[data-testid=activation-donation]").count()) === 1);
+}
 /* המבצע החד-פעמי (lib/pricing PROMO_PRICE, 3.10.2026) גובר על שעון ההשקה */
-const promo = ((await girl.textContent("body")) ?? "").includes("מבצע חד-פעמי");
+const promo = (await girl.evaluate(() => document.body.innerText)).includes("מבצע חד-פעמי");
 if (promo) {
   check("מבצע חד-פעמי: ₪20 לפתוח דוכן, ולצידו המחיר המלא חתוך",
     shown.length === 2 && expectedPrice === 20 && shown[1] > 20, priceText);

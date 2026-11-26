@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { markParentSent } from "@/app/dashboard/parent-nudge";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { useStore } from "../dashboard/use-store";
 import { AnchorTable, GetsList, LearnsTable, PaybackCard, SafetyList } from "../price/sections";
@@ -310,7 +311,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
     `היי! בניתי דוכן באינטרנט: "${store.display_name}" 🙂\n` +
     `אני רוצה לפתוח אותו כדי למכור דברים לחברים ולמשפחה.\n\n` +
     `כדי לפתוח אותו צריך תשלום אחד של ₪${price}` +
-    (isLaunch ? ` (${dealLabel}, במקום ₪${fullPrice})` : "") +
+    (TEAM_FUND.active ? `, וכל הכסף עובר כתרומה ל${TEAM_FUND.short}` : "") +
     `. בלי מנוי ובלי עמלות, והכסף מהמכירות נשאר אצלי.\n\n` +
     `כל ההסבר, ואיך משלמים בביט בשלושה צעדים:\n${parentUrl ?? priceUrl}`;
 
@@ -338,7 +339,11 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
           )}
           <span className="text-sm text-[var(--muted)]">פעם אחת</span>
         </div>
-        <p className="text-[12.5px] text-[var(--muted)] mt-1.5">בלי מנוי ובלי עמלה על מכירות</p>
+        {/* מרינה, 26.11.2026: "בלי מבצע חד פעמי ולציין שהכסף עובר כתרומה" */}
+        {TEAM_FUND.active && (
+          <p className="text-[13.5px] font-bold mt-1.5" data-testid="activation-donation">כל הכסף עובר כתרומה</p>
+        )}
+        <p className="text-[12.5px] text-[var(--muted)] mt-1">בלי מנוי ובלי עמלה על מכירות</p>
       </div>
 
       {/* מרינה, 11.2026: "ילדים לא מבינים שצריך לשלם בביט 20 שח כדי שהדוכן
@@ -373,6 +378,7 @@ export default function ActivateView({ price, fullPrice, isLaunch, dealLabel, bi
         </p>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(parentShareText)}`}
+          onClick={() => markParentSent(store.id)}
           data-testid="send-parent"
           className="mt-3 block text-center bg-[var(--whatsapp)] text-white py-3.5 text-[15px] font-bold"
         >

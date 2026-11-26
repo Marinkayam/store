@@ -108,6 +108,8 @@ export interface Product {
   created_at: string;
 }
 
+export type CancelReason = "changed" | "unpaid" | "sold_out" | "not_real" | "other";
+
 export interface OrderItem {
   id?: string; // מזהה המוצר. נוסף ב-0014 לחישוב "הכי נמכר"; חסר בהזמנות ותיקות.
   name: string;
@@ -149,6 +151,9 @@ export interface Order {
   discount?: number | string | null;
   subtotal?: number | string | null;
   wants_shipping: boolean | null;
+  /** 0073: למה בוטלה, ומתי הורידו ממנה כמות או מוצר */
+  cancel_reason?: CancelReason | null;
+  edited_at?: string | null;
   status: OrderStatus;
   created_at: string;
 }

@@ -118,10 +118,29 @@ try {
   await p.waitForSelector("[data-testid=first-step-publish][data-state=current]", { timeout: 15000 });
   check("'דוכן' ו'מוצר' מסומנים כנעשו", (await p.getAttribute("[data-testid=first-step-open]", "data-state")) === "done" &&
     (await p.getAttribute("[data-testid=first-step-product]", "data-state")) === "done");
-  check("כרטיס אחד, כפתור אחד: לפרסם", await p.locator("[data-testid=first-steps-publish]").isVisible() &&
-    (await p.locator("[data-testid=orders-empty] a.btn, [data-testid=orders-empty] button.btn").count()) === 1);
-  check("הכרטיס קצר — בלי פסקאות", ((await p.textContent("[data-testid=first-step-card]")) ?? "").length < 70,
+  /* מרינה, 11.2026 ("תתחיל הכל", סעיף 1): בצעד הפרסום הכפתור הראשי שולח
+     ישר להורים, וקישור קטן ל"ההורה לידי" (/activate). */
+  check("כרטיס אחד, כפתור ראשי אחד: לשלוח להורים", await p.locator("[data-testid=parent-nudge-send]").isVisible() &&
+    (await p.locator("[data-testid=orders-empty] a.btn, [data-testid=orders-empty] button.btn").count()) === 0 &&
+    ((await p.getAttribute("[data-testid=first-steps-publish]", "href")) ?? "") === "/activate");
+  check("הכרטיס קצר — בלי פסקאות", ((await p.textContent("[data-testid=first-step-card]")) ?? "").length < 110,
     String(((await p.textContent("[data-testid=first-step-card]")) ?? "").length));
+  {
+    const href = decodeURIComponent((await p.getAttribute("[data-testid=parent-nudge-send]", "href")) ?? "");
+    const slug = (await db.query("select slug from stores where id=$1", [st.id])).rows[0].slug;
+    check("ההודעה להורים: לינק לדוכן ולינק אישי להורה", href.includes(`/${slug}`) && href.includes("/parent/"), href.slice(0, 80));
+    await p.evaluate(() => { document.querySelector("[data-testid=parent-nudge-send]").removeAttribute("target"); });
+    await p.locator("[data-testid=parent-nudge-send]").evaluate((a) => a.addEventListener("click", (e) => e.preventDefault()));
+    await p.click("[data-testid=parent-nudge-send]");
+    check("אחרי שליחה: 'שלחתם להורים היום'", ((await p.textContent("[data-testid=parent-nudge-sent]")) ?? "").includes("היום"));
+    await p.evaluate((id) => localStorage.setItem("duchan-parent-sent-" + id, String(Date.now() - 3 * 864e5)), st.id);
+    await p.reload();
+    await p.waitForSelector("[data-testid=parent-nudge]");
+    await p.waitForTimeout(500);
+    check("אחרי 3 ימים: 'להזכיר להורים', עם הודעת תזכורת", ((await p.textContent("[data-testid=parent-nudge-send]")) ?? "").includes("להזכיר") &&
+      decodeURIComponent((await p.getAttribute("[data-testid=parent-nudge-send]", "href")) ?? "").includes("תזכורת קטנה"));
+    await p.evaluate((id) => localStorage.removeItem("duchan-parent-sent-" + id), st.id);
+  }
   check("סרטון ההסבר על הפתיחה יושב מתחת לכרטיס, לא בתוכו",
     (await p.locator("[data-testid=orders-empty] [data-testid=video-open]").count()) === 1 &&
     (await p.locator("[data-testid=first-step-card] [data-testid=video-open]").count()) === 0);
