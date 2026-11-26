@@ -125,6 +125,8 @@ await buyer.locator("[data-testid=order-pay-first], [data-testid=order-confirmed
 if (await buyer.locator("[data-testid=order-pay-first]").count())
   await buyer.click("button:has-text('שילמתי')");
 await buyer.waitForSelector("[data-testid=order-confirmed]", { timeout: 15000 });
+// מרינה, 11.2026 ("תתחיל הכל", סעיף 9): לשנות הזמנה בלי להזמין שוב
+check("אישור ההזמנה: 'לא צריך להזמין שוב'", ((await buyer.textContent("[data-testid=order-change-hint]")) ?? "").includes("לא צריך להזמין שוב"));
 await buyer.screenshot({ path: `${shots}/12b-confirmed.png` });
 const waUrl = await buyer
   .locator("[data-testid=order-confirmed] a:has-text('יצירת קשר')")

@@ -94,6 +94,7 @@ const DUCHAN = [
   "e2e-featured.mjs",
   "e2e-coupons.mjs",
   "e2e-orders-edit.mjs",
+  "e2e-grow.mjs",
   "e2e-badges.mjs",
   "e2e-kupa.mjs",
   "e2e-firststeps.mjs",

@@ -150,6 +150,18 @@ try {
   await p.reload();
   await p.waitForSelector("[data-testid=first-step-product][data-state=current]", { timeout: 15000 });
   check("בלי מוצר: הצעד הנוכחי הוא מוצר ראשון", await p.locator("[data-testid=first-steps-product]").isVisible());
+  /* מרינה, 11.2026 ("תתחיל הכל", סעיפים 4 ו-10): רעיונות למה למכור, העונתיים קודם */
+  {
+    const ideas = p.locator("[data-testid=sell-ideas]");
+    check("דוכן ריק: רעיונות למה למכור", await ideas.isVisible() && (await ideas.locator("[data-testid=sell-idea]").count()) >= 6);
+    const first = p.locator("[data-testid=sell-idea]").first();
+    const idea = ((await first.textContent()) ?? "").trim();
+    await first.click();
+    await p.waitForSelector("#ed-name", { timeout: 15000 });
+    check("לחיצה על רעיון פותחת מוצר חדש עם השם", (await p.inputValue("#ed-name")) === idea, idea);
+    await p.goto(`${BASE}/dashboard`);
+    await p.waitForSelector("[data-testid=first-step-product][data-state=current]", { timeout: 15000 });
+  }
   // מרינה: "להוסיף תמונה / להוסיף מוצר — איזה בלאגן. תחשוב כמו ילדה בת 9"
   await p.click("[data-testid=first-steps-product]");
   await p.waitForSelector("[data-testid=editor-photo]", { timeout: 15000 });

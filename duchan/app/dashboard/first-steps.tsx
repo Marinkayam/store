@@ -7,6 +7,8 @@ import Icon from "@/app/icons";
 import OrderAlerts from "./order-alerts";
 import ExplainerVideo from "../explainer-video";
 import ParentNudge from "./parent-nudge";
+import StatusImage from "./status-image";
+import { sellIdeas } from "@/lib/sell-ideas";
 
 /**
  * המסך הראשון אחרי פתיחת דוכן — כשעוד אין אף הזמנה.
@@ -88,9 +90,12 @@ export default function FirstSteps({
       title: "מוסיפים מוצר ראשון",
       line: "תמונה, שם ומחיר. לוקח דקה.",
       body: (
-        <a href="/dashboard/products?new=1" className="btn btn-primary w-full" data-testid="first-steps-product">
-          להוסיף מוצר ←
-        </a>
+        <div className="flex flex-col gap-4">
+          <a href="/dashboard/products?new=1" className="btn btn-primary w-full" data-testid="first-steps-product">
+            להוסיף מוצר ←
+          </a>
+          <Ideas />
+        </div>
       ),
     },
     /* מרינה, 11.2026 ("תתחיל הכל", סעיף 1): הדוכן כבר מוכן, ומה שחסר זה
@@ -104,6 +109,7 @@ export default function FirstSteps({
       title: "שולחים את הלינק לחברים",
       line: claimed && !published ? "התשלום בבדיקה. בינתיים אפשר כבר לשלוח." : "מי שמקבל את הלינק יכול להזמין.",
       body: (
+        <div className="flex flex-col gap-2.5">
         <div className="flex gap-2">
           <a
             href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
@@ -127,12 +133,21 @@ export default function FirstSteps({
             העתקת הלינק
           </button>
         </div>
+        {/* "תתחיל הכל", סעיף 5: תמונה עם המוצרים, לסטטוס */}
+        <StatusImage store={store} />
+        </div>
       ),
     },
     order: {
       title: "עכשיו מחכים להזמנה הראשונה. היא תופיע כאן!",
       line: "אפשר לשמור את הדוכן כאפליקציה ולקבל התראה על כל הזמנה.",
-      body: <OrderAlerts storeId={store.id} cta="לשמור במסך הבית ולהפעיל התראות" />,
+      body: (
+        <div className="flex flex-col gap-2.5">
+          <OrderAlerts storeId={store.id} cta="לשמור במסך הבית ולהפעיל התראות" />
+          {/* בזמן שמחכים להזמנה הראשונה: עוד דרך להגיע לאנשים */}
+          <StatusImage store={store} />
+        </div>
+      ),
     },
   };
   const now = card[current];
@@ -170,5 +185,40 @@ export default function FirstSteps({
           מתחת לכרטיס ולא בתוכו: הכרטיס נשאר משפט אחד וכפתור אחד. */}
       {current === "publish" && <ExplainerVideo which="open" />}
     </section>
+  );
+}
+
+/**
+ * רעיונות למה למכור, כשעוד אין מוצר. מרינה, 11.2026 ("תתחיל הכל", סעיפים 4
+ * ו-10): 31 דוכנים ריקים. לחיצה על רעיון פותחת מוצר חדש עם השם כבר כתוב.
+ * העונתיים קודם (lib/sell-ideas.ts).
+ */
+function Ideas() {
+  const [ideas, setIdeas] = useState<ReturnType<typeof sellIdeas> | null>(null);
+  // לפי התאריך בדפדפן, לא בבנייה
+  useEffect(() => setIdeas(sellIdeas()), []);
+  if (!ideas) return null;
+  const chip = (t: string) => (
+    <a
+      key={t}
+      href={`/dashboard/products?new=1&name=${encodeURIComponent(t)}`}
+      className="border border-[var(--line)] bg-[var(--canvas)] px-3 py-2 text-[13px] leading-tight"
+      data-testid="sell-idea"
+    >
+      {t}
+    </a>
+  );
+  return (
+    <div data-testid="sell-ideas" className="border-t border-[var(--sand)] pt-3.5">
+      <p className="text-[13px] font-bold">לא בטוחים מה למכור? רעיונות:</p>
+      {ideas.season && (
+        <>
+          <p className="text-[12px] text-[var(--muted)] mt-2.5 mb-1.5" data-testid="sell-ideas-season">{ideas.season}</p>
+          <div className="flex flex-wrap gap-1.5">{ideas.seasonal.map(chip)}</div>
+        </>
+      )}
+      <p className="text-[12px] text-[var(--muted)] mt-2.5 mb-1.5">כל השנה</p>
+      <div className="flex flex-wrap gap-1.5">{ideas.always.map(chip)}</div>
+    </div>
   );
 }

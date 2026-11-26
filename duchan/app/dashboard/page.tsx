@@ -8,6 +8,7 @@ import WhatsNew from "./whats-new";
 import InstallCard from "../install-card";
 import type { CancelReason, Order } from "@/lib/types";
 import StaleOrders, { isStale } from "./stale-orders";
+import MonthReport from "./month-report";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { kupaCheck } from "./kupa/use-kupa";
 import Icon from "@/app/icons";
@@ -399,6 +400,9 @@ export default function OrdersPage() {
           )}
         </section>
       )}
+
+      {/* החודש בדוכן: סיכום קטן, ולשלוח להורים */}
+      <MonthReport orders={orders} storeName={store.display_name} />
 
       {/* חיפוש — מופיע רק כשיש מספיק הזמנות בשביל שיהיה בו טעם */}
       {orders.length >= 5 && (

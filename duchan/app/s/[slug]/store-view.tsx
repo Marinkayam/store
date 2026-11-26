@@ -2003,6 +2003,12 @@ export default function StoreView({
           <p className="text-[13px] opacity-70 mt-2 leading-relaxed">
             בעלי הדוכן קיבלו את הפרטים ויחזרו אליכם לטלפון שהשארתם.
           </p>
+          {/* מרינה, 11.2026 ("תתחיל הכל", סעיף 9): הרבה קונים הזמינו שוב כדי
+              לתקן הזמנה, והמוכרים ביטלו את הקודמת. עכשיו המוכרים יכולים
+              להוריד מוצר מההזמנה (0073), אז אומרים את זה לקונים. */}
+          <p className="text-[12.5px] opacity-70 mt-1.5 leading-relaxed" data-testid="order-change-hint">
+            רוצים לשנות משהו? לא צריך להזמין שוב. כותבים לבעלי הדוכן, והם מעדכנים את ההזמנה.
+          </p>
           {payTarget?.kind === "link" && (
             <a
               href={payTarget.url}
