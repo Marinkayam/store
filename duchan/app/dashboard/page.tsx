@@ -6,7 +6,8 @@ import { displayPhone, normalizePhone } from "@/lib/phone";
 import { useStore, confettiBurst } from "./use-store";
 import WhatsNew from "./whats-new";
 import InstallCard from "../install-card";
-import type { Order } from "@/lib/types";
+import type { CancelReason, Order } from "@/lib/types";
+import StaleOrders, { isStale } from "./stale-orders";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { kupaCheck } from "./kupa/use-kupa";
 import Icon from "@/app/icons";
@@ -41,6 +42,23 @@ function orderWhen(iso: string): string {
 
 const PAY_LABEL: Record<string, string> = { bit: "ביט", paybox: "פייבוקס", cash: "מזומן" };
 
+/* למה מבטלים. מרינה, 11.2026: כמעט חצי מההזמנות בוטלו, ולא ידענו למה.
+   לחיצה אחת, בלי להקליד. "רוצים לשנות" פותח עריכה במקום לבטל. */
+const CANCEL_REASONS: { key: CancelReason; label: string }[] = [
+  { key: "changed", label: "רוצים לשנות משהו בהזמנה" },
+  { key: "unpaid", label: "לא שילמו" },
+  { key: "sold_out", label: "המוצר נגמר" },
+  { key: "not_real", label: "הזמנה לא אמיתית" },
+  { key: "other", label: "משהו אחר" },
+];
+const CANCEL_LABEL: Record<CancelReason, string> = {
+  changed: "שינוי בהזמנה",
+  unpaid: "לא שילמו",
+  sold_out: "המוצר נגמר",
+  not_real: "הזמנה לא אמיתית",
+  other: "סיבה אחרת",
+};
+
 type Filter = "all" | "sent" | "paid" | "delivered" | "cancelled";
 
 const FILTERS: { key: Filter; label: string }[] = [
@@ -65,6 +83,12 @@ export default function OrdersPage() {
   const [whoPhone, setWhoPhone] = useState("");
   // הסתרת הזמנה היא פעולה חד-כיוונית במסך, אז שואלים פעם אחת לפני
   const [confirmHide, setConfirmHide] = useState<string | null>(null);
+  // ביטול: קודם שואלים למה (שורה של סיבות בכרטיס)
+  const [cancelAskId, setCancelAskId] = useState<string | null>(null);
+  // עריכה: כמות חדשה לכל שורה, לפי הסדר בהזמנה
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editQty, setEditQty] = useState<number[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!store) return;
@@ -126,14 +150,41 @@ export default function OrdersPage() {
   }
 
   // ביטול דרך פונקציית DB — אם המלאי כבר נוכה ("שולם"), הוא חוזר אטומית
-  async function cancelOrder(o: Order) {
+  async function cancelOrder(o: Order, reason: CancelReason) {
     const supa = supabaseBrowser();
     const { error } = await supa.rpc("cancel_order", { p_order: o.id });
     if (error) {
       showToast("לא הצלחנו לבטל את ההזמנה. אפשר לנסות שוב");
       return;
     }
+    setCancelAskId(null);
+    // הסיבה היא תוספת: אם השמירה שלה נכשלת, הביטול עצמו כבר קרה
+    const { error: reasonError } = await supa.from("orders").update({ cancel_reason: reason }).eq("id", o.id);
+    if (reasonError) console.error("[orders] cancel_reason:", reasonError.message);
     showToast(o.status === "sent" ? "ההזמנה בוטלה" : "ההזמנה בוטלה והכמות חזרה למלאי");
+    refresh();
+  }
+
+  function openEdit(o: Order) {
+    setCancelAskId(null);
+    setEditId(o.id);
+    setEditQty(o.items.map((it) => it.qty));
+  }
+
+  /* עריכת הזמנה חדשה: רק להוריד כמות או מוצר (0073, edit_order_items).
+     השרת מחשב מחדש את הסכום ואת הקופון. */
+  async function saveEdit(o: Order) {
+    setEditSaving(true);
+    const supa = supabaseBrowser();
+    const { error } = await supa.rpc("edit_order_items", { p_order: o.id, p_qty: editQty });
+    setEditSaving(false);
+    if (error) {
+      console.error("[orders] edit:", error.message);
+      showToast("לא הצלחנו לשנות את ההזמנה. אפשר לנסות שוב");
+      return;
+    }
+    setEditId(null);
+    showToast("ההזמנה עודכנה. כדאי לשלוח לקונה את הסכום החדש");
     refresh();
   }
 
@@ -404,6 +455,15 @@ export default function OrdersPage() {
           <p className="text-center py-8 text-sm text-[var(--muted)]">אין הזמנות בסינון הזה.</p>
         )}
 
+        {/* הזמנות שמחכות כבר כמה ימים: "קיבלתם כסף?" בלחיצה אחת */}
+        {filter === "all" && !q && (
+          <StaleOrders
+            orders={orders.filter((o) => isStale(o))}
+            onPaid={(o) => markPaid(o)}
+            onUnpaid={(o) => cancelOrder(o, "unpaid")}
+          />
+        )}
+
         {/* תזכורת אחת לכל הרשימה, לא בכל כרטיס. ההחלטה "לארוז או לא" נשארת
             אצלה, אבל לא צריך לקרוא את אותו משפט עשר פעמים. */}
         {orders.some((o) => o.status === "sent") && (
@@ -442,12 +502,28 @@ export default function OrdersPage() {
                 <div className="text-[16px] font-bold leading-snug truncate">{o.buyer_name || (o.pii_purged_at ? "קונה" : "בלי שם")}</div>
                 <div className="text-[12px] text-[var(--muted)] mt-0.5">
                   <bdi>#{o.order_number}</bdi> · <bdi>{orderWhen(o.created_at)}</bdi>
+                  {o.edited_at && <span data-testid="order-edited"> · שונתה</span>}
                 </div>
+                {o.status === "cancelled" && o.cancel_reason && (
+                  <div className="text-[12px] text-[var(--muted)] mt-0.5" data-testid="order-cancel-reason">
+                    בוטלה: {CANCEL_LABEL[o.cancel_reason]}
+                  </div>
+                )}
               </div>
               <span className={`shrink-0 text-[11.5px] font-bold px-2 py-1 ${PILL[o.status].cls}`}>{PILL[o.status].label}</span>
             </header>
 
             {/* מה הזמינו — כמות, שם, צבע/מידה, ומחיר בצד */}
+            {editId === o.id ? (
+              <EditItems
+                order={o}
+                qty={editQty}
+                onChange={setEditQty}
+                saving={editSaving}
+                onSave={() => saveEdit(o)}
+                onCancel={() => setEditId(null)}
+              />
+            ) : (
             <ul className="border-t border-[var(--line)] px-4">
               {o.items.map((it, i) => {
                 const full = lineTotal(it.price, it.qty);
@@ -480,6 +556,14 @@ export default function OrdersPage() {
                 );
               })}
             </ul>
+            )}
+            {o.status === "sent" && editId !== o.id && (
+              <div className="px-4 pb-2 -mt-1">
+                <button onClick={() => openEdit(o)} className="text-[12px] underline text-[var(--muted)] min-h-9" data-testid="order-edit">
+                  לשנות כמות או להוריד מוצר
+                </button>
+              </div>
+            )}
 
             {o.buyer_note && (
               <p className="mx-4 mb-3 px-3 py-2 bg-[var(--sub)] text-[12.5px] leading-relaxed">
@@ -611,10 +695,38 @@ export default function OrdersPage() {
                   </button>
                 )}
                 <button
-                  onClick={() => cancelOrder(o)}
+                  onClick={() => {
+                    setEditId(null);
+                    setCancelAskId(cancelAskId === o.id ? null : o.id);
+                  }}
+                  aria-expanded={cancelAskId === o.id}
                   className="bg-white border border-[var(--danger-line)] text-[var(--danger)] py-2.5 min-h-11 px-3.5 text-[13px]"
+                  data-testid="order-cancel"
                 >
                   ביטול
+                </button>
+              </div>
+            )}
+            {cancelAskId === o.id && (o.status === "sent" || o.status === "paid") && (
+              <div className="mx-4 mb-4 border border-[var(--line)] bg-[var(--sub)] p-3" data-testid="cancel-reasons">
+                <p className="text-[13px] font-bold mb-2">למה מבטלים?</p>
+                <div className="flex flex-col gap-1.5">
+                  {CANCEL_REASONS.filter((r) => r.key !== "changed" || o.status === "sent").map((r) => (
+                    <button
+                      key={r.key}
+                      onClick={() => (r.key === "changed" ? openEdit(o) : cancelOrder(o, r.key))}
+                      className="bg-white border border-[var(--line)] text-right px-3 py-2.5 min-h-11 text-[13px]"
+                      data-testid={`cancel-${r.key}`}
+                    >
+                      {r.label}
+                      {r.key === "changed" && (
+                        <span className="block text-[11.5px] text-[var(--muted)] mt-0.5">אפשר להוריד מוצר או כמות בלי לבטל את כל ההזמנה</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setCancelAskId(null)} className="mt-2 text-[12px] underline text-[var(--muted)] min-h-9">
+                  לא לבטל
                 </button>
               </div>
             )}
@@ -720,5 +832,105 @@ function Missing({ missing, optional = false }: { missing: MissingItem[]; option
         </a>
       ))}
     </section>
+  );
+}
+
+/** עריכת הזמנה חדשה: מורידים כמות או מוצר. מבצע יורד רק בשלמותו. */
+function EditItems({
+  order,
+  qty,
+  onChange,
+  saving,
+  onSave,
+  onCancel,
+}: {
+  order: Order;
+  qty: number[];
+  onChange: (q: number[]) => void;
+  saving: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const set = (i: number, v: number) => onChange(qty.map((q, j) => (j === i ? v : q)));
+  const lines = order.items.map((it, i) =>
+    qty[i] === it.qty ? (it.line ?? lineTotal(it.price, it.qty)) : lineTotal(it.price, qty[i])
+  );
+  const sum = sumPrices(lines);
+  const empty = qty.every((q) => q === 0);
+  const same = qty.every((q, i) => q === order.items[i].qty);
+  return (
+    <div className="border-t border-[var(--line)] px-4 pt-3 pb-3.5" data-testid="order-edit-panel">
+      <p className="text-[12.5px] text-[var(--muted)] leading-relaxed mb-2">
+        אפשר רק להוריד. אם הקונה רוצה עוד, אפשר לבקש שיזמינו שוב.
+      </p>
+      <ul>
+        {order.items.map((it, i) => (
+          <li key={i} className="flex items-center gap-3 py-2.5 border-b border-[var(--sand)] last:border-b-0">
+            <div className="flex-1 min-w-0">
+              <div className={`text-[14px] font-medium leading-snug ${qty[i] === 0 ? "line-through text-[var(--faint)]" : ""}`}>{it.name}</div>
+              {(it.option || it.deal) && (
+                <div className="text-[12px] text-[var(--muted)] mt-0.5">
+                  {it.option}
+                  {it.option && it.deal ? " · " : ""}
+                  {it.deal && <>מבצע <bdi>{it.deal}</bdi></>}
+                </div>
+              )}
+            </div>
+            {it.deal ? (
+              /* חלק ממבצע זה כבר מחיר אחר, אז השורה יורדת או נשארת בשלמותה */
+              <button
+                onClick={() => set(i, qty[i] === 0 ? it.qty : 0)}
+                className="shrink-0 border border-[var(--line)] bg-white px-3 min-h-10 text-[12.5px]"
+              >
+                {qty[i] === 0 ? "להחזיר" : "להוריד"}
+              </button>
+            ) : (
+              <div className="shrink-0 flex items-center border border-[var(--line)] bg-white" data-testid="edit-stepper">
+                <button
+                  onClick={() => set(i, Math.max(0, qty[i] - 1))}
+                  disabled={qty[i] === 0}
+                  aria-label={`פחות ${it.name}`}
+                  className="w-10 h-10 text-[18px] disabled:opacity-30"
+                >
+                  −
+                </button>
+                <span className="w-7 text-center text-[14px] font-bold" aria-live="polite">{qty[i]}</span>
+                <button
+                  onClick={() => set(i, Math.min(it.qty, qty[i] + 1))}
+                  disabled={qty[i] >= it.qty}
+                  aria-label={`עוד ${it.name}`}
+                  className="w-10 h-10 text-[18px] disabled:opacity-30"
+                >
+                  +
+                </button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="flex justify-between items-baseline pt-3">
+        <span className="text-[13px] font-bold">סה"כ חדש</span>
+        <span className="text-[17px] font-bold" data-testid="edit-sum">₪{formatPrice(sum)}</span>
+      </div>
+      {order.coupon_code && !empty && (
+        <p className="text-[12px] text-[var(--muted)] mt-1">הקופון יחושב מחדש על הסכום החדש.</p>
+      )}
+      {empty && (
+        <p className="text-[12px] text-[var(--danger)] mt-1">כדי להוריד הכול, מבטלים את ההזמנה.</p>
+      )}
+      <div className="flex gap-2.5 mt-3">
+        <button
+          onClick={onSave}
+          disabled={empty || same || saving}
+          className="flex-1 bg-[var(--ink)] text-white min-h-11 text-[13px] font-bold disabled:opacity-40"
+          data-testid="edit-save"
+        >
+          {saving ? "שומרים…" : "לשמור את השינוי"}
+        </button>
+        <button onClick={onCancel} className="border border-[var(--line)] bg-white px-4 min-h-11 text-[13px]">
+          בלי שינוי
+        </button>
+      </div>
+    </div>
   );
 }

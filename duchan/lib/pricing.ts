@@ -59,7 +59,13 @@ export const PROMO_ACTIVE = PROMO_PRICE > 0 && PROMO_PRICE < FULL_PRICE;
  * נכנס להודעה להורה ונרשם בחמ"ל, ואין מצב שהמחיר משתנה באמצע התהליך.
  */
 export const ACTIVATION_PRICE = PROMO_ACTIVE ? PROMO_PRICE : launchActive() ? LAUNCH_PRICE : FULL_PRICE;
-export const IS_LAUNCH = ACTIVATION_PRICE < FULL_PRICE;
+/**
+ * האם להציג את המחיר כ"מבצע" (תווית, מחיר מלא חתוך, קונפטי).
+ * מרינה, 26.11.2026: "בלי מבצע חד פעמי ולציין שהכסף עובר כתרומה". ה-₪20
+ * הוא המחיר, לא הנחה: מציגים מחיר אחד, ולידו שהכסף הולך לתרומה (DONATION_NOTE).
+ * המחיר עצמו (ACTIVATION_PRICE) לא משתנה.
+ */
+export const IS_LAUNCH = false;
 
 /**
  * שם ההנחה, לכל המסכים: "מבצע חד-פעמי" או "מחיר השקה · עד 30.7.2026".
@@ -109,6 +115,8 @@ export const PAY_PAYBOX_URL = TEAM_FUND.active ? TEAM_FUND.payboxUrl : PAYBOX_ST
 /** שם הקבוצה כמו שהוא מופיע בפייבוקס */
 export const PAY_PAYBOX_GROUP = TEAM_FUND.active ? TEAM_FUND.payboxGroup : "הקמת דוכן";
 /** משפט אחד על היעד של הכסף, לכל המסכים. ריק כשאין משלחת. */
+/** חצי משפט לצד המחיר: "וכל הכסף עובר כתרומה". ריק כשאין משלחת. */
+export const DONATION_NOTE = TEAM_FUND.active ? "וכל הכסף עובר כתרומה" : "";
 export const FUND_LINE = TEAM_FUND.active
   ? `כל ה-₪${ACTIVATION_PRICE} הם תרומה למשלחת של ${TEAM_FUND.team}, שנוסעת לתחרות בפורטוגל.`
   : "";

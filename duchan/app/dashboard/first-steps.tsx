@@ -6,6 +6,7 @@ import type { Store } from "@/lib/types";
 import Icon from "@/app/icons";
 import OrderAlerts from "./order-alerts";
 import ExplainerVideo from "../explainer-video";
+import ParentNudge from "./parent-nudge";
 
 /**
  * המסך הראשון אחרי פתיחת דוכן — כשעוד אין אף הזמנה.
@@ -92,14 +93,12 @@ export default function FirstSteps({
         </a>
       ),
     },
+    /* מרינה, 11.2026 ("תתחיל הכל", סעיף 1): הדוכן כבר מוכן, ומה שחסר זה
+       ההורים. אז הכפתור הראשי שולח להם ישר מכאן, ובפעם הבאה מזכיר. */
     publish: {
-      title: <span data-testid="store-state-banner">עכשיו מפרסמים את הדוכן</span>,
-      line: "ככה החברים יוכלו להזמין.",
-      body: (
-        <a href="/activate" className="btn btn-primary w-full" data-testid="first-steps-publish">
-          לפרסם את הדוכן ←
-        </a>
-      ),
+      title: <span data-testid="store-state-banner">הדוכן מוכן! נשאר רק שההורים יאשרו</span>,
+      line: "שולחים להם את הדוכן ואת ההסבר.",
+      body: <ParentNudge store={store} products={products ?? 1} />,
     },
     share: {
       title: "שולחים את הלינק לחברים",
