@@ -9,6 +9,7 @@ import InstallCard from "../install-card";
 import type { CancelReason, Order } from "@/lib/types";
 import StaleOrders, { isStale } from "./stale-orders";
 import MonthReport from "./month-report";
+import WantedCard from "./wanted-card";
 import TikTokEntry from "./tiktok/entry";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { kupaCheck } from "./kupa/use-kupa";
@@ -404,6 +405,8 @@ export default function OrdersPage() {
 
       {/* החודש בדוכן: סיכום קטן, ולשלוח להורים */}
       <MonthReport orders={orders} storeName={store.display_name} />
+      {/* מוצרים שאזלו ואנשים ניסו לקנות (0075) */}
+      {store.activated_at && <WantedCard storeId={store.id} />}
       {store.activated_at && orders.length > 0 && (
         <div className="mx-gutter mt-4">
           <TikTokEntry />

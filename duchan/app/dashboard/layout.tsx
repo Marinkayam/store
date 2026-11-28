@@ -12,6 +12,7 @@ import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 import KupaCelebrate from "./kupa/celebrate";
 import LiveCelebration from "./live-celebration";
 import { HanukkahGarland } from "@/app/hanukkah";
+import { SeasonGarland } from "@/app/seasonal";
 
 // אייקונים משלנו ולא אימוג'י: אימוג'י נראה אחרת בכל מכשיר, ואז שורת
 // הניווט — הדבר שהילדה רואה בכל מסך — לא בשליטתנו.
@@ -85,6 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <KupaCelebrate />
       <div ref={scroller} data-scroll-root className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain pb-2">
         <HanukkahGarland />
+        <SeasonGarland />
         <StoreSwitcher />
         {children}
       </div>
