@@ -209,7 +209,7 @@ export default function CategoryBar({
             }}
           >
             {img ? (
-              <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={img} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
             ) : (
               <span className="absolute inset-0 flex items-center justify-center pb-5" style={{ fontSize: (grid ? cardGrid.h : d.h) * 0.36 }}>
                 {glyph ?? <Initial name={c} px={(grid ? cardGrid.h : d.h) * 0.5} />}
@@ -273,6 +273,8 @@ function Glyph({
       <img
         src={img}
         alt=""
+        loading="lazy"
+        decoding="async"
         className={`object-cover ${round ? "" : "s-r"}`}
         style={{ width: fill ? "100%" : px, height: fill ? "100%" : px, display: "block", ...shape }}
       />

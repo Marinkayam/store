@@ -10,6 +10,7 @@ import type { CancelReason, Order } from "@/lib/types";
 import StaleOrders, { isStale } from "./stale-orders";
 import MonthReport from "./month-report";
 import WantedCard from "./wanted-card";
+import WeekQuestPeek from "./week-quest-peek";
 import TikTokEntry from "./tiktok/entry";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { kupaCheck } from "./kupa/use-kupa";
@@ -405,6 +406,8 @@ export default function OrdersPage() {
 
       {/* החודש בדוכן: סיכום קטן, ולשלוח להורים */}
       <MonthReport orders={orders} storeName={store.display_name} />
+      {/* משימת השבוע מהמשחק, גם כאן (week-quest-peek.tsx) */}
+      {store.activated_at && <WeekQuestPeek storeId={store.id} />}
       {/* מוצרים שאזלו ואנשים ניסו לקנות (0075) */}
       {store.activated_at && <WantedCard storeId={store.id} />}
       {store.activated_at && orders.length > 0 && (
@@ -578,6 +581,11 @@ export default function OrdersPage() {
               </div>
             )}
 
+            {o.is_gift && (
+              <p className="mx-4 mb-2 px-3 py-2 bg-[var(--warn-bg)] text-[var(--warn-ink)] text-[12.5px] font-medium" data-testid="order-gift">
+                זו מתנה: לארוז יפה, ובלי מחיר בשקית
+              </p>
+            )}
             {o.buyer_note && (
               <p className="mx-4 mb-3 px-3 py-2 bg-[var(--sub)] text-[12.5px] leading-relaxed">
                 <span className="text-[var(--muted)]">הערה מהקונה: </span>{o.buyer_note}

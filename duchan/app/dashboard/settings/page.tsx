@@ -530,7 +530,22 @@ export default function SettingsPage() {
     }
     setStore({ ...store, status: next });
     await refreshStorePage(store.slug);
-    showToast(next === "paused" ? "הדוכן בהפסקה. מי שנכנס ללינק רואה 'הדוכן סגור כרגע'" : "הדוכן פתוח שוב 🎉");
+    showToast(next === "paused" ? "הדוכן בהפסקה. מי שנכנס ללינק רואה 'הדוכן סגור כרגע'" : "הדוכן פתוח שוב");
+  }
+
+  /* מצב חופשה (0076). מרינה, 11.2026 ("תתחיל הכל", סבב 4): הדוכן נשאר גלוי
+     עם המוצרים, ורק ההזמנה סגורה, עם "חוזרים ב-…". במקום "הפסקה" שסגרה
+     את כל הדוכן. */
+  async function saveAway(next: { away: boolean; away_until: string | null }) {
+    if (!store) return;
+    const { error } = await supabaseBrowser().from("stores").update(next).eq("id", store.id);
+    if (error) {
+      showToast("משהו השתבש, לנסות שוב");
+      return;
+    }
+    setStore({ ...store, ...next });
+    await refreshStorePage(store.slug);
+    showToast(next.away ? "הדוכן בחופשה. רואים את המוצרים, אבל אי אפשר להזמין" : "הדוכן פתוח שוב להזמנות");
   }
 
   if (loading) return <div className="p-6 text-sm text-[var(--muted)]">רגע…</div>;
@@ -620,31 +635,54 @@ export default function SettingsPage() {
         הדוכן הושבת על ידי הנהלת דוכן.
       </div>
     ) : (
-      <div className=" bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
+      store.status === "paused" ? (
+        /* הפסקה ישנה (status = paused): הדוכן סגור לגמרי. כפתור אחד לפתוח. */
+        <div className=" bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
+          <div className="text-[14px] font-bold">הדוכן בהפסקה</div>
+          <div className="text-[12px] text-[var(--muted)] leading-snug">מי שנכנס ללינק רואה &apos;הדוכן סגור כרגע&apos;. הכל נשמר.</div>
+          <button onClick={() => togglePause()} className="bg-[var(--ink)] text-white min-h-11 text-[13.5px] font-bold" data-testid="store-reopen">
+            לפתוח את הדוכן
+          </button>
+        </div>
+      ) : (
+      <div className=" bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5" data-testid="away-card">
         <div className="flex items-center gap-3">
         <span className="w-10 h-10 shrink-0 flex items-center justify-center text-[19px] bg-[var(--sand)]" aria-hidden>
-          <Icon name={store.status === "active" ? "shop" : "hourglass"} size={20} tone="var(--ink)" />
+          <Icon name={store.away ? "hourglass" : "shop"} size={20} tone="var(--ink)" />
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-[14px] font-bold">{store.status === "active" ? "הדוכן פתוח" : "הדוכן בהפסקה"}</div>
-          {/* הטוגל לבדו לא אמר שאפשר לחזור אחורה, וזה מה שגרם להיסוס:
-              צריך לכתוב במפורש שסגירה היא זמנית ושום דבר לא נמחק. */}
+          <div className="text-[14px] font-bold">{store.away ? "הדוכן בחופשה" : "הדוכן פתוח"}</div>
           <div className="text-[12px] text-[var(--muted)] leading-snug mt-0.5">
-            {store.status === "active"
-              ? "צריך הפסקה? סוגרים כאן, ופותחים שוב מתי שרוצים."
-              : "מי שנכנס ללינק רואה 'הדוכן סגור כרגע'. הכל נשמר, ולחיצה פותחת שוב."}
+            {store.away
+              ? "רואים את הדוכן ואת המוצרים, אבל אי אפשר להזמין. הכל נשמר."
+              : "מבחנים? חופש? אפשר לצאת לחופשה, והדוכן נשאר גלוי בלי הזמנות."}
           </div>
         </div>
         </div>
         <Choice
-          value={store.status === "active"}
-          onChange={() => togglePause()}
+          value={!store.away}
+          onChange={(open) => saveAway({ away: !open, away_until: open ? null : store.away_until ?? null })}
           on="פתוח להזמנות"
-          off="בהפסקה"
-          label="הדוכן פתוח או בהפסקה"
+          off="בחופשה"
+          label="הדוכן פתוח להזמנות או בחופשה"
           testid="store-open"
         />
+        {store.away && (
+          <label className="flex items-center justify-between gap-3 text-[13px]">
+            <span>חוזרים ב- <span className="text-[var(--muted)]">(לא חובה)</span></span>
+            <input
+              type="date"
+              value={store.away_until ?? ""}
+              min={new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" })}
+              onChange={(e) => saveAway({ away: true, away_until: e.target.value || null })}
+              className="border border-[var(--line)] px-2.5 py-2 text-[13px] bg-white"
+              data-testid="away-until"
+              aria-label="חוזרים בתאריך"
+            />
+          </label>
+        )}
       </div>
+      )
     );
 
   const bgLabel = bgPattern === "photo" ? "התמונה שלי" : bgPattern && isPatternKey(bgPattern) ? PATTERNS[bgPattern].label : "בלי רקע";

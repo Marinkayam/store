@@ -182,20 +182,23 @@ check("the product sheet tells the buyer how many are left",
   (await buyer.textContent("body")).includes("נשארו 2"),
   (await buyer.textContent("body")).match(/נשארו \d+ במלאי/)?.[0] ?? "—");
 
-/* ── שלב 7: מצב חופשה ← החנות סגורה ← חזרה ── */
+/* ── שלב 7: מצב חופשה (0076) ← הדוכן גלוי בלי הזמנות ← חזרה ──
+   מרינה, 11.2026: במקום "הפסקה" שסגרה את כל הדוכן, "בחופשה": רואים את
+   המוצרים, ורק ההזמנה סגורה. */
 await page.goto(`${BASE}/dashboard/settings`);
 await page.waitForSelector("text=הדוכן פתוח", { timeout: 20000 });
 await page.click("[data-testid=store-open-off]");
-await page.waitForSelector("text=הדוכן בהפסקה", { timeout: 15000 });
-await new Promise((r) => setTimeout(r, 400));
-const closedRes = await fetch(`${BASE}/s/${slug}`, { headers: { "Cache-Control": "no-cache" } });
-const closedHtml = await closedRes.text();
-check("paused store shows closed page to buyers",
-  closedHtml.includes("סגור") && !closedHtml.includes("סקוויש חד-קרן"));
+await page.waitForSelector("text=הדוכן בחופשה", { timeout: 15000 });
+await new Promise((r) => setTimeout(r, 600));
+const awayRes = await fetch(`${BASE}/s/${slug}`, { headers: { "Cache-Control": "no-cache" } });
+const awayHtml = await awayRes.text();
+check("store on vacation stays visible, with the vacation banner",
+  awayHtml.includes("הדוכן בחופשה") && awayHtml.includes("סקוויש חד-קרן"));
 await page.click("[data-testid=store-open-on]");
 await page.waitForSelector("text=הדוכן פתוח", { timeout: 15000 });
+await new Promise((r) => setTimeout(r, 600));
 check("store reopens",
-  (await db.query("select status from stores where id=$1", [seedStore.id])).rows[0].status === "active");
+  (await db.query("select away, status from stores where id=$1", [seedStore.id])).rows[0].away === false);
 
 /* ── שלב 8: קרון — גיבוי ל-storage ── */
 const cronRes = await fetch(`${BASE}/api/cron`, { headers: { Authorization: "Bearer test-cron-secret" } });
