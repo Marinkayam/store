@@ -701,6 +701,12 @@ export default function SettingsPage() {
   const groups: HubGroup[] = [{ title: "", rows: [rowShare, rowDesign, rowPayment] }];
   const more: HubGroup[] = [
     {
+      title: "השכונה",
+      rows: [
+        { key: "hood", icon: "pin", title: "השוק של השכונה", summary: "הדוכנים של השכנים, באישור ההורים", href: "/dashboard/hood", testid: "settings-hood-link" },
+      ],
+    },
+    {
       title: "מה רואים בדוכן",
       rows: [
         {

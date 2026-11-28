@@ -98,6 +98,7 @@ const DUCHAN = [
   "e2e-tiktok.mjs",
   "e2e-round3.mjs",
   "e2e-round4.mjs",
+  "e2e-hood.mjs",
   "e2e-badges.mjs",
   "e2e-kupa.mjs",
   "e2e-firststeps.mjs",
