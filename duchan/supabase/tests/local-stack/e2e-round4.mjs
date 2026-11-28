@@ -143,6 +143,32 @@ try {
   await buyer.goto(`${BASE}/s/${store.slug}?t=${Date.now()}`, { waitUntil: "networkidle" });
   const lazy = await buyer.evaluate(() => [...document.querySelectorAll(".grid img")].map((i) => i.loading));
   check("תמונות המוצרים: הראשונות מיד, השאר lazy", lazy.length === 0 || (lazy.slice(0, Math.min(6, lazy.length)).every((l) => l === "eager") && lazy.slice(6).every((l) => l === "lazy")), `${n} מוצרים עם תמונה · ${lazy.join(",").slice(0, 80)}`);
+
+  /* ── 7. "לקבל התראה על כל הזמנה" (alerts-nudge.tsx) ── */
+  {
+    await db.query("update store_push_subscriptions set disabled_at=now() where store_id=$1 and disabled_at is null", [store.id]);
+    await db.query("insert into orders (store_id, order_number, items, total, status, buyer_name) values ($1, 99990, '[{\"name\":\"x\",\"qty\":1,\"price\":5}]', 5, 'paid', 'בדיקת התראות') on conflict do nothing", [store.id]);
+    await me.evaluate((id) => localStorage.removeItem("duchan-alerts-later-" + id), store.id);
+    await me.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
+    const nudge = me.locator("[data-testid=alerts-nudge]");
+    const shown = await nudge.waitFor({ timeout: 15000 }).then(() => true).catch(() => false);
+    check("בלי מכשיר עם התראות ויש הזמנות: 'לקבל התראה על כל הזמנה'", shown);
+    if (shown) {
+      await me.click("[data-testid=alerts-nudge-later]");
+      await me.reload({ waitUntil: "networkidle" });
+      await me.waitForTimeout(1200);
+      check("'לא עכשיו' מסתיר", (await nudge.count()) === 0);
+    }
+    const admin = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+    await admin.goto(`${BASE}/login`);
+    await verifyPhone(admin, "0509990000");
+    await admin.waitForURL(/admin|dashboard|onboarding/, { timeout: 20000 });
+    await admin.goto(`${BASE}/admin`, { waitUntil: "networkidle" });
+    const ov = await admin.evaluate(async () => (await (await fetch("/api/admin/overview")).json()).stores ?? []);
+    const mine = ov.find((x) => x.id === store.id);
+    check("בחמ\"ל: לכל דוכן מסומן אם יש התראות", mine && mine.push === false, JSON.stringify({ push: mine?.push }));
+    await db.query("delete from orders where store_id=$1 and order_number=99990", [store.id]);
+  }
 } finally {
   await browser.close();
   await closeHelper();
