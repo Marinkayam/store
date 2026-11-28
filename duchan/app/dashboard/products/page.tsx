@@ -1412,6 +1412,8 @@ export default function ProductsPage() {
             <input id="ed-name" value={edit.name} maxLength={40} aria-label="שם המוצר" placeholder="למשל: סקוויש אבוקדו"
               onChange={(e) => setEdit((s) => s && { ...s, name: e.target.value })}
               className="w-full border border-[var(--line)] px-3 py-3 text-[15px] mb-4" />
+            {/* עזרה בתמחור: טווח מחירים של מוצרים דומים בדוכנים אחרים (/api/price-hint) */}
+            <PriceHint name={edit.name} />
 
             <div className="flex gap-3 mb-4">
               <div className="flex-1">
@@ -2126,5 +2128,35 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * "בדוכנים אחרים «סקוויש» עולה בדרך כלל ₪10–₪15". מרינה, 11.2026 ("תתחיל
+ * הכל", סבב 4 סעיף 3). טווח מצטבר בלבד, ורק כשיש מספיק דוכנים.
+ */
+function PriceHint({ name }: { name: string }) {
+  const [hint, setHint] = useState<{ word: string; low: number; high: number } | null>(null);
+  useEffect(() => {
+    const n = name.trim();
+    if (n.length < 3) {
+      setHint(null);
+      return;
+    }
+    const t = setTimeout(() => {
+      fetch(`/api/price-hint?name=${encodeURIComponent(n)}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : { hint: null }))
+        .then((d) => setHint(d.hint ?? null))
+        .catch(() => {});
+    }, 600);
+    return () => clearTimeout(t);
+  }, [name]);
+  if (!hint) return null;
+  return (
+    <p className="-mt-2.5 mb-4 text-[12.5px] text-[var(--muted)] leading-relaxed" data-testid="price-hint">
+      בדוכנים אחרים «{hint.word}» עולה בדרך כלל{" "}
+      <b className="text-[var(--ink)]">{hint.low === hint.high ? `₪${hint.low}` : `₪${hint.low}–₪${hint.high}`}</b>.
+      המחיר אצלכם, ואתם מחליטים.
+    </p>
   );
 }

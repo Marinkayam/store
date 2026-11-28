@@ -1,7 +1,9 @@
 import "server-only";
 import webpush from "web-push";
 import { supabaseAdmin } from "./supabase/admin";
-import { notifyTelegram } from "./telegram";
+import { notifyTelegram, telegramConfigured } from "./telegram";
+import { sendSms } from "./sms";
+import { normalizePhone } from "./phone";
 import { SITE_URL, absolute } from "./site";
 
 /**
@@ -145,6 +147,18 @@ async function pushAll(a: Alert): Promise<number> {
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** התראות שיוצאות גם בסמס, כשהפוש לא הגיע לאף מכשיר: רק כסף שמחכה */
+const SMS_KINDS: AlertKind[] = ["payment_claimed", "payment_reminder"];
+
+async function adminPhones(): Promise<string[]> {
+  const env = (process.env.ADMIN_PHONES ?? "")
+    .split(/[,\s]+/)
+    .map((p) => normalizePhone(p))
+    .filter((p): p is string => !!p);
+  const { data } = await supabaseAdmin().from("admin_phones").select("phone");
+  return [...new Set([...env, ...((data ?? []).map((r) => r.phone as string))])];
+}
+
 /**
  * התראה למנהלת. מחזיר כמה מכשירים קיבלו, או duplicate כשהאירוע כבר נשלח.
  */
@@ -168,6 +182,16 @@ export async function notifyAdmins(a: Alert): Promise<{ sent: number; duplicate?
       ),
     ]);
     if (!error) await db.from("admin_alerts").update({ sent_to: sent }).eq("kind", a.kind).eq("ref", a.ref);
+
+    /* גיבוי בסמס. מרינה, 11.2026: הפוש לטלפון נכבה ב-9.10 (המנוי בוטל), ומאז
+       כל תזכורת "מחכים לאישור תשלום" יצאה לאפס מכשירים, ושמונה דוכנים חיכו.
+       כשהפוש לא הגיע לאף מכשיר ואין טלגרם, התראות על כסף שמחכה יוצאות בסמס
+       למספרי המנהלת. אחת לכל (kind, ref), כמו הפוש. */
+    if (sent === 0 && !telegramConfigured() && SMS_KINDS.includes(a.kind)) {
+      const phones = await adminPhones();
+      const msg = `דוכן: ${a.title.replace(/[^\p{L}\p{N}\s.,:!?₪()\-]/gu, "").trim()}${a.body ? `. ${a.body}` : ""} ${absolute(a.url ?? "/admin")}`.slice(0, 300);
+      await Promise.all(phones.map((p) => sendSms(p, msg).catch(() => null)));
+    }
     return { sent };
   } catch (e) {
     console.error("[push] notify failed:", e instanceof Error ? e.message : e);

@@ -8,6 +8,7 @@ import { sumPrices } from "@/lib/money";
 import { applyDeals, parseDeal } from "@/lib/deals";
 import { stockOfOption } from "@/lib/option-stock";
 import { isSource } from "@/lib/stats";
+import { isAway, awayLine } from "@/lib/away";
 import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
 import { findCoupon } from "@/lib/coupons-server";
 import { countdown, dropTime } from "@/lib/drop";
@@ -25,6 +26,8 @@ interface Body {
   buyerName?: string;
   /** מאיפה הגיע הקונה (lib/stats.ts), 0074 */
   source?: string;
+  /** "זו מתנה" (0076) */
+  isGift?: boolean;
   /** true = משלוח (ואז כתובת ועיר חובה), false = מסירה אישית */
   wantsShipping?: boolean;
   shipAddress?: string;
@@ -50,7 +53,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, shipDetails, payMethod, couponCode, source } = body;
+  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, shipDetails, payMethod, couponCode, source, isGift } = body;
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
@@ -77,6 +80,14 @@ export async function POST(req: NextRequest) {
   // חנות שלא הופעלה לא מקבלת הזמנות, גם אם מישהו הגיע ללינק
   if (!store || !store.activated_at || store.status !== "active") {
     return NextResponse.json({ error: "הדוכן סגור כרגע" }, { status: 404 });
+  }
+
+  /* מצב חופשה (0076): קריאה נפרדת, כדי שדאטהבייס בלי העמודות לא יפיל הזמנות */
+  {
+    const { data: aw } = await db.from("stores").select("away, away_until").eq("id", store.id).maybeSingle();
+    if (isAway(aw as { away?: boolean | null; away_until?: string | null } | null)) {
+      return NextResponse.json({ error: `הדוכן בחופשה (${awayLine(aw as { away_until?: string | null })}). אפשר להזמין כשיחזרו` }, { status: 409 });
+    }
   }
 
   // נשמר על ההזמנה עצמה (p_ip_hash) לצורך מעקב, לא לשם הגבלת קצב —
@@ -353,11 +364,16 @@ export async function POST(req: NextRequest) {
 
   /* מאיפה הגיעה ההזמנה (0074): טיקטוק, אינסטגרם, וואטסאפ... רק הקטגוריה.
      נפרד מ-place_order, כדי שדאטהבייס בלי העמודה לא יפיל הזמנה. */
-  if (isSource(source)) {
-    after(async () => {
-      const { error } = await db.from("orders").update({ source }).eq("store_id", store.id).eq("order_number", placed);
-      if (error) console.error("[orders] source:", error.message);
-    });
+  {
+    const extra: Record<string, unknown> = {};
+    if (isSource(source)) extra.source = source;
+    if (isGift === true) extra.is_gift = true; // 0076
+    if (Object.keys(extra).length) {
+      after(async () => {
+        const { error } = await db.from("orders").update(extra).eq("store_id", store.id).eq("order_number", placed);
+        if (error) console.error("[orders] source/gift:", error.message);
+      });
+    }
   }
   after(() =>
     notifyStoreOrder({

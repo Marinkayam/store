@@ -23,6 +23,7 @@ import DropCountdown from "@/app/drop-countdown";
 import MysteryBag from "@/app/mystery-bag";
 import { detectSource, type Source } from "@/lib/stats";
 import { confettiBurst } from "@/app/confetti";
+import { isAway, awayLine } from "@/lib/away";
 import { HanukkahGarland } from "@/app/hanukkah";
 import { SeasonGarland } from "@/app/seasonal";
 
@@ -42,7 +43,7 @@ export default function StoreView({
   products,
   bestSellerId,
   soldIds,
-  preview = false,
+  preview: previewProp = false,
   hasCoupons = false,
   buyerConfetti = false,
   footer,
@@ -62,6 +63,10 @@ export default function StoreView({
    *  הדוכן: מחוץ לה, תמונת הרקע הקבועה נצבעת מעליו ומעלימה אותו. */
   footer?: ReactNode;
 }) {
+  /* מצב חופשה (0076): הדוכן גלוי, אבל לא מקבל הזמנות. מבחינת ההזמנה זה כמו
+     תצוגה מקדימה, עם רצועה משלו ("בחופשה, חוזרים ב-…"). */
+  const away = isAway(store);
+  const preview = previewProp || away;
   const [cart, setCart] = useState<CartLine[]>([]);
   /* הסל נשמר בטלפון, לכל דוכן בנפרד. לקוחה, 11.2026: "למה אני מכניסה לסל
      דברים, יוצאת, וזה לא שומר לי". נשמר שבוע; מוצר שכבר לא בדוכן נופל,
@@ -104,6 +109,10 @@ export default function StoreView({
   const [picks, setPicks] = useState<(string | null)[]>([]);
   const [orderOpen, setOrderOpen] = useState(false);
   const [note, setNote] = useState("");
+  /* "זו מתנה" (0076): בעלי הדוכן אורזים יפה ובלי מחיר. הברכה נכנסת להערה,
+     כדי שתימחק עם שאר פרטי הקונה בזמן (0071). */
+  const [gift, setGift] = useState(false);
+  const [giftNote, setGiftNote] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
   const [buyerName, setBuyerName] = useState("");
   /* כתובת מובנית (0046): עיר, רחוב, בניין/בית פרטי — ולבניין גם
@@ -678,7 +687,8 @@ export default function StoreView({
         body: JSON.stringify({
           slug: store.slug,
           items: cart.map((l) => ({ productId: l.id, qty: l.qty, option: l.option })),
-          note: note.trim() || undefined,
+          note: [note.trim(), gift && giftNote.trim() ? `ברכה למתנה: ${giftNote.trim()}` : ""].filter(Boolean).join(" · ").slice(0, 200) || undefined,
+          isGift: gift || undefined,
           buyerPhone: buyerPhone.trim(),
           buyerName: buyerName.trim(),
           wantsShipping: store.ships ? wantsShipping : false,
@@ -914,9 +924,12 @@ export default function StoreView({
                       </span>
                     )}
                     {vid ? (
-                      <video src={vid} poster={poster ?? undefined} muted loop playsInline className="w-full h-full object-cover" />
+                      /* דוכן גדול: רק מה שבמסך נטען מיד. מרינה, 11.2026 ("תתחיל הכל",
+                         סבב 4 סעיף 5): בדוכן של 238 מוצרים נטענו 240 תמונות (51MB) בבת
+                         אחת, וזה לקח כחצי דקה ברשת של טלפון. */
+                      <video src={vid} poster={poster ?? undefined} muted loop playsInline preload={i < 4 ? "metadata" : "none"} className="w-full h-full object-cover" />
                     ) : img ? (
-                      <img src={img} alt={p.name} className="w-full h-full object-cover" />
+                      <img src={img} alt={p.name} loading={i < 6 ? "eager" : "lazy"} decoding="async" className="w-full h-full object-cover" />
                     ) : p.is_mystery ? (
                       <MysteryBag className="w-24 h-24" />
                     ) : (
@@ -1031,7 +1044,12 @@ export default function StoreView({
 
       {/* תצוגה מקדימה — הדוכן בנוי ונראה, אבל עוד לא נפתח להזמנות.
           הרצועה מחוץ לערכת הנושא בכוונה: זו הודעת מערכת, לא חלק מהחנות. */}
-      {preview && (
+      {away && (
+        <div data-testid="away-banner" className="bg-[var(--warn-bg)] text-[var(--warn-ink)] border-b border-[var(--warn-line)] px-3 py-2.5 text-center text-[13px] leading-snug" dir="rtl">
+          <b>הדוכן בחופשה</b> · {awayLine(store)}. אפשר להסתכל על המוצרים, ולהזמין כשנחזור.
+        </div>
+      )}
+      {previewProp && (
         <div data-testid="preview-banner" className="bg-[var(--warn-bg)] text-[var(--warn-ink)] border-b border-[var(--warn-line)]" dir="rtl">
           {owner ? (
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
@@ -1502,7 +1520,7 @@ export default function StoreView({
             {/* בתצוגה מקדימה אומרים את זה על הכפתור עצמו, ולא נותנים להוסיף
                 לסל ואז לחסום — חברה שבחרה מוצר ונתקעת חושבת שהחנות שבורה. */}
             {!canAdd && (preview
-              ? "הדוכן עוד לא נפתח להזמנות"
+              ? away ? `הדוכן בחופשה · ${awayLine(store)}` : "הדוכן עוד לא נפתח להזמנות"
               : locked(current)
                 ? <><Icon name="lock" size={16} tone="none" className="inline-block align-[-3px] me-1" />עוד לא נפתח</>
                 : maxQty(current) === 0
@@ -1846,6 +1864,23 @@ export default function StoreView({
                   className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
                 />
               </label>
+              <label className="flex items-center gap-2.5 text-[14px] min-h-11" data-testid="gift-toggle">
+                <input type="checkbox" checked={gift} onChange={(e) => setGift(e.target.checked)} className="w-5 h-5" />
+                זו מתנה <span className="text-[12px] opacity-70">(יארזו יפה, בלי מחיר)</span>
+              </label>
+              {gift && (
+                <label className="block">
+                  <span className="block text-[11.5px] opacity-75 mb-1.5">ברכה קצרה (לא חובה)</span>
+                  <input
+                    value={giftNote}
+                    onChange={(e) => setGiftNote(e.target.value)}
+                    placeholder="למשל: מזל טוב, נועה!"
+                    maxLength={80}
+                    className="w-full border-[1.5px] border-black/15 bg-transparent px-3 py-3 text-[14px]"
+                    data-testid="gift-note"
+                  />
+                </label>
+              )}
             </div>
           </section>
           {(paySummary || payTarget || willHavePayPhone) && (

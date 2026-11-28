@@ -53,6 +53,8 @@ const STORE_FULL = `${STORE_CATS}, featured_title, show_sold_out`;
 /* 0070: העיר כמזהה מרשימת היישובים. אם המיגרציה עוד לא רצה נופלים ל-FULL,
    ו-publicCityName מציג את הטקסט הישן רק אם הוא שם של יישוב. */
 const STORE_CITY = `${STORE_FULL}, city_id`;
+/* 0076: מצב חופשה. אם המיגרציה עוד לא רצה, נופלים ל-CITY */
+const STORE_AWAY = `${STORE_CITY}, away, away_until`;
 
 const PRODUCT_BASE =
   "id, name, description, price, image_key, video_key, poster_key, track_stock, stock, sort_order, created_at";
@@ -87,7 +89,7 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
   // מהמלא לבסיס, שכבה אחרי שכבה: עמודה שעוד לא קיימת מורידה רק את מה
   // שנוסף אחריה, לא את כל מה שנוסף מאז ומעולם
   let store: unknown = null;
-  for (const cols of [STORE_CITY, STORE_FULL, STORE_CATS, STORE_LOOKS, STORE_PREV, STORE_BASE]) {
+  for (const cols of [STORE_AWAY, STORE_CITY, STORE_FULL, STORE_CATS, STORE_LOOKS, STORE_PREV, STORE_BASE]) {
     const { data, error } = await readStore(cols);
     if (!error) {
       store = data;
@@ -210,6 +212,8 @@ export const getPublicStore = cache(async (slug: string): Promise<PublicStoreRes
     category_meta: null,
     featured_title: null,
     show_sold_out: null,
+    away: null,
+    away_until: null,
     ...rest,
     /* העיר בדוכן הציבורי היא תמיד שם מרשימת היישובים, אף פעם לא הטקסט
        החופשי כמו שהוא: בשדה הישן הצטברו גם מספר טלפון וקישור (0070). */

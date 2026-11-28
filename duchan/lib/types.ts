@@ -78,6 +78,9 @@ export interface Store {
   /** 0053: כותרת חלק המומלצים, והאם להציג מוצרים שאזלו (null = להסתיר) */
   featured_title?: string | null;
   show_sold_out?: boolean | null;
+  /** 0076: מצב חופשה (lib/away.ts) */
+  away?: boolean | null;
+  away_until?: string | null;
   created_at: string;
 }
 
@@ -154,6 +157,8 @@ export interface Order {
   /** 0073: למה בוטלה, ומתי הורידו ממנה כמות או מוצר */
   cancel_reason?: CancelReason | null;
   edited_at?: string | null;
+  /** 0076: הקונה סימן "זו מתנה" */
+  is_gift?: boolean | null;
   status: OrderStatus;
   created_at: string;
 }
@@ -190,6 +195,9 @@ export interface PublicStore {
   category_meta?: unknown;
   featured_title?: string | null;
   show_sold_out?: boolean | null;
+  /** 0076: מצב חופשה (lib/away.ts) */
+  away?: boolean | null;
+  away_until?: string | null;
   about: string | null;
   city: string | null;
   ships: boolean;
