@@ -20,6 +20,7 @@ import Chevron from "@/app/chevron";
 import { storePath } from "@/lib/short-link";
 import FirstSteps from "./first-steps";
 import SafetyTips from "./safety-tips";
+import HoodEntry from "./hood-entry";
 import WhatsNewBanner from "./whats-new-banner";
 import StatsPeek from "./stats-peek";
 
@@ -411,6 +412,8 @@ export default function OrdersPage() {
       {/* התראה על כל הזמנה, למי שעוד אין לו (alerts-nudge.tsx) */}
       {store.activated_at && orders.length > 0 && <AlertsNudge storeId={store.id} />}
       {/* משימת השבוע מהמשחק, גם כאן (week-quest-peek.tsx) */}
+      {/* השוק של השכונה (0077, hood-entry.tsx) */}
+      {store.activated_at && <HoodEntry storeId={store.id} />}
       {store.activated_at && <WeekQuestPeek storeId={store.id} />}
       {/* מוצרים שאזלו ואנשים ניסו לקנות (0075) */}
       {store.activated_at && <WantedCard storeId={store.id} />}
