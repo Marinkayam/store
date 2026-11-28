@@ -54,3 +54,16 @@ export function sellIdeas(now: Date = new Date()): SellIdeas {
   const s = SEASONS.find((x) => md >= x.from && md < x.to);
   return s ? { season: s.name, seasonal: s.ideas, always: ALWAYS } : { season: null, seasonal: [], always: ALWAYS };
 }
+
+/** רעיונות לחג מסוים, לספלאש של החג (app/holiday-splash.tsx) */
+export function holidayIdeas(key: "hanukkah" | "tubishvat" | "purim" | "pesach" | "atzmaut" | "roshhashana"): string[] {
+  const by: Record<string, string[]> = {
+    hanukkah: HANUKKAH_IDEAS,
+    tubishvat: SEASONS[0].ideas,
+    purim: SEASONS[1].ideas,
+    pesach: SEASONS[2].ideas,
+    atzmaut: ["דגלים מקושטים", "צמידים בכחול-לבן", "קישוטים לחג"],
+    roshhashana: SEASONS[6].ideas,
+  };
+  return by[key] ?? [];
+}

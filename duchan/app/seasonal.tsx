@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 export type Season = "tubishvat" | "purim" | "pesach" | "atzmaut" | "roshhashana";
 
 /** היום של החג (ט״ו בשבט, פורים, פסח א׳, יום העצמאות, ראש השנה א׳) */
-const DATES: Record<Season, string[]> = {
+export const DATES: Record<Season, string[]> = {
   tubishvat: ["2027-01-23", "2028-02-12", "2029-01-31", "2030-01-19"],
   purim: ["2027-03-23", "2028-03-12", "2029-03-01", "2030-03-19"],
   pesach: ["2027-04-22", "2028-04-11", "2029-03-31", "2030-04-18"],
@@ -59,7 +59,7 @@ export function useSeason(): Season | null {
 
 const INK = "#4A3B2F";
 const WHITE = "#FFFFFF";
-const FLAGS: Record<Season, string[]> = {
+export const FLAGS: Record<Season, string[]> = {
   tubishvat: ["#8BB174", "#CFE3B8", "#F4C7D3"],
   purim: ["#E58FB0", "#F2C94C", "#B39DDB", "#7FC8C2"],
   pesach: ["#F2D27A", "#FFFFFF", "#B9D98A"],
@@ -143,8 +143,9 @@ function Counter({ season }: { season: Season }) {
 }
 
 /** שכבת החג לאיור הדוכן (app/home-stall.tsx). אותן קואורדינטות. */
-export function SeasonStall({ empty = false }: { empty?: boolean }) {
-  const season = useSeason();
+export function SeasonStall({ empty = false, season: forced }: { empty?: boolean; season?: Season }) {
+  const auto = useSeason();
+  const season = forced ?? auto;
   if (!season) return null;
   const hidesBag = season !== "tubishvat";
   return (

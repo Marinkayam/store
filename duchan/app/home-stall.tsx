@@ -42,6 +42,7 @@ export default function HomeStall({
   className = "",
   celebrate = false,
   empty = false,
+  holiday,
 }: {
   name?: string;
   className?: string;
@@ -49,6 +50,8 @@ export default function HomeStall({
   celebrate?: boolean;
   /** דוכן ריק — בלי מוצרים, עם שלט "?" מתנדנד וכדור אבק מתגלגל (דף 404) */
   empty?: boolean;
+  /** קישוט חג מאולץ, בלי קשר לתאריך (הספלאש של החג, app/dashboard/holiday-splash.tsx) */
+  holiday?: { night?: number; season?: import("./seasonal").Season };
 }) {
   // השלט גדל עם השם, והגופן קטן — "הסקווישים של נועה" נכנס שלם ולא נחתך
   const label = name.length > 22 ? name.slice(0, 21) + "…" : name;
@@ -257,9 +260,9 @@ export default function HomeStall({
       </g>
 
       {/* חנוכה: נדלק לבד בימי החג (app/hanukkah.tsx) */}
-      <HanukkahStall empty={empty} />
+      <HanukkahStall empty={empty} night={holiday?.night} />
       {/* שאר החגים: ט״ו בשבט, פורים, פסח, יום העצמאות, ראש השנה (app/seasonal.tsx) */}
-      <SeasonStall empty={empty} />
+      <SeasonStall empty={empty} season={holiday?.season} />
 
       {empty && (
         <g className="hs-roll" aria-hidden>
