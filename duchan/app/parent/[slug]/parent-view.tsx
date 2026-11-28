@@ -1,5 +1,6 @@
 "use client";
 
+import { SafetyTipsForParents } from "@/app/dashboard/safety-tips";
 import { useState } from "react";
 import HomeStall from "@/app/home-stall";
 import Icon, { type IconName } from "@/app/icons";
@@ -179,6 +180,7 @@ export default function ParentView(p: {
       <section className="mt-9">
         <h2 className="text-[18px] font-black mb-3">בטיחות</h2>
         <SafetyList />
+        <SafetyTipsForParents />
       </section>
 
       {/* ── איך משלמים ── */}

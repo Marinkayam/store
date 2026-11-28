@@ -19,6 +19,7 @@ import Icon from "@/app/icons";
 import Chevron from "@/app/chevron";
 import { storePath } from "@/lib/short-link";
 import FirstSteps from "./first-steps";
+import SafetyTips from "./safety-tips";
 import WhatsNewBanner from "./whats-new-banner";
 import StatsPeek from "./stats-peek";
 
@@ -486,9 +487,7 @@ export default function OrdersPage() {
         {/* תזכורת אחת לכל הרשימה, לא בכל כרטיס. ההחלטה "לארוז או לא" נשארת
             אצלה, אבל לא צריך לקרוא את אותו משפט עשר פעמים. */}
         {orders.some((o) => o.status === "sent") && (
-          <p className="text-[12.5px] text-[var(--muted)] leading-relaxed -mb-1" data-testid="orders-check-note">
-            לפני שמכינים הזמנה, כדאי לוודא עם הקונה שזה אמיתי.
-          </p>
+          <SafetyTips storeId={store.id} />
         )}
 
         {filtered.map((o) => {
