@@ -2081,6 +2081,9 @@ export default function ProductsPage() {
             >
               לשלוח בוואטסאפ
             </a>
+            <a href="/dashboard/tiktok" className="text-center text-[13px] underline min-h-10 flex items-center justify-center" data-testid="new-product-tiktok">
+              או לטיקטוק ולאינסטגרם
+            </a>
           </div>
         </div>
       )}

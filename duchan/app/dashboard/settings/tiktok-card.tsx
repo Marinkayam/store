@@ -5,7 +5,7 @@ import type { Store } from "@/lib/types";
 import { shortStoreLink } from "@/lib/short-link";
 
 /**
- * 🎵 טיקטוק — "רוב הקהל בטיקטוק".
+ * טיקטוק. "רוב הקהל בטיקטוק".
  *
  * מה באמת מותר שם (נבדק 10/2026):
  *   • לינק לחיץ בביו — רק מגיל 18, ורק עם 1,000 עוקבים או חשבון עסקי.
@@ -19,7 +19,7 @@ import { shortStoreLink } from "@/lib/short-link";
 const IDEAS = [
   {
     key: "pack",
-    label: "📦 אורזים הזמנה",
+    label: "אורזים הזמנה",
     screen: "אורזים הזמנה מהדוכן שלי 📦💜",
     caption: "עוד הזמנה יוצאת לדרך 💜",
     tags: "#packingorders #smallbusiness #דוכן #עבודתיד",
@@ -27,7 +27,7 @@ const IDEAS = [
   },
   {
     key: "three",
-    label: "✨ 3 מוצרים ב-10 שניות",
+    label: "3 מוצרים ב-10 שניות",
     screen: "3 דברים שאפשר להזמין אצלי ✨",
     caption: "איזה מהם הכי שלכם? 👇",
     tags: "#smallbusiness #handmade #דוכן #עבודתיד",
@@ -35,7 +35,7 @@ const IDEAS = [
   },
   {
     key: "drop",
-    label: "🔥 דרופ חדש",
+    label: "דרופ חדש",
     screen: "דרופ חדש בדוכן! 🔥 מי ראשון?",
     caption: "יש מעט מכל אחד, אז מהר 🏃",
     tags: "#newdrop #smallbusiness #דוכן",
@@ -43,7 +43,7 @@ const IDEAS = [
   },
   {
     key: "make",
-    label: "🛠️ מכינים מאפס",
+    label: "מכינים מאפס",
     screen: "מכינים מאפס ⏱️ חכו לסוף",
     caption: "ככה זה נראה מההתחלה ועד הסוף ✨",
     tags: "#handmade #satisfying #עבודתיד #דוכן",
@@ -64,14 +64,14 @@ export default function TikTokCard({ store, onToast }: { store: Store; onToast: 
 
   return (
     <div className="bg-[var(--ink)] text-white p-4" data-testid="tiktok-card">
-      <div className="text-[15px] font-bold">🎵 לשתף בטיקטוק</div>
+      <div className="text-[15px] font-bold">לשתף בטיקטוק</div>
       <p className="text-[12.5px] text-white/80 leading-relaxed mt-1">
         כותבים את הלינק <b className="text-white">על הסרטון</b>, והקונים מקלידים אותו. בגלל זה הוא קצר.
       </p>
 
       {/* הלינק — גדול, ולוחצים עליו כדי להעתיק */}
       <button
-        onClick={() => copy(short, "הלינק הועתק 🎵 עכשיו מדביקים על הסרטון")}
+        onClick={() => copy(short, "הלינק הועתק. עכשיו מדביקים על הסרטון")}
         data-testid="tiktok-copy-link"
         aria-label={`העתקת הלינק ${short}`}
         className="fx-press mt-3 w-full bg-white text-[var(--ink)] px-4 py-3.5 flex items-center justify-between gap-3"
@@ -79,21 +79,21 @@ export default function TikTokCard({ store, onToast }: { store: Store; onToast: 
         <span className="text-[20px] font-extrabold tracking-tight truncate" dir="ltr" data-testid="tiktok-link">
           {short}
         </span>
-        <span className="shrink-0 text-[12.5px] font-bold border border-[var(--ink)] px-2.5 py-1">📋 העתקה</span>
+        <span className="shrink-0 text-[12.5px] font-bold border border-[var(--ink)] px-2.5 py-1">העתקה</span>
       </button>
 
       {/* איפה שמים — לפי מה שטיקטוק באמת מאפשר */}
       <ul className="mt-4 flex flex-col gap-2.5 text-[12.5px] leading-relaxed" data-testid="tiktok-where">
         <li className="flex gap-2.5">
-          <span className="shrink-0 w-6 text-center" aria-hidden>✅</span>
+          <span className="shrink-0 w-6 text-center font-bold" aria-hidden>✓</span>
           <span><b>על הסרטון</b> <span className="text-white/75">— בעריכה לוחצים על Aa ומדביקים. עובד לכולם.</span></span>
         </li>
         <li className="flex gap-2.5">
-          <span className="shrink-0 w-6 text-center" aria-hidden>✅</span>
+          <span className="shrink-0 w-6 text-center font-bold" aria-hidden>✓</span>
           <span><b>בכיתוב</b> <span className="text-white/75">— לא לחיץ, אבל רואים אותו ואפשר להעתיק.</span></span>
         </li>
         <li className="flex gap-2.5">
-          <span className="shrink-0 w-6 text-center" aria-hidden>🔒</span>
+          <span className="shrink-0 w-6 text-center font-bold" aria-hidden>✕</span>
           <span>
             <b>לינק לחיץ בביו</b>{" "}
             <span className="text-white/75">— בטיקטוק רק מגיל 18, עם 1,000 עוקבים או חשבון עסקי.</span>
@@ -103,7 +103,7 @@ export default function TikTokCard({ store, onToast }: { store: Store; onToast: 
 
       {/* רעיונות לסרטון */}
       <div className="mt-5 border-t border-white/20 pt-4">
-        <div className="text-[13.5px] font-bold">🎬 מה מצלמים?</div>
+        <div className="text-[13.5px] font-bold">מה מצלמים?</div>
         <div className="flex flex-wrap gap-1.5 mt-2.5" role="radiogroup" aria-label="רעיון לסרטון">
           {IDEAS.map((i) => (
             <button
@@ -120,14 +120,14 @@ export default function TikTokCard({ store, onToast }: { store: Store; onToast: 
             </button>
           ))}
         </div>
-        <p className="text-[12px] text-white/75 leading-relaxed mt-2.5" data-testid="tiktok-tip">💡 {cur.tip}</p>
+        <p className="text-[12px] text-white/75 leading-relaxed mt-2.5" data-testid="tiktok-tip">{cur.tip}</p>
 
         <div className="mt-3 text-[11.5px] font-bold text-white/70">טקסט על המסך</div>
         <div className="mt-1 bg-white/10 px-3 py-2.5 text-[13.5px] font-bold leading-relaxed whitespace-pre-line" data-testid="tiktok-screen">
           {onScreen}
         </div>
         <button
-          onClick={() => copy(onScreen, "הטקסט הועתק — מדביקים ב-Aa")}
+          onClick={() => copy(onScreen, "הטקסט הועתק. מדביקים ב-Aa")}
           data-testid="tiktok-copy-screen"
           className="fx-press mt-1.5 w-full bg-white text-[var(--ink)] py-2.5 text-[12.5px] font-bold"
         >
@@ -139,7 +139,7 @@ export default function TikTokCard({ store, onToast }: { store: Store; onToast: 
           {caption}
         </div>
         <button
-          onClick={() => copy(caption, "הכיתוב הועתק ✨")}
+          onClick={() => copy(caption, "הכיתוב הועתק")}
           data-testid="tiktok-copy-caption"
           className="fx-press mt-1.5 w-full border border-white/50 py-2.5 text-[12.5px] font-bold"
         >

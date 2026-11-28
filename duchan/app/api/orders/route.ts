@@ -7,6 +7,7 @@ import type { OrderItem } from "@/lib/types";
 import { sumPrices } from "@/lib/money";
 import { applyDeals, parseDeal } from "@/lib/deals";
 import { stockOfOption } from "@/lib/option-stock";
+import { isSource } from "@/lib/stats";
 import { couponProblem, discountFor, normalizeCode, type Coupon } from "@/lib/coupons";
 import { findCoupon } from "@/lib/coupons-server";
 import { countdown, dropTime } from "@/lib/drop";
@@ -22,6 +23,8 @@ interface Body {
   note?: string;
   buyerPhone?: string;
   buyerName?: string;
+  /** מאיפה הגיע הקונה (lib/stats.ts), 0074 */
+  source?: string;
   /** true = משלוח (ואז כתובת ועיר חובה), false = מסירה אישית */
   wantsShipping?: boolean;
   shipAddress?: string;
@@ -47,7 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
 
-  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, shipDetails, payMethod, couponCode } = body;
+  const { slug, items, note, buyerPhone, buyerName, wantsShipping, shipAddress, shipCity, shipDetails, payMethod, couponCode, source } = body;
   if (!slug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "בקשה לא תקינה" }, { status: 400 });
   }
@@ -347,6 +350,15 @@ export async function POST(req: NextRequest) {
 
   // התראה לטלפון של הדוכן (0061) — אחרי שהקונה כבר קיבל/ה תשובה
   const placed = orderNumber;
+
+  /* מאיפה הגיעה ההזמנה (0074): טיקטוק, אינסטגרם, וואטסאפ... רק הקטגוריה.
+     נפרד מ-place_order, כדי שדאטהבייס בלי העמודה לא יפיל הזמנה. */
+  if (isSource(source)) {
+    after(async () => {
+      const { error } = await db.from("orders").update({ source }).eq("store_id", store.id).eq("order_number", placed);
+      if (error) console.error("[orders] source:", error.message);
+    });
+  }
   after(() =>
     notifyStoreOrder({
       storeId: store.id,
