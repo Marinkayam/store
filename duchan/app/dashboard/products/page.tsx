@@ -345,6 +345,16 @@ export default function ProductsPage() {
   useEffect(() => {
     if (autoOpened || !store) return;
     const qs = new URLSearchParams(window.location.search);
+    /* ?edit={id}: מ"רצו מוצרים שאזלו" (wanted-card.tsx), ישר לעריכת המוצר */
+    const editId = qs.get("edit");
+    if (editId) {
+      const p = products.find((x) => x.id === editId);
+      if (!p) return; // המוצרים עוד נטענים
+      setAutoOpened(true);
+      openEditor(p);
+      window.history.replaceState({}, "", "/dashboard/products");
+      return;
+    }
     if (qs.get("new") !== "1") return;
     setAutoOpened(true);
     // &name= מרעיון בצעד "מוצר ראשון" (lib/sell-ideas.ts): השם כבר כתוב, ואפשר לשנות
@@ -352,7 +362,8 @@ export default function ProductsPage() {
     editBase.current = fresh;
     setEdit(fresh);
     window.history.replaceState({}, "", "/dashboard/products");
-  }, [store, autoOpened]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, autoOpened, products]);
 
   /* ---------- קטגוריות של החנות ---------- */
   async function saveCategories(next: string[]): Promise<boolean> {
@@ -1113,6 +1124,28 @@ export default function ProductsPage() {
             </div>
           </section>
         )}
+        {/* מוצרים בלי תמונה ובלי סרטון. מרינה, 11.2026 ("תתחיל הכל", סבב 3 סעיף 3):
+            60 מוצרים כאלה באתר. מוצר עם תמונה נמכר יותר, אז כרטיס אחד קטן,
+            וכפתור שפותח את הראשון מהם. */}
+        {!sorting && (() => {
+          const bare = products.filter((p) => !p.image_key && !p.video_key && p.is_visible !== false);
+          if (!bare.length) return null;
+          return (
+            <section className="bg-[var(--warn-bg)] border border-[var(--warn-line)] p-3.5 flex items-center gap-3" data-testid="no-photo-card">
+              <span className="flex-1 min-w-0 text-[13px] leading-snug">
+                <b>{bare.length === 1 ? "מוצר אחד בלי תמונה" : `${bare.length} מוצרים בלי תמונה`}.</b>{" "}
+                מוצר עם תמונה נמכר יותר.
+              </span>
+              <button
+                onClick={() => openEditor(bare[0])}
+                className="shrink-0 bg-[var(--ink)] text-white px-3.5 min-h-10 text-[12.5px] font-bold"
+                data-testid="no-photo-fix"
+              >
+                להוסיף תמונה
+              </button>
+            </section>
+          );
+        })()}
         {/* מעל הרשימה: כותרת קטנה ו"לשנות סדר". החצים ▲▼ מופיעים רק במצב
             סידור — בשאר הזמן השורה נקייה: תמונה, שם, מחיר, ומה שחשוב לדעת. */}
         {products.length > 1 && !sorting && (

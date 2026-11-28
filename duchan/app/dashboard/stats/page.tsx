@@ -28,7 +28,7 @@ import { formatPrice } from "@/lib/money";
 type Range = "today" | "7" | "30";
 type Stats = {
   live: number;
-  totals: { visits: number; visitors: number; newVisitors: number; productOpens: number; carts: number; orders: number; revenue: number };
+  totals: { visits: number; visitors: number; newVisitors: number; productOpens: number; carts: number; checkouts?: number; blocked?: number; submits?: number; failed?: number; orders: number; revenue: number };
   prevVisits: number;
   series: { key: string; label: string; visits: number }[];
   sources: { source: string; label: string; visits: number }[];
@@ -269,8 +269,14 @@ export default function StatsPage() {
                   { k: "visits", label: "נכנסו לדוכן", n: data.totals.visits },
                   { k: "opens", label: "פתחו מוצר", n: data.totals.productOpens },
                   { k: "carts", label: "הוסיפו לסל", n: data.totals.carts },
+                  // 0075: שני שלבים בתוך הסל, כדי לראות איפה עוזבים
+                  { k: "checkouts", label: "פתחו את הסל", n: data.totals.checkouts ?? 0 },
+                  { k: "submits", label: "לחצו לשלוח", n: data.totals.submits ?? 0 },
                   { k: "orders", label: "הזמינו", n: data.totals.orders },
-                ].map((f) => {
+                ]
+                  // השלבים החדשים נספרים מ-11.2026. בלי נתונים עדיין לא מציגים אותם (אחרת "0" באמצע)
+                  .filter((f) => !["checkouts", "submits"].includes(f.k) || (data.totals.checkouts ?? 0) + (data.totals.submits ?? 0) > 0)
+                  .map((f) => {
                   const w = Math.min(100, (f.n / Math.max(1, data.totals.visits)) * 100);
                   return (
                     <li key={f.k} data-testid={`stats-funnel-${f.k}`}>
@@ -292,6 +298,8 @@ export default function StatsPage() {
                     <b>{Math.max(1, Math.round((data.totals.orders / Math.max(1, data.totals.visits)) * Math.min(10, data.totals.visits)))}</b> הזמינו
                     {data.totals.revenue > 0 && <> · נכנסו ₪{formatPrice(data.totals.revenue)}</>}
                   </>
+                ) : (data.totals.blocked ?? 0) > 0 ? (
+                  "היו שהתחילו להזמין ועצרו בפרטים (שם, טלפון או כתובת). אפשר לכתוב בדוכן מה צריך למלא."
                 ) : data.totals.carts > 0 ? (
                   "הוסיפו לסל ולא הזמינו? אולי הם עוד מתלבטים. אפשר לשלוח להם הודעה."
                 ) : data.totals.productOpens > 0 ? (

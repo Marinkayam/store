@@ -14,6 +14,7 @@
  */
 
 import { HanukkahStall } from "./hanukkah";
+import { SeasonStall } from "./seasonal";
 
 const INK = "#4A3B2F";
 const WOOD = "#B9875A";
@@ -257,6 +258,8 @@ export default function HomeStall({
 
       {/* חנוכה: נדלק לבד בימי החג (app/hanukkah.tsx) */}
       <HanukkahStall empty={empty} />
+      {/* שאר החגים: ט״ו בשבט, פורים, פסח, יום העצמאות, ראש השנה (app/seasonal.tsx) */}
+      <SeasonStall empty={empty} />
 
       {empty && (
         <g className="hs-roll" aria-hidden>

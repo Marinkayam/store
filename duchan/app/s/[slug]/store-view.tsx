@@ -24,6 +24,7 @@ import MysteryBag from "@/app/mystery-bag";
 import { detectSource, type Source } from "@/lib/stats";
 import { confettiBurst } from "@/app/confetti";
 import { HanukkahGarland } from "@/app/hanukkah";
+import { SeasonGarland } from "@/app/seasonal";
 
 interface CartLine {
   id: string;
@@ -133,7 +134,7 @@ export default function StoreView({
   /* מי מסתכל: הצוות של הדוכן לא נספר בסטטיסטיקה (0062). עד שיודעים —
      לא שולחים כלום. */
   const [viewer, setViewer] = useState<"unknown" | "team" | "visitor">("unknown");
-  const stat = useRef<{ sid: string; src: Source; opened: Set<string>; carted: Set<string> } | null>(null);
+  const stat = useRef<{ sid: string; src: Source; opened: Set<string>; carted: Set<string>; steps: Set<string>; wanted: Set<string> } | null>(null);
   const track = (payload: Record<string, unknown>) => {
     const t = stat.current;
     if (!t) return;
@@ -172,7 +173,7 @@ export default function StoreView({
         sessionStorage.setItem(key, JSON.stringify(session));
       } catch {}
     }
-    stat.current = { ...session, opened: new Set(), carted: new Set() };
+    stat.current = { ...session, opened: new Set(), carted: new Set(), steps: new Set(), wanted: new Set() };
     if (firstInTab) {
       const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
       let visitor = true, fresh = true;
@@ -567,6 +568,28 @@ export default function StoreView({
     return own === null ? total : Math.min(total, own);
   }
 
+  /* שלבי ההזמנה, פעם אחת לביקור (0075): פתחו סל, נעצרו בטופס, שלחו, נכשל.
+     מרינה, 11.2026: 1,010 ביקורים עם סל ו-355 הזמנות, ולא ידענו איפה עוזבים. */
+  const step = (ev: "checkout" | "blocked" | "submit" | "fail") => {
+    const t = stat.current;
+    if (!t || t.steps.has(ev)) return;
+    t.steps.add(ev);
+    track({ ev });
+  };
+  /* ניסו לקנות מוצר שאזל (0075). בעלי הדוכן רואים "3 אנשים רצו את X". */
+  const want = (p: PublicProduct) => {
+    const t = stat.current;
+    if (t && !t.wanted.has(p.id)) {
+      t.wanted.add(p.id);
+      track({ ev: "want", product: p.id });
+    }
+    showToast("אזל. בעלי הדוכן יראו שרציתם אותו");
+  };
+  useEffect(() => {
+    if (orderOpen) step("checkout");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderOpen]);
+
   /**
    * הוספה מהירה מהרשת, בלי לפתוח את המוצר.
    *
@@ -585,7 +608,8 @@ export default function StoreView({
       return;
     }
     if (maxQty(p) === 0) {
-      showToast("אין יותר במלאי");
+      if (p.track_stock && p.stock === 0) want(p);
+      else showToast("אין יותר במלאי");
       return;
     }
     addLine(p, 1);
@@ -594,27 +618,32 @@ export default function StoreView({
   async function sendOrder() {
     if (!cart.length || sending || preview) return;
     if (buyerName.trim().length < 2) {
+      step("blocked");
       showToast("צריך לכתוב שם, כדי שבעלי הדוכן ידעו מי הזמין");
       return;
     }
     // טלפון חובה: ההזמנה כבר לא עוברת בוואטסאפ, ובלי מספר אין למוכרת
     // דרך לחזור לקונה. אותה בדיקה רצה גם בשרת.
     if (!buyerPhone.trim()) {
+      step("blocked");
       showToast("צריך מספר טלפון, כדי שבעלי הדוכן יוכלו לחזור אליכם");
       return;
     }
     const shipping = store.ships && wantsShipping;
     if (shipping && buyerName.trim().split(/\s+/).length < 2) {
+      step("blocked");
       showToast("למשלוח צריך שם ושם משפחה");
       return;
     }
     if (shipping && (shipStreet.trim().length < 2 || shipCity.trim().length < 2)) {
+      step("blocked");
       showToast("למשלוח צריך עיר וכתובת");
       return;
     }
     // בבניין: דירה וקומה חובה. בבית פרטי מסמנים "בית פרטי".
     const homeType: "building" | "private" | null = shipping ? (privateHouse ? "private" : "building") : null;
     if (shipping && homeType === "building" && (!shipFloor.trim() || !shipApartment.trim())) {
+      step("blocked");
       showToast("צריך מספר דירה וקומה (או לסמן \"בית פרטי\")");
       return;
     }
@@ -641,6 +670,7 @@ export default function StoreView({
         }`
       : undefined;
     setSending(true);
+    step("submit");
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
@@ -663,6 +693,7 @@ export default function StoreView({
       });
       const data = await res.json();
       if (!res.ok) {
+        step("fail");
         if (data.field === "coupon") {
           // הקוד נפל בדרך (נוצל, פג). ההזמנה לא נשלחה; הסל והפרטים נשמרו.
           setCoupon(null);
@@ -766,6 +797,7 @@ export default function StoreView({
         for (let i = 0; i < 3; i++) setTimeout(() => confettiBurst(window.innerWidth / 2, window.innerHeight * 0.45, 18), i * 220);
       }
     } catch {
+      step("fail");
       showToast("אין חיבור, ההזמנה לא נשלחה. אפשר לנסות שוב עוד רגע");
     } finally {
       setSending(false);
@@ -798,7 +830,7 @@ export default function StoreView({
                   key={p.id}
                   // אזל: הכרטיס עצמו נשאר אטום ורק התוכן דוהה — כרטיס שקוף על
                   // רקע של דוגמה או תמונה נראה כמו כתם
-                  className={`s-r text-right overflow-hidden relative flex flex-col ${out ? "pointer-events-none" : ""}`}
+                  className="s-r text-right overflow-hidden relative flex flex-col"
                   style={{
                     background: "var(--s-surface)",
                     border: "var(--s-border)" as string,
@@ -806,7 +838,7 @@ export default function StoreView({
                   }}
                 >
                 <button
-                  onClick={() => !out && openProduct(p)}
+                  onClick={() => (out ? want(p) : openProduct(p))}
                   aria-label={p.name}
                   className={`text-right transition active:translate-y-[1px] ${out ? "opacity-45" : ""}`}
                 >
@@ -966,6 +998,7 @@ export default function StoreView({
       )}
       {/* חנוכה: שרשרת דגלים בכחול-לבן, רק בימי החג (app/hanukkah.tsx) */}
       <HanukkahGarland />
+      <SeasonGarland />
       {/* רצועת הבעלים — נצמדת למעלה, אפור-שחור ולא בערכה של החנות, כדי שיהיה
           ברור שזו המערכת ולא הדף שהקונות רואות. קונה לא מקבלת אותה בכלל. */}
       {owner && (

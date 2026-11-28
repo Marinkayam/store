@@ -23,7 +23,8 @@ const addDays = (ymd: string, n: number) => {
 export type StatsResult = {
   range: Range;
   live: number;
-  totals: { visits: number; visitors: number; newVisitors: number; productOpens: number; carts: number; orders: number; revenue: number };
+  /** checkouts/blocked/submits/failed: שלבי ההזמנה (0075) */
+  totals: { visits: number; visitors: number; newVisitors: number; productOpens: number; carts: number; checkouts: number; blocked: number; submits: number; failed: number; orders: number; revenue: number };
   prevVisits: number;
   /** היום: 24 שעות. אחרת: יום אחרי יום */
   series: { key: string; label: string; visits: number }[];
@@ -32,7 +33,7 @@ export type StatsResult = {
   stores?: { id: string; name: string; slug: string; visits: number; live: number }[];
 };
 
-type Row = { store_id: string; day: string; hour: number; source: string; visits: number; visitors: number; new_visitors: number; product_opens: number; carts: number };
+type Row = { store_id: string; day: string; hour: number; source: string; visits: number; visitors: number; new_visitors: number; product_opens: number; carts: number; checkouts?: number | null; blocked?: number | null; submits?: number | null; failed?: number | null };
 
 export async function loadStats(db: SupabaseClient, storeIds: string[] | null, range: Range): Promise<StatsResult> {
   const today = dayOf(new Date());
@@ -45,7 +46,7 @@ export async function loadStats(db: SupabaseClient, storeIds: string[] | null, r
   const scope = (q: any) => (storeIds ? q.in("store_id", storeIds) : q);
 
   const [{ data: rows }, { data: prevRows }, { data: live }, { data: prod }, { data: orders }] = await Promise.all([
-    scope(db.from("store_stats").select("store_id, day, hour, source, visits, visitors, new_visitors, product_opens, carts").gte("day", start)),
+    scope(db.from("store_stats").select("store_id, day, hour, source, visits, visitors, new_visitors, product_opens, carts, checkouts, blocked, submits, failed").gte("day", start)),
     scope(db.from("store_stats").select("visits").gte("day", prevStart).lt("day", start)),
     scope(db.from("store_presence").select("store_id").gte("seen_at", since)),
     storeIds
@@ -72,6 +73,10 @@ export async function loadStats(db: SupabaseClient, storeIds: string[] | null, r
     newVisitors: sum("new_visitors"),
     productOpens: sum("product_opens"),
     carts: sum("carts"),
+    checkouts: sum("checkouts"),
+    blocked: sum("blocked"),
+    submits: sum("submits"),
+    failed: sum("failed"),
     orders: ordersIn.length,
     revenue: ordersIn.reduce((s, o) => s + Number(o.total ?? 0), 0),
   };

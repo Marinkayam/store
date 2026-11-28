@@ -9,6 +9,8 @@ import { isSource } from "@/lib/stats";
 //   { slug, ev: "product", product, src, first }    — פתחו מוצר (פעם אחת למוצר בביקור; first = הראשון בביקור)
 //   { slug, ev: "cart", product, src, first }       — הוסיפו לסל (פעם אחת למוצר בביקור)
 //   { slug, ev: "ping", sid }                       — "עדיין כאן", כל 30 שניות כשהדף גלוי
+//   { slug, ev: "checkout"|"blocked"|"submit"|"fail", src } — שלבי ההזמנה, פעם אחת לביקור (0075)
+//   { slug, ev: "want", product }                   — ניסו לקנות מוצר שאזל (0075)
 //
 // שום דבר כאן לא מזהה אדם (0062): visitor/fresh הם כן/לא שהדפדפן מחליט לבד,
 // ו-sid הוא מספר אקראי שנוצר מחדש בכל לשונית. בעלי הדוכן לא נספרים — הדף
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
   }
   if (!body.slug || typeof body.slug !== "string") return NextResponse.json({ ok: false }, { status: 400 });
   const ev = body.ev ?? "visit";
-  if (!["visit", "product", "cart", "ping"].includes(ev)) return NextResponse.json({ ok: false }, { status: 400 });
+  if (!["visit", "product", "cart", "ping", "checkout", "blocked", "submit", "fail", "want"].includes(ev)) return NextResponse.json({ ok: false }, { status: 400 });
 
   const db = supabaseAdmin();
   const { data: store } = await db
@@ -53,6 +55,10 @@ export async function POST(req: NextRequest) {
     tasks.push(db.rpc("bump_store_view", { p_store: store.id })); // הסה"כ הוותיק — מטבעות הקופה נשענים עליו
     tasks.push(db.rpc("bump_store_stat", { p_store: store.id, p_kind: "visit", p_source: src, p_visitor: !!body.visitor, p_new: !!body.fresh }));
     tasks.push(seen());
+  } else if (["checkout", "blocked", "submit", "fail"].includes(ev)) {
+    tasks.push(db.rpc("bump_store_stat", { p_store: store.id, p_kind: ev, p_source: src }));
+  } else if (ev === "want") {
+    if (product) tasks.push(db.rpc("bump_store_stat", { p_store: store.id, p_kind: "want", p_source: src, p_product: product }));
   } else if (ev === "product" || ev === "cart") {
     tasks.push(db.rpc("bump_store_stat", { p_store: store.id, p_kind: ev, p_source: src, p_product: product, p_first: body.first !== false }));
   } else {
