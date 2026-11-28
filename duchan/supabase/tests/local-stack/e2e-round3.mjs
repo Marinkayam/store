@@ -119,6 +119,24 @@ try {
   check("ושליחה לחברים עם הקוד והלינק", share.includes("חברים10") && share.includes(`/${store.slug}`));
   await db.query("update coupons set deleted_at=now() where store_id=$1 and code='חברים10'", [store.id]);
 
+  /* ── 6. ספלאש של חג (holiday-splash.tsx) ── */
+  await me.goto(`${BASE}/dashboard?holiday=hanukkah`, { waitUntil: "networkidle" });
+  const sp = me.locator("[data-testid=holiday-splash]");
+  await sp.waitFor({ timeout: 15000 });
+  check("ספלאש חג: 'חנוכה שמח!' עם דוכן מקושט", ((await sp.textContent()) ?? "").includes("חנוכה שמח") && (await sp.locator("[data-testid=hanukkah-stall]").count()) === 1);
+  check("ורעיונות למוצרים לחנוכה", (await sp.locator("[data-testid=holiday-ideas] a").count()) >= 3);
+  const ideaHref = (await sp.locator("[data-testid=holiday-ideas] a").first().getAttribute("href")) ?? "";
+  check("רעיון פותח מוצר חדש עם השם", ideaHref.includes("/dashboard/products?new=1&name="));
+  await sp.locator("[data-testid=status-image-make]").click();
+  const img = sp.locator("[data-testid=status-image-preview] img");
+  await img.waitFor({ timeout: 20000 });
+  check("ותמונה לסטטוס עם ברכה", (await img.evaluate((i) => new Promise((r) => (i.complete ? r(i.naturalHeight) : (i.onload = () => r(i.naturalHeight)))))) === 1920);
+  await me.click("[data-testid=holiday-close]");
+  check("סגירה", (await sp.count()) === 0);
+  await me.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
+  await me.waitForTimeout(1500);
+  check("בדפדפן אוטומטי בלי ?holiday: לא קופץ", (await me.locator("[data-testid=holiday-splash]").count()) === 0);
+
   /* ── 5. חגים ── */
   const g = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   for (const s of ["tubishvat", "purim", "pesach", "atzmaut", "roshhashana"]) {

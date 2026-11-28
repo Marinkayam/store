@@ -11,6 +11,7 @@ import StoreSwitcher from "./store-switcher";
 import { hasUnsaved, setUnsaved, UNSAVED_PROMPT } from "@/lib/unsaved";
 import KupaCelebrate from "./kupa/celebrate";
 import LiveCelebration from "./live-celebration";
+import HolidaySplash from "./holiday-splash";
 import { HanukkahGarland } from "@/app/hanukkah";
 import { SeasonGarland } from "@/app/seasonal";
 
@@ -84,6 +85,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* "התשלום התקבל, הדוכן באוויר!" — פעם אחת אחרי ההפעלה */}
       <LiveCelebration />
       <KupaCelebrate />
+      {/* ספלאש של חג, פעם אחת בכל חג (holiday-splash.tsx) */}
+      {store && <HolidaySplash store={store} />}
       <div ref={scroller} data-scroll-root className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain pb-2">
         <HanukkahGarland />
         <SeasonGarland />

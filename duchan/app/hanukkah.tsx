@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
  */
 
 /** הנר הראשון (בערב) של כל שנה */
-const FIRST_NIGHT = ["2026-12-04", "2027-12-24", "2028-12-12", "2029-12-01", "2030-12-20"];
+export const FIRST_NIGHT = ["2026-12-04", "2027-12-24", "2028-12-12", "2029-12-01", "2030-12-20"];
 
 const israelDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(d);
 
@@ -63,8 +63,9 @@ function Flame({ x, y, delay, s = 1.3 }: { x: number; y: number; delay: number; 
 }
 
 /** שכבת חנוכה לאיור הדוכן (app/home-stall.tsx). אותן קואורדינטות של ה-viewBox שם. */
-export function HanukkahStall({ empty = false }: { empty?: boolean }) {
-  const night = useHanukkah();
+export function HanukkahStall({ empty = false, night: forced }: { empty?: boolean; night?: number }) {
+  const auto = useHanukkah();
+  const night = forced ?? auto;
   if (!night) return null;
   const flags = Array.from({ length: 9 }, (_, i) => {
     const t = 0.08 + (i * 0.84) / 8;

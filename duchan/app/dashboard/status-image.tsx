@@ -49,7 +49,10 @@ function fit(ctx: CanvasRenderingContext2D, text: string, max: number): string {
   return t + "…";
 }
 
-export async function buildStatusImage(store: Store, origin: string): Promise<Blob | null> {
+/** מסגרת חג לתמונה (app/holiday-splash.tsx): ברכה במקום "הדוכן שלי פתוח!", ושרשרת דגלים בצבעי החג */
+export type StatusFrame = { greet: string; colors: string[] };
+
+export async function buildStatusImage(store: Store, origin: string, frame?: StatusFrame): Promise<Blob | null> {
   const { data } = await supabaseBrowser()
     .from("products")
     .select("name, price, image_key, poster_key")
@@ -77,10 +80,32 @@ export async function buildStatusImage(store: Store, origin: string): Promise<Bl
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, W, H);
 
+  // שרשרת דגלים של החג בראש התמונה
+  if (frame) {
+    const n = 12, step = W / n;
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, 70);
+    for (let i = 0; i < n; i++) ctx.quadraticCurveTo(i * step + step / 2, 100, (i + 1) * step, 70);
+    ctx.stroke();
+    for (let i = 0; i < n; i++) {
+      const x = i * step + step / 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 30, 84);
+      ctx.lineTo(x + 30, 84);
+      ctx.lineTo(x, 140);
+      ctx.closePath();
+      ctx.fillStyle = frame.colors[i % frame.colors.length];
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
   // כותרת
-  ctx.fillStyle = MUTED;
-  ctx.font = "500 40px Heebo, sans-serif";
-  ctx.fillText("הדוכן שלי פתוח!", W / 2, 230);
+  ctx.fillStyle = frame ? INK : MUTED;
+  ctx.font = frame ? "800 50px Heebo, sans-serif" : "500 40px Heebo, sans-serif";
+  ctx.fillText(frame ? frame.greet : "הדוכן שלי פתוח!", W / 2, 230);
   ctx.fillStyle = INK;
   ctx.font = "800 88px Heebo, sans-serif";
   ctx.fillText(fit(ctx, store.display_name, W - 140), W / 2, 340);
@@ -144,7 +169,7 @@ export async function buildStatusImage(store: Store, origin: string): Promise<Bl
   return new Promise((resolve) => c.toBlob((b) => resolve(b), "image/png"));
 }
 
-export default function StatusImage({ store }: { store: Store }) {
+export default function StatusImage({ store, frame, label }: { store: Store; frame?: StatusFrame; label?: string }) {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const [err, setErr] = useState("");
@@ -153,7 +178,7 @@ export default function StatusImage({ store }: { store: Store }) {
     setBusy(true);
     setErr("");
     try {
-      const blob = await buildStatusImage(store, window.location.origin);
+      const blob = await buildStatusImage(store, window.location.origin, frame);
       if (!blob) throw new Error("no blob");
       const file = new File([blob], "duchan-status.png", { type: "image/png" });
       // בטלפון: מסך השיתוף, ומשם וואטסאפ. אם אין, מציגים ומורידים.
@@ -181,7 +206,7 @@ export default function StatusImage({ store }: { store: Store }) {
         className="w-full border border-[var(--line)] bg-white py-3 min-h-11 text-[13.5px] font-medium disabled:opacity-50"
         data-testid="status-image-make"
       >
-        {busy ? "מכינים…" : "תמונה של הדוכן לסטטוס בוואטסאפ"}
+        {busy ? "מכינים…" : label ?? "תמונה של הדוכן לסטטוס בוואטסאפ"}
       </button>
       {err && <p className="text-[12.5px] text-[var(--danger)] mt-1.5">{err}</p>}
       {url && (
