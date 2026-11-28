@@ -212,6 +212,11 @@ export default function ProductsPage() {
      ("תתחיל הכל", סעיף 6): 21 דוכנים פתוחים לא העלו מוצר בשבועיים, ומוצר
      חדש הוא סיבה טובה לשלוח שוב את הלינק. */
   const [justAdded, setJustAdded] = useState<{ name: string; price: string } | null>(null);
+  useEffect(() => {
+    if (!justAdded) return;
+    const t = setTimeout(() => setJustAdded(null), 7000);
+    return () => clearTimeout(t);
+  }, [justAdded]);
 
   // הקלטה
   const [recOpen, setRecOpen] = useState(false);
@@ -814,7 +819,7 @@ export default function ProductsPage() {
       // הדוכן הופך לדבר אמיתי שאפשר לשלוח, ואומרים את זה בגדול ומיד.
       const isFirst = !edit.id && products.length === 0;
       if (isFirst) setCelebrate(true);
-      else if (!edit.id && store?.activated_at && !(edit.trackStock && edit.stock === 0)) setJustAdded({ name: edit.name.trim(), price: edit.price });
+      else if (!edit.id && store?.activated_at && !(edit.trackStock && edit.stock === 0) && shareOfferDue(store.id)) setJustAdded({ name: edit.name.trim(), price: edit.price });
       else showToast(edit.trackStock && edit.stock === 0 ? "המוצר סומן כאזל" : edit.id ? "המוצר עודכן" : "המוצר נוסף לדוכן");
       setEdit(null);
       refresh();
@@ -2092,16 +2097,15 @@ export default function ProductsPage() {
       )}
 
       {justAdded && store && (
+        /* מרינה, 11.2026: "לא צריך שהחדש אצלי בדוכן יחפור". אז: פעם ביום
+           לכל היותר (shareOfferDue), שורה אחת קטנה, ונעלם לבד אחרי כמה שניות. */
         <div
           role="status"
           className="fixed bottom-24 inset-x-0 mx-auto max-w-sm px-gutter z-[90]"
           data-testid="new-product-share"
         >
-          <div className="bg-white border border-[var(--line)] p-3.5 flex flex-col gap-2.5">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-[14px] font-bold leading-snug">המוצר נוסף לדוכן! לספר לחברים?</p>
-              <CloseX onClick={() => setJustAdded(null)} label="סגירה" testid="new-product-share-close" />
-            </div>
+          <div className="bg-white border border-[var(--line)] pr-3.5 pl-1.5 py-1.5 flex items-center gap-2">
+            <p className="flex-1 text-[13px] leading-snug">המוצר נוסף לדוכן</p>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
                 `חדש אצלי בדוכן: ${justAdded.name}` +
@@ -2111,14 +2115,12 @@ export default function ProductsPage() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setJustAdded(null)}
-              className="block text-center bg-[var(--whatsapp)] text-white py-3 text-[14px] font-bold"
+              className="text-[13px] underline px-2 min-h-10 flex items-center whitespace-nowrap"
               data-testid="new-product-share-wa"
             >
-              לשלוח בוואטסאפ
+              לספר לחברים
             </a>
-            <a href="/dashboard/tiktok" className="text-center text-[13px] underline min-h-10 flex items-center justify-center" data-testid="new-product-tiktok">
-              או לטיקטוק ולאינסטגרם
-            </a>
+            <CloseX onClick={() => setJustAdded(null)} label="סגירה" testid="new-product-share-close" />
           </div>
         </div>
       )}
@@ -2159,4 +2161,15 @@ function PriceHint({ name }: { name: string }) {
       המחיר אצלכם, ואתם מחליטים.
     </p>
   );
+}
+
+/** "לספר לחברים" אחרי מוצר חדש: פעם ביום לכל דוכן, לא אחרי כל מוצר. */
+function shareOfferDue(storeId: string): boolean {
+  const key = `duchan-new-share-${storeId}`;
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+  try {
+    if (localStorage.getItem(key) === today) return false;
+    localStorage.setItem(key, today);
+  } catch {}
+  return true;
 }

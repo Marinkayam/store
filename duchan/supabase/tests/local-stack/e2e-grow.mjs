@@ -75,7 +75,10 @@ try {
   const shown = await share.waitFor({ timeout: 8000 }).then(() => true).catch(() => false);
   if (shown) {
     const href = decodeURIComponent((await share.locator("[data-testid=new-product-share-wa]").getAttribute("href")) ?? "");
-    check("אחרי מוצר חדש: 'לספר לחברים?' עם 'חדש אצלי בדוכן' ומחיר", href.includes("חדש אצלי בדוכן: מוצר חדש לבדיקה") && href.includes("₪12"), href.slice(0, 80));
+    check("אחרי מוצר חדש: 'לספר לחברים' עם 'חדש אצלי בדוכן' ומחיר", href.includes("חדש אצלי בדוכן: מוצר חדש לבדיקה") && href.includes("₪12"), href.slice(0, 80));
+    check("לא חופר: נעלם לבד אחרי כמה שניות", await share.waitFor({ state: "detached", timeout: 10000 }).then(() => true).catch(() => false));
+    const seen = await me.evaluate((id) => localStorage.getItem(`duchan-new-share-${id}`), store.id);
+    check("ופעם ביום לכל היותר (נשמר היום במכשיר)", /^\d{4}-\d{2}-\d{2}$/.test(seen ?? ""), seen);
   } else {
     console.log("(העורך לא שמר בלי תמונה. בודקים את הכרטיס דרך מוצר עם תמונה בפעם הבאה)");
   }
