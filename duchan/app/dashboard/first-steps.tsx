@@ -8,6 +8,7 @@ import OrderAlerts from "./order-alerts";
 import ExplainerVideo from "../explainer-video";
 import ParentNudge from "./parent-nudge";
 import StatusImage from "./status-image";
+import TikTokEntry from "./tiktok/entry";
 import { sellIdeas } from "@/lib/sell-ideas";
 
 /**
@@ -135,6 +136,7 @@ export default function FirstSteps({
         </div>
         {/* "תתחיל הכל", סעיף 5: תמונה עם המוצרים, לסטטוס */}
         <StatusImage store={store} />
+        <TikTokEntry compact />
         </div>
       ),
     },
@@ -146,6 +148,7 @@ export default function FirstSteps({
           <OrderAlerts storeId={store.id} cta="לשמור במסך הבית ולהפעיל התראות" />
           {/* בזמן שמחכים להזמנה הראשונה: עוד דרך להגיע לאנשים */}
           <StatusImage store={store} />
+          <TikTokEntry compact />
         </div>
       ),
     },

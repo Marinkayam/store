@@ -258,6 +258,26 @@ export default function StoreView({
     };
   }, [store.slug]);
 
+  /* ?p={id}: הגעה מלינק של מוצר אחד (duchan.app/abcde/12, lib/product-link.ts),
+     למשל מסרטון בטיקטוק. פותחים את המוצר מיד, ומנקים את הכתובת. */
+  const deepLinked = useRef(false);
+  /* בתוך טיקטוק או אינסטגרם (הדפדפן שבתוך האפליקציה) וואטסאפ לפעמים לא
+     נפתח מקישור. ההזמנה כבר נשמרת בשרת לפני וואטסאפ, אז רק אומרים את זה. */
+  const [inApp, setInApp] = useState(false);
+  useEffect(() => setInApp(/TikTok|musical_ly|BytedanceWebview|Instagram|FBAN|FBAV|FB_IAB/i.test(navigator.userAgent)), []);
+  useEffect(() => {
+    if (deepLinked.current) return;
+    const id = new URLSearchParams(window.location.search).get("p");
+    if (!id) return;
+    deepLinked.current = true;
+    const p = products.find((x) => x.id === id);
+    if (p) openProduct(p);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("p");
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]);
+
   // מנגן רק את הסרטונים שנראים — שישה במקביל מקפיאים גלילה בטלפון ישן
   useEffect(() => {
     const root = gridRef.current;
@@ -637,6 +657,8 @@ export default function StoreView({
           shipDetails,
           payMethod: chosenPay ?? undefined,
           couponCode: coupon?.code,
+          // מאיפה הגיע הקונה (0074), אותה קטגוריה כמו בסטטיסטיקה
+          source: stat.current?.src,
         }),
       });
       const data = await res.json();
@@ -1967,6 +1989,11 @@ export default function StoreView({
               </p>
             </div>
           ) : null}
+          {inApp && (
+            <p className="text-[12.5px] mt-3 leading-relaxed opacity-80" data-testid="inapp-help">
+              וואטסאפ לא נפתח? זה קורה לפעמים בתוך טיקטוק ואינסטגרם. ההזמנה כבר אצל בעלי הדוכן, והם יחזרו אליכם לטלפון שהשארתם.
+            </p>
+          )}
           <button
             onClick={() => setConfirmed({ ...confirmed, payFirst: false })}
             className="s-r mt-2 w-full py-3 text-[13.5px] font-bold border-[1.5px]"
@@ -2009,6 +2036,12 @@ export default function StoreView({
           <p className="text-[12.5px] opacity-70 mt-1.5 leading-relaxed" data-testid="order-change-hint">
             רוצים לשנות משהו? לא צריך להזמין שוב. כותבים לבעלי הדוכן, והם מעדכנים את ההזמנה.
           </p>
+          {inApp && (
+            <p className="text-[12.5px] mt-1.5 leading-relaxed opacity-80" data-testid="inapp-help">
+              וואטסאפ לא נפתח? זה קורה לפעמים בתוך טיקטוק ואינסטגרם. ההזמנה כבר אצל בעלי הדוכן, והם יחזרו אליכם לטלפון שהשארתם.
+            </p>
+          )}
+
           {payTarget?.kind === "link" && (
             <a
               href={payTarget.url}

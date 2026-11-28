@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { SHARE_TEXTS, inviteText, type ShareContext } from "@/lib/share-texts";
 import type { Store } from "@/lib/types";
-import TikTokCard from "./tiktok-card";
+import TikTokEntry from "../tiktok/entry";
 import { storePath } from "@/lib/short-link";
 import GiftBagsArt from "@/app/gift-bags-art";
 import Icon from "@/app/icons";
@@ -167,7 +167,7 @@ export default function ShareSection({ store, onToast }: { store: Store; onToast
             </div>
           </section>
 
-          <TikTokCard store={store} onToast={onToast} />
+          <TikTokEntry />
 
           {/* להזמין חברים לפתוח דוכן */}
           <section>
