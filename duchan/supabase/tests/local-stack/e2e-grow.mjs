@@ -61,6 +61,29 @@ try {
   const wa = decodeURIComponent((await rep.locator("[data-testid=month-share-parents]").getAttribute("href")) ?? "");
   check("'לשלוח את הסיכום להורים': הודעה עם שם הדוכן והסכום", wa.includes(store.display_name) && wa.includes("נכנסו ₪"), wa.slice(0, 90));
 
+  /* ── 1א. לפני שמוסרים הזמנה: טיפים לבטיחות ── */
+  {
+    const r = await fetch(`${BASE}/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: store.slug, items: [{ productId: prod.id, qty: 1 }], buyerName: "רוני", buyerPhone: "0526665544", payMethod: "cash" }),
+    });
+    const j = await r.json();
+    const { rows: [o] } = await db.query("select id from orders where store_id=$1 and order_number=$2", [store.id, j.orderNumber]);
+    made.push(o.id);
+    await me.evaluate((id) => localStorage.removeItem(`duchan-safety-seen-${id}`), store.id);
+    await me.reload({ waitUntil: "networkidle" });
+    const card = me.locator("[data-testid=safety-tips]");
+    const shown = await card.waitFor({ timeout: 15000 }).then(() => true).catch(() => false);
+    const txt = shown ? await card.innerText() : "";
+    check("הזמנה שמחכה: 'לפני שמוסרים הזמנה' עם שישה טיפים", shown && (await card.locator("li").count()) === 6);
+    check("לא להיפגש לבד, רק אחרי שהכסף הגיע, לוודא שהקונה אמין", ["לא נפגשים לבד", "רק אחרי שהכסף הגיע", "שהקונה אמין"].every((w) => txt.includes(w)));
+    if (shown) await me.click("[data-testid=safety-ok]");
+    await me.reload({ waitUntil: "networkidle" });
+    await me.locator("[data-testid=safety-tips-line]").waitFor({ timeout: 15000 }).catch(() => {});
+    check("אחרי 'הבנו': רק שורה אחת שאפשר לפתוח", (await me.locator("[data-testid=safety-tips]").count()) === 0 && (await me.locator("[data-testid=safety-tips-line]").count()) === 1);
+  }
+
   /* ── 2. חדש אצלי בדוכן ── */
   await me.goto(`${BASE}/dashboard/products?new=1&name=${encodeURIComponent("מוצר חדש לבדיקה")}`, { waitUntil: "networkidle" });
   await me.waitForSelector("#ed-name", { timeout: 15000 });

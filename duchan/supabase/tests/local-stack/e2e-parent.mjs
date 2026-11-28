@@ -96,6 +96,8 @@ try {
   check("ביט נשאר כדרך שנייה, ואומר ביושר שהכסף עובר דרכנו",
     ((await parent.textContent("[data-testid=parent-pay] details")) ?? "").includes("אנחנו מעבירים למשלחת"));
   check("יזמות ובטיחות", body.includes("להיות יזמים") && (await parent.locator("[data-testid=learns]").count()) === 1 && (await parent.locator("[data-testid=safety]").count()) === 1);
+  check("ומה אומרים לילדים כשמגיעה הזמנה: לא נפגשים לבד, רק אחרי שהכסף הגיע",
+    ["לא נפגשים לבד", "רק אחרי שהכסף הגיע"].every((w) => (body ?? "").includes(w)) && (await parent.locator("[data-testid=parent-safety-tips] li").count()) === 6);
   check("שלושה צעדים לתשלום, עם שם הדוכן להעתקה", (await parent.locator("[data-testid=parent-pay] ol > li").count()) === 3 &&
     (await parent.locator("[data-testid=parent-copy-name]").count()) === 1);
 
