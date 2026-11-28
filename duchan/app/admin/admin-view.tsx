@@ -24,7 +24,6 @@ import LoginFlow from "./login-flow";
 import AdminPush from "./admin-push";
 import AdminStats from "./admin-stats";
 import AdminCities from "./admin-cities";
-import AdminHoods from "./admin-hoods";
 import Icon from "@/app/icons";
 import { SQUISH_OPEN } from "@/lib/squish-open";
 
@@ -577,8 +576,6 @@ function SchemaWarning() {
 
             {/* ערים שלא זוהו בוודאות (0070, 0072). נעלם כשאין מה לבדוק */}
             <AdminCities />
-            {/* שכונות שהורים כתבו ולא ברשימה (0077). נעלם כשאין מה לבדוק */}
-            <AdminHoods />
 
             <section className="bg-white border border-[var(--line)] p-3">
               <h2 className="text-sm font-bold mb-2">דורשים תשומת לב</h2>

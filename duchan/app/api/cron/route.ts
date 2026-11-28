@@ -44,9 +44,8 @@ const BACKUP: Record<string, string[]> = {
   app_settings: ["key"],
   // רשימת היישובים קטנה, ודוכנים מצביעים עליה: בלעדיה שחזור למסד ריק נכשל
   localities: ["id"],
-  // השוק של השכונה (0077)
-  neighborhoods: ["id"],
-  neighborhood_members: ["store_id"],
+  // השוק של העיר (0077)
+  community_members: ["store_id"],
   squish_profiles: ["id"],
   squish_items: ["id"],
   squish_connections: ["id"],
