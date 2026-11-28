@@ -55,11 +55,14 @@ export async function GET() {
     storesQ = await readStores(STORE_COLUMNS_BASE);
   }
 
-  const [productsQ, ordersQ, viewsQ] = await Promise.all([
+  const [productsQ, ordersQ, viewsQ, pushQ] = await Promise.all([
     db.from("products").select("store_id, deleted_at"),
     db.from("orders").select("store_id, status, total, created_at"),
     db.from("store_views").select("store_id, day, views"),
+    // מי מקבל התראה על הזמנה (0061). מרינה, 11.2026: "האם יש פוש כשמגיעה הזמנה?"
+    db.from("store_push_subscriptions").select("store_id").is("disabled_at", null),
   ]);
+  const withPush = new Set(((pushQ.error ? [] : pushQ.data) ?? []).map((r) => r.store_id as string));
 
   const stores = (storesQ.data ?? []) as unknown as StoreRow[];
   const products = productsQ.data ?? [];
@@ -99,7 +102,7 @@ export async function GET() {
     if (s.referred_by) brought.set(s.referred_by, (brought.get(s.referred_by) ?? 0) + 1);
   });
 
-  const enriched = stores.map((s) => ({ ...s, ...a(s.id), brought: brought.get(s.id) ?? 0 }));
+  const enriched = stores.map((s) => ({ ...s, ...a(s.id), brought: brought.get(s.id) ?? 0, push: pushQ.error ? null : withPush.has(s.id) }));
 
   return NextResponse.json({
     totals: {

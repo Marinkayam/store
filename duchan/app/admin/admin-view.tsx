@@ -86,6 +86,8 @@ interface AdminStore {
   viewsTotal: number;
   views7d: number;
   lastOrderAt: string | null;
+  /** יש לפחות מכשיר אחד עם התראה על הזמנה. null = לא ידוע */
+  push?: boolean | null;
 }
 
 interface DetailProduct {
@@ -665,6 +667,9 @@ function SchemaWarning() {
                             <div className="text-[12px] text-[var(--muted)] mt-0.5">
                               {s.views7d} כניסות השבוע · {s.products} מוצרים · {s.ordersTotal} הזמנות · ₪{formatPrice(s.revenue)}
                               {s.ordersNew > 0 && <b className="text-[var(--warn-ink)]"> · {s.ordersNew} חדשות</b>}
+                              {s.activated_at && s.push === false && (
+                                <span className="text-[var(--warn-ink)]" data-testid="store-no-push"> · אין התראות</span>
+                              )}
                             </div>
                             <div className="text-[12px] text-[var(--muted)] mt-0.5">
                               התקדמות: {reachedCount(milestones({

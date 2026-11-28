@@ -11,6 +11,7 @@ import StaleOrders, { isStale } from "./stale-orders";
 import MonthReport from "./month-report";
 import WantedCard from "./wanted-card";
 import WeekQuestPeek from "./week-quest-peek";
+import AlertsNudge from "./alerts-nudge";
 import TikTokEntry from "./tiktok/entry";
 import { formatPrice, lineTotal, sumPrices } from "@/lib/money";
 import { kupaCheck } from "./kupa/use-kupa";
@@ -406,6 +407,8 @@ export default function OrdersPage() {
 
       {/* החודש בדוכן: סיכום קטן, ולשלוח להורים */}
       <MonthReport orders={orders} storeName={store.display_name} />
+      {/* התראה על כל הזמנה, למי שעוד אין לו (alerts-nudge.tsx) */}
+      {store.activated_at && orders.length > 0 && <AlertsNudge storeId={store.id} />}
       {/* משימת השבוע מהמשחק, גם כאן (week-quest-peek.tsx) */}
       {store.activated_at && <WeekQuestPeek storeId={store.id} />}
       {/* מוצרים שאזלו ואנשים ניסו לקנות (0075) */}
